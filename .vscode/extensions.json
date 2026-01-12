@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "bradlc.vscode-tailwindcss",
+    "formulahendry.auto-close-tag",
+    "formulahendry.auto-rename-tag",
+    "biomejs.biome",
+    "christian-kohler.path-intellisense",
+    "vscode-icons-team.vscode-icons"
+  ]
+}
