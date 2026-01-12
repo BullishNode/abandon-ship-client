@@ -1,0 +1,23 @@
+{
+  "language": "English",
+  "actions": {
+    "scan": "Scan",
+    "send": "Send",
+    "receive": "Receive"
+  },
+  "nav": {
+    "wallet_one": "Wallet",
+    "wallet_other": "Wallets",
+    "transactions": "Transactions",
+    "vtxos": "VTXOs",
+    "contacts": "Contacts",
+    "console": "Console",
+    "settings": "Settings"
+  },
+  "wallet": {
+    "add": "Add wallet"
+  },
+  "network": {
+    "signet": "Signet"
+  }
+}

@@ -1,0 +1,48 @@
+services:
+  bark-web:
+    build:
+      context: .
+      dockerfile: docker/bark-web.Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+
+  bark:
+    container_name: bark
+    build:
+      context: .
+      dockerfile: docker/bark.Dockerfile
+      args:
+        BARK_VERSION: ${BARK_VERSION:-0.1.0-beta.5}
+    volumes:
+      - wallet-data:/root/.bark
+
+  barkd:
+    container_name: barkd
+    build:
+      context: .
+      dockerfile: docker/barkd.Dockerfile
+      args:
+        BARK_VERSION: ${BARK_VERSION:-0.1.0-beta.5}
+    ports:
+      - "4000:4000"
+    volumes:
+      - wallet-data:/root/.bark
+
+  proxy:
+    build:
+      context: .
+      dockerfile: docker/proxy.Dockerfile
+    ports:
+      - "5174:5174"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - bark
+
+volumes:
+  wallet-data:
