@@ -1,9 +1,14 @@
 {
   "language": "English",
+  "app": {
+    "name": "bark-web"
+  },
   "actions": {
     "scan": "Scan",
     "send": "Send",
-    "receive": "Receive"
+    "receive": "Receive",
+    "cancel": "Cancel",
+    "continue": "Continue"
   },
   "nav": {
     "wallet_one": "Wallet",
@@ -15,9 +20,52 @@
     "settings": "Settings"
   },
   "wallet": {
-    "add": "Add wallet"
+    "add": "Add wallet",
+    "name": {
+      "title": "Wallet name",
+      "description": "Enter a name for this wallet",
+      "placeholder": "Byte's wallet"
+    },
+    "mnemonic": {
+      "show": {
+        "title": "Seed phrase",
+        "description": "Take note of your seed phrase. Don't share it with anyone!"
+      },
+      "confirm": {
+        "title": "Confirm seed phrase",
+        "description": "Click the words in the correct order"
+      },
+      "import": {
+        "title": "Import seed phrase",
+        "description": "Type in all {{count}} words of your seed phrase",
+        "error": {
+          "invalid": "Invalid seed phrase. Check that all words are correct and in order."
+        }
+      }
+    },
+    "backend": {
+      "title": "Network and servers",
+      "description": "Select a network and server to connect to"
+    }
   },
   "network": {
     "signet": "Signet"
+  },
+  "welcome": {
+    "title": "Welcome to $t(app.name)",
+    "description": "A web-based graphical user interface for managing bark wallet"
+  },
+  "onboarding": {
+    "create": "Create new wallet",
+    "import": "Import existing wallet"
+  },
+  "backend": {
+    "network": "Network",
+    "ark": "Ark server",
+    "server": "Server"
+  },
+  "links": {
+    "forum": "Community forum",
+    "chat": "Community chat"
   }
 }

@@ -15,12 +15,14 @@ import {
   SidebarMenu,
   SidebarMenuItem
 } from '@/components/ui/sidebar'
+import { useWalletStore } from '@/stores/wallet'
 import type { Wallet } from '@/types/wallet'
 import { NavGroup, type NavGroupProps } from './nav-group'
 import { NavWallet } from './nav-wallet'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { t } = useTranslation()
+  const wallet = useWalletStore((state) => state.wallet)
 
   const navMainItems: NavGroupProps['items'] = [
     {
@@ -56,7 +58,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const wallets: Wallet[] = [
     {
       id: '1',
-      name: `Byte's wallet`,
+      name: wallet?.name || '',
       avatar: 'https://picsum.photos/id/237/200'
     }
   ]

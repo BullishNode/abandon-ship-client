@@ -22,6 +22,20 @@ const app = new Hono()
 
 app.use('*', cors())
 
+app.get('/api/v1/wallet', async (c) => {
+  try {
+    const { stdout } = await execAsync(
+      'docker exec bark find /root/.bark -type f 2>/dev/null | head -n 1'
+    )
+
+    const exists = stdout.trim().length > 0
+
+    return c.json({ exists })
+  } catch (error) {
+    return c.json({ error: (error as Error).message }, 500)
+  }
+})
+
 app.post('/api/v1/wallet', async (c) => {
   try {
     // TODO: Receive arguments in the future (--signet, --ark, --esplora, etc.)
@@ -50,9 +64,7 @@ app.delete('/api/v1/wallet', async (c) => {
   try {
     await execAsync('docker stop barkd')
 
-    await execAsync(
-      'docker exec bark find /root/.bark -mindepth 1 -delete'
-    )
+    await execAsync('docker exec bark find /root/.bark -mindepth 1 -delete')
 
     await execAsync('docker start barkd')
 
