@@ -4,6 +4,7 @@ import { z } from 'zod'
 export default defineConfig({
   validator: 'standard',
   schema: {
-    VITE_BARKD_URL: z.url()
+    VITE_BARKD_URL: z.url(),
+    VITE_PROXY_URL: z.url()
   }
 })
