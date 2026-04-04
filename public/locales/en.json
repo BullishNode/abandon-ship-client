@@ -8,7 +8,14 @@
     "send": "Send",
     "receive": "Receive",
     "cancel": "Cancel",
-    "continue": "Continue"
+    "continue": "Continue",
+    "paste": "Paste",
+    "back": "Back"
+  },
+  "bitcoin": {
+    "sats_unit_one": "sat",
+    "sats_unit_other": "sats",
+    "btc_unit": "BTC"
   },
   "nav": {
     "wallet_one": "Wallet",
@@ -62,10 +69,64 @@
   "backend": {
     "network": "Network",
     "ark": "Ark server",
-    "server": "Server"
+    "server": "Chain source"
   },
   "links": {
     "forum": "Community forum",
     "chat": "Community chat"
+  },
+  "receive": {
+    "title": "Receive",
+    "description": "Scan the QR code or copy the address to receive funds.",
+    "new": "New address",
+    "tabs": {
+      "payto": "Pay to",
+      "ark": "Ark",
+      "lightning": "Lightning",
+      "onchain": "On-chain"
+    },
+    "details": "Additional details",
+    "require": {
+      "amount": "To generate a Lightning invoice enter an amount"
+    }
+  },
+  "amount": {
+    "label": "Amount"
+  },
+  "label": {
+    "label": "Label"
+  },
+  "tags": {
+    "label": "Tags",
+    "search": "Search tags...",
+    "hint": "Select a tag or create one",
+    "create": "Create \"{{search}}\""
+  },
+  "send": {
+    "title": "Send bitcoin",
+    "scan": {
+      "description": "Scan any Bitcoin, Lightning, or Ark QR code to pay with bitcoin."
+    },
+    "confirm": {
+      "description": "Review the payment details before sending.",
+      "button": "Confirm send"
+    },
+    "destination": "Destination",
+    "destination.placeholder": "Address, invoice, or Lightning address",
+    "amount": "Amount (sats)",
+    "fee": {
+      "estimate": "Estimated fee"
+    },
+    "details": "Additional details",
+    "label": "Label",
+    "label.placeholder": "Enter a label",
+    "message": "Message",
+    "message.placeholder": "Enter a message"
+  },
+  "contacts": {
+    "label": "Contacts",
+    "search": "Search contacts...",
+    "hint": "Select a contact or create one",
+    "create": "Create \"{{search}}\""
   }
 }

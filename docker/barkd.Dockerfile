@@ -8,13 +8,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 ARG BARK_VERSION
+ARG TARGETARCH
 
-RUN curl -fsSL "https://gitlab.com/ark-bitcoin/bark/-/releases/bark-${BARK_VERSION}/downloads/barkd-${BARK_VERSION}-linux-x86_64" -o barkd \
+RUN case "${TARGETARCH}" in \
+      amd64) ARCH="x86_64" ;; \
+      arm64) ARCH="arm64" ;; \
+      arm)   ARCH="armv7" ;; \
+      *)     echo "Unsupported architecture: ${TARGETARCH}" && exit 1 ;; \
+    esac && \
+    curl -fsSL "https://gitlab.com/ark-bitcoin/bark/-/releases/bark-${BARK_VERSION}/downloads/barkd-${BARK_VERSION}-linux-${ARCH}" -o barkd \
     && chmod +x barkd
-
-COPY docker/barkd-entrypoint.sh ./entrypoint.sh
-RUN chmod +x entrypoint.sh
 
 EXPOSE 4000
 
-CMD ["./entrypoint.sh"]
+CMD ["./barkd", "--port", "4000", "--host", "0.0.0.0", "--allowed-origins", "http://localhost:5173"]

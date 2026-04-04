@@ -51,6 +51,20 @@ function Button({
   }) {
   const Comp = asChild ? Slot.Root : "button"
 
+  if (asChild) {
+    return (
+      <Comp
+        data-slot="button"
+        data-variant={variant}
+        data-size={size}
+        className={cn(buttonVariants({ variant, size, className }))}
+        {...props}
+      >
+        {children}
+      </Comp>
+    )
+  }
+
   return (
     <Comp
       data-slot="button"
@@ -60,7 +74,16 @@ function Button({
       disabled={loading || disabled}
       {...props}
     >
-      {loading ? <Spinner /> : children}
+      <span className="relative inline-flex items-center justify-center size-full gap-[inherit]">
+        <span className={cn("inline-flex items-center justify-center whitespace-nowrap gap-[inherit]", loading && "invisible")}>
+          {children}
+        </span>
+        {loading && (
+          <span className="absolute inset-0 flex items-center justify-center">
+            <Spinner />
+          </span>
+        )}
+      </span>
     </Comp>
   )
 }

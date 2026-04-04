@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { generateMnemonic } from '@scure/bip39'
 import { wordlist } from '@scure/bip39/wordlists/english.js'
+import { BarkNetwork } from '@secondts/barkd'
 import { defineStepper } from '@stepperize/react'
 import { useMemo, useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
@@ -33,7 +34,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { useCreateWallet } from '@/hooks/proxy/use-create-wallet'
+import { useCreateWallet } from '@/hooks/barkd/use-create-wallet'
 import { shuffleArray } from '@/utils/shuffle-array'
 
 const walletNameSchema = z.object({
@@ -44,9 +45,9 @@ const walletNameSchema = z.object({
 })
 
 const networkAndServerSchema = z.object({
-  network: z.string(),
+  network: z.enum(Object.values(BarkNetwork)),
   arkServer: z.url(),
-  server: z.url()
+  chainSource: z.url()
 })
 
 type WalletNameFormValues = z.infer<typeof walletNameSchema>
@@ -90,7 +91,7 @@ export default function CreateWalletPage() {
       name: '',
       network: 'signet',
       arkServer: 'https://ark.signet.2nd.dev',
-      server: 'https://esplora.signet.2nd.dev'
+      chainSource: 'https://esplora.signet.2nd.dev'
     }
   })
 
@@ -119,13 +120,31 @@ export default function CreateWalletPage() {
       return stepper.next()
     }
 
-    createWallet({ name, mnemonic, createdAt: new Date() })
+    if (
+      'arkServer' in values &&
+      'chainSource' in values &&
+      'network' in values
+    ) {
+      createWallet({
+        name,
+        mnemonic,
+        createdAt: new Date(),
+        ark_server: values.arkServer,
+        chain_source: { esplora: { url: values.chainSource } },
+        network: values.network
+      })
+    }
   }
 
   const currentIndex = utils.getIndex(stepper.current.id)
 
   const isNameStepInvalid =
     stepper.current.id === 'name' && !form.formState.isValid
+
+  const isMnemonicConfirmIncomplete =
+    stepper.current.id === 'mnemonic' &&
+    mnemonicStage === 'confirm' &&
+    !isMnemonicConfirmed
 
   return (
     <StepsLayout>
@@ -153,7 +172,7 @@ export default function CreateWalletPage() {
           })}
           <StepsLayoutContentAction>
             <Button
-              disabled={isNameStepInvalid}
+              disabled={isNameStepInvalid || isMnemonicConfirmIncomplete}
               loading={creatingWallet}
               type="submit"
             >
@@ -182,6 +201,7 @@ function WalletNameComponent() {
     >
       <Input
         {...register('name')}
+        autoComplete="off"
         placeholder={t('wallet.name.placeholder')}
         required
       />

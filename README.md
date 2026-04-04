@@ -1,8 +1,9 @@
-# bark-web
+![bark: Ark on bitcoin](assets/bark-web-header-white.jpg)
 
-todo: image
-
-A web-based graphical user interface for managing bark wallets
+<div align="center">
+<h1>bark-web</h1>
+<p>A web-based graphical user interface for managing bark wallets</p>
+</div>
 
 ## Getting started
 
