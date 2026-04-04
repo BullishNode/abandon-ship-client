@@ -1,5 +1,3 @@
-"use client"
-
 import * as React from "react"
 import { Command as CommandPrimitive } from "cmdk"
 
@@ -87,8 +85,14 @@ function CommandInput({
 
 function CommandList({
   className,
+  onWheel,
   ...props
 }: React.ComponentProps<typeof CommandPrimitive.List>) {
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    e.stopPropagation()
+    onWheel?.(e)
+  }
+
   return (
     <CommandPrimitive.List
       data-slot="command-list"
@@ -96,6 +100,7 @@ function CommandList({
         "no-scrollbar max-h-72 scroll-py-1 outline-none overflow-x-hidden overflow-y-auto",
         className
       )}
+      onWheel={handleWheel}
       {...props}
     />
   )

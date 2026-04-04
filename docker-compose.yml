@@ -8,8 +8,12 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
+      - wallet-data:/wallet-data:ro
     environment:
       - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - barkd
+    entrypoint: ["/bin/sh", "/app/docker/bark-web-entrypoint.sh"]
 
   bark:
     container_name: bark
@@ -17,9 +21,9 @@ services:
       context: .
       dockerfile: docker/bark.Dockerfile
       args:
-        BARK_VERSION: ${BARK_VERSION:-0.1.0-beta.5}
+        BARK_VERSION: ${BARK_VERSION:-0.1.0-beta.8}
     volumes:
-      - wallet-data:/root/.bark
+      - wallet-data:/root
 
   barkd:
     container_name: barkd
@@ -27,22 +31,11 @@ services:
       context: .
       dockerfile: docker/barkd.Dockerfile
       args:
-        BARK_VERSION: ${BARK_VERSION:-0.1.0-beta.5}
+        BARK_VERSION: ${BARK_VERSION:-0.1.0-beta.8}
     ports:
       - "4000:4000"
     volumes:
-      - wallet-data:/root/.bark
-
-  proxy:
-    build:
-      context: .
-      dockerfile: docker/proxy.Dockerfile
-    ports:
-      - "5174:5174"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    depends_on:
-      - bark
+      - wallet-data:/root
 
 volumes:
   wallet-data:

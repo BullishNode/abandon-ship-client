@@ -1,0 +1,157 @@
+import { PlusIcon, XIcon } from '@phosphor-icons/react'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { buttonVariants } from '@/components/ui/button'
+import {
+  Command,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList
+} from '@/components/ui/command'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from '@/components/ui/popover'
+import { cn } from '@/lib/utils'
+import { useMetadataStore } from '@/stores/metadata'
+
+interface TagInputProps {
+  value: string[]
+  onChange: (value: string[]) => void
+  disabled?: boolean
+}
+
+export function TagInput({ value, onChange, disabled = false }: TagInputProps) {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const { tags, addTag } = useMetadataStore()
+
+  const sanitizedSearch = search.replace(/,/g, '').trim()
+
+  const filteredTags = tags.filter((tag) =>
+    tag.name.toLowerCase().includes(sanitizedSearch.toLowerCase())
+  )
+
+  const exactMatchExists = tags.some(
+    (tag) => tag.name.toLowerCase() === sanitizedSearch.toLowerCase()
+  )
+
+  const showCreateOption = sanitizedSearch && !exactMatchExists
+
+  const handleSelect = (tagName: string) => {
+    if (value.includes(tagName)) {
+      onChange(value.filter((name) => name !== tagName))
+    } else {
+      onChange([...value, tagName])
+    }
+  }
+
+  const handleCreate = () => {
+    if (!sanitizedSearch) {
+      return
+    }
+
+    const tagName = addTag(sanitizedSearch)
+    onChange([...value, tagName])
+    setSearch('')
+  }
+
+  const selectedTags = value.flatMap((name) => {
+    const tag = tags.find((t) => t.name === name)
+    return tag ? [tag] : []
+  })
+
+  return (
+    <Popover onOpenChange={setOpen} open={open}>
+      <PopoverTrigger asChild>
+        <button
+          className={cn(
+            buttonVariants({
+              variant: 'outline',
+              className:
+                'h-auto min-h-9 w-full flex-wrap justify-start gap-x-1 gap-y-1.5 py-1.5 font-normal hover:bg-transparent aria-expanded:bg-transparent'
+            })
+          )}
+          disabled={disabled}
+          type="button"
+        >
+          {selectedTags.length > 0 &&
+            selectedTags.map((tag) => (
+              // biome-ignore lint/a11y/noStaticElementInteractions: don't open popover when clicking on the tag text
+              <div
+                className="inline-flex cursor-default items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-foreground text-xs"
+                key={tag.name}
+                onClick={(e) => e.stopPropagation()}
+                role="presentation"
+              >
+                <span>{tag.name}</span>
+                <button
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    e.preventDefault()
+                    handleSelect(tag.name)
+                  }}
+                  type="button"
+                >
+                  <XIcon className="size-3 rounded-sm hover:bg-foreground/20" />
+                </button>
+              </div>
+            ))}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-(--radix-popover-trigger-width) p-0"
+      >
+        <Command shouldFilter={false}>
+          <CommandInput
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && showCreateOption) {
+                e.preventDefault()
+                handleCreate()
+              }
+            }}
+            onValueChange={setSearch}
+            placeholder={t('tags.search')}
+            value={search}
+          />
+          <p className="p-1.5 text-muted-foreground text-xs">
+            {t('tags.hint')}
+          </p>
+          <CommandList>
+            {filteredTags.length > 0 && (
+              <CommandGroup>
+                {filteredTags.map((tag) => (
+                  <CommandItem
+                    className="cursor-pointer"
+                    data-checked={value.includes(tag.name)}
+                    key={tag.name}
+                    onSelect={() => handleSelect(tag.name)}
+                  >
+                    <span
+                      className={cn(value.includes(tag.name) && 'font-medium')}
+                    >
+                      {tag.name}
+                    </span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+            {showCreateOption && (
+              <CommandGroup>
+                <CommandItem onSelect={handleCreate}>
+                  <PlusIcon className="size-4" />
+                  {t('tags.create', { search: sanitizedSearch })}
+                </CommandItem>
+              </CommandGroup>
+            )}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
+}
