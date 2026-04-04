@@ -1,4 +1,4 @@
-![bark: Ark on bitcoin](assets/bark-web-header-white.jpg)
+![bark-web banner](assets/banner.png)
 
 <div align="center">
 <h1>bark-web</h1>
