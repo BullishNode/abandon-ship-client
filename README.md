@@ -54,4 +54,4 @@ npx ultracite fix
 
 ## License
 
-Released under the **CC0 1.0 Universal** license. See the [LICENSE](LICENSE) file for details.
+Released under the **MIT** license — see the [LICENSE](LICENSE) file for details.
