@@ -2,7 +2,7 @@
 
 <div align="center">
 <h1>bark-web</h1>
-<p>A web-based graphical user interface for managing bark wallets</p>
+<p>A web-based graphical user interface for managing Bark wallets</p>
 </div>
 
 ## Getting started
