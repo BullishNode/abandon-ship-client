@@ -18,7 +18,7 @@ export function useSend(
 
   return useMutation({
     mutationFn: (params: SendRequest) =>
-      walletApi.send(params).then((response) => response.data),
+      walletApi.send({ sendRequest: params }),
     ...options,
     onSuccess: async (...args) => {
       await queryClient.invalidateQueries({ queryKey: ['wallet', 'balance'] })

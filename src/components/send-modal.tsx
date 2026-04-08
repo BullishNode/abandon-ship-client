@@ -144,7 +144,7 @@ export function SendModal({
     const amountSats = Number.parseInt(amount, 10)
     send({
       destination,
-      amount_sat: Number.isNaN(amountSats) ? undefined : amountSats,
+      amountSat: Number.isNaN(amountSats) ? undefined : amountSats,
       comment: message || undefined
     })
   }

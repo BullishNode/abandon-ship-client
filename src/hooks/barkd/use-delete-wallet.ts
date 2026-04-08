@@ -10,13 +10,15 @@ import { useWalletStore } from '@/stores/wallet'
 const walletApi = new WalletApi(config)
 
 async function deleteWallet(params: WalletDeleteRequest) {
-  const response = await walletApi.walletDelete(params)
+  const response = await walletApi.walletDelete({
+    walletDeleteRequest: params
+  })
 
-  if (response.data.deleted) {
+  if (response.deleted) {
     useWalletStore.getState().clearWallet()
   }
 
-  return response.data
+  return response
 }
 
 export function useDeleteWallet(

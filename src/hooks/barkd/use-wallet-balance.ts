@@ -9,7 +9,7 @@ export function useWalletBalance(
 ) {
   return useQuery({
     queryKey: ['wallet', 'balance'],
-    queryFn: () => walletApi.balance().then((response) => response.data),
+    queryFn: () => walletApi.balance(),
     refetchInterval: 10_000,
     ...options
   })

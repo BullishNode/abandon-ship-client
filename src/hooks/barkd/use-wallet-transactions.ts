@@ -9,7 +9,7 @@ export function useWalletTransactions(
 ) {
   return useQuery({
     queryKey: ['wallet', 'transactions'],
-    queryFn: () => walletApi.history().then((response) => response.data),
+    queryFn: () => walletApi.history(),
     ...options
   })
 }

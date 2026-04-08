@@ -17,14 +17,15 @@ interface CreateWalletParams extends CreateWalletRequest {
 async function createWallet(params: CreateWalletParams) {
   const setWallet = useWalletStore.getState().setWallet
 
-  const fingerprint = await walletApi
-    .createWallet({
-      ark_server: params.ark_server,
-      chain_source: params.chain_source,
+  const response = await walletApi.createWallet({
+    createWalletRequest: {
+      arkServer: params.arkServer,
+      chainSource: params.chainSource,
       network: params.network,
       mnemonic: params.mnemonic
-    })
-    .then((response) => response.data.fingerprint)
+    }
+  })
+  const fingerprint = response.fingerprint
 
   if (!fingerprint) {
     return false

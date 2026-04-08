@@ -9,7 +9,7 @@ export function useOnchainAddress(
 ) {
   return useMutation({
     mutationFn: () =>
-      onchainApi.onchainAddress().then((response) => response.data.address),
+      onchainApi.onchainAddress().then((response) => response.address),
     ...options
   })
 }

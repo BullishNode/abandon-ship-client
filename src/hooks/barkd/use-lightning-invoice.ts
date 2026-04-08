@@ -17,8 +17,8 @@ export function useLightningInvoice(
   return useMutation({
     mutationFn: (params: LightningInvoiceRequest) =>
       lightningApi
-        .generateInvoice(params)
-        .then((response) => response.data.invoice),
+        .generateInvoice({ lightningInvoiceRequest: params })
+        .then((response) => response.invoice),
     ...options
   })
 }

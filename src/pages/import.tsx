@@ -118,8 +118,8 @@ export default function ImportWalletPage() {
         name,
         mnemonic,
         createdAt: new Date(),
-        ark_server: values.arkServer,
-        chain_source: { esplora: { url: values.chainSource } },
+        arkServer: values.arkServer,
+        chainSource: { esplora: { url: values.chainSource } },
         network: values.network
       })
     }

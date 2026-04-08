@@ -6,7 +6,7 @@ const walletApi = new WalletApi(config)
 
 async function checkWallet() {
   const response = await walletApi.walletExists()
-  return response.data.fingerprint != null
+  return response.fingerprint != null
 }
 
 export function useCheckWallet(
