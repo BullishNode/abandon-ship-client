@@ -41,10 +41,10 @@ const slideVariants = {
     x: 0,
     opacity: 1
   },
-  exit: (direction: number) => ({
-    x: direction > 0 ? '-100%' : '100%',
-    opacity: 0
-  })
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.1 }
+  }
 }
 
 async function parsePaymentInput(input: string) {
@@ -178,7 +178,10 @@ export function SendModal({
               exit="exit"
               initial="enter"
               key="scan"
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              transition={{
+                x: { type: 'spring', stiffness: 300, damping: 30 },
+                opacity: { duration: 0.1 }
+              }}
               variants={slideVariants}
             >
               <ModalHeader>
@@ -209,7 +212,10 @@ export function SendModal({
               exit="exit"
               initial="enter"
               key="send"
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              transition={{
+                x: { type: 'spring', stiffness: 300, damping: 30 },
+                opacity: { duration: 0.1 }
+              }}
               variants={slideVariants}
             >
               <ModalHeader>
