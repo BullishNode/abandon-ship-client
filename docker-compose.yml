@@ -32,6 +32,8 @@ services:
       dockerfile: docker/barkd.Dockerfile
       args:
         BARK_VERSION: ${BARK_VERSION:-0.1.0-beta.8}
+    environment:
+      - BARKD_ALLOWED_ORIGINS=http://localhost:5173
     ports:
       - "4000:4000"
     volumes:

@@ -21,4 +21,4 @@ RUN case "${TARGETARCH}" in \
 
 EXPOSE 4000
 
-CMD ["./barkd", "--port", "4000", "--host", "0.0.0.0", "--allowed-origins", "http://localhost:5173"]
+CMD ["./barkd", "--port", "4000", "--host", "0.0.0.0"]

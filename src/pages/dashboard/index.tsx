@@ -11,7 +11,7 @@ export default function TransactionsPage() {
   const fiatCurrency = useSettingsStore((state) => state.fiatCurrency)
   const formatBitcoin = useFormatBitcoin()
 
-  const balanceSats = balance?.spendable_sat ?? 0
+  const balanceSats = balance?.spendableSat ?? 0
   const balanceBtc = balanceSats / SATOSHIS_PER_BTC
   const fiatValue =
     btcPrice?.currentPrice !== undefined
