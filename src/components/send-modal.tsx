@@ -20,7 +20,9 @@ import {
 } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useLightningSendFee } from '@/hooks/barkd/use-lightning-send-fee'
 import { useSend } from '@/hooks/barkd/use-send'
+import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
 
 type Step = 'scan' | 'send'
 
@@ -100,6 +102,19 @@ export function SendModal({
       handleClose()
     }
   })
+
+  const formatBitcoin = useFormatBitcoin()
+  const amountSat = Number.parseInt(amount, 10)
+  const { data: feeEstimate, isFetching: isFetchingFee } = useLightningSendFee(
+    Number.isNaN(amountSat) ? undefined : amountSat
+  )
+
+  let feeDisplay = '—'
+  if (isFetchingFee) {
+    feeDisplay = '...'
+  } else if (feeEstimate) {
+    feeDisplay = formatBitcoin(feeEstimate.feeSat)
+  }
 
   const handleClose = () => {
     onOpenChange(false)
@@ -228,7 +243,9 @@ export function SendModal({
                   <Label className="text-muted-foreground">
                     {t('send.fee.estimate')}
                   </Label>
-                  <span className="text-muted-foreground text-sm">—</span>
+                  <span className="text-muted-foreground text-sm">
+                    {feeDisplay}
+                  </span>
                 </div>
                 <Collapsible>
                   <CollapsibleTrigger asChild>
