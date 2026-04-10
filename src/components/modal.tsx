@@ -139,12 +139,21 @@ function ModalBody({
   }
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col" data-slot="modal-body">
+    <div
+      className="relative flex min-h-0 flex-1 flex-col"
+      data-slot="modal-body"
+    >
       {canScrollUp && (
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-6 bg-linear-to-b from-background to-transparent" />
       )}
       <div
-        className={cn('-mx-1 min-h-0 flex-auto px-1', (canScrollUp || canScrollDown) ? 'overflow-y-auto' : 'overflow-y-hidden', className)}
+        className={cn(
+          '-mx-1 min-h-0 flex-auto px-1',
+          canScrollUp || canScrollDown
+            ? 'overflow-y-auto'
+            : 'overflow-y-hidden',
+          className
+        )}
         onScroll={updateScrollState}
         ref={setRefs}
         {...props}
