@@ -203,7 +203,7 @@ function MnemonicComponent({ stage, mnemonic, onConfirmedChange }: MnemonicCompo
 
   const [selectedWords, setSelectedWords] = useState<string[]>([])
   const [status, setStatus] = useState<SeedWordStatus[]>(
-    Array.from({ length: 12 }).map(() => 'idle')
+    () => Array.from({ length: 12 }).map(() => 'idle')
   )
 
   function handleClick(word: string, index: number) {
