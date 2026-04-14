@@ -1,4 +1,4 @@
-import { LazyMotion, MotionConfig, domAnimation } from 'motion/react'
+import { LazyMotion, MotionConfig, domMax } from 'motion/react'
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { Spinner } from './components/ui/spinner'
 import { useCheckWallet } from './hooks/barkd/use-check-wallet'
@@ -47,7 +47,7 @@ function RedirectRoute() {
 
 export function App() {
   return (
-    <LazyMotion features={domAnimation} strict>
+    <LazyMotion features={domMax} strict>
       <MotionConfig reducedMotion="user">
         <BrowserRouter>
           <Routes>

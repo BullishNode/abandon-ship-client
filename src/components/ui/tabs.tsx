@@ -1,6 +1,6 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-import { motion } from "motion/react"
+import { m } from "motion/react"
 import { Tabs as TabsPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
@@ -92,7 +92,7 @@ function TabsTrigger({
       {...props}
     >
       {isActive && (
-        <motion.span
+        <m.span
           layoutId="tabs-indicator"
           className="bg-background dark:bg-input/30 dark:border-input absolute inset-0 rounded-md border shadow-sm"
           transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}

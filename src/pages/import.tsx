@@ -193,7 +193,7 @@ function MnemonicInputComponent({
   const { t } = useTranslation()
   const { setValue, getValues, watch } = useFormContext<MnemonicFormValues>()
   const words = watch('words')
-  const [searchValues, setSearchValues] = useState(Array.from({ length: 12 }).map(() => ''))
+  const [searchValues, setSearchValues] = useState(() => Array.from({ length: 12 }).map(() => ''))
   const showError = isMnemonicComplete && !isMnemonicValid
 
   function handleSearchChange(index: number, value: string) {

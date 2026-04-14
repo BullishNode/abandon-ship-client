@@ -30,8 +30,8 @@ export function CopyAddressButton({ text, ...props }: CopyAddressButtonProps) {
       <AnimatePresence initial={false} mode="popLayout">
         <m.span
           animate={{ filter: 'blur(0px)', opacity: 1, scale: 1 }}
-          exit={{ filter: 'blur(4px)', opacity: 0.4, scale: 0 }}
-          initial={{ filter: 'blur(4px)', opacity: 0.4, scale: 0 }}
+          exit={{ filter: 'blur(4px)', opacity: 0.4, scale: 0.95 }}
+          initial={{ filter: 'blur(4px)', opacity: 0.4, scale: 0.95 }}
           key={isCopied ? 'check' : 'copy'}
           transition={{ duration: 0.25 }}
         >
