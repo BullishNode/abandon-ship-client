@@ -40,15 +40,13 @@ const walletNameSchema = z.object({
 })
 
 const mnemonicSchema = z.object({
-  words: z
-    .array(z.string().min(1, 'Word is required'))
-    .length(12, 'Must have exactly 12 words')
+  words: z.array(z.string().min(1, 'Word is required')).length(12, 'Must have exactly 12 words')
 })
 
 const networkAndServerSchema = z.object({
-  network: z.enum(Object.values(BarkNetwork)),
   arkServer: z.url(),
-  chainSource: z.url()
+  chainSource: z.url(),
+  network: z.enum(Object.values(BarkNetwork))
 })
 
 type WalletNameFormValues = z.infer<typeof walletNameSchema>
@@ -68,35 +66,35 @@ const { useStepper, utils } = defineStepper(
   }
 )
 
-const wordlistItems = wordlist.map((word) => ({ value: word, label: word }))
+const wordlistItems = wordlist.map((word) => ({ label: word, value: word }))
 
 export default function ImportWalletPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const stepper = useStepper()
-  const [name, setName] = useState<string>('')
-  const [mnemonic, setMnemonic] = useState<string>('')
+  const [name, setName] = useState('')
+  const [mnemonic, setMnemonic] = useState('')
   const { mutate: createWallet, isPending: creatingWallet } = useCreateWallet({
     onSuccess: (data) => {
       if (data) {
-        navigate('/dashboard')
+        void navigate('/dashboard')
       }
     }
   })
 
   const form = useForm({
-    mode: 'onTouched',
-    resolver: zodResolver(stepper.current.schema),
     defaultValues: {
-      name: '',
-      words: Array.from({ length: 12 }).map(() => ''),
-      network: 'signet',
       arkServer: 'https://ark.signet.2nd.dev',
-      chainSource: 'https://esplora.signet.2nd.dev'
-    }
+      chainSource: 'https://esplora.signet.2nd.dev',
+      name: '',
+      network: 'signet',
+      words: Array.from({ length: 12 }).map(() => '')
+    },
+    mode: 'onTouched',
+    resolver: zodResolver(stepper.current.schema)
   })
 
-  const onSubmit = (values: z.infer<typeof stepper.current.schema>) => {
+  function onSubmit(values: z.infer<typeof stepper.current.schema>) {
     if (stepper.current.id === 'name' && 'name' in values) {
       setName(values.name)
     }
@@ -109,17 +107,13 @@ export default function ImportWalletPage() {
       return stepper.next()
     }
 
-    if (
-      'arkServer' in values &&
-      'chainSource' in values &&
-      'network' in values
-    ) {
+    if ('arkServer' in values && 'chainSource' in values && 'network' in values) {
       createWallet({
-        name,
-        mnemonic,
-        createdAt: new Date(),
         arkServer: values.arkServer,
         chainSource: { esplora: { url: values.chainSource } },
+        createdAt: new Date(),
+        mnemonic,
+        name,
         network: values.network
       })
     }
@@ -128,34 +122,27 @@ export default function ImportWalletPage() {
   const currentIndex = utils.getIndex(stepper.current.id)
   const words = form.watch('words')
   const isMnemonicComplete = words.every((word) => wordlist.includes(word))
-  const isMnemonicValid =
-    isMnemonicComplete && validateMnemonic(words.join(' '), wordlist)
-  const isNameStepInvalid =
-    stepper.current.id === 'name' && !form.formState.isValid
-  const isMnemonicIncomplete =
-    stepper.current.id === 'mnemonic' && !isMnemonicValid
+  const isMnemonicValid = isMnemonicComplete && validateMnemonic(words.join(' '), wordlist)
+  const isNameStepInvalid = stepper.current.id === 'name' && !form.formState.isValid
+  const isMnemonicIncomplete = stepper.current.id === 'mnemonic' && !isMnemonicValid
 
   return (
     <StepsLayout>
       <StepsLayoutNav>
         {stepper.all.map((step, index) => (
-          <StepIndicator
-            isActive={index <= currentIndex}
-            key={step.id}
-            label={t(step.label)}
-          />
+          <StepIndicator isActive={index <= currentIndex} key={step.id} label={t(step.label)} />
         ))}
       </StepsLayoutNav>
       <FormProvider {...form}>
-        <StepsLayoutForm onSubmit={form.handleSubmit(onSubmit)}>
+        <StepsLayoutForm onSubmit={(e) => void form.handleSubmit(onSubmit)(e)}>
           {stepper.switch({
-            name: () => <WalletNameComponent />,
             mnemonic: () => (
               <MnemonicInputComponent
                 isMnemonicComplete={isMnemonicComplete}
                 isMnemonicValid={isMnemonicValid}
               />
             ),
+            name: () => <WalletNameComponent />,
             server: () => <NetworkAndServersComponent />
           })}
           <StepsLayoutContentAction>
@@ -183,10 +170,7 @@ function WalletNameComponent() {
   const { t } = useTranslation()
 
   return (
-    <StepsLayoutContent
-      description={t('wallet.name.description')}
-      title={t('wallet.name.title')}
-    >
+    <StepsLayoutContent description={t('wallet.name.description')} title={t('wallet.name.title')}>
       <Input
         {...register('name')}
         autoComplete="off"
@@ -209,12 +193,10 @@ function MnemonicInputComponent({
   const { t } = useTranslation()
   const { setValue, getValues, watch } = useFormContext<MnemonicFormValues>()
   const words = watch('words')
-  const [searchValues, setSearchValues] = useState<string[]>(
-    Array.from({ length: 12 }).map(() => '')
-  )
+  const [searchValues, setSearchValues] = useState(Array.from({ length: 12 }).map(() => ''))
   const showError = isMnemonicComplete && !isMnemonicValid
 
-  const handleSearchChange = (index: number, value: string) => {
+  function handleSearchChange(index: number, value: string) {
     setSearchValues((prev) => {
       const updated = [...prev]
       updated[index] = value
@@ -222,7 +204,7 @@ function MnemonicInputComponent({
     })
   }
 
-  const handleValueChange = (index: number, value: string) => {
+  function handleValueChange(index: number, value: string) {
     const currentWords = getValues('words')
     const updatedWords = [...currentWords]
     updatedWords[index] = value
@@ -245,9 +227,7 @@ function MnemonicInputComponent({
           const normalizedSearch = searchValue.toLowerCase()
           const filteredItems =
             normalizedSearch.length > 0
-              ? wordlistItems.filter((item) =>
-                  item.value.startsWith(normalizedSearch)
-                )
+              ? wordlistItems.filter((item) => item.value.startsWith(normalizedSearch))
               : []
 
           return (
@@ -291,19 +271,11 @@ function NetworkAndServersComponent() {
         </Field>
         <Field>
           <FieldLabel>{t('backend.ark')}</FieldLabel>
-          <Input
-            disabled
-            placeholder="ark.signet.2nd.dev"
-            value="ark.signet.2nd.dev"
-          />
+          <Input disabled placeholder="ark.signet.2nd.dev" value="ark.signet.2nd.dev" />
         </Field>
         <Field>
           <FieldLabel>{t('backend.server')}</FieldLabel>
-          <Input
-            disabled
-            placeholder="esplora.signet.2nd.dev"
-            value="esplora.signet.2nd.dev"
-          />
+          <Input disabled placeholder="esplora.signet.2nd.dev" value="esplora.signet.2nd.dev" />
         </Field>
       </FieldGroup>
     </StepsLayoutContent>

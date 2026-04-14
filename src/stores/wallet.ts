@@ -15,9 +15,9 @@ interface WalletStore {
 export const useWalletStore = create<WalletStore>()(
   persist(
     (set) => ({
-      wallet: null,
+      clearWallet: () => set({ wallet: null }),
       setWallet: (wallet) => set({ wallet }),
-      clearWallet: () => set({ wallet: null })
+      wallet: null
     }),
     {
       name: 'bark-web-wallet-store',

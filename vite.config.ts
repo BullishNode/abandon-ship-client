@@ -1,10 +1,10 @@
-import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { ValidateEnv } from '@julr/vite-plugin-validate-env'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react({
       babel: {
@@ -12,11 +12,11 @@ export default defineConfig({
       }
     }),
     tailwindcss(),
-    ValidateEnv({ configFile: 'src/lib/env' })
+    mode !== 'test' && ValidateEnv({ configFile: 'src/lib/env' })
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
+      '@': fileURLToPath(new URL('src', import.meta.url))
     }
   },
   server: {
@@ -26,4 +26,4 @@ export default defineConfig({
       usePolling: true
     }
   }
-})
+}))

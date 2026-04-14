@@ -15,12 +15,12 @@ interface SettingsStore {
 export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set) => ({
-      priceProvider: 'binance',
-      setPriceProvider: (priceProvider) => set({ priceProvider }),
-      fiatCurrency: 'usd',
-      setFiatCurrency: (fiatCurrency) => set({ fiatCurrency }),
       bitcoinUnit: 'sats',
-      setBitcoinUnit: (bitcoinUnit) => set({ bitcoinUnit })
+      fiatCurrency: 'usd',
+      priceProvider: 'binance',
+      setBitcoinUnit: (bitcoinUnit) => set({ bitcoinUnit }),
+      setFiatCurrency: (fiatCurrency) => set({ fiatCurrency }),
+      setPriceProvider: (priceProvider) => set({ priceProvider })
     }),
     {
       name: 'bark-web-settings-store',

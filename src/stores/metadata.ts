@@ -14,39 +14,6 @@ interface MetadataStore {
 export const useMetadataStore = create<MetadataStore>()(
   persist(
     (set, get) => ({
-      tags: [],
-      contacts: [],
-      addTag: (name) => {
-        const trimmed = name.trim()
-        if (trimmed.length === 0) {
-          throw new Error('Tag must not be empty')
-        }
-
-        const normalized = trimmed.toLowerCase()
-        const existing = get().tags.find(
-          (t) => t.name.toLowerCase() === normalized
-        )
-
-        if (existing) {
-          return existing.name
-        }
-
-        const newTag: Tag = {
-          name: trimmed,
-          createdAt: new Date().toISOString()
-        }
-
-        set((state) => ({ tags: [...state.tags, newTag] }))
-        return trimmed
-      },
-      removeTag: (name) => {
-        const normalized = name.trim().toLowerCase()
-        set((state) => ({
-          tags: state.tags.filter(
-            (tag) => tag.name.toLowerCase() !== normalized
-          )
-        }))
-      },
       addContact: (name) => {
         const trimmed = name.trim()
         if (trimmed.length === 0) {
@@ -54,19 +21,48 @@ export const useMetadataStore = create<MetadataStore>()(
         }
 
         const newContact: Contact = {
+          createdAt: new Date().toISOString(),
           id: crypto.randomUUID(),
-          name: trimmed,
-          createdAt: new Date().toISOString()
+          name: trimmed
         }
 
         set((state) => ({ contacts: [...state.contacts, newContact] }))
         return newContact
       },
+      addTag: (name) => {
+        const trimmed = name.trim()
+        if (trimmed.length === 0) {
+          throw new Error('Tag must not be empty')
+        }
+
+        const normalized = trimmed.toLowerCase()
+        const existing = get().tags.find((t) => t.name.toLowerCase() === normalized)
+
+        if (existing) {
+          return existing.name
+        }
+
+        const newTag: Tag = {
+          createdAt: new Date().toISOString(),
+          name: trimmed
+        }
+
+        set((state) => ({ tags: [...state.tags, newTag] }))
+        return trimmed
+      },
+      contacts: [],
       removeContact: (id) => {
         set((state) => ({
           contacts: state.contacts.filter((contact) => contact.id !== id)
         }))
-      }
+      },
+      removeTag: (name) => {
+        const normalized = name.trim().toLowerCase()
+        set((state) => ({
+          tags: state.tags.filter((tag) => tag.name.toLowerCase() !== normalized)
+        }))
+      },
+      tags: []
     }),
     {
       name: 'bark-web-metadata-store',

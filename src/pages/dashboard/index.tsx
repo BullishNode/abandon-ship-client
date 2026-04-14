@@ -14,9 +14,9 @@ export default function TransactionsPage() {
   const balanceSats = balance?.spendableSat ?? 0
   const balanceBtc = balanceSats / SATOSHIS_PER_BTC
   const fiatValue =
-    btcPrice?.currentPrice !== undefined
-      ? formatCurrency(balanceBtc * btcPrice.currentPrice, fiatCurrency)
-      : '—'
+    btcPrice?.currentPrice === undefined
+      ? '—'
+      : formatCurrency(balanceBtc * btcPrice.currentPrice, fiatCurrency)
 
   return (
     <div>

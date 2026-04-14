@@ -1,11 +1,4 @@
-import {
-  BrowserRouter,
-  Navigate,
-  Outlet,
-  Route,
-  Routes,
-  useLocation
-} from 'react-router-dom'
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { Spinner } from './components/ui/spinner'
 import { useCheckWallet } from './hooks/barkd/use-check-wallet'
 import DashboardLayout from './layouts/dashboard'
@@ -25,8 +18,7 @@ function RedirectRoute() {
   const { data: walletExists, isPending } = useCheckWallet({ staleTime: 0 })
   const location = useLocation()
 
-  const isOnboarding =
-    location.pathname === '/create' || location.pathname === '/import'
+  const isOnboarding = location.pathname === '/create' || location.pathname === '/import'
   const isDashboard = location.pathname.startsWith('/dashboard')
 
   if (isPending) {
@@ -41,11 +33,11 @@ function RedirectRoute() {
     return <Outlet />
   }
 
-  if (walletExists && !isDashboard) {
+  if (walletExists === true && !isDashboard) {
     return <Navigate replace to="/dashboard" />
   }
 
-  if (!walletExists && isDashboard) {
+  if (walletExists !== true && isDashboard) {
     return <Navigate replace to="/" />
   }
 

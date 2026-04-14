@@ -1,4 +1,5 @@
-import { type UseQueryOptions, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
+import type { UseQueryOptions } from '@tanstack/react-query'
 import { binanceProvider } from '@/lib/price-providers/binance'
 import { coingeckoProvider } from '@/lib/price-providers/coingecko'
 import { useSettingsStore } from '@/stores/settings'
@@ -10,15 +11,15 @@ const providers: Record<string, PriceProvider> = {
 }
 
 export function useBitcoinPrice(
-  options?: Omit<UseQueryOptions<PriceData, Error>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<PriceData>, 'queryKey' | 'queryFn'>
 ) {
   const priceProviderId = useSettingsStore((state) => state.priceProvider)
   const fiatCurrency = useSettingsStore((state) => state.fiatCurrency)
   const provider = providers[priceProviderId]
 
   return useQuery({
+    queryFn: async () => provider.fetchPrice(fiatCurrency),
     queryKey: ['bitcoin', 'price', priceProviderId, fiatCurrency],
-    queryFn: () => provider.fetchPrice(fiatCurrency),
     refetchInterval: provider.refetchInterval,
     staleTime: provider.staleTime,
     ...options

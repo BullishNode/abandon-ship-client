@@ -3,20 +3,20 @@ import LanguageDetector from 'i18next-browser-languagedetector'
 import HttpBackend from 'i18next-http-backend'
 import { initReactI18next } from 'react-i18next'
 
-i18n
+void i18n
   .use(HttpBackend)
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    fallbackLng: 'en',
-    load: 'languageOnly',
+    backend: {
+      loadPath: '/locales/{{lng}}.json'
+    },
     debug: import.meta.env.DEV,
+    fallbackLng: 'en',
     interpolation: {
       escapeValue: false
     },
-    backend: {
-      loadPath: '/locales/{{lng}}.json'
-    }
+    load: 'languageOnly'
   })
 
 export default i18n

@@ -13,11 +13,7 @@ import {
 } from '@/components/modal'
 import { QRScanner } from '@/components/qr-scanner'
 import { Button } from '@/components/ui/button'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger
-} from '@/components/ui/collapsible'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useLightningSendFee } from '@/hooks/barkd/use-lightning-send-fee'
@@ -33,14 +29,14 @@ interface SendModalProps {
 }
 
 const slideVariants = {
-  enter: (direction: number) => ({
-    x: direction > 0 ? '100%' : '-100%',
-    opacity: 0
-  }),
   center: {
-    x: 0,
-    opacity: 1
+    opacity: 1,
+    x: 0
   },
+  enter: (direction: number) => ({
+    opacity: 0,
+    x: direction > 0 ? '100%' : '-100%'
+  }),
   exit: {
     opacity: 0,
     transition: { duration: 0.1 }
@@ -52,12 +48,11 @@ async function parsePaymentInput(input: string) {
 
   try {
     const result = await decode(trimmed)
-    // TODO: Allow multiple destinations
     if (result.valid) {
       return {
-        destination: result.destination.destination,
         amountSats: result.metadata?.amount,
-        description: result.metadata?.description
+        description: result.metadata?.description,
+        destination: result.destination.destination
       }
     }
   } catch {
@@ -65,17 +60,13 @@ async function parsePaymentInput(input: string) {
   }
 
   return {
-    destination: trimmed,
     amountSats: undefined,
-    description: undefined
+    description: undefined,
+    destination: trimmed
   }
 }
 
-export function SendModal({
-  open,
-  onOpenChange,
-  initialStep = 'scan'
-}: SendModalProps) {
+export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModalProps) {
   const { t } = useTranslation()
   const [step, setStep] = useState<Step>(initialStep)
   const [direction, setDirection] = useState(1)
@@ -116,7 +107,7 @@ export function SendModal({
     feeDisplay = formatBitcoin(feeEstimate.feeSat)
   }
 
-  const handleClose = () => {
+  function handleClose() {
     onOpenChange(false)
     setStep(initialStep)
     setDirection(1)
@@ -126,41 +117,41 @@ export function SendModal({
     setMessage('')
   }
 
-  const goToSend = async (input: string) => {
+  async function goToSend(input: string) {
     const parsed = await parsePaymentInput(input)
     setDestination(parsed.destination)
-    if (parsed.amountSats) {
+    if (parsed.amountSats !== undefined && parsed.amountSats !== 0) {
       setAmount(String(parsed.amountSats))
     }
-    if (parsed.description) {
+    if (parsed.description !== undefined && parsed.description !== '') {
       setMessage(parsed.description)
     }
     setDirection(1)
     setStep('send')
   }
 
-  const goToScan = () => {
+  function goToScan() {
     setDirection(-1)
     setStep('scan')
   }
 
-  const handlePaste = async () => {
+  async function handlePaste() {
     try {
       const text = await navigator.clipboard.readText()
       if (text.trim()) {
-        goToSend(text)
+        void goToSend(text)
       }
     } catch {
       // Clipboard access denied
     }
   }
 
-  const handleConfirmSend = () => {
+  function handleConfirmSend() {
     const amountSats = Number.parseInt(amount, 10)
     send({
-      destination,
       amountSat: Number.isNaN(amountSats) ? undefined : amountSats,
-      comment: message || undefined
+      comment: message || undefined,
+      destination
     })
   }
 
@@ -179,25 +170,23 @@ export function SendModal({
               initial="enter"
               key="scan"
               transition={{
-                x: { type: 'spring', stiffness: 300, damping: 30 },
-                opacity: { duration: 0.1 }
+                opacity: { duration: 0.1 },
+                x: { damping: 30, stiffness: 300, type: 'spring' }
               }}
               variants={slideVariants}
             >
               <ModalHeader>
                 <ModalTitle>{t('send.title')}</ModalTitle>
-                <ModalDescription>
-                  {t('send.scan.description')}
-                </ModalDescription>
+                <ModalDescription>{t('send.scan.description')}</ModalDescription>
               </ModalHeader>
               <ModalBody>
                 <QRScanner
                   className="mx-auto aspect-square w-full"
-                  onScan={goToSend}
+                  onScan={(v) => void goToSend(v)}
                 />
               </ModalBody>
               <ModalFooter className="items-center">
-                <Button onClick={handlePaste} variant="outline">
+                <Button onClick={() => void handlePaste()} variant="outline">
                   <ClipboardTextIcon />
                   {t('actions.paste')}
                 </Button>
@@ -213,16 +202,14 @@ export function SendModal({
               initial="enter"
               key="send"
               transition={{
-                x: { type: 'spring', stiffness: 300, damping: 30 },
-                opacity: { duration: 0.1 }
+                opacity: { duration: 0.1 },
+                x: { damping: 30, stiffness: 300, type: 'spring' }
               }}
               variants={slideVariants}
             >
               <ModalHeader>
                 <ModalTitle>{t('send.title')}</ModalTitle>
-                <ModalDescription>
-                  {t('send.confirm.description')}
-                </ModalDescription>
+                <ModalDescription>{t('send.confirm.description')}</ModalDescription>
               </ModalHeader>
               <ModalBody className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
@@ -246,12 +233,8 @@ export function SendModal({
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label className="text-muted-foreground">
-                    {t('send.fee.estimate')}
-                  </Label>
-                  <span className="text-muted-foreground text-sm">
-                    {feeDisplay}
-                  </span>
+                  <Label className="text-muted-foreground">{t('send.fee.estimate')}</Label>
+                  <span className="text-muted-foreground text-sm">{feeDisplay}</span>
                 </div>
                 <Collapsible>
                   <CollapsibleTrigger asChild>
@@ -288,11 +271,7 @@ export function SendModal({
                 <Button onClick={goToScan} variant="outline">
                   {t('actions.back')}
                 </Button>
-                <Button
-                  disabled={!canSend}
-                  loading={isSending}
-                  onClick={handleConfirmSend}
-                >
+                <Button disabled={!canSend} loading={isSending} onClick={handleConfirmSend}>
                   {t('send.confirm.button')}
                 </Button>
               </ModalFooter>

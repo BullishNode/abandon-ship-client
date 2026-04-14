@@ -11,8 +11,8 @@ import { useSettingsStore } from '@/stores/settings'
 import type { BitcoinUnit } from '@/types/bitcoin'
 
 const BITCOIN_UNITS: { value: BitcoinUnit; label: string }[] = [
-  { value: 'sats', label: 'Satoshi' },
-  { value: 'btc', label: 'Bitcoin' }
+  { label: 'Satoshi', value: 'sats' },
+  { label: 'Bitcoin', value: 'btc' }
 ]
 
 export default function SettingsPage() {

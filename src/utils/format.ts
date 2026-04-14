@@ -6,8 +6,8 @@ const TRAILING_ZEROS_REGEX = /\.?0+$/
 
 export function formatCurrency(value: number, currency: FiatCurrency): string {
   return new Intl.NumberFormat(undefined, {
-    style: 'currency',
-    currency: currency.toUpperCase()
+    currency: currency.toUpperCase(),
+    style: 'currency'
   }).format(value)
 }
 
@@ -31,11 +31,7 @@ export function formatBitcoin(sats: number, unit: BitcoinUnit) {
   return formattedInteger
 }
 
-export function formatAddress(
-  address: string,
-  startChars = 7,
-  endChars = 7
-): string {
+export function formatAddress(address: string, startChars = 7, endChars = 7): string {
   if (address.length <= startChars + endChars) {
     return address
   }

@@ -9,11 +9,7 @@ import {
   CommandItem,
   CommandList
 } from '@/components/ui/command'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { useMetadataStore } from '@/stores/metadata'
 
@@ -29,7 +25,7 @@ export function TagInput({ value, onChange, disabled = false }: TagInputProps) {
   const [search, setSearch] = useState('')
   const { tags, addTag } = useMetadataStore()
 
-  const sanitizedSearch = search.replace(/,/g, '').trim()
+  const sanitizedSearch = search.replaceAll(',', '').trim()
 
   const filteredTags = tags.filter((tag) =>
     tag.name.toLowerCase().includes(sanitizedSearch.toLowerCase())
@@ -39,9 +35,9 @@ export function TagInput({ value, onChange, disabled = false }: TagInputProps) {
     (tag) => tag.name.toLowerCase() === sanitizedSearch.toLowerCase()
   )
 
-  const showCreateOption = sanitizedSearch && !exactMatchExists
+  const showCreateOption = sanitizedSearch.length > 0 && !exactMatchExists
 
-  const handleSelect = (tagName: string) => {
+  function handleSelect(tagName: string) {
     if (value.includes(tagName)) {
       onChange(value.filter((name) => name !== tagName))
     } else {
@@ -49,7 +45,7 @@ export function TagInput({ value, onChange, disabled = false }: TagInputProps) {
     }
   }
 
-  const handleCreate = () => {
+  function handleCreate() {
     if (!sanitizedSearch) {
       return
     }
@@ -60,7 +56,7 @@ export function TagInput({ value, onChange, disabled = false }: TagInputProps) {
   }
 
   const selectedTags = value.flatMap((name) => {
-    const tag = tags.find((t) => t.name === name)
+    const tag = tags.find((item) => item.name === name)
     return tag ? [tag] : []
   })
 
@@ -70,9 +66,9 @@ export function TagInput({ value, onChange, disabled = false }: TagInputProps) {
         <button
           className={cn(
             buttonVariants({
-              variant: 'outline',
               className:
-                'h-auto min-h-9 w-full flex-wrap justify-start gap-x-1 gap-y-1.5 py-1.5 font-normal hover:bg-transparent aria-expanded:bg-transparent'
+                'h-auto min-h-9 w-full flex-wrap justify-start gap-x-1 gap-y-1.5 py-1.5 font-normal hover:bg-transparent aria-expanded:bg-transparent',
+              variant: 'outline'
             })
           )}
           disabled={disabled}
@@ -103,10 +99,7 @@ export function TagInput({ value, onChange, disabled = false }: TagInputProps) {
             ))}
         </button>
       </PopoverTrigger>
-      <PopoverContent
-        align="start"
-        className="w-(--radix-popover-trigger-width) p-0"
-      >
+      <PopoverContent align="start" className="w-(--radix-popover-trigger-width) p-0">
         <Command shouldFilter={false}>
           <CommandInput
             onKeyDown={(e) => {
@@ -119,9 +112,7 @@ export function TagInput({ value, onChange, disabled = false }: TagInputProps) {
             placeholder={t('tags.search')}
             value={search}
           />
-          <p className="p-1.5 text-muted-foreground text-xs">
-            {t('tags.hint')}
-          </p>
+          <p className="p-1.5 text-muted-foreground text-xs">{t('tags.hint')}</p>
           <CommandList>
             {filteredTags.length > 0 && (
               <CommandGroup>
@@ -132,9 +123,7 @@ export function TagInput({ value, onChange, disabled = false }: TagInputProps) {
                     key={tag.name}
                     onSelect={() => handleSelect(tag.name)}
                   >
-                    <span
-                      className={cn(value.includes(tag.name) && 'font-medium')}
-                    >
+                    <span className={cn(value.includes(tag.name) && 'font-medium')}>
                       {tag.name}
                     </span>
                   </CommandItem>

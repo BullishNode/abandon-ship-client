@@ -18,10 +18,8 @@ import {
   StepsLayoutNav
 } from '@/components/layout/steps-layout'
 import { SeedWord } from '@/components/seed-word'
-import {
-  SeedWordButton,
-  type SeedWordStatus
-} from '@/components/seed-word-button'
+import { SeedWordButton } from '@/components/seed-word-button'
+import type { SeedWordStatus } from '@/components/seed-word-button'
 import { StepIndicator } from '@/components/step-indicator'
 import { Button } from '@/components/ui/button'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
@@ -45,9 +43,9 @@ const walletNameSchema = z.object({
 })
 
 const networkAndServerSchema = z.object({
-  network: z.enum(Object.values(BarkNetwork)),
   arkServer: z.url(),
-  chainSource: z.url()
+  chainSource: z.url(),
+  network: z.enum(Object.values(BarkNetwork))
 })
 
 type WalletNameFormValues = z.infer<typeof walletNameSchema>
@@ -72,30 +70,30 @@ export default function CreateWalletPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const stepper = useStepper()
-  const [name, setName] = useState<string>('')
-  const [mnemonic, setMnemonic] = useState<string>('')
+  const [name, setName] = useState('')
+  const [mnemonic, setMnemonic] = useState('')
   const [mnemonicStage, setMnemonicStage] = useState<MnemonicStage>('show')
   const [isMnemonicConfirmed, setIsMnemonicConfirmed] = useState(false)
   const { mutate: createWallet, isPending: creatingWallet } = useCreateWallet({
     onSuccess: (data) => {
       if (data) {
-        navigate('/dashboard')
+        void navigate('/dashboard')
       }
     }
   })
 
   const form = useForm({
-    mode: 'onTouched',
-    resolver: zodResolver(stepper.current.schema),
     defaultValues: {
-      name: '',
-      network: 'signet',
       arkServer: 'https://ark.signet.2nd.dev',
-      chainSource: 'https://esplora.signet.2nd.dev'
-    }
+      chainSource: 'https://esplora.signet.2nd.dev',
+      name: '',
+      network: 'signet'
+    },
+    mode: 'onTouched',
+    resolver: zodResolver(stepper.current.schema)
   })
 
-  const onSubmit = (values: z.infer<typeof stepper.current.schema>) => {
+  function onSubmit(values: z.infer<typeof stepper.current.schema>) {
     if (stepper.current.id === 'name' && 'name' in values) {
       setName(values.name)
       setMnemonic(generateMnemonic(wordlist))
@@ -107,11 +105,7 @@ export default function CreateWalletPage() {
       return
     }
 
-    if (
-      stepper.current.id === 'mnemonic' &&
-      mnemonicStage === 'confirm' &&
-      !isMnemonicConfirmed
-    ) {
+    if (stepper.current.id === 'mnemonic' && mnemonicStage === 'confirm' && !isMnemonicConfirmed) {
       return
     }
 
@@ -120,17 +114,13 @@ export default function CreateWalletPage() {
       return stepper.next()
     }
 
-    if (
-      'arkServer' in values &&
-      'chainSource' in values &&
-      'network' in values
-    ) {
+    if ('arkServer' in values && 'chainSource' in values && 'network' in values) {
       createWallet({
-        name,
-        mnemonic,
-        createdAt: new Date(),
         arkServer: values.arkServer,
         chainSource: { esplora: { url: values.chainSource } },
+        createdAt: new Date(),
+        mnemonic,
+        name,
         network: values.network
       })
     }
@@ -138,29 +128,21 @@ export default function CreateWalletPage() {
 
   const currentIndex = utils.getIndex(stepper.current.id)
 
-  const isNameStepInvalid =
-    stepper.current.id === 'name' && !form.formState.isValid
+  const isNameStepInvalid = stepper.current.id === 'name' && !form.formState.isValid
 
   const isMnemonicConfirmIncomplete =
-    stepper.current.id === 'mnemonic' &&
-    mnemonicStage === 'confirm' &&
-    !isMnemonicConfirmed
+    stepper.current.id === 'mnemonic' && mnemonicStage === 'confirm' && !isMnemonicConfirmed
 
   return (
     <StepsLayout>
       <StepsLayoutNav>
         {stepper.all.map((step, index) => (
-          <StepIndicator
-            isActive={index <= currentIndex}
-            key={step.id}
-            label={t(step.label)}
-          />
+          <StepIndicator isActive={index <= currentIndex} key={step.id} label={t(step.label)} />
         ))}
       </StepsLayoutNav>
       <FormProvider {...form}>
-        <StepsLayoutForm onSubmit={form.handleSubmit(onSubmit)}>
+        <StepsLayoutForm onSubmit={(e) => void form.handleSubmit(onSubmit)(e)}>
           {stepper.switch({
-            name: () => <WalletNameComponent />,
             mnemonic: () => (
               <MnemonicComponent
                 mnemonic={mnemonic}
@@ -168,6 +150,7 @@ export default function CreateWalletPage() {
                 stage={mnemonicStage}
               />
             ),
+            name: () => <WalletNameComponent />,
             server: () => <NetworkAndServersComponent />
           })}
           <StepsLayoutContentAction>
@@ -195,10 +178,7 @@ function WalletNameComponent() {
   const { t } = useTranslation()
 
   return (
-    <StepsLayoutContent
-      description={t('wallet.name.description')}
-      title={t('wallet.name.title')}
-    >
+    <StepsLayoutContent description={t('wallet.name.description')} title={t('wallet.name.title')}>
       <Input
         {...register('name')}
         autoComplete="off"
@@ -215,11 +195,7 @@ interface MnemonicComponentProps {
   onConfirmedChange: (confirmed: boolean) => void
 }
 
-function MnemonicComponent({
-  stage,
-  mnemonic,
-  onConfirmedChange
-}: MnemonicComponentProps) {
+function MnemonicComponent({ stage, mnemonic, onConfirmedChange }: MnemonicComponentProps) {
   const { t } = useTranslation()
 
   const words = mnemonic.split(' ')
@@ -230,7 +206,7 @@ function MnemonicComponent({
     Array.from({ length: 12 }).map(() => 'idle')
   )
 
-  const handleClick = (word: string, index: number) => {
+  function handleClick(word: string, index: number) {
     const lastInvalidIndex = status.indexOf('invalid')
     const isLastWordInvalid = lastInvalidIndex !== -1
     const lastSelectedWord = selectedWords.at(-1)
@@ -351,19 +327,11 @@ function NetworkAndServersComponent() {
         </Field>
         <Field>
           <FieldLabel>{t('backend.ark')}</FieldLabel>
-          <Input
-            disabled
-            placeholder="ark.signet.2nd.dev"
-            value="ark.signet.2nd.dev"
-          />
+          <Input disabled placeholder="ark.signet.2nd.dev" value="ark.signet.2nd.dev" />
         </Field>
         <Field>
           <FieldLabel>{t('backend.server')}</FieldLabel>
-          <Input
-            disabled
-            placeholder="esplora.signet.2nd.dev"
-            value="esplora.signet.2nd.dev"
-          />
+          <Input disabled placeholder="esplora.signet.2nd.dev" value="esplora.signet.2nd.dev" />
         </Field>
       </FieldGroup>
     </StepsLayoutContent>

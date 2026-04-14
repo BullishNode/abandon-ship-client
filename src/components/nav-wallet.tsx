@@ -11,12 +11,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger
 } from './ui/dropdown-menu'
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar
-} from './ui/sidebar'
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from './ui/sidebar'
 
 interface NavWalletProps {
   selectedWalletId: Wallet['id']
@@ -27,9 +22,7 @@ export function NavWallet({ selectedWalletId, wallets }: NavWalletProps) {
   const { t } = useTranslation()
   const { isMobile } = useSidebar()
 
-  const selectedWallet = wallets.find(
-    (wallet) => wallet.id === selectedWalletId
-  )
+  const selectedWallet = wallets.find((wallet) => wallet.id === selectedWalletId)
 
   if (!selectedWallet) {
     return null
@@ -45,16 +38,11 @@ export function NavWallet({ selectedWalletId, wallets }: NavWalletProps) {
               size="lg"
             >
               <Avatar className="size-8 rounded-lg">
-                <AvatarImage
-                  alt={selectedWallet.name}
-                  src="https://picsum.photos/200"
-                />
+                <AvatarImage alt={selectedWallet.name} src="https://picsum.photos/200" />
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">
-                  {selectedWallet.name}
-                </span>
+                <span className="truncate font-medium">{selectedWallet.name}</span>
               </div>
               <CaretUpDownIcon className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -82,9 +70,7 @@ export function NavWallet({ selectedWalletId, wallets }: NavWalletProps) {
               <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                 <PlusIcon className="size-4" />
               </div>
-              <div className="font-medium text-muted-foreground">
-                {t('wallet.add')}
-              </div>
+              <div className="font-medium text-muted-foreground">{t('wallet.add')}</div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

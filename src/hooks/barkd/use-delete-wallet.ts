@@ -1,9 +1,7 @@
-import { WalletApi, type WalletDeleteRequest } from '@secondts/barkd'
-import {
-  type UseMutationOptions,
-  useMutation,
-  useQueryClient
-} from '@tanstack/react-query'
+import { WalletApi } from '@secondts/barkd'
+import type { WalletDeleteRequest } from '@secondts/barkd'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import type { UseMutationOptions } from '@tanstack/react-query'
 import { config } from '@/config/barkd'
 import { useWalletStore } from '@/stores/wallet'
 
@@ -23,11 +21,7 @@ async function deleteWallet(params: WalletDeleteRequest) {
 
 export function useDeleteWallet(
   options?: Omit<
-    UseMutationOptions<
-      { deleted: boolean; message: string },
-      Error,
-      WalletDeleteRequest
-    >,
+    UseMutationOptions<{ deleted: boolean; message: string }, Error, WalletDeleteRequest>,
     'mutationFn'
   >
 ) {

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { formatAddress } from '../../src/utils/format'
 
 describe('format utils', () => {
-  describe('formatAddress', () => {
+  // oxlint-disable-next-line jest/valid-title -- vitest/prefer-describe-function-title requires function ref
+  describe(formatAddress, () => {
     it('truncates a long address with default parameters', () => {
       const address = 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq'
       expect(formatAddress(address)).toBe('bc1qar0...zwf5mdq')
