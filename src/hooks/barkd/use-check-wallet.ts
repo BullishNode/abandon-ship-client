@@ -1,20 +1,19 @@
 import { WalletApi } from '@secondts/barkd'
-import { type UseQueryOptions, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
+import type { UseQueryOptions } from '@tanstack/react-query'
 import { config } from '@/config/barkd'
 
 const walletApi = new WalletApi(config)
 
 async function checkWallet() {
   const response = await walletApi.walletExists()
-  return response.fingerprint != null
+  return response.fingerprint !== null && response.fingerprint !== undefined
 }
 
-export function useCheckWallet(
-  options?: Omit<UseQueryOptions<boolean, Error>, 'queryKey' | 'queryFn'>
-) {
+export function useCheckWallet(options?: Omit<UseQueryOptions<boolean>, 'queryKey' | 'queryFn'>) {
   return useQuery({
-    queryKey: ['wallet', 'exists'],
     queryFn: checkWallet,
+    queryKey: ['wallet', 'exists'],
     retry: false,
     ...options
   })

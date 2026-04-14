@@ -19,20 +19,15 @@ function getDimensions() {
     return null
   }
 
-  return { width: window.innerWidth, height: window.innerHeight }
+  return { height: window.innerHeight, width: window.innerWidth }
 }
 
 export function useMediaQuery() {
-  const [device, setDevice] = useState<'mobile' | 'tablet' | 'desktop' | null>(
-    getDevice()
-  )
-  const [dimensions, setDimensions] = useState<{
-    width: number
-    height: number
-  } | null>(getDimensions())
+  const [device, setDevice] = useState<'mobile' | 'tablet' | 'desktop' | null>(getDevice())
+  const [dimensions, setDimensions] = useState(getDimensions())
 
   useEffect(() => {
-    const checkDevice = () => {
+    function checkDevice() {
       setDevice(getDevice())
       setDimensions(getDimensions())
     }
@@ -48,10 +43,10 @@ export function useMediaQuery() {
 
   return {
     device,
-    width: dimensions?.width,
     height: dimensions?.height,
+    isDesktop: device === 'desktop',
     isMobile: device === 'mobile',
     isTablet: device === 'tablet',
-    isDesktop: device === 'desktop'
+    width: dimensions?.width
   }
 }

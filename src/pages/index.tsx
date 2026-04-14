@@ -1,13 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card'
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function IndexPage() {
   const { t } = useTranslation()
@@ -15,9 +9,7 @@ export default function IndexPage() {
   return (
     <Card className="min-w-sm shadow-none ring-0">
       <CardHeader>
-        <CardTitle className="text-center font-bold text-3xl">
-          {t('welcome.title')}
-        </CardTitle>
+        <CardTitle className="text-center font-bold text-3xl">{t('welcome.title')}</CardTitle>
         <CardDescription className="text-pretty text-center text-foreground text-lg">
           {t('welcome.description')}
         </CardDescription>

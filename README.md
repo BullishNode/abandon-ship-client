@@ -36,20 +36,30 @@ The application will be running on `http://localhost:5173`.
 
 To stop, run `docker-compose down`.
 
+### Reset / Start from Scratch
+
+Remove all containers and the shared `wallet-data` volume to start with a clean state:
+
+```bash
+docker-compose --env-file .env.local down -v
+```
+
+Then run `npm run dev` again.
+
 ### Lint and Format
 
-We use [ultracite](https://docs.ultracite.ai/) with [biome](https://biomejs.dev/) for the linting and formatting.
+We use [ultracite](https://docs.ultracite.ai/) with [oxlint](https://oxc.rs/docs/guide/usage/linter) and [oxfmt](https://oxc.rs/docs/guide/usage/formatter) for the linting and formatting.
 
 Run linter checks without modifying files:
 
 ```bash
-npx ultracite check
+npm run check
 ```
 
 Run the linter and auto-fix issues:
 
 ```bash
-npx ultracite fix
+npm run fix
 ```
 
 ## License

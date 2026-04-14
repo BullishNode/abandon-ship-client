@@ -5,32 +5,34 @@ let initialized = false
 const subscribers = new Set<() => void>()
 
 function notifyAll(): void {
-  for (const cb of subscribers) {
-    cb()
+  for (const subscriber of subscribers) {
+    subscriber()
   }
 }
 
-function subscribe(callback: () => void): () => void {
+async function initPermissions(): Promise<void> {
+  try {
+    const status = await navigator.permissions.query({ name: 'camera' as PermissionName })
+    granted = status.state === 'granted'
+    status.addEventListener('change', () => {
+      granted = status.state === 'granted'
+      notifyAll()
+    })
+    notifyAll()
+  } catch {
+    granted = true
+    notifyAll()
+  }
+}
+
+function subscribe(listener: () => void): () => void {
   if (!initialized) {
     initialized = true
-    navigator.permissions
-      .query({ name: 'camera' as PermissionName })
-      .then((status) => {
-        granted = status.state === 'granted'
-        status.addEventListener('change', () => {
-          granted = status.state === 'granted'
-          notifyAll()
-        })
-        notifyAll()
-      })
-      .catch(() => {
-        granted = true
-        notifyAll()
-      })
+    void initPermissions()
   }
-  subscribers.add(callback)
+  subscribers.add(listener)
   return () => {
-    subscribers.delete(callback)
+    subscribers.delete(listener)
   }
 }
 

@@ -1,9 +1,4 @@
-import {
-  CaretDownIcon,
-  PaperPlaneTiltIcon,
-  QrCodeIcon,
-  ScanIcon
-} from '@phosphor-icons/react'
+import { CaretDownIcon, PaperPlaneTiltIcon, QrCodeIcon, ScanIcon } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet } from 'react-router-dom'
@@ -20,19 +15,11 @@ import {
 import { QRCode } from '@/components/qr-code'
 import { SendModal } from '@/components/send-modal'
 import { Button } from '@/components/ui/button'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger
-} from '@/components/ui/collapsible'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger
-} from '@/components/ui/sidebar'
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useWalletAddress } from '@/hooks/barkd/use-wallet-address'
 import { useBitcoinPrice } from '@/hooks/price/use-bitcoin-price'
@@ -42,21 +29,18 @@ import { formatCurrency } from '@/utils/format'
 type ReceiveTab = 'payto' | 'ark' | 'lightning' | 'onchain'
 
 const PLACEHOLDER_ADDRESSES: Record<ReceiveTab, string> = {
-  payto:
-    'payto://bitcoin/bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlhblabhasdlabhasdg',
   ark: '',
   lightning:
     'lnbc1pvjluezsp5zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zyg3zygspp5qqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqqqsyqcyq5rqwzqfqypqdpl2pkx2ctnv5sxxmmwwd5kgetjypeh2ursdae8g6twvus8g6rfwvs8qun0dfjkxaq9qrsgq357wnc5r2ueh7ck6q93dj32dlqnls087fxdwk8qakdyafkq3yap9us6v52vjjsrvywa6rt52cm9r9zqt8r2t7mlcwspyetp5h2tztugp9lfyql',
-  onchain: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh'
+  onchain: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+  payto: 'payto://bitcoin/bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlhblabhasdlabhasdg'
 }
 
 export default function DashboardLayout() {
   const { t } = useTranslation()
   const [showReceiveModal, setShowReceiveModal] = useState(false)
   const [showSendModal, setShowSendModal] = useState(false)
-  const [sendInitialStep, setSendInitialStep] = useState<'scan' | 'send'>(
-    'scan'
-  )
+  const [sendInitialStep, setSendInitialStep] = useState<'scan' | 'send'>('scan')
   const [activeTab, setActiveTab] = useState<ReceiveTab>('payto')
   const [amount, setAmount] = useState('')
   const [label, setLabel] = useState('')
@@ -70,25 +54,27 @@ export default function DashboardLayout() {
     isPending: isFetchingArkAddress
   } = useWalletAddress()
 
-  const handleTabChange = (value: string) => {
-    setActiveTab(value as ReceiveTab)
+  function handleTabChange(value: string) {
+    if (value === 'payto' || value === 'ark' || value === 'lightning' || value === 'onchain') {
+      setActiveTab(value)
+    }
   }
 
-  const handleOpenReceiveModal = () => {
+  function handleOpenReceiveModal() {
     fetchArkAddress()
     setShowReceiveModal(true)
   }
 
-  const handleNewAddress = () => {
+  function handleNewAddress() {
     fetchArkAddress()
   }
 
-  const currentAddress =
-    activeTab === 'ark' ? (arkAddress ?? '') : PLACEHOLDER_ADDRESSES[activeTab]
+  const currentAddress = activeTab === 'ark' ? (arkAddress ?? '') : PLACEHOLDER_ADDRESSES[activeTab]
 
-  const formattedPrice = btcPrice?.currentPrice
-    ? formatCurrency(btcPrice.currentPrice, fiatCurrency)
-    : '—'
+  const formattedPrice =
+    btcPrice?.currentPrice !== undefined && btcPrice.currentPrice !== 0
+      ? formatCurrency(btcPrice.currentPrice, fiatCurrency)
+      : '—'
 
   const isArkTab = activeTab === 'ark'
 
@@ -108,9 +94,7 @@ export default function DashboardLayout() {
           <ul className="flex gap-2 pr-4">
             <li className="flex items-center gap-2 pr-4">
               <span className="font-medium">BTC</span>
-              <span className="text-muted-foreground tabular-nums">
-                {formattedPrice}
-              </span>
+              <span className="text-muted-foreground tabular-nums">{formattedPrice}</span>
             </li>
             <li>
               <Button
@@ -168,10 +152,7 @@ export default function DashboardLayout() {
                 </div>
               </TabsContent>
               <TabsContent value="ark">
-                <ArkAddressTab
-                  address={arkAddress}
-                  isLoading={isFetchingArkAddress}
-                />
+                <ArkAddressTab address={arkAddress} isLoading={isFetchingArkAddress} />
               </TabsContent>
               <TabsContent value="lightning">
                 <div className="flex flex-col items-center gap-4 py-4">
@@ -242,10 +223,7 @@ export default function DashboardLayout() {
             )}
           </ModalBody>
           <ModalFooter>
-            <Button
-              onClick={() => setShowReceiveModal(false)}
-              variant="outline"
-            >
+            <Button onClick={() => setShowReceiveModal(false)} variant="outline">
               {t('actions.cancel')}
             </Button>
             <Button loading={isFetchingArkAddress} onClick={handleNewAddress}>
@@ -279,13 +257,11 @@ function ArkAddressTab({ address, isLoading }: ArkAddressTabProps) {
     )
   }
 
-  if (!address) {
+  if (address === undefined || address === '') {
     return (
       <div className="flex flex-col items-center py-4">
         <div className="flex aspect-square w-75 items-center justify-center">
-          <span className="text-muted-foreground text-sm">
-            No address available
-          </span>
+          <span className="text-muted-foreground text-sm">No address available</span>
         </div>
       </div>
     )

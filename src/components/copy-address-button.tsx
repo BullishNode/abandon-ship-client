@@ -18,20 +18,20 @@ export function CopyAddressButton({ text, ...props }: CopyAddressButtonProps) {
     <button
       className={cn(
         buttonVariants({
-          variant: 'outline',
-          className: 'w-full justify-between gap-3'
+          className: 'w-full justify-between gap-3',
+          variant: 'outline'
         })
       )}
-      onClick={() => copy(text)}
+      onClick={() => void copy(text)}
       type="button"
       {...props}
     >
       <span>{formatAddress(text, 16, 16)}</span>
       <AnimatePresence initial={false} mode="popLayout">
         <motion.span
-          animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
-          exit={{ scale: 0, opacity: 0.4, filter: 'blur(4px)' }}
-          initial={{ scale: 0, opacity: 0.4, filter: 'blur(4px)' }}
+          animate={{ filter: 'blur(0px)', opacity: 1, scale: 1 }}
+          exit={{ filter: 'blur(4px)', opacity: 0.4, scale: 0 }}
+          initial={{ filter: 'blur(4px)', opacity: 0.4, scale: 0 }}
           key={isCopied ? 'check' : 'copy'}
           transition={{ duration: 0.25 }}
         >

@@ -1,0 +1,41 @@
+stages:
+  - check
+  - test
+
+default:
+  image: node:22-alpine
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - node_modules/
+
+workflow:
+  rules:
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"
+
+install:
+  stage: .pre
+  script:
+    - npm ci
+  artifacts:
+    paths:
+      - node_modules/
+    expire_in: 1 hour
+
+lint:
+  stage: check
+  needs: [install]
+  script:
+    - npm run check
+
+typecheck:
+  stage: check
+  needs: [install]
+  script:
+    - npm run typecheck
+
+test:
+  stage: test
+  needs: [install]
+  script:
+    - npm test

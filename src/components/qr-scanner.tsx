@@ -12,24 +12,20 @@ export function QRScanner({ onScan, onError, className }: QRScannerProps) {
   const cameraReady = useCameraReady()
 
   return (
-    <div
-      className={cn('relative w-full overflow-hidden rounded-lg', className)}
-    >
-      {!cameraReady && (
-        <div className="absolute inset-0 z-10 animate-pulse rounded-lg bg-muted" />
-      )}
+    <div className={cn('relative w-full overflow-hidden rounded-lg', className)}>
+      {!cameraReady && <div className="absolute inset-0 z-10 animate-pulse rounded-lg bg-muted" />}
       <Scanner
         components={{ finder: false }}
         onError={onError}
         onScan={(results) => {
-          const first = results[0]
-          if (first) {
+          const [first] = results
+          if (first !== undefined) {
             onScan(first.rawValue)
           }
         }}
         styles={{
-          container: { width: '100%', height: '100%' },
-          video: { width: '100%', height: '100%', objectFit: 'cover' }
+          container: { height: '100%', width: '100%' },
+          video: { height: '100%', objectFit: 'cover', width: '100%' }
         }}
       />
     </div>

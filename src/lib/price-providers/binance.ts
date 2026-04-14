@@ -1,15 +1,19 @@
-import type {
-  FiatCurrency,
-  PriceData,
-  PriceProvider
-} from '@/types/price-providers'
+import type { FiatCurrency, PriceData, PriceProvider } from '@/types/price-providers'
 
 const BINANCE_API = 'https://api.binance.com/api/v3'
 
 const currencySymbols: Record<FiatCurrency, string> = {
-  usd: 'USDT',
-  eur: 'EUR'
+  eur: 'EUR',
+  usd: 'USDT'
 }
+
+interface BinanceTickerResponse {
+  priceChange: string
+  priceChangePercent: string
+  lastPrice: string
+}
+
+type BinanceKline = [number, string, string, string, string, ...string[]]
 
 async function fetchPrice(currency: FiatCurrency): Promise<PriceData> {
   const symbol = `BTC${currencySymbols[currency]}`
@@ -23,25 +27,23 @@ async function fetchPrice(currency: FiatCurrency): Promise<PriceData> {
     throw new Error('Failed to fetch Bitcoin price from Binance')
   }
 
-  const ticker = await tickerResponse.json()
-  const klines = await klinesResponse.json()
+  const ticker: BinanceTickerResponse = await tickerResponse.json()
+  const klines: BinanceKline[] = await klinesResponse.json()
 
-  const priceHistory = klines.map((kline: (string | number)[]) =>
-    Number.parseFloat(kline[4] as string)
-  )
+  const priceHistory = klines.map((kline) => Number.parseFloat(kline[4]))
 
   return {
-    currentPrice: Number.parseFloat(ticker.lastPrice),
-    priceHistory,
     change24h: Number.parseFloat(ticker.priceChange),
-    changePercent24h: Number.parseFloat(ticker.priceChangePercent)
+    changePercent24h: Number.parseFloat(ticker.priceChangePercent),
+    currentPrice: Number.parseFloat(ticker.lastPrice),
+    priceHistory
   }
 }
 
 export const binanceProvider: PriceProvider = {
+  fetchPrice,
   id: 'binance',
   name: 'Binance',
-  fetchPrice,
   refetchInterval: 30_000,
   staleTime: 10_000
 }

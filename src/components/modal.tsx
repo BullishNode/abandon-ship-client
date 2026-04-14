@@ -1,11 +1,5 @@
-import {
-  type ComponentProps,
-  type ReactNode,
-  type Ref,
-  useEffect,
-  useRef,
-  useState
-} from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { ComponentProps, ReactNode, Ref } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -44,8 +38,8 @@ function Modal({
 }: ModalProps) {
   const { isMobile } = useMediaQuery()
 
-  const handleClose = ({ dragged }: { dragged?: boolean } = {}) => {
-    if (preventDefaultClose && !dragged) {
+  function handleClose({ dragged }: { dragged?: boolean } = {}) {
+    if (preventDefaultClose === true && dragged !== true) {
       return
     }
     onClose?.()
@@ -81,10 +75,7 @@ function Modal({
   )
 }
 
-function ModalHeader({
-  className,
-  ...props
-}: ComponentProps<typeof DialogHeader>) {
+function ModalHeader({ className, ...props }: ComponentProps<typeof DialogHeader>) {
   const { isMobile } = useMediaQuery()
 
   if (isMobile) {
@@ -104,7 +95,7 @@ function ModalBody({
   const [canScrollUp, setCanScrollUp] = useState(false)
   const [canScrollDown, setCanScrollDown] = useState(false)
 
-  const updateScrollState = () => {
+  function updateScrollState() {
     const el = innerRef.current
     if (!el) {
       return
@@ -113,9 +104,10 @@ function ModalBody({
     setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 1)
   }
 
+  /* oxlint-disable @typescript-eslint/consistent-return */
   useEffect(() => {
     const el = innerRef.current
-    if (!el) {
+    if (el === null) {
       return
     }
 
@@ -126,10 +118,13 @@ function ModalBody({
       observer.observe(child)
     }
 
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+    }
   })
+  /* oxlint-enable @typescript-eslint/consistent-return */
 
-  const setRefs = (node: HTMLDivElement | null) => {
+  function setRefs(node: HTMLDivElement | null) {
     innerRef.current = node
     if (typeof ref === 'function') {
       ref(node)
@@ -139,19 +134,14 @@ function ModalBody({
   }
 
   return (
-    <div
-      className="relative flex min-h-0 flex-1 flex-col"
-      data-slot="modal-body"
-    >
+    <div className="relative flex min-h-0 flex-1 flex-col" data-slot="modal-body">
       {canScrollUp && (
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-6 bg-linear-to-b from-background to-transparent" />
       )}
       <div
         className={cn(
           '-mx-1 min-h-0 flex-auto px-1',
-          canScrollUp || canScrollDown
-            ? 'overflow-y-auto'
-            : 'overflow-y-hidden',
+          canScrollUp || canScrollDown ? 'overflow-y-auto' : 'overflow-y-hidden',
           className
         )}
         onScroll={updateScrollState}
@@ -167,10 +157,7 @@ function ModalBody({
   )
 }
 
-function ModalFooter({
-  className,
-  ...props
-}: ComponentProps<typeof DialogFooter>) {
+function ModalFooter({ className, ...props }: ComponentProps<typeof DialogFooter>) {
   const { isMobile } = useMediaQuery()
 
   if (isMobile) {
@@ -180,10 +167,7 @@ function ModalFooter({
   return <DialogFooter className={className} {...props} />
 }
 
-function ModalTitle({
-  className,
-  ...props
-}: ComponentProps<typeof DialogTitle>) {
+function ModalTitle({ className, ...props }: ComponentProps<typeof DialogTitle>) {
   const { isMobile } = useMediaQuery()
 
   if (isMobile) {
@@ -193,10 +177,7 @@ function ModalTitle({
   return <DialogTitle className={className} {...props} />
 }
 
-function ModalDescription({
-  className,
-  ...props
-}: ComponentProps<typeof DialogDescription>) {
+function ModalDescription({ className, ...props }: ComponentProps<typeof DialogDescription>) {
   const { isMobile } = useMediaQuery()
 
   if (isMobile) {
@@ -206,11 +187,4 @@ function ModalDescription({
   return <DialogDescription className={className} {...props} />
 }
 
-export {
-  Modal,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  ModalTitle,
-  ModalDescription
-}
+export { Modal, ModalHeader, ModalBody, ModalFooter, ModalTitle, ModalDescription }

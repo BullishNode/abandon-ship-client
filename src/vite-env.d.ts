@@ -1,12 +1,12 @@
 /// <reference types="vite/client" />
 
-type ImportMetaEnvAugmented =
-  import('@julr/vite-plugin-validate-env').ImportMetaEnvAugmented<
-    typeof import('./lib/env').default
-  >
+import type { ImportMetaEnvAugmented } from '@julr/vite-plugin-validate-env'
+import type envConfig from './lib/env'
+
+type AugmentedEnv = ImportMetaEnvAugmented<typeof envConfig>
 
 interface ViteTypeOptions {
   strictImportMetaEnv: unknown
 }
 
-interface ImportMetaEnv extends ImportMetaEnvAugmented {}
+interface ImportMetaEnv extends AugmentedEnv {}

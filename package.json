@@ -1,33 +1,31 @@
 {
   "name": "bark-web",
-  "description": "A web-based graphical user interface for managing bark wallets",
-  "private": true,
   "version": "0.1.0",
-  "type": "module",
-  "packageManager": "npm@10.9.2",
-  "bugs": {
-    "url": "https://gitlab.com/ark-bitcoin/labs/bark-web/-/issues"
-  },
-  "author": {
-    "name": "Second",
-    "url": "https://second.tech/"
-  },
-  "license": "MIT",
+  "private": true,
+  "description": "A web-based graphical user interface for managing bark wallets",
   "keywords": [
     "Ark",
     "Bark",
     "Bitcoin"
   ],
-  "engines": {
-    "node": ">=22"
+  "bugs": {
+    "url": "https://gitlab.com/ark-bitcoin/labs/bark-web/-/issues"
   },
+  "license": "MIT",
+  "author": {
+    "name": "Second",
+    "url": "https://second.tech/"
+  },
+  "type": "module",
   "scripts": {
     "dev": "docker-compose --env-file .env.local up --build",
     "dev:bark-web": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json"
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "check": "ultracite check --type-aware --type-check",
+    "fix": "ultracite fix --type-aware --type-check"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
@@ -66,19 +64,25 @@
     "zustand": "^5.0.10"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.3.11",
     "@julr/vite-plugin-validate-env": "^2.2.0",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
     "babel-plugin-react-compiler": "^1.0.0",
+    "oxfmt": "^0.45.0",
+    "oxlint": "^1.60.0",
+    "oxlint-tsgolint": "^0.21.0",
     "typescript": "~5.9.3",
-    "ultracite": "7.0.8",
+    "ultracite": "^7.5.8",
     "vite": "^7.2.4",
     "vitest": "^4.0.17"
   },
   "overrides": {
     "react-is": "^19.2.0"
-  }
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "npm@10.9.2"
 }

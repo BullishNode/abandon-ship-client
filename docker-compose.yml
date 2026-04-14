@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: docker/bark-web.Dockerfile
     ports:
-      - "5173:5173"
+      - '5173:5173'
     volumes:
       - .:/app
       - /app/node_modules
@@ -13,7 +13,7 @@ services:
       - CHOKIDAR_USEPOLLING=true
     depends_on:
       - barkd
-    entrypoint: ["/bin/sh", "/app/docker/bark-web-entrypoint.sh"]
+    entrypoint: ['/bin/sh', '/app/docker/bark-web-entrypoint.sh']
 
   bark:
     container_name: bark
@@ -35,7 +35,7 @@ services:
     environment:
       - BARKD_ALLOWED_ORIGINS=http://localhost:5173
     ports:
-      - "4000:4000"
+      - '4000:4000'
     volumes:
       - wallet-data:/root
 

@@ -1,9 +1,7 @@
-import { type CreateWalletRequest, WalletApi } from '@secondts/barkd'
-import {
-  type UseMutationOptions,
-  useMutation,
-  useQueryClient
-} from '@tanstack/react-query'
+import { WalletApi } from '@secondts/barkd'
+import type { CreateWalletRequest } from '@secondts/barkd'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import type { UseMutationOptions } from '@tanstack/react-query'
 import { config } from '@/config/barkd'
 import { useWalletStore } from '@/stores/wallet'
 
@@ -15,31 +13,28 @@ interface CreateWalletParams extends CreateWalletRequest {
 }
 
 async function createWallet(params: CreateWalletParams) {
-  const setWallet = useWalletStore.getState().setWallet
+  const { setWallet } = useWalletStore.getState()
 
   const response = await walletApi.createWallet({
     createWalletRequest: {
       arkServer: params.arkServer,
       chainSource: params.chainSource,
-      network: params.network,
-      mnemonic: params.mnemonic
+      mnemonic: params.mnemonic,
+      network: params.network
     }
   })
-  const fingerprint = response.fingerprint
+  const { fingerprint } = response
 
   if (!fingerprint) {
     return false
   }
 
-  setWallet({ name: params.name, createdAt: params.createdAt.toISOString() })
+  setWallet({ createdAt: params.createdAt.toISOString(), name: params.name })
   return true
 }
 
 export function useCreateWallet(
-  options?: Omit<
-    UseMutationOptions<boolean, Error, CreateWalletParams>,
-    'mutationFn'
-  >
+  options?: Omit<UseMutationOptions<boolean, Error, CreateWalletParams>, 'mutationFn'>
 ) {
   const queryClient = useQueryClient()
 

@@ -1,15 +1,17 @@
-import { type Movement, WalletApi } from '@secondts/barkd'
-import { type UseQueryOptions, useQuery } from '@tanstack/react-query'
+import { WalletApi } from '@secondts/barkd'
+import type { Movement } from '@secondts/barkd'
+import { useQuery } from '@tanstack/react-query'
+import type { UseQueryOptions } from '@tanstack/react-query'
 import { config } from '@/config/barkd'
 
 const walletApi = new WalletApi(config)
 
 export function useWalletTransactions(
-  options?: Omit<UseQueryOptions<Movement[], Error>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<Movement[]>, 'queryKey' | 'queryFn'>
 ) {
   return useQuery({
+    queryFn: async () => walletApi.history(),
     queryKey: ['wallet', 'transactions'],
-    queryFn: () => walletApi.history(),
     ...options
   })
 }

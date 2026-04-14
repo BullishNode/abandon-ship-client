@@ -1,32 +1,22 @@
 import { Command as CommandPrimitive } from 'cmdk'
-import { type ReactNode, useMemo, useRef, useState } from 'react'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandList
-} from './ui/command'
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupText
-} from './ui/input-group'
+import { useMemo, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from './ui/command'
+import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from './ui/input-group'
 import { Popover, PopoverAnchor, PopoverContent } from './ui/popover'
 
-interface SeedWordAutocompleteProps<T extends string> {
-  selectedValue: T
-  onSelectedValueChange: (value: T) => void
+interface SeedWordAutocompleteProps {
+  selectedValue: string
+  onSelectedValueChange: (value: string) => void
   searchValue: string
   onSearchValueChange: (value: string) => void
-  items: { value: T; label: string }[]
+  items: { value: string; label: string }[]
   emptyMessage?: string
   placeholder?: string
   iconLeft: ReactNode
 }
 
-export function SeedWordAutocomplete<T extends string>({
+export function SeedWordAutocomplete({
   selectedValue,
   onSelectedValueChange,
   searchValue,
@@ -34,34 +24,30 @@ export function SeedWordAutocomplete<T extends string>({
   items,
   emptyMessage = 'No matches',
   iconLeft
-}: SeedWordAutocompleteProps<T>) {
+}: SeedWordAutocompleteProps) {
   const [open, setOpen] = useState(false)
   const [hasError, setHasError] = useState(false)
   const inputRef = useRef<HTMLDivElement>(null)
 
-  const labels = useMemo(
-    () =>
-      items.reduce(
-        (acc, item) => {
-          acc[item.value] = item.label
-          return acc
-        },
-        {} as Record<string, string>
-      ),
-    [items]
-  )
+  const labels = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const item of items) {
+      map[item.value] = item.label
+    }
+    return map
+  }, [items])
 
-  const reset = () => {
-    onSelectedValueChange('' as T)
+  function reset() {
+    onSelectedValueChange('')
     onSearchValueChange('')
     setHasError(false)
   }
 
-  const onInputBlur = () => {
+  function onInputBlur() {
     const normalized = searchValue.toLowerCase()
 
     if (labels[normalized]) {
-      onSelectedValueChange(normalized as T)
+      onSelectedValueChange(normalized)
       onSearchValueChange(labels[normalized])
       setHasError(false)
     } else if (searchValue.length > 0) {
@@ -69,32 +55,32 @@ export function SeedWordAutocomplete<T extends string>({
     }
   }
 
-  const onSelectItem = (inputValue: string) => {
+  function onSelectItem(inputValue: string) {
     if (inputValue === selectedValue) {
       reset()
     } else {
-      onSelectedValueChange(inputValue as T)
+      onSelectedValueChange(inputValue)
       onSearchValueChange(labels[inputValue] ?? '')
       setHasError(false)
     }
     setOpen(false)
   }
 
-  const handleSearchValueChange = (value: string) => {
-    const filteredValue = value.replace(/[^a-zA-Z]/g, '').toLowerCase()
+  function handleSearchValueChange(value: string) {
+    const filteredValue = value.replaceAll(/[^a-zA-Z]/g, '').toLowerCase()
 
     onSearchValueChange(filteredValue)
     if (hasError) {
       setHasError(false)
     }
 
-    const isCorrect = !!labels[filteredValue]
+    const isCorrect = labels[filteredValue] !== undefined
 
     if (isCorrect) {
-      onSelectedValueChange(filteredValue as T)
+      onSelectedValueChange(filteredValue)
       setOpen(false)
     } else {
-      onSelectedValueChange('' as T)
+      onSelectedValueChange('')
       if (filteredValue.length > 0) {
         setOpen(true)
       } else {
@@ -148,7 +134,8 @@ export function SeedWordAutocomplete<T extends string>({
             onInteractOutside={(e) => {
               if (
                 e.target instanceof Element &&
-                inputRef.current?.contains(e.target as Node)
+                inputRef.current !== null &&
+                inputRef.current.contains(e.target)
               ) {
                 e.preventDefault()
               }
@@ -170,9 +157,7 @@ export function SeedWordAutocomplete<T extends string>({
                   ))}
                 </CommandGroup>
               ) : (
-                searchValue.length > 0 && (
-                  <CommandEmpty>{emptyMessage}</CommandEmpty>
-                )
+                searchValue.length > 0 && <CommandEmpty>{emptyMessage}</CommandEmpty>
               )}
             </CommandList>
           </PopoverContent>

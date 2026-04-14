@@ -9,25 +9,17 @@ import {
   CommandItem,
   CommandList
 } from '@/components/ui/command'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger
-} from '@/components/ui/popover'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { useMetadataStore } from '@/stores/metadata'
 
 interface ContactInputProps {
   value: string | undefined
-  onChange: (value: string | undefined) => void
+  onChange: (value?: string) => void
   disabled?: boolean
 }
 
-export function ContactInput({
-  value,
-  onChange,
-  disabled = false
-}: ContactInputProps) {
+export function ContactInput({ value, onChange, disabled = false }: ContactInputProps) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -43,14 +35,19 @@ export function ContactInput({
     (contact) => contact.name.toLowerCase() === sanitizedSearch.toLowerCase()
   )
 
-  const showCreateOption = sanitizedSearch && !exactMatchExists
+  const showCreateOption = sanitizedSearch.length > 0 && !exactMatchExists
 
-  const handleSelect = (contactId: string) => {
+  function handleClear() {
+    onChange()
+    setOpen(false)
+  }
+
+  function handleSelect(contactId: string) {
     onChange(contactId === value ? undefined : contactId)
     setOpen(false)
   }
 
-  const handleCreate = () => {
+  function handleCreate() {
     if (!sanitizedSearch) {
       return
     }
@@ -61,9 +58,8 @@ export function ContactInput({
     setOpen(false)
   }
 
-  const selectedContact = value
-    ? contacts.find((c) => c.id === value)
-    : undefined
+  const selectedContact =
+    value !== undefined && value !== '' ? contacts.find((c) => c.id === value) : undefined
 
   return (
     <Popover onOpenChange={setOpen} open={open}>
@@ -71,9 +67,9 @@ export function ContactInput({
         <button
           className={cn(
             buttonVariants({
-              variant: 'outline',
               className:
-                'h-9 w-full justify-between font-normal hover:bg-transparent aria-expanded:bg-transparent'
+                'h-9 w-full justify-between font-normal hover:bg-transparent aria-expanded:bg-transparent',
+              variant: 'outline'
             })
           )}
           disabled={disabled}
@@ -86,7 +82,7 @@ export function ContactInput({
               onClick={(e) => {
                 e.stopPropagation()
                 e.preventDefault()
-                onChange(undefined)
+                handleClear()
               }}
               type="button"
             >
@@ -95,10 +91,7 @@ export function ContactInput({
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent
-        align="start"
-        className="w-(--radix-popover-trigger-width) p-0"
-      >
+      <PopoverContent align="start" className="w-(--radix-popover-trigger-width) p-0">
         <Command shouldFilter={false}>
           <CommandInput
             onKeyDown={(e) => {
@@ -111,9 +104,7 @@ export function ContactInput({
             placeholder={t('contacts.search')}
             value={search}
           />
-          <p className="p-1.5 text-muted-foreground text-xs">
-            {t('contacts.hint')}
-          </p>
+          <p className="p-1.5 text-muted-foreground text-xs">{t('contacts.hint')}</p>
           <CommandList>
             {filteredContacts.length > 0 && (
               <CommandGroup>

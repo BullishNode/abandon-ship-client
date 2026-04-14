@@ -1,17 +1,19 @@
-import { type ArkAddressResponse, WalletApi } from '@secondts/barkd'
-import { type UseMutationOptions, useMutation } from '@tanstack/react-query'
+import { WalletApi } from '@secondts/barkd'
+import type { ArkAddressResponse } from '@secondts/barkd'
+import { useMutation } from '@tanstack/react-query'
+import type { UseMutationOptions } from '@tanstack/react-query'
 import { config } from '@/config/barkd'
 
 const walletApi = new WalletApi(config)
 
 export function useWalletAddress(
-  options?: Omit<
-    UseMutationOptions<ArkAddressResponse['address'], Error>,
-    'mutationFn'
-  >
+  options?: Omit<UseMutationOptions<ArkAddressResponse['address']>, 'mutationFn'>
 ) {
   return useMutation({
-    mutationFn: () => walletApi.address().then((response) => response.address),
+    mutationFn: async () => {
+      const response = await walletApi.address()
+      return response.address
+    },
     ...options
   })
 }
