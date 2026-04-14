@@ -202,8 +202,8 @@ function MnemonicComponent({ stage, mnemonic, onConfirmedChange }: MnemonicCompo
   const shuffledWords = useMemo(() => shuffleArray(words), [words])
 
   const [selectedWords, setSelectedWords] = useState<string[]>([])
-  const [status, setStatus] = useState<SeedWordStatus[]>(
-    () => Array.from({ length: 12 }).map(() => 'idle')
+  const [status, setStatus] = useState<SeedWordStatus[]>(() =>
+    Array.from({ length: 12 }).map(() => 'idle')
   )
 
   function handleClick(word: string, index: number) {
