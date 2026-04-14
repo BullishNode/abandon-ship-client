@@ -1,6 +1,6 @@
 import { CaretDownIcon, ClipboardTextIcon } from '@phosphor-icons/react'
 import { decode } from 'bitcoin-decoder'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, m } from 'motion/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -162,7 +162,7 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
       <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-6 overflow-hidden px-1">
         <AnimatePresence custom={direction} initial={false} mode="popLayout">
           {step === 'scan' && (
-            <motion.div
+            <m.div
               animate="center"
               className="flex min-h-0 flex-1 flex-col gap-6"
               custom={direction}
@@ -191,10 +191,10 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                   {t('actions.paste')}
                 </Button>
               </ModalFooter>
-            </motion.div>
+            </m.div>
           )}
           {step === 'send' && (
-            <motion.div
+            <m.div
               animate="center"
               className="flex min-h-0 flex-1 flex-col gap-6"
               custom={direction}
@@ -275,7 +275,7 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                   {t('send.confirm.button')}
                 </Button>
               </ModalFooter>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>

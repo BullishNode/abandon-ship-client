@@ -1,5 +1,5 @@
 import { CheckIcon, CopyIcon } from '@phosphor-icons/react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, m } from 'motion/react'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { cn } from '@/lib/utils'
 import { formatAddress } from '@/utils/format'
@@ -28,7 +28,7 @@ export function CopyAddressButton({ text, ...props }: CopyAddressButtonProps) {
     >
       <span>{formatAddress(text, 16, 16)}</span>
       <AnimatePresence initial={false} mode="popLayout">
-        <motion.span
+        <m.span
           animate={{ filter: 'blur(0px)', opacity: 1, scale: 1 }}
           exit={{ filter: 'blur(4px)', opacity: 0.4, scale: 0 }}
           initial={{ filter: 'blur(4px)', opacity: 0.4, scale: 0 }}
@@ -36,7 +36,7 @@ export function CopyAddressButton({ text, ...props }: CopyAddressButtonProps) {
           transition={{ duration: 0.25 }}
         >
           <Icon />
-        </motion.span>
+        </m.span>
       </AnimatePresence>
     </button>
   )

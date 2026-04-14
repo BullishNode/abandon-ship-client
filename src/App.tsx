@@ -1,3 +1,4 @@
+import { LazyMotion, MotionConfig, domAnimation } from 'motion/react'
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { Spinner } from './components/ui/spinner'
 import { useCheckWallet } from './hooks/barkd/use-check-wallet'
@@ -46,28 +47,32 @@ function RedirectRoute() {
 
 export function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route element={<RedirectRoute />}>
-          <Route element={<WelcomeLayout />} path="/">
-            <Route element={<RootPage />} index />
-          </Route>
-          <Route element={<OnboardingLayout />} path="/create">
-            <Route element={<CreateWalletPage />} index />
-          </Route>
-          <Route element={<OnboardingLayout />} path="/import">
-            <Route element={<ImportWalletPage />} index />
-          </Route>
-          <Route element={<DashboardLayout />} path="/dashboard">
-            <Route element={<TransactionsPage />} index />
-            <Route element={<VtxosPage />} path="/dashboard/vtxos" />
-            <Route element={<ContactsPage />} path="/dashboard/contacts" />
-            <Route element={<ConsolePage />} path="/dashboard/console" />
-            <Route element={<SettingsPage />} path="/dashboard/settings" />
-          </Route>
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <LazyMotion features={domAnimation} strict>
+      <MotionConfig reducedMotion="user">
+        <BrowserRouter>
+          <Routes>
+            <Route element={<RedirectRoute />}>
+              <Route element={<WelcomeLayout />} path="/">
+                <Route element={<RootPage />} index />
+              </Route>
+              <Route element={<OnboardingLayout />} path="/create">
+                <Route element={<CreateWalletPage />} index />
+              </Route>
+              <Route element={<OnboardingLayout />} path="/import">
+                <Route element={<ImportWalletPage />} index />
+              </Route>
+              <Route element={<DashboardLayout />} path="/dashboard">
+                <Route element={<TransactionsPage />} index />
+                <Route element={<VtxosPage />} path="/dashboard/vtxos" />
+                <Route element={<ContactsPage />} path="/dashboard/contacts" />
+                <Route element={<ConsolePage />} path="/dashboard/console" />
+                <Route element={<SettingsPage />} path="/dashboard/settings" />
+              </Route>
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </MotionConfig>
+    </LazyMotion>
   )
 }
 
