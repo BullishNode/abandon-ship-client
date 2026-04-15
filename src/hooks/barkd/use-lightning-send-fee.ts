@@ -16,7 +16,8 @@ export function useLightningSendFee(
       if (amountSat === undefined) {
         throw new Error('amountSat is required')
       }
-      return feesApi.lightningSendFee({ amountSat })
+      const fee = await feesApi.lightningSendFee({ amountSat })
+      return fee
     },
     queryKey: ['fees', 'lightning', 'send', amountSat],
     ...options

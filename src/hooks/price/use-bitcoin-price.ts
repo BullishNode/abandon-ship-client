@@ -18,7 +18,10 @@ export function useBitcoinPrice(
   const provider = providers[priceProviderId]
 
   return useQuery({
-    queryFn: async () => provider.fetchPrice(fiatCurrency),
+    queryFn: async () => {
+      const price = await provider.fetchPrice(fiatCurrency)
+      return price
+    },
     queryKey: ['bitcoin', 'price', priceProviderId, fiatCurrency],
     refetchInterval: provider.refetchInterval,
     staleTime: provider.staleTime,

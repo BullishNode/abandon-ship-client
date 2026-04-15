@@ -12,7 +12,10 @@ export function useSend(
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (params: SendRequest) => walletApi.send({ sendRequest: params }),
+    mutationFn: async (params: SendRequest) => {
+      const response = await walletApi.send({ sendRequest: params })
+      return response
+    },
     ...options,
     onSuccess: async (...args) => {
       await queryClient.invalidateQueries({ queryKey: ['wallet', 'balance'] })

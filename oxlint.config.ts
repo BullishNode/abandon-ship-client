@@ -16,9 +16,21 @@ export default defineConfig({
       }
     },
     {
+      files: ['src/main.tsx'],
+      rules: {
+        'import/no-named-as-default': 'off'
+      }
+    },
+    {
       files: ['src/App.tsx'],
       rules: {
         'unicorn/filename-case': 'off'
+      }
+    },
+    {
+      files: ['src/i18n/index.ts'],
+      rules: {
+        'import/no-named-as-default-member': 'off'
       }
     },
     {
@@ -38,11 +50,6 @@ export default defineConfig({
   ],
   rules: {
     '@typescript-eslint/no-unsafe-assignment': 'off',
-    'func-style': ['error', 'declaration'],
-    'import/no-named-as-default': 'off',
-    'import/no-named-as-default-member': 'off',
-    'jest/valid-title': 'off',
-    'require-await': 'off',
-    'vitest/valid-title': 'off'
+    'func-style': ['error', 'declaration']
   }
 })

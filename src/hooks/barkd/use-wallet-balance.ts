@@ -8,7 +8,10 @@ const walletApi = new WalletApi(config)
 
 export function useWalletBalance(options?: Omit<UseQueryOptions<Balance>, 'queryKey' | 'queryFn'>) {
   return useQuery({
-    queryFn: async () => walletApi.balance(),
+    queryFn: async () => {
+      const balance = await walletApi.balance()
+      return balance
+    },
     queryKey: ['wallet', 'balance'],
     refetchInterval: 10_000,
     ...options
