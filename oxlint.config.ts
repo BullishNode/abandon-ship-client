@@ -39,13 +39,6 @@ export default defineConfig({
         '@typescript-eslint/no-empty-interface': 'off',
         '@typescript-eslint/no-empty-object-type': 'off'
       }
-    },
-    {
-      files: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
-      rules: {
-        'jest/valid-title': 'off',
-        'vitest/valid-title': 'off'
-      }
     }
   ],
   rules: {

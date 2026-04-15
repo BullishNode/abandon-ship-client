@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { btcToSats, satsToBTC } from '../../src/utils/bitcoin'
 
 describe('bitcoin utils', () => {
-  // oxlint-disable-next-line jest/valid-title -- vitest/prefer-describe-function-title requires function ref
   describe(btcToSats, () => {
     it('converts 1 BTC to 100,000,000 sats', () => {
       expect(btcToSats(1)).toBe(100_000_000)
@@ -25,7 +24,6 @@ describe('bitcoin utils', () => {
     })
   })
 
-  // oxlint-disable-next-line jest/valid-title -- vitest/prefer-describe-function-title requires function ref
   describe(satsToBTC, () => {
     it('converts 100,000,000 sats to 1 BTC', () => {
       expect(satsToBTC(100_000_000)).toBe(1)
