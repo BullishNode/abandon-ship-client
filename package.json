@@ -23,6 +23,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "check": "ultracite check --type-aware --type-check",
     "fix": "ultracite fix --type-aware --type-check"
@@ -69,6 +70,7 @@
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "@vitest/coverage-v8": "^4.1.4",
     "babel-plugin-react-compiler": "^1.0.0",
     "oxfmt": "^0.45.0",
     "oxlint": "^1.60.0",

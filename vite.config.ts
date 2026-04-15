@@ -25,5 +25,13 @@ export default defineConfig(({ mode }) => ({
     watch: {
       usePolling: true
     }
+  },
+  test: {
+    coverage: {
+      exclude: ['src/**/*.d.ts', 'src/types/**'],
+      include: ['src/**/*.ts'],
+      provider: 'v8',
+      reporter: ['text', 'html']
+    }
   }
 }))
