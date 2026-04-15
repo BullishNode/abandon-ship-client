@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useBrantaVerification } from '@/hooks/branta/use-branta-verification'
 import { useLightningSendFee } from '@/hooks/barkd/use-lightning-send-fee'
 import { useSend } from '@/hooks/barkd/use-send'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
@@ -74,6 +75,7 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
   const [amount, setAmount] = useState('')
   const [label, setLabel] = useState('')
   const [message, setMessage] = useState('')
+  const [rawQrInput, setRawQrInput] = useState('')
   const [prevOpen, setPrevOpen] = useState(open)
 
   if (open && !prevOpen) {
@@ -83,6 +85,7 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
     setAmount('')
     setLabel('')
     setMessage('')
+    setRawQrInput('')
   }
 
   if (open !== prevOpen) {
@@ -107,6 +110,11 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
     feeDisplay = formatBitcoin(feeEstimate.feeSat)
   }
 
+  const { data: brantaPayments, isFetching: isFetchingBranta } = useBrantaVerification(
+    step === 'send' ? rawQrInput : undefined
+  )
+  const brantaPayment = brantaPayments?.[0]
+
   function handleClose() {
     onOpenChange(false)
     setStep(initialStep)
@@ -115,9 +123,11 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
     setAmount('')
     setLabel('')
     setMessage('')
+    setRawQrInput('')
   }
 
   async function goToSend(input: string) {
+    setRawQrInput(input)
     const parsed = await parsePaymentInput(input)
     setDestination(parsed.destination)
     if (parsed.amountSats !== undefined && parsed.amountSats !== 0) {
@@ -133,6 +143,7 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
   function goToScan() {
     setDirection(-1)
     setStep('scan')
+    setRawQrInput('')
   }
 
   async function handlePaste() {
@@ -236,6 +247,32 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                   <Label className="text-muted-foreground">{t('send.fee.estimate')}</Label>
                   <span className="text-muted-foreground text-sm">{feeDisplay}</span>
                 </div>
+                {isFetchingBranta && (
+                  <div className="flex flex-col gap-2">
+                    <Label className="text-muted-foreground">{t('send.branta.title')}</Label>
+                    <span className="text-muted-foreground animate-pulse text-sm">...</span>
+                  </div>
+                )}
+                {!isFetchingBranta && brantaPayment && (
+                  <div className="flex flex-col gap-2">
+                    <Label className="text-muted-foreground">{t('send.branta.title')}</Label>
+                    <a
+                      className="flex items-center gap-2 text-sm"
+                      href={brantaPayment.verifyUrl}
+                      rel="noopener"
+                      target="_blank"
+                    >
+                      {(brantaPayment.platformLogoLightUrl ?? brantaPayment.platformLogoUrl) && (
+                        <img
+                          alt={brantaPayment.platform ?? ''}
+                          className={`max-h-6 w-auto rounded object-contain p-0.5${brantaPayment.platformLogoLightUrl ? '' : ' bg-black'}`}
+                          src={brantaPayment.platformLogoLightUrl ?? brantaPayment.platformLogoUrl}
+                        />
+                      )}
+                      {brantaPayment.platform}
+                    </a>
+                  </div>
+                )}
                 <Collapsible>
                   <CollapsibleTrigger asChild>
                     <Label className="flex items-center justify-between">
