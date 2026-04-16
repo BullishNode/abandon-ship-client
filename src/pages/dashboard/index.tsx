@@ -1,3 +1,4 @@
+import { MovementsTable } from '@/components/movements-table'
 import { SATOSHIS_PER_BTC } from '@/constants/btc'
 import { useWalletBalance } from '@/hooks/barkd/use-wallet-balance'
 import { useBitcoinPrice } from '@/hooks/price/use-bitcoin-price'
@@ -22,6 +23,7 @@ export default function TransactionsPage() {
     <div>
       <p className="font-bold text-4xl">{formatBitcoin(balanceSats)}</p>
       <p className="text-muted-foreground">{fiatValue}</p>
+      <MovementsTable />
     </div>
   )
 }

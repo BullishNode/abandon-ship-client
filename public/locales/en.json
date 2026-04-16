@@ -131,5 +131,15 @@
     "search": "Search contacts...",
     "hint": "Select a contact or create one",
     "create": "Create \"{{search}}\""
+  },
+  "movements": {
+    "title": "Movements",
+    "empty": "No movements yet",
+    "columns": {
+      "from": "From",
+      "date": "Date",
+      "amount_sats": "Amount (sats)",
+      "amount_fiat": "Amount (fiat)"
+    }
   }
 }
