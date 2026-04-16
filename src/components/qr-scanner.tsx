@@ -17,6 +17,7 @@ export function QRScanner({ onScan, onError, className }: QRScannerProps) {
       <Scanner
         components={{ finder: false }}
         onError={onError}
+        sound={false}
         onScan={(results) => {
           const [first] = results
           if (first !== undefined) {
