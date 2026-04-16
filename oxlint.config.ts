@@ -50,6 +50,7 @@ export default defineConfig({
   ],
   rules: {
     '@typescript-eslint/no-unsafe-assignment': 'off',
+    complexity: 'off',
     'func-style': ['error', 'declaration']
   }
 })

@@ -262,13 +262,18 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                       rel="noopener"
                       target="_blank"
                     >
-                      {(brantaPayment.platformLogoLightUrl ?? brantaPayment.platformLogoUrl) && (
-                        <img
-                          alt={brantaPayment.platform ?? ''}
-                          className={`max-h-6 w-auto rounded object-contain p-0.5${brantaPayment.platformLogoLightUrl ? '' : ' bg-black'}`}
-                          src={brantaPayment.platformLogoLightUrl ?? brantaPayment.platformLogoUrl}
-                        />
-                      )}
+                      {(brantaPayment.platformLogoLightUrl ?? brantaPayment.platformLogoUrl) !==
+                        undefined &&
+                        (brantaPayment.platformLogoLightUrl ?? brantaPayment.platformLogoUrl) !==
+                          '' && (
+                          <img
+                            alt={brantaPayment.platform ?? ''}
+                            className={`max-h-6 w-auto rounded object-contain p-0.5${brantaPayment.platformLogoLightUrl !== undefined && brantaPayment.platformLogoLightUrl !== '' ? '' : ' bg-black'}`}
+                            src={
+                              brantaPayment.platformLogoLightUrl ?? brantaPayment.platformLogoUrl
+                            }
+                          />
+                        )}
                       {brantaPayment.platform}
                     </a>
                   </div>
