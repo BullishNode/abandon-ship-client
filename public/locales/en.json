@@ -121,7 +121,10 @@
     "label": "Label",
     "label.placeholder": "Enter a label",
     "message": "Message",
-    "message.placeholder": "Enter a message"
+    "message.placeholder": "Enter a message",
+    "branta": {
+      "title": "Branta verification"
+    }
   },
   "contacts": {
     "label": "Contacts",
