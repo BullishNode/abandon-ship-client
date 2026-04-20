@@ -18,7 +18,7 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "docker-compose --env-file .env.local up --build",
+    "dev": "docker compose --env-file .env.local up --build",
     "dev:bark-web": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
