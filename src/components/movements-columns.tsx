@@ -1,7 +1,11 @@
 import type { Movement } from '@secondts/barkd'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { TFunction } from 'i18next'
-import { getMovementCounterparty } from '@/utils/movement'
+import { MovementAmountCell } from '@/components/movement-amount-cell'
+import { MovementLabelCell } from '@/components/movement-label-cell'
+import { MovementSourceBadge } from '@/components/movement-source-badge'
+import { MovementStatusBadge } from '@/components/movement-status-badge'
+import { getMovementCounterparty, getMovementSource, getMovementTxKey } from '@/utils/movement'
 
 interface MovementColumnsOptions {
   t: TFunction
@@ -20,41 +24,42 @@ export function getMovementColumns({
 }: MovementColumnsOptions): ColumnDef<Movement>[] {
   return [
     {
-      accessorFn: (movement) => getMovementCounterparty(movement),
-      header: t('movements.columns.from'),
-      id: 'from'
-    },
-    {
       accessorFn: (movement) => movement.time.createdAt,
       cell: ({ getValue }) => formatDate(getValue<Date>()),
       header: t('movements.columns.date'),
       id: 'date'
     },
     {
-      accessorFn: (movement) => movement.effectiveBalanceSat,
-      cell: ({ getValue }) => {
-        const sats = getValue<number>()
-        if (discreteMode) {
-          return <span>{formatSats(sats)}</span>
-        }
-        return (
-          <span className={sats >= 0 ? 'text-green-500' : 'text-red-500'}>
-            {sats >= 0 ? '+' : ''}
-            {formatSats(sats)}
-          </span>
-        )
-      },
-      header: t('movements.columns.amount_sats'),
-      id: 'amountSats'
+      cell: ({ row }) => (
+        <MovementLabelCell
+          fallback={getMovementCounterparty(row.original)}
+          txKey={getMovementTxKey(row.original)}
+        />
+      ),
+      header: t('movements.columns.label'),
+      id: 'label'
     },
     {
-      accessorFn: (movement) => movement.effectiveBalanceSat,
-      cell: ({ getValue }) => {
-        const sats = getValue<number>()
-        return <span className="text-muted-foreground">{formatFiat(sats)}</span>
-      },
-      header: t('movements.columns.amount_fiat'),
-      id: 'amountFiat'
+      cell: ({ row }) => <MovementStatusBadge status={row.original.status} />,
+      header: t('movements.columns.status'),
+      id: 'status'
+    },
+    {
+      cell: ({ row }) => <MovementSourceBadge source={getMovementSource(row.original)} />,
+      header: t('movements.columns.source'),
+      id: 'source'
+    },
+    {
+      cell: ({ row }) => (
+        <MovementAmountCell
+          discreteMode={discreteMode}
+          formatFiat={formatFiat}
+          formatSats={formatSats}
+          sats={row.original.effectiveBalanceSat}
+        />
+      ),
+      header: () => <div className="text-right">{t('movements.columns.amount')}</div>,
+      id: 'amount'
     }
   ]
 }

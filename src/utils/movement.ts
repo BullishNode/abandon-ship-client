@@ -1,20 +1,54 @@
-import type { Movement } from '@secondts/barkd'
+import type { Movement, MovementDestination } from '@secondts/barkd'
 import { formatAddress } from '@/utils/format'
+
+export type MovementSource = 'onchain' | 'lightning' | 'ark' | 'unknown'
 
 export function getMovementDirection(movement: Movement): 'incoming' | 'outgoing' {
   return movement.effectiveBalanceSat >= 0 ? 'incoming' : 'outgoing'
 }
 
-export function getMovementCounterparty(movement: Movement): string {
+export function getMovementCounterpartyDestination(movement: Movement): MovementDestination | null {
   const direction = getMovementDirection(movement)
-
   if (direction === 'outgoing' && movement.sentTo.length > 0) {
-    return formatAddress(movement.sentTo[0].destination.value)
+    return movement.sentTo[0]
   }
-
   if (direction === 'incoming' && movement.receivedOn.length > 0) {
-    return formatAddress(movement.receivedOn[0].destination.value)
+    return movement.receivedOn[0]
   }
+  return null
+}
 
+export function getMovementCounterparty(movement: Movement): string {
+  const destination = getMovementCounterpartyDestination(movement)
+  if (destination) {
+    return formatAddress(destination.destination.value)
+  }
   return movement.subsystem.name
+}
+
+export function getMovementSource(movement: Movement): MovementSource {
+  const name = movement.subsystem.name.toLowerCase()
+  if (name === 'onchain' || name === 'on-chain' || name === 'bitcoin') {
+    return 'onchain'
+  }
+  if (name === 'lightning' || name === 'ln') {
+    return 'lightning'
+  }
+  if (name === 'ark') {
+    return 'ark'
+  }
+  return 'unknown'
+}
+
+export function getMovementTxKey(movement: Movement): string {
+  return `movement:${movement.id}`
+}
+
+// barkd Movement type currently exposes only offchainFeeSat. Onchain fees may
+// live in `metadata` per subsystem; extend once the metadata schema is documented.
+export function getMovementFeeSat(movement: Movement): number | null {
+  if (typeof movement.offchainFeeSat === 'number') {
+    return movement.offchainFeeSat
+  }
+  return null
 }

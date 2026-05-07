@@ -8,13 +8,19 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
+import { cn } from '@/lib/utils'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
+  onRowClick?: (row: TData) => void
 }
 
-export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData, TValue>) {
+export function DataTable<TData, TValue>({
+  columns,
+  data,
+  onRowClick
+}: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     columns,
     data,
@@ -39,7 +45,11 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
       <TableBody>
         {table.getRowModel().rows.length > 0 ? (
           table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id}>
+            <TableRow
+              className={cn(onRowClick && 'cursor-pointer hover:bg-muted/50')}
+              key={row.id}
+              onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+            >
               {row.getVisibleCells().map((cell) => (
                 <TableCell key={cell.id}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -49,7 +59,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
           ))
         ) : (
           <TableRow>
-            <TableCell colSpan={columns.length} className="h-24 text-center">
+            <TableCell className="h-24 text-center" colSpan={columns.length}>
               No results.
             </TableCell>
           </TableRow>

@@ -28,3 +28,10 @@ export function formatRelativeTime(date: Date, locale?: string): string {
 
   return formatter.format(Math.round(elapsed / YEAR), 'year')
 }
+
+export function formatAbsoluteDateTime(date: Date, locale?: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  }).format(date)
+}

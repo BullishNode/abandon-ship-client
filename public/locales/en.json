@@ -165,7 +165,40 @@
       "from": "From",
       "date": "Date",
       "amount_sats": "Amount",
-      "amount_fiat": "Amount"
+      "amount_fiat": "Amount",
+      "label": "Label",
+      "status": "Status",
+      "amount": "Amount",
+      "source": "Source"
+    },
+    "status": {
+      "pending": "Pending",
+      "successful": "Successful",
+      "failed": "Failed",
+      "canceled": "Canceled"
+    },
+    "source": {
+      "onchain": "On-chain",
+      "lightning": "Lightning",
+      "ark": "Ark"
+    },
+    "detail": {
+      "title": "Movement details",
+      "sentTo": "Sent to",
+      "receivedOn": "Received on",
+      "fee": "Fee",
+      "feeUnavailable": "Not available",
+      "dateCreated": "Created",
+      "dateCompleted": "Completed",
+      "label": "Label",
+      "labelPlaceholder": "Add a label",
+      "tags": "Tags",
+      "copy": "Copy",
+      "copied": "Copied",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "noCounterparty": "No counterparty"
     }
   },
   "settings": {
