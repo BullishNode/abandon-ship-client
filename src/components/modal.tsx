@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef } from 'react'
 import type { ComponentProps, ReactNode, Ref } from 'react'
 import {
   Dialog,
@@ -17,6 +17,7 @@ import {
   DrawerTitle
 } from '@/components/ui/drawer'
 import { useMediaQuery } from '@/hooks/use-media-query'
+import { useScrollOverflow } from '@/hooks/use-scroll-overflow'
 import { cn } from '@/lib/utils'
 
 interface ModalProps {
@@ -92,37 +93,7 @@ function ModalBody({
   ...props
 }: ComponentProps<'div'> & { ref?: Ref<HTMLDivElement> }) {
   const innerRef = useRef<HTMLDivElement>(null)
-  const [canScrollUp, setCanScrollUp] = useState(false)
-  const [canScrollDown, setCanScrollDown] = useState(false)
-
-  function updateScrollState() {
-    const el = innerRef.current
-    if (!el) {
-      return
-    }
-    setCanScrollUp(el.scrollTop > 0)
-    setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 4)
-  }
-
-  /* oxlint-disable @typescript-eslint/consistent-return */
-  useEffect(() => {
-    const el = innerRef.current
-    if (el === null) {
-      return
-    }
-
-    updateScrollState()
-    const observer = new ResizeObserver(updateScrollState)
-    observer.observe(el)
-    for (const child of el.children) {
-      observer.observe(child)
-    }
-
-    return () => {
-      observer.disconnect()
-    }
-  })
-  /* oxlint-enable @typescript-eslint/consistent-return */
+  const { canScrollUp, canScrollDown, update: updateScrollState } = useScrollOverflow(innerRef)
 
   function setRefs(node: HTMLDivElement | null) {
     innerRef.current = node
