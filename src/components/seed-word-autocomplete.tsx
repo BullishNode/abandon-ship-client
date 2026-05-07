@@ -1,5 +1,5 @@
 import { Command as CommandPrimitive } from 'cmdk'
-import { useMemo, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from './ui/command'
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from './ui/input-group'
@@ -29,13 +29,10 @@ export function SeedWordAutocomplete({
   const [hasError, setHasError] = useState(false)
   const inputRef = useRef<HTMLDivElement>(null)
 
-  const labels = useMemo(() => {
-    const map: Record<string, string> = {}
-    for (const item of items) {
-      map[item.value] = item.label
-    }
-    return map
-  }, [items])
+  const labels: Record<string, string> = {}
+  for (const item of items) {
+    labels[item.value] = item.label
+  }
 
   function reset() {
     onSelectedValueChange('')

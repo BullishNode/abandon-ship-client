@@ -3,7 +3,7 @@ import { generateMnemonic } from '@scure/bip39'
 import { wordlist } from '@scure/bip39/wordlists/english.js'
 import { BarkNetwork } from '@secondts/barkd'
 import { defineStepper } from '@stepperize/react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
@@ -199,7 +199,7 @@ function MnemonicComponent({ stage, mnemonic, onConfirmedChange }: MnemonicCompo
   const { t } = useTranslation()
 
   const words = mnemonic.split(' ')
-  const shuffledWords = useMemo(() => shuffleArray(words), [words])
+  const [shuffledWords] = useState(() => shuffleArray(words))
 
   const [selectedWords, setSelectedWords] = useState<string[]>([])
   const [status, setStatus] = useState<SeedWordStatus[]>(() =>
