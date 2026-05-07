@@ -68,15 +68,21 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
   }
 
   const { mutate: send, isPending: isSendingArk } = useSend({
-    onSuccess: () =>{  handleSendSuccess(); }
+    onSuccess: () => {
+      handleSendSuccess()
+    }
   })
 
   const { mutate: sendOnchain, isPending: isSendingOnchain } = useSendOnchain({
-    onSuccess: () =>{  handleSendSuccess(); }
+    onSuccess: () => {
+      handleSendSuccess()
+    }
   })
 
   const { mutate: onchainSend, isPending: isSendingFromWallet } = useOnchainSend({
-    onSuccess: () =>{  handleSendSuccess(); }
+    onSuccess: () => {
+      handleSendSuccess()
+    }
   })
 
   const amountSat = Number.parseInt(amount, 10)
