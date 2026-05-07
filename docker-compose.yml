@@ -21,7 +21,7 @@ services:
       context: .
       dockerfile: docker/bark.Dockerfile
       args:
-        BARK_VERSION: ${BARK_VERSION:-0.1.0-beta.8}
+        BARK_VERSION: ${BARK_VERSION:-0.1.4}
     volumes:
       - wallet-data:/root
 
@@ -31,7 +31,7 @@ services:
       context: .
       dockerfile: docker/barkd.Dockerfile
       args:
-        BARK_VERSION: ${BARK_VERSION:-0.1.0-beta.8}
+        BARK_VERSION: ${BARK_VERSION:-0.1.4}
     environment:
       - BARKD_ALLOWED_ORIGINS=http://localhost:5173
     ports:

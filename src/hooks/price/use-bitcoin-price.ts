@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { UseQueryOptions } from '@tanstack/react-query'
 import { binanceProvider } from '@/lib/price-providers/binance'
 import { coingeckoProvider } from '@/lib/price-providers/coingecko'
+import { bitcoinKeys } from '@/lib/query-keys'
 import { useSettingsStore } from '@/stores/settings'
 import type { PriceData, PriceProvider } from '@/types/price-providers'
 
@@ -22,7 +23,7 @@ export function useBitcoinPrice(
       const price = await provider.fetchPrice(fiatCurrency)
       return price
     },
-    queryKey: ['bitcoin', 'price', priceProviderId, fiatCurrency],
+    queryKey: bitcoinKeys.price(priceProviderId, fiatCurrency),
     refetchInterval: provider.refetchInterval,
     staleTime: provider.staleTime,
     ...options

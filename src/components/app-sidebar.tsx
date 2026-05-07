@@ -1,10 +1,4 @@
-import {
-  AddressBookIcon,
-  GearIcon,
-  SquareIcon,
-  SquaresFourIcon,
-  TerminalWindowIcon
-} from '@phosphor-icons/react'
+import { GearIcon, SquaresFourIcon } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import secondIcon from '@/assets/second_icon.svg'
 import {
@@ -30,25 +24,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: SquaresFourIcon,
       name: t('nav.transactions'),
       url: '/dashboard'
-    },
-    {
-      icon: SquareIcon,
-      name: t('nav.vtxos'),
-      url: '/dashboard/vtxos'
-    },
-    {
-      icon: AddressBookIcon,
-      name: t('nav.contacts'),
-      url: '/dashboard/contacts'
     }
   ]
 
   const navSecondaryItems: NavGroupProps['items'] = [
-    {
-      icon: TerminalWindowIcon,
-      name: t('nav.console'),
-      url: '/dashboard/console'
-    },
     {
       icon: GearIcon,
       name: t('nav.settings'),

@@ -15,3 +15,5 @@ paths:
 8. Try to not duplicate `types`. Place them in the `types` folder;
 9. Code must be readable. No nested conditional logic, nested try/catch, or too much complexity in one function;
 10. Components should be responsible for receiving data through props and rendering it. Business logic should be kept separate and not placed within components;
+11. For TanStack Query, define query keys via factories in `src/lib/query-keys.ts` (never inline raw arrays), and group related invalidations into helpers in `src/lib/query-invalidations.ts` instead of duplicating `invalidateQueries` calls inside mutation `onSuccess` handlers;
+12. In JSX, don't add blank lines between sibling elements.

@@ -7,11 +7,8 @@ import OnboardingLayout from './layouts/onboarding'
 import WelcomeLayout from './layouts/welcome'
 import RootPage from './pages'
 import CreateWalletPage from './pages/create'
-import ConsolePage from './pages/dashboard/console'
-import ContactsPage from './pages/dashboard/contacts'
 import TransactionsPage from './pages/dashboard/index'
 import SettingsPage from './pages/dashboard/settings'
-import VtxosPage from './pages/dashboard/vtxos'
 import ImportWalletPage from './pages/import'
 import './i18n'
 
@@ -63,9 +60,6 @@ export function App() {
               </Route>
               <Route element={<DashboardLayout />} path="/dashboard">
                 <Route element={<TransactionsPage />} index />
-                <Route element={<VtxosPage />} path="/dashboard/vtxos" />
-                <Route element={<ContactsPage />} path="/dashboard/contacts" />
-                <Route element={<ConsolePage />} path="/dashboard/console" />
                 <Route element={<SettingsPage />} path="/dashboard/settings" />
               </Route>
             </Route>

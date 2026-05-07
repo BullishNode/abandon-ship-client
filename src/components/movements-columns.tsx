@@ -1,22 +1,22 @@
 import type { Movement } from '@secondts/barkd'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { TFunction } from 'i18next'
-import type { FiatCurrency } from '@/types/price-providers'
 import { getMovementCounterparty } from '@/utils/movement'
 
 interface MovementColumnsOptions {
   t: TFunction
-  formatBitcoin: (sats: number) => string
+  formatSats: (sats: number) => string
   formatFiat: (sats: number) => string
   formatDate: (date: Date) => string
-  fiatCurrency: FiatCurrency
+  discreteMode: boolean
 }
 
 export function getMovementColumns({
   t,
-  formatBitcoin,
+  formatSats,
   formatFiat,
-  formatDate
+  formatDate,
+  discreteMode
 }: MovementColumnsOptions): ColumnDef<Movement>[] {
   return [
     {
@@ -34,10 +34,13 @@ export function getMovementColumns({
       accessorFn: (movement) => movement.effectiveBalanceSat,
       cell: ({ getValue }) => {
         const sats = getValue<number>()
+        if (discreteMode) {
+          return <span>{formatSats(sats)}</span>
+        }
         return (
           <span className={sats >= 0 ? 'text-green-500' : 'text-red-500'}>
             {sats >= 0 ? '+' : ''}
-            {formatBitcoin(sats)}
+            {formatSats(sats)}
           </span>
         )
       },
