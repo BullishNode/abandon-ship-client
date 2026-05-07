@@ -1,27 +1,30 @@
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
-import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Spinner } from '@/components/ui/spinner'
+import { useAutoCreateWallet } from '@/hooks/barkd/use-auto-create-wallet'
+import { useCheckWallet } from '@/hooks/barkd/use-check-wallet'
 
 export default function IndexPage() {
   const { t } = useTranslation()
+  const { data: walletExists } = useCheckWallet({ staleTime: 0 })
+  const { error } = useAutoCreateWallet({ enabled: walletExists === false })
+
+  if (error) {
+    return (
+      <Card className="min-w-sm shadow-none ring-0">
+        <CardHeader>
+          <CardTitle className="text-center font-bold text-3xl">{t('welcome.title')}</CardTitle>
+          <CardDescription className="text-pretty text-center text-destructive text-lg">
+            {error.message}
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
 
   return (
-    <Card className="min-w-sm shadow-none ring-0">
-      <CardHeader>
-        <CardTitle className="text-center font-bold text-3xl">{t('welcome.title')}</CardTitle>
-        <CardDescription className="text-pretty text-center text-foreground text-lg">
-          {t('welcome.description')}
-        </CardDescription>
-      </CardHeader>
-      <CardFooter className="flex-col gap-2">
-        <Button asChild className="w-full">
-          <Link to="/create">{t('onboarding.create')}</Link>
-        </Button>
-        <Button asChild className="w-full" variant="outline">
-          <Link to="/import">{t('onboarding.import')}</Link>
-        </Button>
-      </CardFooter>
-    </Card>
+    <div className="flex flex-col items-center gap-4">
+      <Spinner className="size-8" />
+    </div>
   )
 }

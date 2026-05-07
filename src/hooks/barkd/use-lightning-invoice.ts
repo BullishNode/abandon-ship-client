@@ -1,22 +1,29 @@
 import { LightningApi } from '@secondts/barkd'
-import type { InvoiceInfo, LightningInvoiceRequest } from '@secondts/barkd'
-import { useMutation } from '@tanstack/react-query'
-import type { UseMutationOptions } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { config } from '@/config/barkd'
+import { lightningKeys } from '@/lib/query-keys'
 
 const lightningApi = new LightningApi(config)
 
-export function useLightningInvoice(
-  options?: Omit<
-    UseMutationOptions<InvoiceInfo['invoice'], Error, LightningInvoiceRequest>,
-    'mutationFn'
-  >
-) {
-  return useMutation({
-    mutationFn: async (params: LightningInvoiceRequest) => {
-      const response = await lightningApi.generateInvoice({ lightningInvoiceRequest: params })
+interface UseLightningInvoiceOptions {
+  amountSat: number | undefined
+  enabled: boolean
+}
+
+export function useLightningInvoice({ amountSat, enabled }: UseLightningInvoiceOptions) {
+  return useQuery({
+    enabled: enabled && amountSat !== undefined,
+    queryFn: async () => {
+      if (amountSat === undefined) {
+        throw new Error('amountSat is required to generate an invoice')
+      }
+      const response = await lightningApi.generateInvoice({
+        lightningInvoiceRequest: { amountSat }
+      })
       return response.invoice
     },
-    ...options
+    queryKey: lightningKeys.invoice(amountSat),
+    retry: false,
+    staleTime: Number.POSITIVE_INFINITY
   })
 }

@@ -3,6 +3,7 @@ import type { FeeEstimateResponse } from '@secondts/barkd'
 import { useQuery } from '@tanstack/react-query'
 import type { UseQueryOptions } from '@tanstack/react-query'
 import { config } from '@/config/barkd'
+import { feeKeys } from '@/lib/query-keys'
 
 const feesApi = new FeesApi(config)
 
@@ -19,7 +20,7 @@ export function useLightningSendFee(
       const fee = await feesApi.lightningSendFee({ amountSat })
       return fee
     },
-    queryKey: ['fees', 'lightning', 'send', amountSat],
+    queryKey: feeKeys.lightningSend(amountSat),
     ...options
   })
 }

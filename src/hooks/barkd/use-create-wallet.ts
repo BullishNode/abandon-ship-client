@@ -3,6 +3,7 @@ import type { CreateWalletRequest } from '@secondts/barkd'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseMutationOptions } from '@tanstack/react-query'
 import { config } from '@/config/barkd'
+import { invalidateWalletExistence } from '@/lib/query-invalidations'
 import { useWalletStore } from '@/stores/wallet'
 
 const walletApi = new WalletApi(config)
@@ -42,7 +43,7 @@ export function useCreateWallet(
     mutationFn: createWallet,
     ...options,
     onSuccess: async (...args) => {
-      await queryClient.invalidateQueries({ queryKey: ['wallet', 'exists'] })
+      await invalidateWalletExistence(queryClient)
       options?.onSuccess?.(...args)
     }
   })

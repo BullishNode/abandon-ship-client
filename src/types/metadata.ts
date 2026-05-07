@@ -8,3 +8,11 @@ export interface Contact {
   name: string
   createdAt: string
 }
+
+export interface TransactionAnnotation {
+  txKey: string
+  label?: string
+  tags: string[]
+  contactId?: string
+  createdAt: string
+}

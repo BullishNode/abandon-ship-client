@@ -4,6 +4,8 @@ import { satsToBTC } from './bitcoin'
 
 const TRAILING_ZEROS_REGEX = /\.?0+$/
 
+export const PRIVACY_MASK = '•••••'
+
 export function formatCurrency(value: number, currency: FiatCurrency): string {
   return new Intl.NumberFormat(undefined, {
     currency: currency.toUpperCase(),

@@ -101,7 +101,7 @@ function ModalBody({
       return
     }
     setCanScrollUp(el.scrollTop > 0)
-    setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 1)
+    setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 4)
   }
 
   /* oxlint-disable @typescript-eslint/consistent-return */
@@ -140,7 +140,7 @@ function ModalBody({
       )}
       <div
         className={cn(
-          '-mx-1 min-h-0 flex-auto px-1',
+          'no-scrollbar -mx-1 -my-1 min-h-0 flex-auto px-1 py-1',
           canScrollUp || canScrollDown ? 'overflow-y-auto' : 'overflow-y-hidden',
           className
         )}

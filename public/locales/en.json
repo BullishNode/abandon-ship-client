@@ -88,6 +88,21 @@
     "details": "Additional details",
     "require": {
       "amount": "To generate a Lightning invoice enter an amount"
+    },
+    "payto": {
+      "description": "Share this QR code to receive on any supported network.",
+      "needs_amount": "Enter an amount to include a Lightning invoice in the unified URI."
+    },
+    "lightning": {
+      "needs_amount": "Enter an amount to generate a Lightning invoice.",
+      "generating": "Generating invoice...",
+      "fee": "Lightning receive fee"
+    },
+    "onchain": {
+      "description": "Receives on-chain bitcoin. You can board it into Ark later."
+    },
+    "success": {
+      "title": "Payment received"
     }
   },
   "amount": {
@@ -111,9 +126,11 @@
       "description": "Review the payment details before sending.",
       "button": "Confirm send"
     },
+    "choose_method": "Choose payment method",
+    "choose_method_description": "Multiple payment options available. Select preferred method.",
     "destination": "Destination",
     "destination.placeholder": "Address, invoice, or Lightning address",
-    "amount": "Amount (sats)",
+    "amount": "Amount",
     "fee": {
       "estimate": "Estimated fee"
     },
@@ -124,7 +141,16 @@
     "message.placeholder": "Enter a message",
     "branta": {
       "title": "Branta verification"
-    }
+    },
+    "route": {
+      "lightning": "Lightning",
+      "ark": "Ark",
+      "onchain_from_ark": "On-chain (from Ark)",
+      "onchain_from_wallet": "On-chain (from wallet)"
+    },
+    "pay_from": "Pay from",
+    "pay_from_ark": "Ark balance",
+    "pay_from_onchain": "On-chain wallet"
   },
   "contacts": {
     "label": "Contacts",
@@ -138,8 +164,14 @@
     "columns": {
       "from": "From",
       "date": "Date",
-      "amount_sats": "Amount (sats)",
-      "amount_fiat": "Amount (fiat)"
+      "amount_sats": "Amount",
+      "amount_fiat": "Amount"
+    }
+  },
+  "settings": {
+    "discrete_mode": {
+      "label": "Discrete mode",
+      "description": "Hide balance and transaction amounts"
     }
   }
 }

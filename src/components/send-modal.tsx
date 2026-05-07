@@ -1,5 +1,5 @@
 import { CaretDownIcon, ClipboardTextIcon } from '@phosphor-icons/react'
-import { decode } from 'bitcoin-decoder'
+import type { DecodedData, Destination } from 'bitcoin-decoder'
 import { AnimatePresence, m } from 'motion/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -12,21 +12,28 @@ import {
   ModalTitle
 } from '@/components/modal'
 import { QRScanner } from '@/components/qr-scanner'
+import { TagInput } from '@/components/tag-input'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useBrantaVerification } from '@/hooks/branta/use-branta-verification'
 import { useLightningSendFee } from '@/hooks/barkd/use-lightning-send-fee'
+import { useOnchainSend } from '@/hooks/barkd/use-onchain-send'
 import { useSend } from '@/hooks/barkd/use-send'
+import { useSendOnchain } from '@/hooks/barkd/use-send-onchain'
+import { useSendOnchainFee } from '@/hooks/barkd/use-send-onchain-fee'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
+import { useMetadataStore } from '@/stores/metadata'
+import type { SendRoute } from '@/utils/payment'
+import { getSendRoute, parsePaymentInput } from '@/utils/payment'
 
-type Step = 'scan' | 'send'
+type Step = 'scan' | 'choose-method' | 'send'
 
 interface SendModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  initialStep?: Step
+  initialStep?: 'scan' | 'send'
 }
 
 const slideVariants = {
@@ -44,38 +51,48 @@ const slideVariants = {
   }
 }
 
-async function parsePaymentInput(input: string) {
-  const trimmed = input.trim()
-
-  try {
-    const result = await decode(trimmed)
-    if (result.valid) {
-      return {
-        amountSats: result.metadata?.amount,
-        description: result.metadata?.description,
-        destination: result.destination.destination
-      }
-    }
-  } catch {
-    // Unrecognized format, treat as raw input
+function getRouteLabel(route: SendRoute, t: (key: string) => string): string {
+  if (route === 'ark') {
+    return t('send.route.ark')
   }
-
-  return {
-    amountSats: undefined,
-    description: undefined,
-    destination: trimmed
+  if (route === 'lightning') {
+    return t('send.route.lightning')
   }
+  if (route === 'onchain-from-ark') {
+    return t('send.route.onchain_from_ark')
+  }
+  return t('send.route.onchain_from_wallet')
+}
+
+function getDestinationTypeLabel(type: Destination['type']): string {
+  if (type === 'ark-address') {
+    return 'Ark'
+  }
+  if (type === 'bolt11' || type === 'lnaddress' || type === 'lnurl') {
+    return 'Lightning'
+  }
+  if (type === 'bolt12') {
+    return 'BOLT12 Offer'
+  }
+  return 'On-chain'
 }
 
 export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModalProps) {
   const { t } = useTranslation()
+  const formatBitcoin = useFormatBitcoin()
+  const setAnnotation = useMetadataStore((state) => state.setAnnotation)
+
   const [step, setStep] = useState<Step>(initialStep)
   const [direction, setDirection] = useState(1)
   const [destination, setDestination] = useState('')
   const [amount, setAmount] = useState('')
   const [label, setLabel] = useState('')
   const [message, setMessage] = useState('')
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [rawQrInput, setRawQrInput] = useState('')
+  const [parsed, setParsed] = useState<DecodedData | undefined>()
+  const [selectedMethodType, setSelectedMethodType] = useState<Destination['type'] | undefined>()
+  const [sendRoute, setSendRoute] = useState<SendRoute>('lightning')
   const [prevOpen, setPrevOpen] = useState(open)
 
   if (open && !prevOpen) {
@@ -85,23 +102,43 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
     setAmount('')
     setLabel('')
     setMessage('')
+    setSelectedTags([])
     setRawQrInput('')
+    setParsed(undefined)
+    setSelectedMethodType(undefined)
+    setSendRoute('lightning')
   }
 
   if (open !== prevOpen) {
     setPrevOpen(open)
   }
-  const { mutate: send, isPending: isSending } = useSend({
-    onSuccess: () => {
-      handleClose()
-    }
+
+  const { mutate: send, isPending: isSendingArk } = useSend({
+    onSuccess: () => handleSendSuccess()
   })
 
-  const formatBitcoin = useFormatBitcoin()
+  const { mutate: sendOnchain, isPending: isSendingOnchain } = useSendOnchain({
+    onSuccess: () => handleSendSuccess()
+  })
+
+  const { mutate: onchainSend, isPending: isSendingFromWallet } = useOnchainSend({
+    onSuccess: () => handleSendSuccess()
+  })
+
   const amountSat = Number.parseInt(amount, 10)
-  const { data: feeEstimate, isFetching: isFetchingFee } = useLightningSendFee(
-    Number.isNaN(amountSat) ? undefined : amountSat
+  const validAmountSat = Number.isNaN(amountSat) || amountSat <= 0 ? undefined : amountSat
+
+  const isOnchainRoute = sendRoute === 'onchain-from-ark' || sendRoute === 'onchain-from-wallet'
+  const { data: lightningSendFee, isFetching: isFetchingLnFee } = useLightningSendFee(
+    isOnchainRoute ? undefined : validAmountSat
   )
+  const { data: onchainSendFee, isFetching: isFetchingOnchainFee } = useSendOnchainFee(
+    isOnchainRoute ? validAmountSat : undefined,
+    isOnchainRoute ? destination : undefined
+  )
+
+  const feeEstimate = isOnchainRoute ? onchainSendFee : lightningSendFee
+  const isFetchingFee = isOnchainRoute ? isFetchingOnchainFee : isFetchingLnFee
 
   let feeDisplay = '—'
   if (isFetchingFee) {
@@ -115,27 +152,75 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
   )
   const brantaPayment = brantaPayments?.[0]
 
+  const isSending = isSendingArk || isSendingOnchain || isSendingFromWallet
+
   function handleClose() {
     onOpenChange(false)
-    setStep(initialStep)
-    setDirection(1)
-    setDestination('')
-    setAmount('')
-    setLabel('')
-    setMessage('')
-    setRawQrInput('')
+  }
+
+  function handleSendSuccess() {
+    const txKey = `${destination}:${amount}:${Date.now()}`
+    const hasLabel = label !== ''
+    const hasTags = selectedTags.length > 0
+    if (hasLabel || hasTags) {
+      setAnnotation(txKey, {
+        label: hasLabel ? label : undefined,
+        tags: selectedTags
+      })
+    }
+    handleClose()
   }
 
   async function goToSend(input: string) {
     setRawQrInput(input)
-    const parsed = await parsePaymentInput(input)
-    setDestination(parsed.destination)
-    if (parsed.amountSats !== undefined && parsed.amountSats !== 0) {
-      setAmount(String(parsed.amountSats))
+    const decoded = await parsePaymentInput(input)
+    setParsed(decoded)
+
+    if (!decoded.valid) {
+      setDestination(input.trim())
+      setDirection(1)
+      setStep('send')
+      return
     }
-    if (parsed.description !== undefined && parsed.description !== '') {
-      setMessage(parsed.description)
+
+    const amountSats = decoded.metadata?.amount
+    const description = decoded.metadata?.description
+
+    if (decoded.destinations.length > 1) {
+      setSelectedMethodType(decoded.destination.type)
+      setDirection(1)
+      setStep('choose-method')
+
+      if (amountSats !== undefined && amountSats !== 0) {
+        setAmount(String(amountSats))
+      }
+      if (description !== undefined && description !== '') {
+        setLabel(description)
+      }
+      return
     }
+
+    setDestination(decoded.destination.destination)
+    setSendRoute(getSendRoute(decoded.destination.type))
+
+    if (amountSats !== undefined && amountSats !== 0) {
+      setAmount(String(amountSats))
+    }
+    if (description !== undefined && description !== '') {
+      setLabel(description)
+    }
+
+    setDirection(1)
+    setStep('send')
+  }
+
+  function handleChooseMethodConfirm() {
+    if (parsed?.valid !== true || selectedMethodType === undefined) {
+      return
+    }
+    const match = parsed.destinations.find((d) => d.type === selectedMethodType)
+    setDestination(match?.destination ?? parsed.destination.destination)
+    setSendRoute(getSendRoute(selectedMethodType))
     setDirection(1)
     setStep('send')
   }
@@ -146,10 +231,15 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
     setRawQrInput('')
   }
 
+  function goBackFromChooseMethod() {
+    setDirection(-1)
+    setStep('scan')
+  }
+
   async function handlePaste() {
     try {
       const text = await navigator.clipboard.readText()
-      if (text.trim()) {
+      if (text.trim() !== '') {
         void goToSend(text)
       }
     } catch {
@@ -158,15 +248,45 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
   }
 
   function handleConfirmSend() {
-    const amountSats = Number.parseInt(amount, 10)
-    send({
-      amountSat: Number.isNaN(amountSats) ? undefined : amountSats,
-      comment: message || undefined,
-      destination
-    })
+    const sendAmountSat = validAmountSat
+
+    if (sendRoute === 'ark' || sendRoute === 'lightning') {
+      send({
+        amountSat: sendAmountSat,
+        comment: message === '' ? undefined : message,
+        destination
+      })
+    } else if (sendRoute === 'onchain-from-ark') {
+      if (sendAmountSat === undefined) {
+        return
+      }
+      sendOnchain({
+        amountSat: sendAmountSat,
+        destination
+      })
+    } else {
+      if (sendAmountSat === undefined) {
+        return
+      }
+      onchainSend({
+        amountSat: sendAmountSat,
+        destination
+      })
+    }
   }
 
   const canSend = destination.trim().length > 0
+
+  const chooserDestinations = parsed?.valid === true ? parsed.destinations : []
+
+  const currentDestinationType =
+    selectedMethodType ?? (parsed?.valid === true ? parsed.destination.type : undefined)
+
+  const isAmountLocked =
+    parsed?.valid === true &&
+    (currentDestinationType === 'bolt11' || currentDestinationType === 'bolt12') &&
+    parsed.metadata?.amount !== undefined &&
+    parsed.metadata.amount > 0
 
   return (
     <Modal onClose={handleClose} setShowModal={onOpenChange} showModal={open}>
@@ -204,6 +324,55 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
               </ModalFooter>
             </m.div>
           )}
+          {step === 'choose-method' && (
+            <m.div
+              animate="center"
+              className="flex min-h-0 flex-1 flex-col gap-6"
+              custom={direction}
+              exit="exit"
+              initial="enter"
+              key="choose-method"
+              transition={{
+                opacity: { duration: 0.1 },
+                x: { damping: 30, stiffness: 300, type: 'spring' }
+              }}
+              variants={slideVariants}
+            >
+              <ModalHeader>
+                <ModalTitle>{t('send.choose_method')}</ModalTitle>
+                <ModalDescription>{t('send.choose_method_description')}</ModalDescription>
+              </ModalHeader>
+              <ModalBody className="flex flex-col gap-2">
+                {chooserDestinations.map((dest) => (
+                  <button
+                    className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
+                      selectedMethodType === dest.type
+                        ? 'border-foreground bg-muted'
+                        : 'border-border hover:bg-muted/50'
+                    }`}
+                    key={`${dest.type}-${dest.destination}`}
+                    onClick={() => setSelectedMethodType(dest.type)}
+                    type="button"
+                  >
+                    <span className="font-medium text-sm">
+                      {getDestinationTypeLabel(dest.type)}
+                    </span>
+                  </button>
+                ))}
+              </ModalBody>
+              <ModalFooter>
+                <Button onClick={goBackFromChooseMethod} variant="outline">
+                  {t('actions.back')}
+                </Button>
+                <Button
+                  disabled={selectedMethodType === undefined}
+                  onClick={handleChooseMethodConfirm}
+                >
+                  {t('actions.continue')}
+                </Button>
+              </ModalFooter>
+            </m.div>
+          )}
           {step === 'send' && (
             <m.div
               animate="center"
@@ -224,10 +393,24 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
               </ModalHeader>
               <ModalBody className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="destination">{t('send.destination')}</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="destination">{t('send.destination')}</Label>
+                    {destination.trim() !== '' && (
+                      <span className="text-muted-foreground text-xs">
+                        {getRouteLabel(sendRoute, t)}
+                      </span>
+                    )}
+                  </div>
                   <Input
                     id="destination"
                     onChange={(e) => setDestination(e.target.value)}
+                    onPaste={(e) => {
+                      const text = e.clipboardData.getData('text').trim()
+                      if (text !== '') {
+                        e.preventDefault()
+                        void goToSend(text)
+                      }
+                    }}
                     placeholder={t('send.destination.placeholder')}
                     type="text"
                     value={destination}
@@ -236,6 +419,8 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="send-amount">{t('send.amount')}</Label>
                   <Input
+                    disabled={isAmountLocked}
+                    endTextAddOn={t('bitcoin.sats_unit_other')}
                     id="send-amount"
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="0"
@@ -253,7 +438,7 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                     <span className="text-muted-foreground animate-pulse text-sm">...</span>
                   </div>
                 )}
-                {!isFetchingBranta && brantaPayment && (
+                {!isFetchingBranta && brantaPayment !== undefined && (
                   <div className="flex flex-col gap-2">
                     <Label className="text-muted-foreground">{t('send.branta.title')}</Label>
                     <a
@@ -305,6 +490,10 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                         type="text"
                         value={message}
                       />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Label>{t('tags.label')}</Label>
+                      <TagInput onChange={setSelectedTags} value={selectedTags} />
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
