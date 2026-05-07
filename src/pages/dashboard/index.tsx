@@ -19,7 +19,7 @@ export default function TransactionsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4 items-center">
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-col justify-center">
             <p className="font-bold text-4xl">{formatSats(balanceSats)}</p>
