@@ -1,12 +1,9 @@
-import { WalletApi } from '@secondts/barkd'
 import type { CreateWalletRequest } from '@secondts/barkd'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseMutationOptions } from '@tanstack/react-query'
-import { config } from '@/config/barkd'
+import { walletApi } from '@/lib/barkd-client'
 import { invalidateWalletExistence } from '@/lib/query-invalidations'
 import { useWalletStore } from '@/stores/wallet'
-
-const walletApi = new WalletApi(config)
 interface CreateWalletParams extends CreateWalletRequest {
   name: string
   mnemonic: string

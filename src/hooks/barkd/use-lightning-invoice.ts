@@ -1,9 +1,6 @@
-import { LightningApi } from '@secondts/barkd'
 import { useQuery } from '@tanstack/react-query'
-import { config } from '@/config/barkd'
+import { lightningApi } from '@/lib/barkd-client'
 import { lightningKeys } from '@/lib/query-keys'
-
-const lightningApi = new LightningApi(config)
 
 interface UseLightningInvoiceOptions {
   amountSat: number | undefined

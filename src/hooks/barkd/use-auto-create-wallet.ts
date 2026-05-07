@@ -1,13 +1,11 @@
 import { generateMnemonic } from '@scure/bip39'
 import { wordlist } from '@scure/bip39/wordlists/english.js'
-import { BarkNetwork, WalletApi } from '@secondts/barkd'
+import { BarkNetwork } from '@secondts/barkd'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { config } from '@/config/barkd'
+import { walletApi } from '@/lib/barkd-client'
 import { invalidateWalletExistence } from '@/lib/query-invalidations'
 import { walletKeys } from '@/lib/query-keys'
 import { useWalletStore } from '@/stores/wallet'
-
-const walletApi = new WalletApi(config)
 
 const DEFAULT_WALLET_NAME = 'My wallet'
 const DEFAULT_ARK_SERVER = 'https://ark.signet.2nd.dev'

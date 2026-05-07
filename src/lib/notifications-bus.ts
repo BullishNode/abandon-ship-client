@@ -1,7 +1,7 @@
-import { NotificationsApi, WalletNotificationFromJSON } from '@secondts/barkd'
+import { WalletNotificationFromJSON } from '@secondts/barkd'
 import type { WalletNotification } from '@secondts/barkd'
 import ReconnectingWebSocket from 'partysocket/ws'
-import { config } from '@/config/barkd'
+import { notificationsApi } from '@/lib/barkd-client'
 
 type Listener = (notification: WalletNotification) => void
 
@@ -9,7 +9,6 @@ const MIN_RECONNECT_DELAY_MS = 1000
 const MAX_RECONNECT_DELAY_MS = 30_000
 const RECONNECT_GROW_FACTOR = 2
 
-const notificationsApi = new NotificationsApi(config)
 const listeners = new Set<Listener>()
 
 let socket: ReconnectingWebSocket | null = null

@@ -1,10 +1,7 @@
-import { OnchainApi } from '@secondts/barkd'
 import type { Address } from '@secondts/barkd'
 import { useMutation } from '@tanstack/react-query'
 import type { UseMutationOptions } from '@tanstack/react-query'
-import { config } from '@/config/barkd'
-
-const onchainApi = new OnchainApi(config)
+import { onchainApi } from '@/lib/barkd-client'
 
 export function useOnchainAddress(
   options?: Omit<UseMutationOptions<Address['address']>, 'mutationFn'>

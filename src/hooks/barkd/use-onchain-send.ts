@@ -1,11 +1,8 @@
-import { OnchainApi } from '@secondts/barkd'
 import type { OnchainSendRequest, Send } from '@secondts/barkd'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseMutationOptions } from '@tanstack/react-query'
-import { config } from '@/config/barkd'
+import { onchainApi } from '@/lib/barkd-client'
 import { invalidateOnchainState } from '@/lib/query-invalidations'
-
-const onchainApi = new OnchainApi(config)
 
 export function useOnchainSend(
   options?: Omit<UseMutationOptions<Send, Error, OnchainSendRequest>, 'mutationFn'>
