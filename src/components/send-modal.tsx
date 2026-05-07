@@ -1,7 +1,6 @@
 import { CaretDownIcon, ClipboardTextIcon } from '@phosphor-icons/react'
-import type { DecodedData, Destination } from 'bitcoin-decoder'
+import type { Destination } from 'bitcoin-decoder'
 import { AnimatePresence, m } from 'motion/react'
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Modal,
@@ -17,18 +16,8 @@ import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useBrantaVerification } from '@/hooks/branta/use-branta-verification'
-import { useLightningSendFee } from '@/hooks/barkd/use-lightning-send-fee'
-import { useOnchainSend } from '@/hooks/barkd/use-onchain-send'
-import { useSend } from '@/hooks/barkd/use-send'
-import { useSendOnchain } from '@/hooks/barkd/use-send-onchain'
-import { useSendOnchainFee } from '@/hooks/barkd/use-send-onchain-fee'
-import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
-import { useMetadataStore } from '@/stores/metadata'
+import { useSendFlow } from '@/hooks/use-send-flow'
 import type { SendRoute } from '@/utils/payment'
-import { getSendRoute, parsePaymentInput } from '@/utils/payment'
-
-type Step = 'scan' | 'choose-method' | 'send'
 
 interface SendModalProps {
   open: boolean
@@ -79,224 +68,17 @@ function getDestinationTypeLabel(type: Destination['type']): string {
 
 export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModalProps) {
   const { t } = useTranslation()
-  const formatBitcoin = useFormatBitcoin()
-  const setAnnotation = useMetadataStore((state) => state.setAnnotation)
-
-  const [step, setStep] = useState<Step>(initialStep)
-  const [direction, setDirection] = useState(1)
-  const [destination, setDestination] = useState('')
-  const [amount, setAmount] = useState('')
-  const [label, setLabel] = useState('')
-  const [message, setMessage] = useState('')
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [rawQrInput, setRawQrInput] = useState('')
-  const [parsed, setParsed] = useState<DecodedData | undefined>()
-  const [selectedMethodType, setSelectedMethodType] = useState<Destination['type'] | undefined>()
-  const [sendRoute, setSendRoute] = useState<SendRoute>('lightning')
-  const [prevOpen, setPrevOpen] = useState(open)
-
-  if (open && !prevOpen) {
-    setStep(initialStep)
-    setDirection(1)
-    setDestination('')
-    setAmount('')
-    setLabel('')
-    setMessage('')
-    setSelectedTags([])
-    setRawQrInput('')
-    setParsed(undefined)
-    setSelectedMethodType(undefined)
-    setSendRoute('lightning')
-  }
-
-  if (open !== prevOpen) {
-    setPrevOpen(open)
-  }
-
-  const { mutate: send, isPending: isSendingArk } = useSend({
-    onSuccess: () => handleSendSuccess()
-  })
-
-  const { mutate: sendOnchain, isPending: isSendingOnchain } = useSendOnchain({
-    onSuccess: () => handleSendSuccess()
-  })
-
-  const { mutate: onchainSend, isPending: isSendingFromWallet } = useOnchainSend({
-    onSuccess: () => handleSendSuccess()
-  })
-
-  const amountSat = Number.parseInt(amount, 10)
-  const validAmountSat = Number.isNaN(amountSat) || amountSat <= 0 ? undefined : amountSat
-
-  const isOnchainRoute = sendRoute === 'onchain-from-ark' || sendRoute === 'onchain-from-wallet'
-  const { data: lightningSendFee, isFetching: isFetchingLnFee } = useLightningSendFee(
-    isOnchainRoute ? undefined : validAmountSat
-  )
-  const { data: onchainSendFee, isFetching: isFetchingOnchainFee } = useSendOnchainFee(
-    isOnchainRoute ? validAmountSat : undefined,
-    isOnchainRoute ? destination : undefined
-  )
-
-  const feeEstimate = isOnchainRoute ? onchainSendFee : lightningSendFee
-  const isFetchingFee = isOnchainRoute ? isFetchingOnchainFee : isFetchingLnFee
-
-  let feeDisplay = '—'
-  if (isFetchingFee) {
-    feeDisplay = '...'
-  } else if (feeEstimate) {
-    feeDisplay = formatBitcoin(feeEstimate.feeSat)
-  }
-
-  const { data: brantaPayments, isFetching: isFetchingBranta } = useBrantaVerification(
-    step === 'send' ? rawQrInput : undefined
-  )
-  const brantaPayment = brantaPayments?.[0]
-
-  const isSending = isSendingArk || isSendingOnchain || isSendingFromWallet
-
-  function handleClose() {
-    onOpenChange(false)
-  }
-
-  function handleSendSuccess() {
-    const txKey = `${destination}:${amount}:${Date.now()}`
-    const hasLabel = label !== ''
-    const hasTags = selectedTags.length > 0
-    if (hasLabel || hasTags) {
-      setAnnotation(txKey, {
-        label: hasLabel ? label : undefined,
-        tags: selectedTags
-      })
-    }
-    handleClose()
-  }
-
-  async function goToSend(input: string) {
-    setRawQrInput(input)
-    const decoded = await parsePaymentInput(input)
-    setParsed(decoded)
-
-    if (!decoded.valid) {
-      setDestination(input.trim())
-      setDirection(1)
-      setStep('send')
-      return
-    }
-
-    const amountSats = decoded.metadata?.amount
-    const description = decoded.metadata?.description
-
-    if (decoded.destinations.length > 1) {
-      setSelectedMethodType(decoded.destination.type)
-      setDirection(1)
-      setStep('choose-method')
-
-      if (amountSats !== undefined && amountSats !== 0) {
-        setAmount(String(amountSats))
-      }
-      if (description !== undefined && description !== '') {
-        setLabel(description)
-      }
-      return
-    }
-
-    setDestination(decoded.destination.destination)
-    setSendRoute(getSendRoute(decoded.destination.type))
-
-    if (amountSats !== undefined && amountSats !== 0) {
-      setAmount(String(amountSats))
-    }
-    if (description !== undefined && description !== '') {
-      setLabel(description)
-    }
-
-    setDirection(1)
-    setStep('send')
-  }
-
-  function handleChooseMethodConfirm() {
-    if (parsed?.valid !== true || selectedMethodType === undefined) {
-      return
-    }
-    const match = parsed.destinations.find((d) => d.type === selectedMethodType)
-    setDestination(match?.destination ?? parsed.destination.destination)
-    setSendRoute(getSendRoute(selectedMethodType))
-    setDirection(1)
-    setStep('send')
-  }
-
-  function goToScan() {
-    setDirection(-1)
-    setStep('scan')
-    setRawQrInput('')
-  }
-
-  function goBackFromChooseMethod() {
-    setDirection(-1)
-    setStep('scan')
-  }
-
-  async function handlePaste() {
-    try {
-      const text = await navigator.clipboard.readText()
-      if (text.trim() !== '') {
-        void goToSend(text)
-      }
-    } catch {
-      // Clipboard access denied
-    }
-  }
-
-  function handleConfirmSend() {
-    const sendAmountSat = validAmountSat
-
-    if (sendRoute === 'ark' || sendRoute === 'lightning') {
-      send({
-        amountSat: sendAmountSat,
-        comment: message === '' ? undefined : message,
-        destination
-      })
-    } else if (sendRoute === 'onchain-from-ark') {
-      if (sendAmountSat === undefined) {
-        return
-      }
-      sendOnchain({
-        amountSat: sendAmountSat,
-        destination
-      })
-    } else {
-      if (sendAmountSat === undefined) {
-        return
-      }
-      onchainSend({
-        amountSat: sendAmountSat,
-        destination
-      })
-    }
-  }
-
-  const canSend = destination.trim().length > 0
-
-  const chooserDestinations = parsed?.valid === true ? parsed.destinations : []
-
-  const currentDestinationType =
-    selectedMethodType ?? (parsed?.valid === true ? parsed.destination.type : undefined)
-
-  const isAmountLocked =
-    parsed?.valid === true &&
-    (currentDestinationType === 'bolt11' || currentDestinationType === 'bolt12') &&
-    parsed.metadata?.amount !== undefined &&
-    parsed.metadata.amount > 0
+  const flow = useSendFlow({ initialStep, onOpenChange, open })
 
   return (
-    <Modal onClose={handleClose} setShowModal={onOpenChange} showModal={open}>
+    <Modal onClose={flow.handleClose} setShowModal={onOpenChange} showModal={open}>
       <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-6 overflow-hidden px-1">
-        <AnimatePresence custom={direction} initial={false} mode="popLayout">
-          {step === 'scan' && (
+        <AnimatePresence custom={flow.direction} initial={false} mode="popLayout">
+          {flow.step === 'scan' && (
             <m.div
               animate="center"
               className="flex min-h-0 flex-1 flex-col gap-6"
-              custom={direction}
+              custom={flow.direction}
               exit="exit"
               initial="enter"
               key="scan"
@@ -313,22 +95,22 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
               <ModalBody>
                 <QRScanner
                   className="mx-auto aspect-square w-full"
-                  onScan={(v) => void goToSend(v)}
+                  onScan={(v) => void flow.goToSend(v)}
                 />
               </ModalBody>
               <ModalFooter className="items-center">
-                <Button onClick={() => void handlePaste()} variant="outline">
+                <Button onClick={() => void flow.handlePaste()} variant="outline">
                   <ClipboardTextIcon />
                   {t('actions.paste')}
                 </Button>
               </ModalFooter>
             </m.div>
           )}
-          {step === 'choose-method' && (
+          {flow.step === 'choose-method' && (
             <m.div
               animate="center"
               className="flex min-h-0 flex-1 flex-col gap-6"
-              custom={direction}
+              custom={flow.direction}
               exit="exit"
               initial="enter"
               key="choose-method"
@@ -343,15 +125,15 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                 <ModalDescription>{t('send.choose_method_description')}</ModalDescription>
               </ModalHeader>
               <ModalBody className="flex flex-col gap-2">
-                {chooserDestinations.map((dest) => (
+                {flow.chooserDestinations.map((dest) => (
                   <button
                     className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
-                      selectedMethodType === dest.type
+                      flow.selectedMethodType === dest.type
                         ? 'border-foreground bg-muted'
                         : 'border-border hover:bg-muted/50'
                     }`}
                     key={`${dest.type}-${dest.destination}`}
-                    onClick={() => setSelectedMethodType(dest.type)}
+                    onClick={() => flow.setSelectedMethodType(dest.type)}
                     type="button"
                   >
                     <span className="font-medium text-sm">
@@ -361,23 +143,23 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                 ))}
               </ModalBody>
               <ModalFooter>
-                <Button onClick={goBackFromChooseMethod} variant="outline">
+                <Button onClick={flow.goBackFromChooseMethod} variant="outline">
                   {t('actions.back')}
                 </Button>
                 <Button
-                  disabled={selectedMethodType === undefined}
-                  onClick={handleChooseMethodConfirm}
+                  disabled={flow.selectedMethodType === undefined}
+                  onClick={flow.handleChooseMethodConfirm}
                 >
                   {t('actions.continue')}
                 </Button>
               </ModalFooter>
             </m.div>
           )}
-          {step === 'send' && (
+          {flow.step === 'send' && (
             <m.div
               animate="center"
               className="flex min-h-0 flex-1 flex-col gap-6"
-              custom={direction}
+              custom={flow.direction}
               exit="exit"
               initial="enter"
               key="send"
@@ -395,71 +177,72 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="destination">{t('send.destination')}</Label>
-                    {destination.trim() !== '' && (
+                    {flow.destination.trim() !== '' && (
                       <span className="text-muted-foreground text-xs">
-                        {getRouteLabel(sendRoute, t)}
+                        {getRouteLabel(flow.sendRoute, t)}
                       </span>
                     )}
                   </div>
                   <Input
                     id="destination"
-                    onChange={(e) => setDestination(e.target.value)}
+                    onChange={(e) => flow.setDestination(e.target.value)}
                     onPaste={(e) => {
                       const text = e.clipboardData.getData('text').trim()
                       if (text !== '') {
                         e.preventDefault()
-                        void goToSend(text)
+                        void flow.goToSend(text)
                       }
                     }}
                     placeholder={t('send.destination.placeholder')}
                     type="text"
-                    value={destination}
+                    value={flow.destination}
                   />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="send-amount">{t('send.amount')}</Label>
                   <Input
-                    disabled={isAmountLocked}
+                    disabled={flow.isAmountLocked}
                     endTextAddOn={t('bitcoin.sats_unit_other')}
                     id="send-amount"
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(e) => flow.setAmount(e.target.value)}
                     placeholder="0"
                     type="text"
-                    value={amount}
+                    value={flow.amount}
                   />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label className="text-muted-foreground">{t('send.fee.estimate')}</Label>
-                  <span className="text-muted-foreground text-sm">{feeDisplay}</span>
+                  <span className="text-muted-foreground text-sm">{flow.feeDisplay}</span>
                 </div>
-                {isFetchingBranta && (
+                {flow.isFetchingBranta && (
                   <div className="flex flex-col gap-2">
                     <Label className="text-muted-foreground">{t('send.branta.title')}</Label>
                     <span className="text-muted-foreground animate-pulse text-sm">...</span>
                   </div>
                 )}
-                {!isFetchingBranta && brantaPayment !== undefined && (
+                {!flow.isFetchingBranta && flow.brantaPayment !== undefined && (
                   <div className="flex flex-col gap-2">
                     <Label className="text-muted-foreground">{t('send.branta.title')}</Label>
                     <a
                       className="flex items-center gap-2 text-sm"
-                      href={brantaPayment.verifyUrl}
+                      href={flow.brantaPayment.verifyUrl}
                       rel="noopener"
                       target="_blank"
                     >
-                      {(brantaPayment.platformLogoLightUrl ?? brantaPayment.platformLogoUrl) !==
-                        undefined &&
-                        (brantaPayment.platformLogoLightUrl ?? brantaPayment.platformLogoUrl) !==
-                          '' && (
+                      {(flow.brantaPayment.platformLogoLightUrl ??
+                        flow.brantaPayment.platformLogoUrl) !== undefined &&
+                        (flow.brantaPayment.platformLogoLightUrl ??
+                          flow.brantaPayment.platformLogoUrl) !== '' && (
                           <img
-                            alt={brantaPayment.platform ?? ''}
-                            className={`max-h-6 w-auto rounded object-contain p-0.5${brantaPayment.platformLogoLightUrl !== undefined && brantaPayment.platformLogoLightUrl !== '' ? '' : ' bg-black'}`}
+                            alt={flow.brantaPayment.platform ?? ''}
+                            className={`max-h-6 w-auto rounded object-contain p-0.5${flow.brantaPayment.platformLogoLightUrl !== undefined && flow.brantaPayment.platformLogoLightUrl !== '' ? '' : ' bg-black'}`}
                             src={
-                              brantaPayment.platformLogoLightUrl ?? brantaPayment.platformLogoUrl
+                              flow.brantaPayment.platformLogoLightUrl ??
+                              flow.brantaPayment.platformLogoUrl
                             }
                           />
                         )}
-                      {brantaPayment.platform}
+                      {flow.brantaPayment.platform}
                     </a>
                   </div>
                 )}
@@ -475,34 +258,38 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                       <Label htmlFor="send-label">{t('send.label')}</Label>
                       <Input
                         id="send-label"
-                        onChange={(e) => setLabel(e.target.value)}
+                        onChange={(e) => flow.setLabel(e.target.value)}
                         placeholder={t('send.label.placeholder')}
                         type="text"
-                        value={label}
+                        value={flow.label}
                       />
                     </div>
                     <div className="flex flex-col gap-2">
                       <Label htmlFor="send-message">{t('send.message')}</Label>
                       <Input
                         id="send-message"
-                        onChange={(e) => setMessage(e.target.value)}
+                        onChange={(e) => flow.setMessage(e.target.value)}
                         placeholder={t('send.message.placeholder')}
                         type="text"
-                        value={message}
+                        value={flow.message}
                       />
                     </div>
                     <div className="flex flex-col gap-2">
                       <Label>{t('tags.label')}</Label>
-                      <TagInput onChange={setSelectedTags} value={selectedTags} />
+                      <TagInput onChange={flow.setSelectedTags} value={flow.selectedTags} />
                     </div>
                   </CollapsibleContent>
                 </Collapsible>
               </ModalBody>
               <ModalFooter>
-                <Button onClick={goToScan} variant="outline">
+                <Button onClick={flow.goToScan} variant="outline">
                   {t('actions.back')}
                 </Button>
-                <Button disabled={!canSend} loading={isSending} onClick={handleConfirmSend}>
+                <Button
+                  disabled={!flow.canSend}
+                  loading={flow.isSending}
+                  onClick={flow.handleConfirmSend}
+                >
                   {t('send.confirm.button')}
                 </Button>
               </ModalFooter>

@@ -1,7 +1,5 @@
 import { CaretDownIcon, CheckCircleIcon } from '@phosphor-icons/react'
-import { encodeBIP321 } from 'bip-321'
 import { m } from 'motion/react'
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CopyAddressButton } from '@/components/copy-address-button'
 import {
@@ -19,227 +17,34 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useLightningInvoice } from '@/hooks/barkd/use-lightning-invoice'
-import { useLightningReceiveFee } from '@/hooks/barkd/use-lightning-receive-fee'
-import { useOnchainAddress } from '@/hooks/barkd/use-onchain-address'
-import { useReceivedPayment } from '@/hooks/barkd/use-received-payment'
-import { useWalletAddress } from '@/hooks/barkd/use-wallet-address'
-import { useDebounce } from '@/hooks/use-debounce'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
-import { useMetadataStore } from '@/stores/metadata'
-
-const INVOICE_DEBOUNCE_MS = 300
-const RECEIVED_AUTO_CLOSE_MS = 1800
-
-type ReceiveTab = 'payto' | 'ark' | 'lightning' | 'onchain'
+import { useReceiveFlow } from '@/hooks/use-receive-flow'
 
 interface ReceiveModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
-function buildPaytoUri(
-  onchainAddress: string | undefined,
-  arkAddress: string | undefined,
-  lightningInvoice: string | undefined,
-  amountBtc: number | undefined
-): string | undefined {
-  const hasOnchain = onchainAddress !== undefined && onchainAddress !== ''
-  const hasArk = arkAddress !== undefined && arkAddress !== ''
-  if (!hasOnchain && !hasArk) {
-    return undefined
-  }
-
-  try {
-    const result = encodeBIP321({
-      address: hasOnchain ? onchainAddress : undefined,
-      amount: amountBtc,
-      ark: hasArk ? arkAddress : undefined,
-      lightning:
-        lightningInvoice !== undefined && lightningInvoice !== '' ? lightningInvoice : undefined
-    })
-    return result.uri
-  } catch {
-    return undefined
-  }
-}
-
-function getLoadingForTab(
-  activeTab: ReceiveTab,
-  isFetchingArkAddress: boolean,
-  isGeneratingInvoice: boolean,
-  isFetchingOnchainAddress: boolean
-): boolean {
-  if (activeTab === 'ark') {
-    return isFetchingArkAddress
-  }
-  if (activeTab === 'lightning') {
-    return isGeneratingInvoice
-  }
-  if (activeTab === 'onchain') {
-    return isFetchingOnchainAddress
-  }
-  return isFetchingArkAddress || isFetchingOnchainAddress
-}
-
 export function ReceiveModal({ open, onOpenChange }: ReceiveModalProps) {
   const { t } = useTranslation()
-  const formatBitcoin = useFormatBitcoin()
+  const flow = useReceiveFlow({ onOpenChange, open })
 
-  const [activeTab, setActiveTab] = useState<ReceiveTab>('payto')
-  const [amount, setAmount] = useState('')
-  const [label, setLabel] = useState('')
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [receivedAmountSat, setReceivedAmountSat] = useState<number | undefined>()
-  const [prevOpen, setPrevOpen] = useState(open)
-
-  const setAnnotation = useMetadataStore((state) => state.setAnnotation)
-
-  const amountSat = Number.parseInt(amount, 10)
-  const validAmount = Number.isNaN(amountSat) || amountSat <= 0 ? undefined : amountSat
-  const amountBtc = validAmount === undefined ? undefined : validAmount / 1e8
-  const debouncedAmount = useDebounce(validAmount, INVOICE_DEBOUNCE_MS)
-
-  const {
-    mutate: fetchArkAddress,
-    data: arkAddress,
-    isPending: isFetchingArkAddress
-  } = useWalletAddress()
-
-  const {
-    data: lightningInvoice,
-    isFetching: isGeneratingInvoice,
-    refetch: regenerateInvoice
-  } = useLightningInvoice({
-    amountSat: debouncedAmount,
-    enabled: activeTab === 'lightning'
-  })
-
-  const {
-    mutate: fetchOnchainAddress,
-    data: onchainAddress,
-    isPending: isFetchingOnchainAddress
-  } = useOnchainAddress()
-
-  if (open && !prevOpen) {
-    setActiveTab('payto')
-    setAmount('')
-    setLabel('')
-    setSelectedTags([])
-    setReceivedAmountSat(undefined)
-    fetchArkAddress()
-    fetchOnchainAddress()
-  }
-
-  useReceivedPayment(
-    (movement) => {
-      if (!open || receivedAmountSat !== undefined) {
-        return
-      }
-      setReceivedAmountSat(movement.effectiveBalanceSat)
-      window.setTimeout(() => {
-        onOpenChange(false)
-      }, RECEIVED_AUTO_CLOSE_MS)
-    },
-    { enabled: open }
-  )
-
-  if (open !== prevOpen) {
-    setPrevOpen(open)
-  }
-
-  const { data: receiveFee } = useLightningReceiveFee(validAmount)
-
-  const paytoUri = buildPaytoUri(onchainAddress, arkAddress, lightningInvoice, amountBtc)
-
-  function handleTabChange(value: string) {
-    if (value === 'payto' || value === 'ark' || value === 'lightning' || value === 'onchain') {
-      setActiveTab(value)
-    }
-  }
-
-  function handleGenerateInvoice() {
-    if (validAmount === undefined) {
-      return
-    }
-    void regenerateInvoice()
-  }
-
-  function saveAnnotation(txKey: string) {
-    const hasLabel = label !== ''
-    const hasTags = selectedTags.length > 0
-    if (!hasLabel && !hasTags) {
-      return
-    }
-    setAnnotation(txKey, {
-      label: hasLabel ? label : undefined,
-      tags: selectedTags
-    })
-  }
-
-  function handleNewAddress() {
-    if (activeTab === 'ark') {
-      fetchArkAddress()
-    } else if (activeTab === 'lightning') {
-      handleGenerateInvoice()
-    } else if (activeTab === 'onchain') {
-      fetchOnchainAddress()
-    } else {
-      fetchArkAddress()
-      fetchOnchainAddress()
-      if (validAmount !== undefined) {
-        handleGenerateInvoice()
-      }
-    }
-  }
-
-  function handleClose() {
-    const currentAddress = getCurrentAddress()
-    if (currentAddress !== '') {
-      saveAnnotation(currentAddress)
-    }
-    onOpenChange(false)
-  }
-
-  function getCurrentAddress(): string {
-    if (activeTab === 'ark') {
-      return arkAddress ?? ''
-    }
-    if (activeTab === 'lightning') {
-      return lightningInvoice ?? ''
-    }
-    if (activeTab === 'onchain') {
-      return onchainAddress ?? ''
-    }
-    return paytoUri ?? ''
-  }
-
-  const isLoading = getLoadingForTab(
-    activeTab,
-    isFetchingArkAddress,
-    isGeneratingInvoice,
-    isFetchingOnchainAddress
-  )
-
-  const showAmountField = activeTab !== 'ark'
-  const hasInvoice = lightningInvoice !== undefined && lightningInvoice !== ''
-
-  if (receivedAmountSat !== undefined) {
+  if (flow.receivedAmountSat !== undefined) {
     return (
-      <Modal onClose={handleClose} setShowModal={onOpenChange} showModal={open}>
-        <ReceivedSuccessView amountSat={receivedAmountSat} />
+      <Modal onClose={flow.handleClose} setShowModal={onOpenChange} showModal={open}>
+        <ReceivedSuccessView amountSat={flow.receivedAmountSat} />
       </Modal>
     )
   }
 
   return (
-    <Modal onClose={handleClose} setShowModal={onOpenChange} showModal={open}>
+    <Modal onClose={flow.handleClose} setShowModal={onOpenChange} showModal={open}>
       <ModalHeader>
         <ModalTitle>{t('receive.title')}</ModalTitle>
         <ModalDescription>{t('receive.description')}</ModalDescription>
       </ModalHeader>
       <ModalBody className="flex flex-col gap-6">
-        <Tabs onValueChange={handleTabChange} value={activeTab}>
+        <Tabs onValueChange={flow.handleTabChange} value={flow.activeTab}>
           <TabsList className="w-full">
             <TabsTrigger value="payto">{t('receive.tabs.payto')}</TabsTrigger>
             <TabsTrigger value="ark">{t('receive.tabs.ark')}</TabsTrigger>
@@ -248,35 +53,32 @@ export function ReceiveModal({ open, onOpenChange }: ReceiveModalProps) {
           </TabsList>
           <TabsContent value="payto">
             <PaytoTab
-              isLoading={isFetchingArkAddress || isFetchingOnchainAddress}
-              needsAmount={!hasInvoice && validAmount === undefined}
-              uri={paytoUri}
+              isLoading={flow.isFetchingArkAddress || flow.isFetchingOnchainAddress}
+              needsAmount={flow.needsAmount}
+              uri={flow.paytoUri}
             />
           </TabsContent>
           <TabsContent value="ark">
-            <AddressTab address={arkAddress} isLoading={isFetchingArkAddress} />
+            <AddressTab address={flow.arkAddress} isLoading={flow.isFetchingArkAddress} />
           </TabsContent>
           <TabsContent value="lightning">
-            <LightningTab
-              feeDisplay={receiveFee ? formatBitcoin(receiveFee.feeSat) : undefined}
-              invoice={lightningInvoice}
-            />
+            <LightningTab feeDisplay={flow.feeDisplay} invoice={flow.lightningInvoice} />
           </TabsContent>
           <TabsContent value="onchain">
-            <AddressTab address={onchainAddress} isLoading={isFetchingOnchainAddress} />
+            <AddressTab address={flow.onchainAddress} isLoading={flow.isFetchingOnchainAddress} />
           </TabsContent>
         </Tabs>
-        {showAmountField && (
+        {flow.showAmountField && (
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="receive-amount">{t('amount.label')}</Label>
               <Input
                 endTextAddOn={t('bitcoin.sats_unit_other')}
                 id="receive-amount"
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => flow.setAmount(e.target.value)}
                 placeholder="0"
                 type="text"
-                value={amount}
+                value={flow.amount}
               />
             </div>
             <Collapsible>
@@ -291,15 +93,15 @@ export function ReceiveModal({ open, onOpenChange }: ReceiveModalProps) {
                   <Label htmlFor="receive-label">{t('label.label')}</Label>
                   <Input
                     id="receive-label"
-                    onChange={(e) => setLabel(e.target.value)}
+                    onChange={(e) => flow.setLabel(e.target.value)}
                     placeholder={t('send.label.placeholder')}
                     type="text"
-                    value={label}
+                    value={flow.label}
                   />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label>{t('tags.label')}</Label>
-                  <TagInput onChange={setSelectedTags} value={selectedTags} />
+                  <TagInput onChange={flow.setSelectedTags} value={flow.selectedTags} />
                 </div>
               </CollapsibleContent>
             </Collapsible>
@@ -307,10 +109,10 @@ export function ReceiveModal({ open, onOpenChange }: ReceiveModalProps) {
         )}
       </ModalBody>
       <ModalFooter>
-        <Button onClick={handleClose} variant="outline">
+        <Button onClick={flow.handleClose} variant="outline">
           {t('actions.cancel')}
         </Button>
-        <Button loading={isLoading} onClick={handleNewAddress}>
+        <Button loading={flow.isLoading} onClick={flow.handleNewAddress}>
           {t('receive.new')}
         </Button>
       </ModalFooter>
