@@ -1,7 +1,6 @@
 import { LazyMotion, MotionConfig, domMax } from 'motion/react'
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
-import { Spinner } from './components/ui/spinner'
-import { useCheckWallet } from './hooks/barkd/use-check-wallet'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { RedirectRoute } from './components/redirect-route'
 import DashboardLayout from './layouts/dashboard'
 import OnboardingLayout from './layouts/onboarding'
 import WelcomeLayout from './layouts/welcome'
@@ -11,36 +10,6 @@ import TransactionsPage from './pages/dashboard/index'
 import SettingsPage from './pages/dashboard/settings'
 import ImportWalletPage from './pages/import'
 import './i18n'
-
-function RedirectRoute() {
-  const { data: walletExists, isPending } = useCheckWallet({ staleTime: 0 })
-  const location = useLocation()
-
-  const isOnboarding = location.pathname === '/create' || location.pathname === '/import'
-  const isDashboard = location.pathname.startsWith('/dashboard')
-
-  if (isPending) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center">
-        <Spinner className="size-8" />
-      </div>
-    )
-  }
-
-  if (isOnboarding) {
-    return <Outlet />
-  }
-
-  if (walletExists === true && !isDashboard) {
-    return <Navigate replace to="/dashboard" />
-  }
-
-  if (walletExists !== true && isDashboard) {
-    return <Navigate replace to="/" />
-  }
-
-  return <Outlet />
-}
 
 export function App() {
   return (
