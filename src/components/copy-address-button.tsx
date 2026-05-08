@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/input-group'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { useElementMetrics } from '@/hooks/use-element-metrics'
+import { useMeasureHeight } from '@/hooks/use-measure-height'
 import { truncateMiddle } from '@/utils/truncate-middle'
 
 interface CopyAddressButtonProps {
@@ -41,49 +42,56 @@ function TruncatedAddress({ text }: TruncatedAddressProps) {
 export function CopyAddressButton({ text }: CopyAddressButtonProps) {
   const { copy, isCopied } = useCopyToClipboard()
   const [expanded, setExpanded] = useState(false)
+  const [height, contentRef] = useMeasureHeight()
 
   const Icon = isCopied ? CheckIcon : CopyIcon
   const ExpandIcon = expanded ? ArrowsInSimpleIcon : ArrowsOutSimpleIcon
 
   return (
-    <InputGroup>
-      {expanded ? (
-        <InputGroupTextarea
-          className="break-all text-sm"
-          onFocus={handleTextareaFocus}
-          readOnly
-          rows={4}
-          value={text}
-        />
-      ) : (
-        <TruncatedAddress text={text} />
-      )}
-      <InputGroupAddon align="inline-end" className={expanded ? 'self-start pt-1.5' : undefined}>
-        <InputGroupButton
-          aria-label={isCopied ? 'Copied' : 'Copy'}
-          onClick={() => void copy(text)}
-          size="icon-xs"
-        >
-          <AnimatePresence initial={false} mode="popLayout">
-            <m.span
-              animate={{ filter: 'blur(0px)', opacity: 1, scale: 1 }}
-              exit={{ filter: 'blur(4px)', opacity: 0.4, scale: 0.95 }}
-              initial={{ filter: 'blur(4px)', opacity: 0.4, scale: 0.95 }}
-              key={isCopied ? 'check' : 'copy'}
-              transition={{ duration: 0.25 }}
-            >
-              <Icon />
-            </m.span>
-          </AnimatePresence>
-        </InputGroupButton>
-        <InputGroupButton
-          aria-label={expanded ? 'Collapse' : 'Expand'}
-          onClick={() => setExpanded((value) => !value)}
-          size="icon-xs"
-        >
-          <ExpandIcon />
-        </InputGroupButton>
-      </InputGroupAddon>
-    </InputGroup>
+    <m.div
+      animate={{ height: height ?? 'auto' }}
+      className="w-full min-w-0 overflow-hidden"
+      transition={{ duration: 0.25, ease: 'easeOut' }}
+    >
+      <InputGroup ref={contentRef}>
+        {expanded ? (
+          <InputGroupTextarea
+            className="break-all text-sm"
+            onFocus={handleTextareaFocus}
+            readOnly
+            rows={4}
+            value={text}
+          />
+        ) : (
+          <TruncatedAddress text={text} />
+        )}
+        <InputGroupAddon align="inline-end" className={expanded ? 'self-start pt-1.5' : undefined}>
+          <InputGroupButton
+            aria-label={isCopied ? 'Copied' : 'Copy'}
+            onClick={() => void copy(text)}
+            size="icon-xs"
+          >
+            <AnimatePresence initial={false} mode="popLayout">
+              <m.span
+                animate={{ filter: 'blur(0px)', opacity: 1, scale: 1 }}
+                exit={{ filter: 'blur(4px)', opacity: 0.4, scale: 0.95 }}
+                initial={{ filter: 'blur(4px)', opacity: 0.4, scale: 0.95 }}
+                key={isCopied ? 'check' : 'copy'}
+                transition={{ duration: 0.25 }}
+              >
+                <Icon />
+              </m.span>
+            </AnimatePresence>
+          </InputGroupButton>
+          <InputGroupButton
+            aria-label={expanded ? 'Collapse' : 'Expand'}
+            onClick={() => setExpanded((value) => !value)}
+            size="icon-xs"
+          >
+            <ExpandIcon />
+          </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
+    </m.div>
   )
 }
