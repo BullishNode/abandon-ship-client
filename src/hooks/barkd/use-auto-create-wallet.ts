@@ -7,7 +7,7 @@ import { invalidateWalletExistence } from '@/lib/query-invalidations'
 import { walletKeys } from '@/lib/query-keys'
 import { useWalletStore } from '@/stores/wallet'
 
-const DEFAULT_WALLET_NAME = 'My wallet'
+const DEFAULT_WALLET_NAME = 'My Wallet'
 const DEFAULT_ARK_SERVER = 'https://ark.signet.2nd.dev'
 const DEFAULT_CHAIN_SOURCE = 'https://esplora.signet.2nd.dev'
 

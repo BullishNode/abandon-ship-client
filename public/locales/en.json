@@ -19,7 +19,6 @@
   },
   "nav": {
     "wallet_one": "Wallet",
-    "wallet_other": "Wallets",
     "transactions": "Transactions",
     "vtxos": "VTXOs",
     "contacts": "Contacts",
@@ -27,7 +26,6 @@
     "settings": "Settings"
   },
   "wallet": {
-    "add": "Add wallet",
     "name": {
       "title": "Wallet name",
       "description": "Enter a name for this wallet",
