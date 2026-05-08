@@ -26,18 +26,46 @@ export function getMovementCounterparty(movement: Movement): string {
   return movement.subsystem.name
 }
 
-export function getMovementSource(movement: Movement): MovementSource {
-  const name = movement.subsystem.name.toLowerCase()
-  if (name === 'onchain' || name === 'on-chain' || name === 'bitcoin') {
-    return 'onchain'
-  }
-  if (name === 'lightning' || name === 'ln') {
-    return 'lightning'
-  }
-  if (name === 'ark') {
+function sourceFromPaymentType(type: string): MovementSource | null {
+  if (type === 'ark') {
     return 'ark'
   }
-  return 'unknown'
+  if (type === 'bitcoin' || type === 'output-script') {
+    return 'onchain'
+  }
+  if (type === 'invoice' || type === 'offer' || type === 'lightning-address') {
+    return 'lightning'
+  }
+  return null
+}
+
+function sourceFromSubsystemName(name: string): MovementSource | null {
+  const normalized = name.toLowerCase()
+  if (normalized.includes('ark')) {
+    return 'ark'
+  }
+  if (normalized.includes('lightning') || normalized === 'ln') {
+    return 'lightning'
+  }
+  if (
+    normalized.includes('onchain') ||
+    normalized.includes('on-chain') ||
+    normalized.includes('bitcoin')
+  ) {
+    return 'onchain'
+  }
+  return null
+}
+
+export function getMovementSource(movement: Movement): MovementSource {
+  const destinations = [...movement.sentTo, ...movement.receivedOn]
+  for (const destination of destinations) {
+    const source = sourceFromPaymentType(destination.destination.type)
+    if (source) {
+      return source
+    }
+  }
+  return sourceFromSubsystemName(movement.subsystem.name) ?? 'unknown'
 }
 
 export function getMovementTxKey(movement: Movement): string {
