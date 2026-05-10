@@ -1,5 +1,5 @@
 import { LazyMotion, MotionConfig, domMax } from 'motion/react'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { RedirectRoute } from './components/redirect-route'
 import DashboardLayout from './layouts/dashboard'
 import OnboardingLayout from './layouts/onboarding'
@@ -31,6 +31,7 @@ export function App() {
                 <Route element={<TransactionsPage />} index />
                 <Route element={<SettingsPage />} path="/dashboard/settings" />
               </Route>
+              <Route element={<Navigate replace to="/dashboard" />} path="*" />
             </Route>
           </Routes>
         </BrowserRouter>
