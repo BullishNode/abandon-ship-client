@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { SeedLayout } from '@/components/layout/seed-layout'
+import { config } from '@/config/barkd'
 import {
   StepsLayout,
   StepsLayoutContent,
@@ -84,10 +85,10 @@ export default function ImportWalletPage() {
 
   const form = useForm({
     defaultValues: {
-      arkServer: 'https://ark.signet.2nd.dev',
-      chainSource: 'https://esplora.signet.2nd.dev',
+      arkServer: config.arkServer,
+      chainSource: config.chainSource,
       name: '',
-      network: 'signet',
+      network: config.network,
       words: Array.from({ length: 12 }).map(() => '')
     },
     mode: 'onTouched',
@@ -258,24 +259,24 @@ function NetworkAndServersComponent() {
       <FieldGroup>
         <Field>
           <FieldLabel>{t('backend.network')}</FieldLabel>
-          <Select defaultValue="signet" disabled>
+          <Select defaultValue={config.network} disabled>
             <SelectTrigger>
-              <SelectValue placeholder={t('network.signet')} />
+              <SelectValue placeholder={t(`network.${config.network}`)} />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value="signet">{t('network.signet')}</SelectItem>
+                <SelectItem value={config.network}>{t(`network.${config.network}`)}</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
         </Field>
         <Field>
           <FieldLabel>{t('backend.ark')}</FieldLabel>
-          <Input disabled placeholder="ark.signet.2nd.dev" value="ark.signet.2nd.dev" />
+          <Input disabled value={config.arkServer} />
         </Field>
         <Field>
           <FieldLabel>{t('backend.server')}</FieldLabel>
-          <Input disabled placeholder="esplora.signet.2nd.dev" value="esplora.signet.2nd.dev" />
+          <Input disabled value={config.chainSource} />
         </Field>
       </FieldGroup>
     </StepsLayoutContent>
