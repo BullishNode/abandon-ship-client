@@ -1,6 +1,7 @@
 import { LazyMotion, MotionConfig, domMax } from 'motion/react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { RedirectRoute } from './components/redirect-route'
+import { Toaster } from './components/ui/sonner'
 import DashboardLayout from './layouts/dashboard'
 import OnboardingLayout from './layouts/onboarding'
 import WelcomeLayout from './layouts/welcome'
@@ -35,6 +36,7 @@ export function App() {
             </Route>
           </Routes>
         </BrowserRouter>
+        <Toaster />
       </MotionConfig>
     </LazyMotion>
   )
