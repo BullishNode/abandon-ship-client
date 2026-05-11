@@ -8,7 +8,7 @@ import { useDebounce } from '@/hooks/use-debounce'
 import { useMetadataStore } from '@/stores/metadata'
 
 const INVOICE_DEBOUNCE_MS = 300
-const RECEIVED_AUTO_CLOSE_MS = 1800
+const RECEIVED_AUTO_CLOSE_MS = 3000
 
 export type ReceiveTab = 'payto' | 'ark' | 'lightning' | 'onchain'
 
