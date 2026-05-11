@@ -1,0 +1,1 @@
+export const WALLET_NAME_MAX_LENGTH = 256

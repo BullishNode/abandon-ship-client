@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useShallow } from 'zustand/react/shallow'
 import { Field, FieldContent, FieldDescription, FieldLabel } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -9,7 +11,9 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { WALLET_NAME_MAX_LENGTH } from '@/constants/wallet'
 import { useSettingsStore } from '@/stores/settings'
+import { useWalletStore } from '@/stores/wallet'
 import type { BitcoinUnit } from '@/types/bitcoin'
 
 const BITCOIN_UNITS: { value: BitcoinUnit; label: string }[] = [
@@ -25,10 +29,43 @@ export default function SettingsPage() {
   const [discreteMode, setDiscreteMode] = useSettingsStore(
     useShallow((state) => [state.discreteMode, state.setDiscreteMode])
   )
+  const [wallet, updateWalletName] = useWalletStore(
+    useShallow((state) => [state.wallet, state.updateWalletName])
+  )
+  const [walletName, setWalletName] = useState(wallet?.name ?? '')
+
+  function commitWalletName() {
+    const trimmed = walletName.trim()
+    if (trimmed.length === 0 || !wallet) {
+      setWalletName(wallet?.name ?? '')
+      return
+    }
+    updateWalletName(trimmed)
+    setWalletName(trimmed)
+  }
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <h1 className="font-bold text-2xl">Settings</h1>
+      <Field>
+        <FieldLabel htmlFor="wallet-name">{t('settings.wallet_name.label')}</FieldLabel>
+        <Input
+          autoComplete="off"
+          disabled={!wallet}
+          id="wallet-name"
+          maxLength={WALLET_NAME_MAX_LENGTH}
+          onBlur={commitWalletName}
+          onChange={(event) => setWalletName(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.currentTarget.blur()
+            }
+          }}
+          placeholder={t('wallet.name.placeholder')}
+          value={walletName}
+        />
+        <FieldDescription>{t('settings.wallet_name.description')}</FieldDescription>
+      </Field>
       <Field>
         <FieldLabel htmlFor="bitcoin-unit">Bitcoin unit</FieldLabel>
         <Select onValueChange={setBitcoinUnit} value={bitcoinUnit}>

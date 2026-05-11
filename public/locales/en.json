@@ -202,6 +202,10 @@
     }
   },
   "settings": {
+    "wallet_name": {
+      "label": "Wallet name",
+      "description": "Name shown in the sidebar"
+    },
     "discrete_mode": {
       "label": "Discrete mode",
       "description": "Hide balance and transaction amounts"
