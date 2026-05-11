@@ -93,8 +93,7 @@
     },
     "lightning": {
       "needs_amount": "Enter an amount to generate a Lightning invoice.",
-      "generating": "Generating invoice...",
-      "fee": "Lightning receive fee"
+      "generating": "Generating invoice..."
     },
     "onchain": {
       "description": "Receives on-chain bitcoin. You can board it into Ark later."

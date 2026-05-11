@@ -62,7 +62,7 @@ export function ReceiveModal({ open, onOpenChange }: ReceiveModalProps) {
             <AddressTab address={flow.arkAddress} isLoading={flow.isFetchingArkAddress} />
           </TabsContent>
           <TabsContent value="lightning">
-            <LightningTab feeDisplay={flow.feeDisplay} invoice={flow.lightningInvoice} />
+            <LightningTab invoice={flow.lightningInvoice} />
           </TabsContent>
           <TabsContent value="onchain">
             <AddressTab address={flow.onchainAddress} isLoading={flow.isFetchingOnchainAddress} />
@@ -198,14 +198,12 @@ function PaytoTab({ uri, isLoading, needsAmount }: PaytoTabProps) {
 
 interface LightningTabProps {
   invoice: string | undefined
-  feeDisplay: string | undefined
 }
 
-function LightningTab({ invoice, feeDisplay }: LightningTabProps) {
+function LightningTab({ invoice }: LightningTabProps) {
   const { t } = useTranslation()
 
   const hasInvoice = invoice !== undefined && invoice !== ''
-  const hasFee = feeDisplay !== undefined && feeDisplay !== ''
 
   if (!hasInvoice) {
     return (
@@ -223,11 +221,6 @@ function LightningTab({ invoice, feeDisplay }: LightningTabProps) {
     <div className="flex flex-col items-center gap-4 py-4">
       <QRCode value={invoice} />
       <CopyAddressButton text={invoice} />
-      {hasFee && (
-        <p className="text-muted-foreground text-xs">
-          {t('receive.lightning.fee')}: {feeDisplay}
-        </p>
-      )}
     </div>
   )
 }

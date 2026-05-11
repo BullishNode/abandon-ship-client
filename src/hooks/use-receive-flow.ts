@@ -1,12 +1,10 @@
 import { encodeBIP321 } from 'bip-321'
 import { useEffect, useState } from 'react'
 import { useLightningInvoice } from '@/hooks/barkd/use-lightning-invoice'
-import { useLightningReceiveFee } from '@/hooks/barkd/use-lightning-receive-fee'
 import { useOnchainAddress } from '@/hooks/barkd/use-onchain-address'
 import { useReceivedPayment } from '@/hooks/barkd/use-received-payment'
 import { useWalletAddress } from '@/hooks/barkd/use-wallet-address'
 import { useDebounce } from '@/hooks/use-debounce'
-import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
 import { useMetadataStore } from '@/stores/metadata'
 
 const INVOICE_DEBOUNCE_MS = 300
@@ -82,7 +80,6 @@ function collectReceiveDestinations(
 }
 
 export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
-  const formatBitcoin = useFormatBitcoin()
   const upsertBinding = useMetadataStore((state) => state.upsertBinding)
 
   const [activeTab, setActiveTab] = useState<ReceiveTab>('payto')
@@ -146,8 +143,6 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
   if (open !== prevOpen) {
     setPrevOpen(open)
   }
-
-  const { data: receiveFee } = useLightningReceiveFee(validAmount)
 
   const paytoUri = buildPaytoUri(onchainAddress, arkAddress, lightningInvoice, amountBtc)
 
@@ -230,13 +225,11 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
   const showAmountField = activeTab === 'payto' || activeTab === 'lightning'
   const hasInvoice = lightningInvoice !== undefined && lightningInvoice !== ''
   const needsAmount = !hasInvoice && validAmount === undefined
-  const feeDisplay = receiveFee ? formatBitcoin(receiveFee.feeSat) : undefined
 
   return {
     activeTab,
     amount,
     arkAddress,
-    feeDisplay,
     handleClose,
     handleNewAddress,
     handleTabChange,

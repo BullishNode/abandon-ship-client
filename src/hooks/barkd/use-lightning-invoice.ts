@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { lightningApi } from '@/lib/barkd-client'
 import { lightningKeys } from '@/lib/query-keys'
 
@@ -10,6 +10,7 @@ interface UseLightningInvoiceOptions {
 export function useLightningInvoice({ amountSat, enabled }: UseLightningInvoiceOptions) {
   return useQuery({
     enabled: enabled && amountSat !== undefined,
+    placeholderData: keepPreviousData,
     queryFn: async () => {
       if (amountSat === undefined) {
         throw new Error('amountSat is required to generate an invoice')
