@@ -212,6 +212,19 @@
       "pending": "Pending {{amount}}",
       "show_amounts": "Show amounts",
       "hide_amounts": "Hide amounts"
+    },
+    "chart": {
+      "title": "Balance Over Time",
+      "description": "Wallet balance history",
+      "balance": "Balance",
+      "select_range": "Select time range",
+      "last_3_months": "Last 3 months",
+      "last_30_days": "Last 30 days",
+      "last_7_days": "Last 7 days"
     }
+  },
+  "errors": {
+    "create_wallet_failed": "Failed to create wallet",
+    "price_fetch_failed": "Failed to fetch Bitcoin price from {{provider}}"
   }
 }

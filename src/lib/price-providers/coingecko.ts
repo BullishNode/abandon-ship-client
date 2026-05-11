@@ -1,3 +1,4 @@
+import i18n from '@/i18n'
 import type { FiatCurrency, PriceData, PriceProvider } from '@/types/price-providers'
 
 const COINGECKO_API = 'https://api.coingecko.com/api/v3'
@@ -19,7 +20,7 @@ async function fetchPrice(currency: FiatCurrency): Promise<PriceData> {
   ])
 
   if (!(priceResponse.ok && chartResponse.ok)) {
-    throw new Error('Failed to fetch Bitcoin price from CoinGecko')
+    throw new Error(i18n.t('errors.price_fetch_failed', { provider: 'CoinGecko' }))
   }
 
   const [priceData, chartData]: [CoinGeckoPriceResponse, CoinGeckoChartResponse] =

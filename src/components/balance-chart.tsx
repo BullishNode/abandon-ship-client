@@ -18,19 +18,19 @@ import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
 import { computeBalanceHistory, filterByTimeRange } from '@/utils/balance-history'
 
-const chartConfig = {
-  balanceSat: {
-    color: 'var(--foreground)',
-    label: 'Balance'
-  }
-} satisfies ChartConfig
-
 export function BalanceChart() {
   const { t } = useTranslation()
   const [timeRange, setTimeRange] = useState('90d')
   const { data: movements = [] } = useWalletTransactions()
   const { data: balance } = useWalletBalance()
   const formatBitcoin = useFormatBitcoin()
+
+  const chartConfig = {
+    balanceSat: {
+      color: 'var(--foreground)',
+      label: t('dashboard.chart.balance')
+    }
+  } satisfies ChartConfig
 
   const currentBalanceSat = balance?.spendableSat ?? 0
   const balanceHistory = computeBalanceHistory(movements, currentBalanceSat)
@@ -40,27 +40,25 @@ export function BalanceChart() {
     <Card className="pt-0 gap-2">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <div className="grid flex-1 gap-1">
-          <CardTitle>{t('dashboard.balance_over_time', 'Balance Over Time')}</CardTitle>
-          <CardDescription>
-            {t('dashboard.balance_chart_description', 'Wallet balance history')}
-          </CardDescription>
+          <CardTitle>{t('dashboard.chart.title')}</CardTitle>
+          <CardDescription>{t('dashboard.chart.description')}</CardDescription>
         </div>
         <Select value={timeRange} onValueChange={setTimeRange}>
           <SelectTrigger
             className="hidden w-40 rounded-lg sm:ml-auto sm:flex"
-            aria-label={t('dashboard.select_time_range', 'Select time range')}
+            aria-label={t('dashboard.chart.select_range')}
           >
-            <SelectValue placeholder={t('dashboard.last_3_months', 'Last 3 months')} />
+            <SelectValue placeholder={t('dashboard.chart.last_3_months')} />
           </SelectTrigger>
           <SelectContent className="rounded-xl">
             <SelectItem value="90d" className="rounded-lg">
-              {t('dashboard.last_3_months', 'Last 3 months')}
+              {t('dashboard.chart.last_3_months')}
             </SelectItem>
             <SelectItem value="30d" className="rounded-lg">
-              {t('dashboard.last_30_days', 'Last 30 days')}
+              {t('dashboard.chart.last_30_days')}
             </SelectItem>
             <SelectItem value="7d" className="rounded-lg">
-              {t('dashboard.last_7_days', 'Last 7 days')}
+              {t('dashboard.chart.last_7_days')}
             </SelectItem>
           </SelectContent>
         </Select>
@@ -112,7 +110,7 @@ export function BalanceChart() {
                   }
                   formatter={(value) => [
                     formatBitcoin(Number(value)),
-                    t('dashboard.balance', 'Balance')
+                    t('dashboard.chart.balance')
                   ]}
                   indicator="dot"
                 />

@@ -1,6 +1,7 @@
 import { generateMnemonic } from '@scure/bip39'
 import { wordlist } from '@scure/bip39/wordlists/english.js'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { config } from '@/config/barkd'
 import { walletApi } from '@/lib/barkd-client'
 import { invalidateWalletExistence } from '@/lib/query-invalidations'
@@ -15,6 +16,7 @@ interface UseAutoCreateWalletOptions {
 
 export function useAutoCreateWallet({ enabled }: UseAutoCreateWalletOptions) {
   const queryClient = useQueryClient()
+  const { t } = useTranslation()
 
   return useQuery({
     enabled,
@@ -31,7 +33,7 @@ export function useAutoCreateWallet({ enabled }: UseAutoCreateWalletOptions) {
       })
 
       if (!response.fingerprint) {
-        throw new Error('Failed to create wallet')
+        throw new Error(t('errors.create_wallet_failed'))
       }
 
       useWalletStore.getState().setWallet({

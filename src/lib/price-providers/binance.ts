@@ -1,3 +1,4 @@
+import i18n from '@/i18n'
 import type { FiatCurrency, PriceData, PriceProvider } from '@/types/price-providers'
 
 const BINANCE_API = 'https://api.binance.com/api/v3'
@@ -24,7 +25,7 @@ async function fetchPrice(currency: FiatCurrency): Promise<PriceData> {
   ])
 
   if (!(tickerResponse.ok && klinesResponse.ok)) {
-    throw new Error('Failed to fetch Bitcoin price from Binance')
+    throw new Error(i18n.t('errors.price_fetch_failed', { provider: 'Binance' }))
   }
 
   const [ticker, klines]: [BinanceTickerResponse, BinanceKline[]] = await Promise.all([
