@@ -207,5 +207,12 @@
       "label": "Discrete mode",
       "description": "Hide balance and transaction amounts"
     }
+  },
+  "dashboard": {
+    "balance": {
+      "pending": "Pending {{amount}}",
+      "show_amounts": "Show amounts",
+      "hide_amounts": "Hide amounts"
+    }
   }
 }
