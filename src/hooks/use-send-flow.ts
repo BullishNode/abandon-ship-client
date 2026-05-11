@@ -1,25 +1,30 @@
 import type { DecodedData, Destination } from 'bitcoin-decoder'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { useLightningSendFee } from '@/hooks/barkd/use-lightning-send-fee'
+import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
 import { useOnchainSend } from '@/hooks/barkd/use-onchain-send'
 import { useSend } from '@/hooks/barkd/use-send'
 import { useSendOnchain } from '@/hooks/barkd/use-send-onchain'
 import { useSendOnchainFee } from '@/hooks/barkd/use-send-onchain-fee'
+import { useWalletBalance } from '@/hooks/barkd/use-wallet-balance'
 import { useBrantaVerification } from '@/hooks/branta/use-branta-verification'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
 import { useMetadataStore } from '@/stores/metadata'
 import type { SendRoute } from '@/utils/payment'
-import { getSendRoute, parsePaymentInput } from '@/utils/payment'
+import { getSendRoute, parsePaymentInput, pickCheapestDestination } from '@/utils/payment'
 
-export type SendStep = 'scan' | 'choose-method' | 'send'
+export type SendStep = 'scan' | 'send'
 
 interface UseSendFlowOptions {
   open: boolean
   onOpenChange: (open: boolean) => void
-  initialStep?: 'scan' | 'send'
+  initialStep?: SendStep
 }
 
 export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSendFlowOptions) {
+  const { t } = useTranslation()
   const formatBitcoin = useFormatBitcoin()
   const setAnnotation = useMetadataStore((state) => state.setAnnotation)
 
@@ -88,24 +93,52 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
   const amountSat = Number.parseInt(amount, 10)
   const validAmountSat = Number.isNaN(amountSat) || amountSat <= 0 ? undefined : amountSat
 
+  const isLightningRoute = sendRoute === 'lightning'
   const isOnchainRoute = sendRoute === 'onchain-from-ark' || sendRoute === 'onchain-from-wallet'
   const { data: lightningSendFee, isFetching: isFetchingLnFee } = useLightningSendFee(
-    isOnchainRoute ? undefined : validAmountSat
+    isLightningRoute ? validAmountSat : undefined
   )
   const { data: onchainSendFee, isFetching: isFetchingOnchainFee } = useSendOnchainFee(
     isOnchainRoute ? validAmountSat : undefined,
     isOnchainRoute ? destination : undefined
   )
 
-  const feeEstimate = isOnchainRoute ? onchainSendFee : lightningSendFee
-  const isFetchingFee = isOnchainRoute ? isFetchingOnchainFee : isFetchingLnFee
+  let feeEstimate: { feeSat: number; grossAmountSat?: number } | undefined
+  let isFetchingFee = false
+  if (sendRoute === 'ark') {
+    feeEstimate = { feeSat: 0 }
+  } else if (isLightningRoute) {
+    feeEstimate = lightningSendFee
+    isFetchingFee = isFetchingLnFee
+  } else {
+    feeEstimate = onchainSendFee
+    isFetchingFee = isFetchingOnchainFee
+  }
 
   let feeDisplay = '—'
-  if (isFetchingFee) {
+  if (sendRoute === 'ark') {
+    feeDisplay = t('send.fee.free')
+  } else if (isFetchingFee) {
     feeDisplay = '...'
   } else if (feeEstimate) {
     feeDisplay = formatBitcoin(feeEstimate.feeSat)
   }
+
+  const { data: walletBalance } = useWalletBalance()
+  const { data: onchainBalance } = useOnchainBalance()
+
+  const availableBalance =
+    sendRoute === 'onchain-from-wallet'
+      ? (onchainBalance?.trustedSpendableSat ?? 0)
+      : (walletBalance?.spendableSat ?? 0)
+
+  const requiredSat =
+    validAmountSat === undefined
+      ? undefined
+      : (feeEstimate?.grossAmountSat ?? validAmountSat + (feeEstimate?.feeSat ?? 0))
+
+  const hasEnoughFunds = requiredSat === undefined ? true : availableBalance >= requiredSat
+  const insufficientFunds = requiredSat !== undefined && !hasEnoughFunds
 
   const { data: brantaPayments, isFetching: isFetchingBranta } = useBrantaVerification(
     step === 'send' ? rawQrInput : undefined
@@ -118,37 +151,29 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     onOpenChange(false)
   }
 
+  function applyDestination(dest: Destination) {
+    setDestination(dest.destination)
+    setSelectedMethodType(dest.type)
+    setSendRoute(getSendRoute(dest.type))
+  }
+
   async function goToSend(input: string) {
     setRawQrInput(input)
     const decoded = await parsePaymentInput(input)
     setParsed(decoded)
 
     if (!decoded.valid) {
-      setDestination(input.trim())
-      setDirection(1)
-      setStep('send')
+      toast.error(t('send.errors.invalid_qr'), {
+        description: decoded.errorMessage
+      })
       return
     }
+
+    const cheapest = pickCheapestDestination(decoded.destinations)
+    applyDestination(cheapest)
 
     const amountSats = decoded.metadata?.amount
     const description = decoded.metadata?.description
-
-    if (decoded.destinations.length > 1) {
-      setSelectedMethodType(decoded.destination.type)
-      setDirection(1)
-      setStep('choose-method')
-
-      if (amountSats !== undefined && amountSats !== 0) {
-        setAmount(String(amountSats))
-      }
-      if (description !== undefined && description !== '') {
-        setLabel(description)
-      }
-      return
-    }
-
-    setDestination(decoded.destination.destination)
-    setSendRoute(getSendRoute(decoded.destination.type))
 
     if (amountSats !== undefined && amountSats !== 0) {
       setAmount(String(amountSats))
@@ -161,33 +186,17 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     setStep('send')
   }
 
-  function handleChooseMethodConfirm() {
-    if (parsed?.valid !== true || selectedMethodType === undefined) {
-      return
-    }
-    const match = parsed.destinations.find((d) => d.type === selectedMethodType)
-    setDestination(match?.destination ?? parsed.destination.destination)
-    setSendRoute(getSendRoute(selectedMethodType))
-    setDirection(1)
-    setStep('send')
-  }
-
   function goToScan() {
     setDirection(-1)
     setStep('scan')
     setRawQrInput('')
   }
 
-  function goBackFromChooseMethod() {
-    setDirection(-1)
-    setStep('scan')
-  }
-
   async function handlePaste() {
     try {
       const text = await navigator.clipboard.readText()
       if (text.trim() !== '') {
-        void goToSend(text)
+        await goToSend(text)
       }
     } catch {
       // intentional: clipboard read denied
@@ -200,7 +209,7 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     if (sendRoute === 'ark' || sendRoute === 'lightning') {
       send({
         amountSat: sendAmountSat,
-        comment: message === '' ? undefined : message,
+        comment: selectedMethodType === 'lnaddress' && message !== '' ? message : undefined,
         destination
       })
       return
@@ -218,7 +227,6 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     onchainSend({ amountSat: sendAmountSat, destination })
   }
 
-  const canSend = destination.trim().length > 0
   const chooserDestinations = parsed?.valid === true ? parsed.destinations : []
   const currentDestinationType =
     selectedMethodType ?? (parsed?.valid === true ? parsed.destination.type : undefined)
@@ -228,21 +236,28 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     parsed.metadata?.amount !== undefined &&
     parsed.metadata.amount > 0
 
+  const canSend =
+    destination.trim().length > 0 &&
+    validAmountSat !== undefined &&
+    hasEnoughFunds &&
+    !isFetchingFee
+
   return {
     amount,
+    applyDestination,
+    availableBalance,
     brantaPayment,
     canSend,
     chooserDestinations,
     destination,
     direction,
     feeDisplay,
-    goBackFromChooseMethod,
     goToScan,
     goToSend,
-    handleChooseMethodConfirm,
     handleClose,
     handleConfirmSend,
     handlePaste,
+    insufficientFunds,
     isAmountLocked,
     isFetchingBranta,
     isSending,
@@ -255,8 +270,8 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     setDestination,
     setLabel,
     setMessage,
-    setSelectedMethodType,
     setSelectedTags,
-    step
+    step,
+    validAmountSat
   }
 }

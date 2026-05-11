@@ -124,13 +124,16 @@
       "description": "Review the payment details before sending.",
       "button": "Confirm send"
     },
-    "choose_method": "Choose payment method",
-    "choose_method_description": "Multiple payment options available. Select preferred method.",
     "destination": "Destination",
     "destination.placeholder": "Address, invoice, or Lightning address",
     "amount": "Amount",
+    "errors": {
+      "invalid_qr": "Invalid QR code",
+      "insufficient_funds": "Insufficient funds. Available: {{balance}}"
+    },
     "fee": {
-      "estimate": "Estimated fee"
+      "estimate": "Estimated fee",
+      "free": "Free"
     },
     "details": "Additional details",
     "label": "Label",

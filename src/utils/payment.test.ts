@@ -1,7 +1,7 @@
 import type { Destination } from 'bitcoin-decoder'
 import { decode } from 'bitcoin-decoder'
 import { describe, expect, it, vi } from 'vitest'
-import { getSendRoute, parsePaymentInput } from './payment'
+import { getSendRoute, parsePaymentInput, pickCheapestDestination } from './payment'
 
 vi.mock(import('bitcoin-decoder'), () => ({
   decode: vi.fn<typeof decode>()
@@ -86,5 +86,41 @@ describe(parsePaymentInput, () => {
 
     const result = await parsePaymentInput('garbage')
     expect(result).toStrictEqual(error)
+  })
+})
+
+describe(pickCheapestDestination, () => {
+  const bolt12Dest = makeDestination('bolt12', 'lno1abc')
+  const lnaddressDest = makeDestination('lnaddress', 'foo@bar.com')
+  const lnurlDest = makeDestination('lnurl', 'lnurl1abc')
+
+  it('returns the single destination when only one is present', () => {
+    expect(pickCheapestDestination([btcDest])).toBe(btcDest)
+  })
+
+  it('prefers ark over lightning and on-chain', () => {
+    expect(pickCheapestDestination([btcDest, bolt11Dest, arkDest])).toBe(arkDest)
+  })
+
+  it('prefers lightning over on-chain when no ark is present', () => {
+    expect(pickCheapestDestination([btcDest, bolt11Dest])).toBe(bolt11Dest)
+  })
+
+  it('falls back to on-chain when it is the only option', () => {
+    expect(pickCheapestDestination([btcDest])).toBe(btcDest)
+  })
+
+  it('treats all lightning variants as same priority', () => {
+    const result = pickCheapestDestination([btcDest, lnurlDest, lnaddressDest, bolt12Dest])
+    expect(
+      result.type === 'lnurl' || result.type === 'lnaddress' || result.type === 'bolt12'
+    ).toBeTruthy()
+  })
+
+  it('does not mutate the input array', () => {
+    const input = [btcDest, arkDest, bolt11Dest]
+    const snapshot = [...input]
+    pickCheapestDestination(input)
+    expect(input).toStrictEqual(snapshot)
   })
 })

@@ -22,3 +22,18 @@ export function getSendRoute(destinationType: Destination['type']): SendRoute {
   }
   return 'onchain-from-ark'
 }
+
+const DESTINATION_PRIORITY: Record<Destination['type'], number> = {
+  'ark-address': 0,
+  'bitcoin-address': 2,
+  bolt11: 1,
+  bolt12: 1,
+  lnaddress: 1,
+  lnurl: 1
+}
+
+export function pickCheapestDestination(destinations: Destination[]): Destination {
+  return [...destinations].toSorted(
+    (a, b) => DESTINATION_PRIORITY[a.type] - DESTINATION_PRIORITY[b.type]
+  )[0]
+}

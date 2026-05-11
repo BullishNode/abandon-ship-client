@@ -1,7 +1,7 @@
 import { CaretDownIcon, ClipboardTextIcon } from '@phosphor-icons/react'
-import type { Destination } from 'bitcoin-decoder'
 import { AnimatePresence, m } from 'motion/react'
 import { useTranslation } from 'react-i18next'
+import { DestinationPicker } from '@/components/destination-picker'
 import {
   Modal,
   ModalBody,
@@ -16,7 +16,9 @@ import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
 import { useSendFlow } from '@/hooks/use-send-flow'
+import { cn } from '@/lib/utils'
 import type { SendRoute } from '@/utils/payment'
 
 interface SendModalProps {
@@ -53,22 +55,12 @@ function getRouteLabel(route: SendRoute, t: (key: string) => string): string {
   return t('send.route.onchain_from_wallet')
 }
 
-function getDestinationTypeLabel(type: Destination['type']): string {
-  if (type === 'ark-address') {
-    return 'Ark'
-  }
-  if (type === 'bolt11' || type === 'lnaddress' || type === 'lnurl') {
-    return 'Lightning'
-  }
-  if (type === 'bolt12') {
-    return 'BOLT12 Offer'
-  }
-  return 'On-chain'
-}
-
 export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModalProps) {
   const { t } = useTranslation()
+  const formatBitcoin = useFormatBitcoin()
   const flow = useSendFlow({ initialStep, onOpenChange, open })
+  const showPicker = flow.chooserDestinations.length > 1
+  const isLnAddress = flow.selectedMethodType === 'lnaddress'
 
   return (
     <Modal onClose={flow.handleClose} setShowModal={onOpenChange} showModal={open}>
@@ -106,55 +98,6 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
               </ModalFooter>
             </m.div>
           )}
-          {flow.step === 'choose-method' && (
-            <m.div
-              animate="center"
-              className="flex min-h-0 flex-1 flex-col gap-6"
-              custom={flow.direction}
-              exit="exit"
-              initial="enter"
-              key="choose-method"
-              transition={{
-                opacity: { duration: 0.1 },
-                x: { damping: 30, stiffness: 300, type: 'spring' }
-              }}
-              variants={slideVariants}
-            >
-              <ModalHeader>
-                <ModalTitle>{t('send.choose_method')}</ModalTitle>
-                <ModalDescription>{t('send.choose_method_description')}</ModalDescription>
-              </ModalHeader>
-              <ModalBody className="flex flex-col gap-2">
-                {flow.chooserDestinations.map((dest) => (
-                  <button
-                    className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
-                      flow.selectedMethodType === dest.type
-                        ? 'border-foreground bg-muted'
-                        : 'border-border hover:bg-muted/50'
-                    }`}
-                    key={`${dest.type}-${dest.destination}`}
-                    onClick={() => flow.setSelectedMethodType(dest.type)}
-                    type="button"
-                  >
-                    <span className="font-medium text-sm">
-                      {getDestinationTypeLabel(dest.type)}
-                    </span>
-                  </button>
-                ))}
-              </ModalBody>
-              <ModalFooter>
-                <Button onClick={flow.goBackFromChooseMethod} variant="outline">
-                  {t('actions.back')}
-                </Button>
-                <Button
-                  disabled={flow.selectedMethodType === undefined}
-                  onClick={flow.handleChooseMethodConfirm}
-                >
-                  {t('actions.continue')}
-                </Button>
-              </ModalFooter>
-            </m.div>
-          )}
           {flow.step === 'send' && (
             <m.div
               animate="center"
@@ -177,7 +120,7 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="destination">{t('send.destination')}</Label>
-                    {flow.destination.trim() !== '' && (
+                    {flow.destination.trim() !== '' && !showPicker && (
                       <span className="text-muted-foreground text-xs">
                         {getRouteLabel(flow.sendRoute, t)}
                       </span>
@@ -197,10 +140,22 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                     type="text"
                     value={flow.destination}
                   />
+                  {showPicker && (
+                    <DestinationPicker
+                      amountSat={flow.validAmountSat}
+                      destinations={flow.chooserDestinations}
+                      onSelect={flow.applyDestination}
+                      selectedDestination={flow.destination}
+                    />
+                  )}
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="send-amount">{t('send.amount')}</Label>
                   <Input
+                    aria-invalid={flow.insufficientFunds}
+                    className={cn(
+                      flow.insufficientFunds && 'border-destructive focus-visible:ring-destructive'
+                    )}
                     disabled={flow.isAmountLocked}
                     endTextAddOn={t('bitcoin.sats_unit_other')}
                     id="send-amount"
@@ -209,6 +164,13 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                     type="text"
                     value={flow.amount}
                   />
+                  {flow.insufficientFunds && (
+                    <p className="text-destructive text-xs">
+                      {t('send.errors.insufficient_funds', {
+                        balance: formatBitcoin(flow.availableBalance)
+                      })}
+                    </p>
+                  )}
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label className="text-muted-foreground">{t('send.fee.estimate')}</Label>
@@ -264,16 +226,18 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                         value={flow.label}
                       />
                     </div>
-                    <div className="flex flex-col gap-2">
-                      <Label htmlFor="send-message">{t('send.message')}</Label>
-                      <Input
-                        id="send-message"
-                        onChange={(e) => flow.setMessage(e.target.value)}
-                        placeholder={t('send.message.placeholder')}
-                        type="text"
-                        value={flow.message}
-                      />
-                    </div>
+                    {isLnAddress && (
+                      <div className="flex flex-col gap-2">
+                        <Label htmlFor="send-message">{t('send.message')}</Label>
+                        <Input
+                          id="send-message"
+                          onChange={(e) => flow.setMessage(e.target.value)}
+                          placeholder={t('send.message.placeholder')}
+                          type="text"
+                          value={flow.message}
+                        />
+                      </div>
+                    )}
                     <div className="flex flex-col gap-2">
                       <Label>{t('tags.label')}</Label>
                       <TagInput onChange={flow.setSelectedTags} value={flow.selectedTags} />
