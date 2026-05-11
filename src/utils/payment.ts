@@ -32,8 +32,12 @@ const DESTINATION_PRIORITY: Record<Destination['type'], number> = {
   lnurl: 1
 }
 
-export function pickCheapestDestination(destinations: Destination[]): Destination {
+export function sortDestinationsByPriority(destinations: Destination[]): Destination[] {
   return [...destinations].toSorted(
     (a, b) => DESTINATION_PRIORITY[a.type] - DESTINATION_PRIORITY[b.type]
-  )[0]
+  )
+}
+
+export function pickCheapestDestination(destinations: Destination[]): Destination {
+  return sortDestinationsByPriority(destinations)[0]
 }

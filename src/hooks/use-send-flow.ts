@@ -13,7 +13,12 @@ import { useBrantaVerification } from '@/hooks/branta/use-branta-verification'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
 import { useMetadataStore } from '@/stores/metadata'
 import type { SendRoute } from '@/utils/payment'
-import { getSendRoute, parsePaymentInput, pickCheapestDestination } from '@/utils/payment'
+import {
+  getSendRoute,
+  parsePaymentInput,
+  pickCheapestDestination,
+  sortDestinationsByPriority
+} from '@/utils/payment'
 
 export type SendStep = 'scan' | 'send'
 
@@ -229,7 +234,8 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     onchainSend({ amountSat: sendAmountSat, destination })
   }
 
-  const chooserDestinations = parsed?.valid === true ? parsed.destinations : []
+  const chooserDestinations =
+    parsed?.valid === true ? sortDestinationsByPriority(parsed.destinations) : []
   const currentDestinationType =
     selectedMethodType ?? (parsed?.valid === true ? parsed.destination.type : undefined)
   const isAmountLocked =
