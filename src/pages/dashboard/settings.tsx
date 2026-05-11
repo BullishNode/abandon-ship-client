@@ -25,6 +25,7 @@ import { useOnchainFeeRates } from '@/hooks/barkd/use-onchain-fee-rates'
 import { useResetWallet } from '@/hooks/barkd/use-reset-wallet'
 import { useStartEmergencyExit } from '@/hooks/barkd/use-start-emergency-exit'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
+import { useDownloadBackup } from '@/hooks/use-download-backup'
 import { useSettingsStore } from '@/stores/settings'
 import { useWalletStore } from '@/stores/wallet'
 import type { BitcoinUnit } from '@/types/bitcoin'
@@ -72,9 +73,16 @@ export default function SettingsPage() {
 
   const [walletName, setWalletName] = useState(wallet?.name ?? '')
   const [isDeleteOpen, setDeleteOpen] = useState(false)
+  const [isBackupOpen, setBackupOpen] = useState(false)
   const [isExitDialogOpen, setExitDialogOpen] = useState(false)
   const [exitDialogMode, setExitDialogMode] = useState<ExitDialogMode>('start')
   const [draftExitAddress, setDraftExitAddress] = useState('')
+
+  const { mutate: downloadBackup, isPending: isDownloadingBackup } = useDownloadBackup({
+    onSuccess: () => {
+      setBackupOpen(false)
+    }
+  })
 
   const { data: exitStatuses } = useExitStatus()
   const { data: onchainBalance } = useOnchainBalance()
@@ -249,6 +257,15 @@ export default function SettingsPage() {
         </FieldContent>
         <Switch checked={discreteMode} id="discrete-mode" onCheckedChange={setDiscreteMode} />
       </Field>
+      <Field orientation="horizontal">
+        <FieldContent>
+          <FieldLabel>{t('settings.backup.label')}</FieldLabel>
+          <FieldDescription>{t('settings.backup.description')}</FieldDescription>
+        </FieldContent>
+        <Button onClick={() => setBackupOpen(true)} variant="outline">
+          {t('settings.backup.button')}
+        </Button>
+      </Field>
       <section className="space-y-4 rounded-lg border border-destructive/30 p-4">
         <h2 className="font-semibold text-destructive text-lg">{t('settings.danger.title')}</h2>
         <Field orientation="horizontal">
@@ -309,6 +326,19 @@ export default function SettingsPage() {
         open={isDeleteOpen}
         title={t('settings.danger.delete_wallet.confirm.title')}
         variant="destructive"
+      />
+      <ConfirmDialog
+        confirmLabel={t('settings.backup.confirm.button')}
+        description={t('settings.backup.confirm.description')}
+        loading={isDownloadingBackup}
+        onConfirm={() => downloadBackup()}
+        onOpenChange={(open) => {
+          if (!isDownloadingBackup) {
+            setBackupOpen(open)
+          }
+        }}
+        open={isBackupOpen}
+        title={t('settings.backup.confirm.title')}
       />
     </div>
   )

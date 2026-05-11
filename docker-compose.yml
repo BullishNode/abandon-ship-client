@@ -13,7 +13,24 @@ services:
       - CHOKIDAR_USEPOLLING=true
     depends_on:
       - barkd
+      - bark-web-api
     entrypoint: ['/bin/sh', '/app/docker/bark-web-entrypoint.sh']
+
+  bark-web-api:
+    container_name: bark-web-api
+    build:
+      context: .
+      dockerfile: docker/bark-web-api.Dockerfile
+    ports:
+      - '4001:4001'
+    volumes:
+      - wallet-data:/wallet-data:ro
+    environment:
+      - ALLOWED_ORIGINS=http://localhost:5173
+      - PORT=4001
+      - WALLET_DIR=/wallet-data/.bark
+    depends_on:
+      - barkd
 
   bark:
     container_name: bark

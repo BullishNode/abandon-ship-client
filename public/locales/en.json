@@ -238,6 +238,16 @@
       "label": "Discrete mode",
       "description": "Hide balance and transaction amounts"
     },
+    "backup": {
+      "label": "Wallet backup",
+      "description": "Download a zip containing your seed phrase and wallet database",
+      "button": "Download backup",
+      "confirm": {
+        "title": "Download wallet backup?",
+        "description": "The backup includes your seed phrase in plain text and your wallet database. Save it to an encrypted location and never share it. Anyone with this file can spend your funds.",
+        "button": "Download"
+      }
+    },
     "danger": {
       "title": "Danger zone",
       "emergency_exit": {

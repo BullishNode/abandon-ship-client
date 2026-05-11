@@ -8,6 +8,7 @@ export default defineConfig({
     VITE_BARKD_TOKEN: z.string(),
     VITE_BARKD_URL: z.url(),
     VITE_BARK_NETWORK: z.enum(Object.values(BarkNetwork)),
+    VITE_BARK_WEB_API_URL: z.url(),
     VITE_CHAIN_SOURCE: z.url()
   },
   validator: 'standard'
