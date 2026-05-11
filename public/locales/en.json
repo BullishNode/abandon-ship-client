@@ -226,6 +226,14 @@
       "label": "Wallet name",
       "description": "Name shown in the sidebar"
     },
+    "price_provider": {
+      "label": "Bitcoin price source",
+      "description": "Where to fetch the BTC price"
+    },
+    "fiat_currency": {
+      "label": "Fiat currency",
+      "description": "Currency used for fiat values"
+    },
     "discrete_mode": {
       "label": "Discrete mode",
       "description": "Hide balance and transaction amounts"

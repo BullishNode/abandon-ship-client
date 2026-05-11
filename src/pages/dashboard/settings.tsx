@@ -28,11 +28,22 @@ import { useVtxos } from '@/hooks/barkd/use-vtxos'
 import { useSettingsStore } from '@/stores/settings'
 import { useWalletStore } from '@/stores/wallet'
 import type { BitcoinUnit } from '@/types/bitcoin'
+import type { FiatCurrency, PriceProviderId } from '@/types/price-providers'
 import { estimateEmergencyExitFeeSat, summarizeExits } from '@/utils/exit-progress'
 
 const BITCOIN_UNITS: { value: BitcoinUnit; label: string }[] = [
   { label: 'Satoshi', value: 'sats' },
   { label: 'Bitcoin', value: 'btc' }
+]
+
+const PRICE_PROVIDERS: { value: PriceProviderId; label: string }[] = [
+  { label: 'Binance', value: 'binance' },
+  { label: 'CoinGecko', value: 'coingecko' }
+]
+
+const FIAT_CURRENCIES: { value: FiatCurrency; label: string }[] = [
+  { label: 'USD', value: 'usd' },
+  { label: 'EUR', value: 'eur' }
 ]
 
 type ExitDialogMode = 'start' | 'edit'
@@ -42,6 +53,12 @@ export default function SettingsPage() {
   const navigate = useNavigate()
   const [bitcoinUnit, setBitcoinUnit] = useSettingsStore(
     useShallow((state) => [state.bitcoinUnit, state.setBitcoinUnit])
+  )
+  const [priceProvider, setPriceProvider] = useSettingsStore(
+    useShallow((state) => [state.priceProvider, state.setPriceProvider])
+  )
+  const [fiatCurrency, setFiatCurrency] = useSettingsStore(
+    useShallow((state) => [state.fiatCurrency, state.setFiatCurrency])
   )
   const [discreteMode, setDiscreteMode] = useSettingsStore(
     useShallow((state) => [state.discreteMode, state.setDiscreteMode])
@@ -192,6 +209,38 @@ export default function SettingsPage() {
             ))}
           </SelectContent>
         </Select>
+      </Field>
+      <Field>
+        <FieldLabel htmlFor="price-provider">{t('settings.price_provider.label')}</FieldLabel>
+        <Select onValueChange={setPriceProvider} value={priceProvider}>
+          <SelectTrigger id="price-provider">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {PRICE_PROVIDERS.map((provider) => (
+              <SelectItem key={provider.value} value={provider.value}>
+                {provider.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <FieldDescription>{t('settings.price_provider.description')}</FieldDescription>
+      </Field>
+      <Field>
+        <FieldLabel htmlFor="fiat-currency">{t('settings.fiat_currency.label')}</FieldLabel>
+        <Select onValueChange={setFiatCurrency} value={fiatCurrency}>
+          <SelectTrigger id="fiat-currency">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {FIAT_CURRENCIES.map((currency) => (
+              <SelectItem key={currency.value} value={currency.value}>
+                {currency.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <FieldDescription>{t('settings.fiat_currency.description')}</FieldDescription>
       </Field>
       <Field orientation="horizontal">
         <FieldContent>
