@@ -3,6 +3,7 @@ import type {
   AnnotationInput,
   AnnotationSource,
   BindingDirection,
+  OnchainAnnotation,
   TransactionAnnotation
 } from '@/types/metadata'
 
@@ -50,6 +51,17 @@ export function buildAnnotation(
     label: hasLabel ? trimmedLabel : undefined,
     movementId,
     source,
+    tags: data.tags
+  }
+}
+
+export function buildOnchainAnnotation(outpoint: string, data: AnnotationInput): OnchainAnnotation {
+  const trimmedLabel = data.label?.trim()
+  const hasLabel = trimmedLabel !== undefined && trimmedLabel.length > 0
+  return {
+    createdAt: new Date().toISOString(),
+    label: hasLabel ? trimmedLabel : undefined,
+    outpoint,
     tags: data.tags
   }
 }

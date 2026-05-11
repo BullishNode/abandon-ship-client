@@ -163,6 +163,24 @@
   "movements": {
     "title": "Movements",
     "empty": "No movements yet",
+    "options": {
+      "label": "Movement options",
+      "hide_refreshes": "Hide refreshes"
+    },
+    "kinds": {
+      "refresh": "Refresh"
+    },
+    "onchain": {
+      "label": "On-chain receive · {{txid}}",
+      "pending_date": "Pending",
+      "confirmed_date": "Block {{height}}",
+      "detail": {
+        "title": "On-chain receive",
+        "txid": "Transaction",
+        "height": "Confirmation",
+        "pending": "Pending"
+      }
+    },
     "columns": {
       "from": "From",
       "date": "Date",
@@ -214,6 +232,56 @@
     },
     "danger": {
       "title": "Danger zone",
+      "emergency_exit": {
+        "label": "Emergency exit all",
+        "description": "Unilaterally exit every VTXO back on-chain. Use only when the Ark server is unreachable. Process is slow (waits on timelocks) and pays on-chain fees.",
+        "button": "Emergency exit all",
+        "in_progress_button": "Exit in progress",
+        "no_vtxos": "No VTXOs to exit.",
+        "confirm": {
+          "title": "Emergency exit all?",
+          "description": "This unilaterally exits every VTXO back on-chain. The process is slow because it waits on Bitcoin timelocks and pays on-chain fees from your on-chain balance, and cannot be cancelled once started. Ensure your on-chain wallet has enough bitcoin for fees and double-check the destination address that will receive the funds once exits are claimable.",
+          "button": "Start emergency exit"
+        },
+        "edit": {
+          "title": "Change destination address",
+          "description": "Update the address that will receive the swept funds once exit outputs are claimable.",
+          "button": "Save address"
+        },
+        "address_label": "Destination address",
+        "address_placeholder": "Bitcoin on-chain address",
+        "address_help": "Funds will be swept to this address when exits become claimable.",
+        "use_wallet_address": "Use my wallet",
+        "estimate": {
+          "title": "Estimated cost",
+          "value": "~{{sats}} sats at {{feeRate}} sat/vB",
+          "balance_one": "On-chain balance: {{sats}} sats",
+          "balance_other": "On-chain balance: {{sats}} sats",
+          "balance": "On-chain balance: {{sats}} sats",
+          "vtxos_one": "{{count}} VTXO to exit",
+          "vtxos_other": "{{count}} VTXOs to exit",
+          "hint": "Rough upper-bound estimate. Actual cost depends on confirmation timing and on-chain congestion.",
+          "insufficient": "Not enough on-chain bitcoin for estimated fees. Deposit more before starting."
+        },
+        "progress": {
+          "title": "Emergency exit in progress",
+          "done": "Emergency exit complete",
+          "summary": "{{claimed}}/{{total}} claimed"
+        },
+        "destination_label": "Destination address",
+        "destination_missing": "No address set",
+        "change_address": "Change",
+        "claim_button_one": "Claim {{count}} output",
+        "claim_button_other": "Claim {{count}} outputs",
+        "states": {
+          "start": "Starting",
+          "processing": "Broadcasting",
+          "awaiting_delta": "Waiting timelock",
+          "claimable": "Ready to claim",
+          "claim_in_progress": "Claiming",
+          "claimed": "Claimed"
+        }
+      },
       "delete_wallet": {
         "label": "Delete wallet",
         "description": "Deletes this wallet and creates a new one. This cannot be undone.",
@@ -228,6 +296,8 @@
   "dashboard": {
     "balance": {
       "pending": "Pending {{amount}}",
+      "onchain": "On-chain {{amount}}",
+      "onchain_pending": "On-chain pending {{amount}}",
       "show_amounts": "Show amounts",
       "hide_amounts": "Hide amounts"
     },

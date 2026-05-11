@@ -29,7 +29,6 @@
     "fix": "ultracite fix --type-aware --type-check"
   },
   "dependencies": {
-    "@base-ui/react": "^1.0.0",
     "@branta-ops/branta": "^2.0.0",
     "@chenglou/pretext": "^0.0.6",
     "@fontsource-variable/dm-sans": "^5.2.8",

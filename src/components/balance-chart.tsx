@@ -13,16 +13,23 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
+import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
+import { useOnchainUtxos } from '@/hooks/barkd/use-onchain-utxos'
 import { useWalletBalance } from '@/hooks/barkd/use-wallet-balance'
 import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
 import { computeBalanceHistory, filterByTimeRange } from '@/utils/balance-history'
+import { utxoToOnchainEntry } from '@/utils/movements-feed'
 
 export function BalanceChart() {
   const { t } = useTranslation()
   const [timeRange, setTimeRange] = useState('90d')
   const { data: movements = [] } = useWalletTransactions()
   const { data: balance } = useWalletBalance()
+  const { data: utxos = [] } = useOnchainUtxos()
+  const { data: onchainBalance } = useOnchainBalance()
+  const { data: tip } = useBitcoinTip()
   const formatBitcoin = useFormatBitcoin()
 
   const chartConfig = {
@@ -32,8 +39,11 @@ export function BalanceChart() {
     }
   } satisfies ChartConfig
 
-  const currentBalanceSat = balance?.spendableSat ?? 0
-  const balanceHistory = computeBalanceHistory(movements, currentBalanceSat)
+  const onchainSpendableSat = onchainBalance?.trustedSpendableSat ?? 0
+  const onchainPendingSat = onchainBalance?.untrustedPendingSat ?? 0
+  const endpointTotalSat = (balance?.spendableSat ?? 0) + onchainSpendableSat + onchainPendingSat
+  const onchainEntries = utxos.map((utxo) => utxoToOnchainEntry(utxo, tip?.tipHeight))
+  const balanceHistory = computeBalanceHistory(movements, onchainEntries, endpointTotalSat)
   const filteredData = filterByTimeRange(balanceHistory, timeRange)
 
   return (
@@ -118,9 +128,9 @@ export function BalanceChart() {
             />
             <Area
               dataKey="balanceSat"
-              type="natural"
               fill="url(#fillBalance)"
               stroke="var(--color-balanceSat)"
+              type="monotone"
             />
           </AreaChart>
         </ChartContainer>

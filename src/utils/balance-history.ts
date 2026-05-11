@@ -1,35 +1,59 @@
 import type { Movement } from '@secondts/barkd'
+import type { OnchainEntry } from '@/utils/movements-feed'
 
 export interface BalanceDataPoint {
   date: string
   balanceSat: number
 }
 
-export function computeBalanceHistory(
-  movements: Movement[],
-  currentBalanceSat: number
-): BalanceDataPoint[] {
-  const sorted = movements
-    .filter((m) => m.status === 'successful')
-    .toSorted((a, b) => a.time.createdAt.getTime() - b.time.createdAt.getTime())
+interface BalanceEvent {
+  timestampMs: number
+  deltaSat: number
+}
 
-  if (sorted.length === 0) {
-    return []
-  }
-
-  const totalChange = sorted.reduce((sum: number, m) => sum + m.effectiveBalanceSat, 0)
-  let runningBalance = currentBalanceSat - totalChange
-
-  const points: BalanceDataPoint[] = []
-
-  for (const movement of sorted) {
-    runningBalance += movement.effectiveBalanceSat
-    points.push({
-      balanceSat: runningBalance,
-      date: movement.time.createdAt.toISOString()
+function movementEvents(movements: Movement[]): BalanceEvent[] {
+  const out: BalanceEvent[] = []
+  for (const movement of movements) {
+    if (movement.status !== 'successful') {
+      continue
+    }
+    out.push({
+      deltaSat: movement.effectiveBalanceSat,
+      timestampMs: movement.time.createdAt.getTime()
     })
   }
+  return out
+}
 
+function onchainEvents(entries: OnchainEntry[]): BalanceEvent[] {
+  return entries.map((entry) => ({
+    deltaSat: entry.amountSat,
+    timestampMs: entry.approximateTimestampMs
+  }))
+}
+
+export function computeBalanceHistory(
+  movements: Movement[],
+  onchainEntries: OnchainEntry[],
+  endpointTotalSat: number
+): BalanceDataPoint[] {
+  const events = [...movementEvents(movements), ...onchainEvents(onchainEntries)]
+  if (events.length === 0) {
+    return []
+  }
+  events.sort((a, b) => a.timestampMs - b.timestampMs)
+
+  const totalDelta = events.reduce((sum, event) => sum + event.deltaSat, 0)
+  let runningBalance = endpointTotalSat - totalDelta
+
+  const points: BalanceDataPoint[] = []
+  for (const event of events) {
+    runningBalance += event.deltaSat
+    points.push({
+      balanceSat: runningBalance,
+      date: new Date(event.timestampMs).toISOString()
+    })
+  }
   return points
 }
 

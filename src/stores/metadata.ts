@@ -8,11 +8,13 @@ import type {
   BindingDirection,
   Contact,
   DestinationBinding,
+  OnchainAnnotation,
   Tag,
   TransactionAnnotation
 } from '@/types/metadata'
 import {
   buildAnnotation,
+  buildOnchainAnnotation,
   dedupeNonEmpty,
   movementDestinationValues,
   movementDirection
@@ -34,6 +36,7 @@ interface MetadataStore {
   contacts: Contact[]
   bindings: DestinationBinding[]
   annotations: Record<number, TransactionAnnotation>
+  onchainAnnotations: Record<string, OnchainAnnotation>
   addTag: (name: string) => string
   removeTag: (name: string) => void
   addContact: (name: string) => Contact
@@ -43,6 +46,8 @@ interface MetadataStore {
   pruneBindings: () => void
   setManualAnnotation: (movementId: number, input: AnnotationInput) => void
   getAnnotation: (movementId: number) => TransactionAnnotation | undefined
+  setOnchainAnnotation: (outpoint: string, input: AnnotationInput) => void
+  getOnchainAnnotation: (outpoint: string) => OnchainAnnotation | undefined
   matchMovement: (movement: Movement) => void
 }
 
@@ -112,6 +117,7 @@ export const useMetadataStore = create<MetadataStore>()(
       bindings: [],
       contacts: [],
       getAnnotation: (movementId) => get().annotations[movementId],
+      getOnchainAnnotation: (outpoint) => get().onchainAnnotations[outpoint],
       matchMovement: (movement) => {
         const state = get()
         if (state.annotations[movement.id] !== undefined) {
@@ -152,6 +158,7 @@ export const useMetadataStore = create<MetadataStore>()(
           }
         }))
       },
+      onchainAnnotations: {},
       pruneBindings: () => {
         const cutoff = Date.now() - BINDING_TTL_MS
         set((state) => ({
@@ -177,6 +184,14 @@ export const useMetadataStore = create<MetadataStore>()(
           annotations: {
             ...state.annotations,
             [movementId]: buildAnnotation(movementId, 'manual', input)
+          }
+        }))
+      },
+      setOnchainAnnotation: (outpoint, input) => {
+        set((state) => ({
+          onchainAnnotations: {
+            ...state.onchainAnnotations,
+            [outpoint]: buildOnchainAnnotation(outpoint, input)
           }
         }))
       },
@@ -216,7 +231,13 @@ export const useMetadataStore = create<MetadataStore>()(
     }),
     {
       migrate: (persistedState) => {
-        const fresh = { annotations: {}, bindings: [], contacts: [], tags: [] }
+        const fresh = {
+          annotations: {},
+          bindings: [],
+          contacts: [],
+          onchainAnnotations: {},
+          tags: []
+        }
         const parsed = persistedSchema.safeParse(persistedState)
         if (!parsed.success) {
           return fresh

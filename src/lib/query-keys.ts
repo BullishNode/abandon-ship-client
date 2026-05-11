@@ -4,13 +4,15 @@ export const walletKeys = {
   balance: () => [...walletKeys.all, 'balance'] as const,
   exists: () => [...walletKeys.all, 'exists'] as const,
   nextRound: () => [...walletKeys.all, 'next-round'] as const,
-  transactions: () => [...walletKeys.all, 'transactions'] as const
+  transactions: () => [...walletKeys.all, 'transactions'] as const,
+  vtxos: () => [...walletKeys.all, 'vtxos'] as const
 }
 
 export const onchainKeys = {
   all: ['onchain'] as const,
   balance: () => [...onchainKeys.all, 'balance'] as const,
-  transactions: () => [...onchainKeys.all, 'transactions'] as const
+  transactions: () => [...onchainKeys.all, 'transactions'] as const,
+  utxos: () => [...onchainKeys.all, 'utxos'] as const
 }
 
 export const feeKeys = {
@@ -30,10 +32,16 @@ export const lightningKeys = {
 export const bitcoinKeys = {
   all: ['bitcoin'] as const,
   price: (providerId: string, currency: string) =>
-    [...bitcoinKeys.all, 'price', providerId, currency] as const
+    [...bitcoinKeys.all, 'price', providerId, currency] as const,
+  tip: () => [...bitcoinKeys.all, 'tip'] as const
 }
 
 export const brantaKeys = {
   all: ['branta'] as const,
   verification: (qrCode: string | undefined) => [...brantaKeys.all, 'verification', qrCode] as const
+}
+
+export const exitKeys = {
+  all: ['exits'] as const,
+  status: () => [...exitKeys.all, 'status'] as const
 }
