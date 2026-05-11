@@ -70,26 +70,26 @@
     "zustand": "^5.0.10"
   },
   "devDependencies": {
-    "@julr/vite-plugin-validate-env": "^2.2.0",
+    "@julr/vite-plugin-validate-env": "^2.2.2",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.1",
+    "@vitejs/plugin-react": "^6.0.1",
     "@vitest/coverage-v8": "^4.1.4",
     "babel-plugin-react-compiler": "^1.0.0",
     "oxfmt": "^0.45.0",
     "oxlint": "^1.60.0",
-    "oxlint-tsgolint": "^0.21.0",
+    "oxlint-tsgolint": "^0.22.1",
     "typescript": "~5.9.3",
     "ultracite": "^7.5.9",
-    "vite": "^7.2.4",
-    "vitest": "^4.0.17"
+    "vite": "^8.0.12",
+    "vitest": "^4.1.5"
   },
   "overrides": {
     "react-is": "^19.2.0"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22.12"
   },
   "packageManager": "npm@10.9.2"
 }
