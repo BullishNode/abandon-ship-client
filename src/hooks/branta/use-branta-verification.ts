@@ -8,7 +8,7 @@ export function useBrantaVerification(qrCode: string | undefined) {
   return useQuery<Payment[]>({
     enabled: qrCode !== undefined && qrCode !== '',
     gcTime: 0,
-    queryFn: async () => brantaClient.getPaymentsByQRCode(qrCode ?? ''),
+    queryFn: async () => await brantaClient.getPaymentsByQRCode(qrCode ?? ''),
     queryKey: brantaKeys.verification(qrCode),
     retry: false
   })

@@ -37,7 +37,7 @@ const walletNameSchema = z.object({
   name: z
     .string()
     .min(1, 'Name is required')
-    .regex(/[a-zA-Z0-9]/, 'Name must contain at least one letter or number')
+    .regex(/[a-zA-Z0-9]/u, 'Name must contain at least one letter or number')
 })
 
 const mnemonicSchema = z.object({

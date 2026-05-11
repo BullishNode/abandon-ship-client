@@ -15,8 +15,12 @@ interface WalletStore {
 export const useWalletStore = create<WalletStore>()(
   persist(
     (set) => ({
-      clearWallet: () => set({ wallet: null }),
-      setWallet: (wallet) => set({ wallet }),
+      clearWallet: () => {
+        set({ wallet: null })
+      },
+      setWallet: (wallet) => {
+        set({ wallet })
+      },
       wallet: null
     }),
     {

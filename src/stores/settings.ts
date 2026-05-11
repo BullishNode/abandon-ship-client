@@ -22,11 +22,21 @@ export const useSettingsStore = create<SettingsStore>()(
       discreteMode: false,
       fiatCurrency: 'usd',
       priceProvider: 'binance',
-      setBitcoinUnit: (bitcoinUnit) => set({ bitcoinUnit }),
-      setDiscreteMode: (discreteMode) => set({ discreteMode }),
-      setFiatCurrency: (fiatCurrency) => set({ fiatCurrency }),
-      setPriceProvider: (priceProvider) => set({ priceProvider }),
-      toggleDiscreteMode: () => set((state) => ({ discreteMode: !state.discreteMode }))
+      setBitcoinUnit: (bitcoinUnit) => {
+        set({ bitcoinUnit })
+      },
+      setDiscreteMode: (discreteMode) => {
+        set({ discreteMode })
+      },
+      setFiatCurrency: (fiatCurrency) => {
+        set({ fiatCurrency })
+      },
+      setPriceProvider: (priceProvider) => {
+        set({ priceProvider })
+      },
+      toggleDiscreteMode: () => {
+        set((state) => ({ discreteMode: !state.discreteMode }))
+      }
     }),
     {
       name: 'bark-web-settings-store',

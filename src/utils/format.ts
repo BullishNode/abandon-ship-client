@@ -2,7 +2,7 @@ import type { BitcoinUnit } from '@/types/bitcoin'
 import type { FiatCurrency } from '@/types/price-providers'
 import { satsToBTC } from './bitcoin'
 
-const TRAILING_ZEROS_REGEX = /\.?0+$/
+const TRAILING_ZEROS_REGEX = /\.?0+$/u
 
 export const PRIVACY_MASK = '•••••'
 

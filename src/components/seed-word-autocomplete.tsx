@@ -64,7 +64,7 @@ export function SeedWordAutocomplete({
   }
 
   function handleSearchValueChange(value: string) {
-    const filteredValue = value.replaceAll(/[^a-zA-Z]/g, '').toLowerCase()
+    const filteredValue = value.replaceAll(/[^a-zA-Z]/gu, '').toLowerCase()
 
     onSearchValueChange(filteredValue)
     if (hasError) {

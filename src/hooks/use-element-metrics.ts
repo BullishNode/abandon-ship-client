@@ -10,7 +10,7 @@ const EMPTY_METRICS: ElementMetrics = { font: '', width: 0 }
 function readMetrics(node: HTMLElement): ElementMetrics {
   const computed = getComputedStyle(node)
   const rawFamily = computed.fontFamily.split(',')[0]?.trim() ?? 'sans-serif'
-  const family = rawFamily.replaceAll(/^['"]|['"]$/g, '')
+  const family = rawFamily.replaceAll(/^['"]|['"]$/gu, '')
   const paddingX =
     Number.parseFloat(computed.paddingLeft) + Number.parseFloat(computed.paddingRight)
   const contentWidth = node.clientWidth - paddingX
