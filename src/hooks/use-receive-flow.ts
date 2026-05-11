@@ -227,7 +227,7 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
     isGeneratingInvoice,
     isFetchingOnchainAddress
   )
-  const showAmountField = activeTab !== 'ark'
+  const showAmountField = activeTab === 'payto' || activeTab === 'lightning'
   const hasInvoice = lightningInvoice !== undefined && lightningInvoice !== ''
   const needsAmount = !hasInvoice && validAmount === undefined
   const feeDisplay = receiveFee ? formatBitcoin(receiveFee.feeSat) : undefined

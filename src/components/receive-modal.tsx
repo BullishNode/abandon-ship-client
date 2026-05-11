@@ -68,8 +68,8 @@ export function ReceiveModal({ open, onOpenChange }: ReceiveModalProps) {
             <AddressTab address={flow.onchainAddress} isLoading={flow.isFetchingOnchainAddress} />
           </TabsContent>
         </Tabs>
-        {flow.showAmountField && (
-          <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
+          {flow.showAmountField && (
             <div className="flex flex-col gap-2">
               <Label htmlFor="receive-amount">{t('amount.label')}</Label>
               <Input
@@ -81,32 +81,32 @@ export function ReceiveModal({ open, onOpenChange }: ReceiveModalProps) {
                 value={flow.amount}
               />
             </div>
-            <Collapsible>
-              <CollapsibleTrigger asChild>
-                <Label className="flex items-center justify-between">
-                  {t('receive.details')}
-                  <CaretDownIcon className="size-4" />
-                </Label>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="flex flex-col gap-4 pt-4">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="receive-label">{t('label.label')}</Label>
-                  <Input
-                    id="receive-label"
-                    onChange={(e) => flow.setLabel(e.target.value)}
-                    placeholder={t('send.label.placeholder')}
-                    type="text"
-                    value={flow.label}
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Label>{t('tags.label')}</Label>
-                  <TagInput onChange={flow.setSelectedTags} value={flow.selectedTags} />
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-        )}
+          )}
+          <Collapsible>
+            <CollapsibleTrigger asChild>
+              <Label className="flex items-center justify-between">
+                {t('receive.details')}
+                <CaretDownIcon className="size-4" />
+              </Label>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="flex flex-col gap-4 pt-4">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="receive-label">{t('label.label')}</Label>
+                <Input
+                  id="receive-label"
+                  onChange={(e) => flow.setLabel(e.target.value)}
+                  placeholder={t('send.label.placeholder')}
+                  type="text"
+                  value={flow.label}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label>{t('tags.label')}</Label>
+                <TagInput onChange={flow.setSelectedTags} value={flow.selectedTags} />
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        </div>
       </ModalBody>
       <ModalFooter>
         <Button onClick={flow.handleClose} variant="outline">
