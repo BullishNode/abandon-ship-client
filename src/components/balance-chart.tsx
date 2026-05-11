@@ -49,10 +49,7 @@ export function BalanceChart() {
   return (
     <Card className="pt-0 gap-2">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-        <div className="grid flex-1 gap-1">
-          <CardTitle>{t('dashboard.chart.title')}</CardTitle>
-          <CardDescription>{t('dashboard.chart.description')}</CardDescription>
-        </div>
+        <CardTitle>{t('dashboard.chart.title')}</CardTitle>
         <Select value={timeRange} onValueChange={setTimeRange}>
           <SelectTrigger
             className="hidden w-40 rounded-lg sm:ml-auto sm:flex"

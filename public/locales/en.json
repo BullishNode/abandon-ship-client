@@ -303,7 +303,6 @@
     },
     "chart": {
       "title": "Balance Over Time",
-      "description": "Wallet balance history",
       "balance": "Balance",
       "select_range": "Select time range",
       "last_3_months": "Last 3 months",

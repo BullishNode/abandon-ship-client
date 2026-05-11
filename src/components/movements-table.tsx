@@ -82,7 +82,7 @@ export function MovementsTable() {
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2">
+        <CardHeader className="flex flex-row items-center justify-between gap-2 border-b">
           <CardTitle>{t('movements.title')}</CardTitle>
           <Popover>
             <PopoverTrigger asChild>
