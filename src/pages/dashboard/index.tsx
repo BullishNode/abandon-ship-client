@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { BalanceChart } from '@/components/balance-chart'
 import { BitcoinPriceCard } from '@/components/dashboard/bitcoin-price-card'
 import { RoundTimerCard } from '@/components/dashboard/round-timer-card'
-import { SpendableVtxosCard } from '@/components/dashboard/spendable-vtxos-card'
+import { NumberTransactionsCard } from '@/components/dashboard/number-transactions-card'
 import { MovementsTable } from '@/components/movements-table'
 import { Button } from '@/components/ui/button'
 import { useWalletBalance } from '@/hooks/barkd/use-wallet-balance'
@@ -58,7 +58,7 @@ export default function TransactionsPage() {
           </div>
         </div>
         <BitcoinPriceCard />
-        <SpendableVtxosCard />
+        <NumberTransactionsCard />
         <RoundTimerCard />
       </div>
       <MovementsTable />

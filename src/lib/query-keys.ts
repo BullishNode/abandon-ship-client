@@ -4,8 +4,7 @@ export const walletKeys = {
   balance: () => [...walletKeys.all, 'balance'] as const,
   exists: () => [...walletKeys.all, 'exists'] as const,
   nextRound: () => [...walletKeys.all, 'next-round'] as const,
-  transactions: () => [...walletKeys.all, 'transactions'] as const,
-  vtxos: (params?: { all?: boolean }) => [...walletKeys.all, 'vtxos', params] as const
+  transactions: () => [...walletKeys.all, 'transactions'] as const
 }
 
 export const onchainKeys = {

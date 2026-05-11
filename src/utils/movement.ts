@@ -76,3 +76,16 @@ export function getMovementFeeSat(movement: Movement): number | null {
   }
   return null
 }
+
+const DAYS_30_MS = 30 * 24 * 60 * 60 * 1000
+
+export function countMovementsInLast30Days(movements: Movement[]): number {
+  const cutoff = Date.now() - DAYS_30_MS
+  let count = 0
+  for (const movement of movements) {
+    if (movement.time.createdAt.getTime() >= cutoff) {
+      count += 1
+    }
+  }
+  return count
+}
