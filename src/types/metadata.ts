@@ -20,6 +20,13 @@ export interface TransactionAnnotation {
   createdAt: string
 }
 
+export interface OnchainAnnotation {
+  outpoint: string
+  label?: string
+  tags: string[]
+  createdAt: string
+}
+
 export interface AnnotationInput {
   label?: string
   tags: string[]

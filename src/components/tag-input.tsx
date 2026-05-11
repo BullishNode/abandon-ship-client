@@ -64,16 +64,28 @@ export function TagInput({ value, onChange, disabled = false }: TagInputProps) {
   return (
     <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger asChild>
-        <button
+        <div
+          aria-disabled={disabled}
           className={cn(
             buttonVariants({
               className:
                 'h-auto min-h-9 w-full flex-wrap justify-start gap-x-1 gap-y-1.5 py-1.5 font-normal hover:bg-transparent aria-expanded:bg-transparent',
               variant: 'outline'
-            })
+            }),
+            disabled && 'pointer-events-none opacity-50'
           )}
-          disabled={disabled}
-          type="button"
+          onKeyDown={(e) => {
+            if (disabled) {
+              return
+            }
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setOpen((prev) => !prev)
+            }
+          }}
+          // oxlint-disable-next-line jsx-a11y/prefer-tag-over-role
+          role="button"
+          tabIndex={disabled ? -1 : 0}
         >
           <AnimatePresence initial={false} mode="popLayout">
             {selectedTags.map((tag) => (
@@ -107,7 +119,7 @@ export function TagInput({ value, onChange, disabled = false }: TagInputProps) {
               </motion.div>
             ))}
           </AnimatePresence>
-        </button>
+        </div>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-(--radix-popover-trigger-width) p-0">
         <Command shouldFilter={false}>

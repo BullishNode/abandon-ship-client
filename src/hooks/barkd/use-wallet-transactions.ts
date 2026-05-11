@@ -8,10 +8,7 @@ export function useWalletTransactions(
   options?: Omit<UseQueryOptions<Movement[]>, 'queryKey' | 'queryFn'>
 ) {
   return useQuery({
-    queryFn: async () => {
-      const transactions = await walletApi.history()
-      return transactions.filter((m) => m.subsystem.kind !== 'refresh')
-    },
+    queryFn: async () => await walletApi.history(),
     queryKey: walletKeys.transactions(),
     ...options
   })

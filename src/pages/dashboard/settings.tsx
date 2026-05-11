@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { ConfirmDialog } from '@/components/confirm-dialog'
+import { EmergencyExitStartDialog } from '@/components/emergency-exit-start-dialog'
+import { ExitProgressCard } from '@/components/exit-progress'
 import { Button } from '@/components/ui/button'
 import { Field, FieldContent, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -15,15 +17,25 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { WALLET_NAME_MAX_LENGTH } from '@/constants/wallet'
+import { useClaimEmergencyExit } from '@/hooks/barkd/use-claim-emergency-exit'
+import { useExitStatus } from '@/hooks/barkd/use-exit-status'
+import { useOnchainAddress } from '@/hooks/barkd/use-onchain-address'
+import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
+import { useOnchainFeeRates } from '@/hooks/barkd/use-onchain-fee-rates'
 import { useResetWallet } from '@/hooks/barkd/use-reset-wallet'
+import { useStartEmergencyExit } from '@/hooks/barkd/use-start-emergency-exit'
+import { useVtxos } from '@/hooks/barkd/use-vtxos'
 import { useSettingsStore } from '@/stores/settings'
 import { useWalletStore } from '@/stores/wallet'
 import type { BitcoinUnit } from '@/types/bitcoin'
+import { estimateEmergencyExitFeeSat, summarizeExits } from '@/utils/exit-progress'
 
 const BITCOIN_UNITS: { value: BitcoinUnit; label: string }[] = [
   { label: 'Satoshi', value: 'sats' },
   { label: 'Bitcoin', value: 'btc' }
 ]
+
+type ExitDialogMode = 'start' | 'edit'
 
 export default function SettingsPage() {
   const { t } = useTranslation()
@@ -37,14 +49,58 @@ export default function SettingsPage() {
   const [wallet, updateWalletName] = useWalletStore(
     useShallow((state) => [state.wallet, state.updateWalletName])
   )
+  const [pendingExitClaimAddress, setPendingExitClaimAddress] = useWalletStore(
+    useShallow((state) => [state.pendingExitClaimAddress, state.setPendingExitClaimAddress])
+  )
+
   const [walletName, setWalletName] = useState(wallet?.name ?? '')
   const [isDeleteOpen, setDeleteOpen] = useState(false)
+  const [isExitDialogOpen, setExitDialogOpen] = useState(false)
+  const [exitDialogMode, setExitDialogMode] = useState<ExitDialogMode>('start')
+  const [draftExitAddress, setDraftExitAddress] = useState('')
+
+  const { data: exitStatuses } = useExitStatus()
+  const { data: onchainBalance } = useOnchainBalance()
+  const { data: vtxos } = useVtxos()
+  const { data: feeRates } = useOnchainFeeRates()
+  const summary = summarizeExits(exitStatuses ?? [])
+  const feeRateSatPerVb = feeRates?.regularSatPerVb ?? 0
+  const estimatedFeeSat = estimateEmergencyExitFeeSat(vtxos ?? [], feeRateSatPerVb)
+
   const { mutate: resetWallet, isPending: isDeleting } = useResetWallet({
     onSuccess: () => {
       setDeleteOpen(false)
       void navigate('/')
     }
   })
+  const { mutate: fetchOnchainAddress, isPending: isFetchingWalletAddress } = useOnchainAddress()
+  const {
+    mutate: startEmergencyExit,
+    isPending: isStartingExit,
+    error: startExitError
+  } = useStartEmergencyExit({
+    onSuccess: () => {
+      setExitDialogOpen(false)
+    }
+  })
+  const { mutate: claimEmergencyExit, isPending: isClaimingExit } = useClaimEmergencyExit()
+
+  const onchainSpendable = onchainBalance?.trustedSpendableSat ?? 0
+  const hasNoVtxos = (vtxos?.length ?? 0) === 0
+
+  const shouldShowProgress = summary.total > 0
+
+  const disableStartButton = summary.inProgress || isStartingExit || hasNoVtxos
+
+  const feeEstimate =
+    vtxos && vtxos.length > 0 && feeRateSatPerVb > 0
+      ? {
+          estimatedFeeSat,
+          feeRateSatPerVb,
+          onchainSat: onchainSpendable,
+          vtxoCount: vtxos.length
+        }
+      : undefined
 
   function commitWalletName() {
     const trimmed = walletName.trim()
@@ -55,6 +111,50 @@ export default function SettingsPage() {
     updateWalletName(trimmed)
     setWalletName(trimmed)
   }
+
+  function openExitDialog(mode: ExitDialogMode) {
+    setExitDialogMode(mode)
+    setDraftExitAddress(pendingExitClaimAddress ?? '')
+    setExitDialogOpen(true)
+  }
+
+  function handleUseWalletAddress() {
+    fetchOnchainAddress(undefined, {
+      onSuccess: (address) => {
+        setDraftExitAddress(address)
+      }
+    })
+  }
+
+  function handleExitDialogOpenChange(nextOpen: boolean) {
+    setExitDialogOpen(nextOpen)
+  }
+
+  function handleSubmitExitAddress(address: string) {
+    setPendingExitClaimAddress(address)
+    if (exitDialogMode === 'start') {
+      startEmergencyExit()
+      return
+    }
+    setExitDialogOpen(false)
+  }
+
+  function handleClaim() {
+    if (pendingExitClaimAddress === null || pendingExitClaimAddress.length === 0) {
+      openExitDialog('edit')
+      return
+    }
+    claimEmergencyExit({ destination: pendingExitClaimAddress })
+  }
+
+  const startButtonLabel = summary.inProgress
+    ? t('settings.danger.emergency_exit.in_progress_button')
+    : t('settings.danger.emergency_exit.button')
+
+  const emergencyExitDescription =
+    !shouldShowProgress && hasNoVtxos
+      ? t('settings.danger.emergency_exit.no_vtxos')
+      : t('settings.danger.emergency_exit.description')
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
@@ -104,6 +204,28 @@ export default function SettingsPage() {
         <h2 className="font-semibold text-destructive text-lg">{t('settings.danger.title')}</h2>
         <Field orientation="horizontal">
           <FieldContent>
+            <FieldLabel>{t('settings.danger.emergency_exit.label')}</FieldLabel>
+            <FieldDescription>{emergencyExitDescription}</FieldDescription>
+          </FieldContent>
+          <Button
+            disabled={disableStartButton}
+            onClick={() => openExitDialog('start')}
+            variant="destructive"
+          >
+            {startButtonLabel}
+          </Button>
+        </Field>
+        {shouldShowProgress ? (
+          <ExitProgressCard
+            destinationAddress={pendingExitClaimAddress}
+            isClaiming={isClaimingExit}
+            onChangeAddress={() => openExitDialog('edit')}
+            onClaim={handleClaim}
+            summary={summary}
+          />
+        ) : null}
+        <Field orientation="horizontal">
+          <FieldContent>
             <FieldLabel>{t('settings.danger.delete_wallet.label')}</FieldLabel>
             <FieldDescription>{t('settings.danger.delete_wallet.description')}</FieldDescription>
           </FieldContent>
@@ -112,6 +234,19 @@ export default function SettingsPage() {
           </Button>
         </Field>
       </section>
+      <EmergencyExitStartDialog
+        address={draftExitAddress}
+        errorMessage={startExitError?.message}
+        feeEstimate={feeEstimate}
+        isFetchingWalletAddress={isFetchingWalletAddress}
+        isSubmitting={isStartingExit}
+        mode={exitDialogMode}
+        onAddressChange={setDraftExitAddress}
+        onOpenChange={handleExitDialogOpenChange}
+        onSubmit={handleSubmitExitAddress}
+        onUseWalletAddress={handleUseWalletAddress}
+        open={isExitDialogOpen}
+      />
       <ConfirmDialog
         confirmLabel={t('actions.delete')}
         description={t('settings.danger.delete_wallet.confirm.description')}

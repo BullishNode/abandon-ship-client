@@ -6,18 +6,17 @@ import { useWalletStore } from '@/stores/wallet'
 
 async function resetWallet() {
   const existsResponse = await walletApi.walletExists()
-  if (!existsResponse.fingerprint) {
+  const { fingerprint } = existsResponse
+  if (fingerprint === undefined || fingerprint === null || fingerprint.length === 0) {
     throw new Error('No wallet to delete')
   }
   await walletApi.walletDelete({
-    walletDeleteRequest: { dangerous: true, fingerprint: existsResponse.fingerprint }
+    walletDeleteRequest: { dangerous: true, fingerprint }
   })
   useWalletStore.getState().clearWallet()
 }
 
-export function useResetWallet(
-  options?: Omit<UseMutationOptions<void, Error, void>, 'mutationFn'>
-) {
+export function useResetWallet(options?: Omit<UseMutationOptions<void>, 'mutationFn'>) {
   const queryClient = useQueryClient()
 
   return useMutation({

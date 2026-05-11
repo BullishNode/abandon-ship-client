@@ -41,12 +41,13 @@ export function ConfirmDialog({
     onOpenChange(false)
   }
 
+  const hasDescription = description !== undefined && description.length > 0
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent showCloseButton={false}>
+      <DialogContent aria-describedby={undefined} showCloseButton={false}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          {description ? <DialogDescription>{description}</DialogDescription> : null}
+          {hasDescription ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
         <DialogFooter>
           <Button disabled={loading} onClick={handleCancel} variant="outline">
