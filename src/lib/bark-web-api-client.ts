@@ -15,7 +15,7 @@ async function authorizedFetch(path: string): Promise<Response> {
 export async function downloadWalletBackup(): Promise<{ blob: Blob; filename: string }> {
   const response = await authorizedFetch('/api/backup')
   const disposition = response.headers.get('Content-Disposition') ?? ''
-  const filenameMatch = disposition.match(/filename="([^"]+)"/u)
+  const filenameMatch = /filename="([^"]+)"/u.exec(disposition)
   const filename = filenameMatch?.[1] ?? 'bark-wallet-backup.zip'
   const blob = await response.blob()
   return { blob, filename }

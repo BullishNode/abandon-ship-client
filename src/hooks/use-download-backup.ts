@@ -13,7 +13,7 @@ function triggerBrowserDownload(blob: Blob, filename: string) {
   URL.revokeObjectURL(url)
 }
 
-export function useDownloadBackup(options?: Omit<UseMutationOptions<void, Error>, 'mutationFn'>) {
+export function useDownloadBackup(options?: Omit<UseMutationOptions<void>, 'mutationFn'>) {
   return useMutation({
     mutationFn: async () => {
       const { blob, filename } = await downloadWalletBackup()

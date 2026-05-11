@@ -1,7 +1,7 @@
 import { PaperPlaneTiltIcon, QrCodeIcon, ScanIcon } from '@phosphor-icons/react'
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation } from 'react-router-dom'
+import { useShallow } from 'zustand/react/shallow'
 import { AppSidebar } from '@/components/app-sidebar'
 import { ReceiveModal } from '@/components/receive-modal'
 import { SendModal } from '@/components/send-modal'
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { useMetadataMatcher } from '@/hooks/use-metadata-matcher'
+import { useModalsStore } from '@/stores/modals'
 
 const ROUTE_TITLE_KEYS: Record<string, string> = {
   '/dashboard': 'nav.transactions',
@@ -18,9 +19,25 @@ const ROUTE_TITLE_KEYS: Record<string, string> = {
 export default function DashboardLayout() {
   const { t } = useTranslation()
   const { pathname } = useLocation()
-  const [showReceiveModal, setShowReceiveModal] = useState(false)
-  const [showSendModal, setShowSendModal] = useState(false)
-  const [sendInitialStep, setSendInitialStep] = useState<'scan' | 'send'>('scan')
+  const [
+    sendOpen,
+    sendInitialStep,
+    receiveOpen,
+    openSend,
+    setSendOpen,
+    openReceive,
+    setReceiveOpen
+  ] = useModalsStore(
+    useShallow((state) => [
+      state.sendOpen,
+      state.sendInitialStep,
+      state.receiveOpen,
+      state.openSend,
+      state.setSendOpen,
+      state.openReceive,
+      state.setReceiveOpen
+    ])
+  )
   useMetadataMatcher()
 
   const routeTitleKey = ROUTE_TITLE_KEYS[pathname]
@@ -41,30 +58,19 @@ export default function DashboardLayout() {
           </div>
           <ul className="flex gap-2 pr-4">
             <li>
-              <Button
-                onClick={() => {
-                  setSendInitialStep('scan')
-                  setShowSendModal(true)
-                }}
-                variant="outline"
-              >
+              <Button onClick={() => openSend('scan')} variant="outline">
                 <ScanIcon />
                 {t('actions.scan')}
               </Button>
             </li>
             <li>
-              <Button onClick={() => setShowReceiveModal(true)}>
+              <Button onClick={openReceive}>
                 <QrCodeIcon />
                 {t('actions.receive')}
               </Button>
             </li>
             <li>
-              <Button
-                onClick={() => {
-                  setSendInitialStep('send')
-                  setShowSendModal(true)
-                }}
-              >
+              <Button onClick={() => openSend('send')}>
                 <PaperPlaneTiltIcon />
                 {t('actions.send')}
               </Button>
@@ -74,12 +80,8 @@ export default function DashboardLayout() {
         <main className="flex-1 p-6">
           <Outlet />
         </main>
-        <ReceiveModal onOpenChange={setShowReceiveModal} open={showReceiveModal} />
-        <SendModal
-          initialStep={sendInitialStep}
-          onOpenChange={setShowSendModal}
-          open={showSendModal}
-        />
+        <ReceiveModal onOpenChange={setReceiveOpen} open={receiveOpen} />
+        <SendModal initialStep={sendInitialStep} onOpenChange={setSendOpen} open={sendOpen} />
       </SidebarInset>
     </SidebarProvider>
   )

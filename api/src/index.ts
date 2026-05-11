@@ -18,7 +18,7 @@ const MNEMONIC_PATH = `${WALLET_DIR}/mnemonic`
 const DB_PATH = `${WALLET_DIR}/db.sqlite`
 
 async function readAuthToken(): Promise<string> {
-  const token = await readFile(TOKEN_PATH, 'utf8')
+  const token = await readFile(TOKEN_PATH, 'utf-8')
   return token.trim()
 }
 
@@ -36,9 +36,9 @@ const app = new Hono()
 app.use(
   '*',
   cors({
-    origin: ALLOWED_ORIGINS,
     allowHeaders: ['Authorization', 'Content-Type'],
-    allowMethods: ['GET', 'OPTIONS']
+    allowMethods: ['GET', 'OPTIONS'],
+    origin: ALLOWED_ORIGINS
   })
 )
 
@@ -58,6 +58,7 @@ app.use('/api/*', async (c, next) => {
     return c.json({ error: 'Invalid token' }, 401)
   }
   await next()
+  return c.res
 })
 
 app.get('/health', (c) => c.json({ ok: true }))
@@ -73,21 +74,25 @@ app.get('/api/backup', async (c) => {
   const archive = archiver('zip', { zlib: { level: 9 } })
   archive.file(MNEMONIC_PATH, { name: 'mnemonic' })
   archive.append(createReadStream(DB_PATH), { name: 'db.sqlite' })
-  archive.finalize().catch((error) => {
-    console.error('Archive finalize failed', error)
-  })
+  void (async () => {
+    try {
+      await archive.finalize()
+    } catch (error: unknown) {
+      console.error('Archive finalize failed', error)
+    }
+  })()
 
-  const webStream = Readable.toWeb(archive) as unknown as ReadableStream<Uint8Array>
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+  const webStream = Readable.toWeb(archive) as ReadableStream
+  const timestamp = new Date().toISOString().replaceAll(/[:.]/gu, '-')
 
   return new Response(webStream, {
     headers: {
-      'Content-Type': 'application/zip',
-      'Content-Disposition': `attachment; filename="bark-wallet-backup-${timestamp}.zip"`
+      'Content-Disposition': `attachment; filename="bark-wallet-backup-${timestamp}.zip"`,
+      'Content-Type': 'application/zip'
     }
   })
 })
 
-serve({ fetch: app.fetch, port: PORT, hostname: '0.0.0.0' }, (info) => {
+serve({ fetch: app.fetch, hostname: '0.0.0.0', port: PORT }, (info) => {
   console.log(`bark-web-api listening on :${info.port}`)
 })

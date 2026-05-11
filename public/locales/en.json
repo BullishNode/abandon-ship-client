@@ -163,6 +163,7 @@
   "movements": {
     "title": "Movements",
     "empty": "No movements yet",
+    "empty_description": "Send or receive sats and they will show up here.",
     "options": {
       "label": "Movement options",
       "hide_refreshes": "Hide refreshes"
@@ -325,7 +326,9 @@
       "select_range": "Select time range",
       "last_3_months": "Last 3 months",
       "last_30_days": "Last 30 days",
-      "last_7_days": "Last 7 days"
+      "last_7_days": "Last 7 days",
+      "empty": "No balance history yet",
+      "empty_description": "Your balance over time will appear here once you start using the wallet."
     }
   },
   "errors": {

@@ -1,11 +1,13 @@
 'use client'
 
+import { ChartLineIcon } from '@phosphor-icons/react'
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import type { ChartConfig } from '@/components/ui/chart'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import {
   Select,
   SelectContent,
@@ -71,66 +73,78 @@ export function BalanceChart() {
         </Select>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer
-          config={chartConfig}
-          className="aspect-auto h-62.5 w-full [&_svg]:overflow-visible"
-        >
-          <AreaChart data={filteredData}>
-            <defs>
-              <linearGradient id="fillBalance" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-balanceSat)" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="var(--color-balanceSat)" stopOpacity={0.02} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
-              tickFormatter={(value: string) => {
-                const date = new Date(value)
-                return date.toLocaleDateString('en-US', {
-                  day: 'numeric',
-                  month: 'short'
-                })
-              }}
-            />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              tickFormatter={(value: number) => formatBitcoin(value)}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(value) =>
-                    new Date(String(value)).toLocaleDateString('en-US', {
-                      day: 'numeric',
-                      hour: 'numeric',
-                      minute: '2-digit',
-                      month: 'short'
-                    })
-                  }
-                  formatter={(value) => [
-                    formatBitcoin(Number(value)),
-                    t('dashboard.chart.balance')
-                  ]}
-                  indicator="dot"
-                />
-              }
-            />
-            <Area
-              dataKey="balanceSat"
-              fill="url(#fillBalance)"
-              stroke="var(--color-balanceSat)"
-              type="monotone"
-            />
-          </AreaChart>
-        </ChartContainer>
+        {balanceHistory.length === 0 ? (
+          <Empty className="h-62.5 border-0 py-0">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <ChartLineIcon />
+              </EmptyMedia>
+              <EmptyTitle>{t('dashboard.chart.empty')}</EmptyTitle>
+              <EmptyDescription>{t('dashboard.chart.empty_description')}</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <ChartContainer
+            config={chartConfig}
+            className="aspect-auto h-62.5 w-full [&_svg]:overflow-visible"
+          >
+            <AreaChart data={filteredData}>
+              <defs>
+                <linearGradient id="fillBalance" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--color-balanceSat)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--color-balanceSat)" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={32}
+                tickFormatter={(value: string) => {
+                  const date = new Date(value)
+                  return date.toLocaleDateString('en-US', {
+                    day: 'numeric',
+                    month: 'short'
+                  })
+                }}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={(value: number) => formatBitcoin(value)}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(value) =>
+                      new Date(String(value)).toLocaleDateString('en-US', {
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        month: 'short'
+                      })
+                    }
+                    formatter={(value) => [
+                      formatBitcoin(Number(value)),
+                      t('dashboard.chart.balance')
+                    ]}
+                    indicator="dot"
+                  />
+                }
+              />
+              <Area
+                dataKey="balanceSat"
+                fill="url(#fillBalance)"
+                stroke="var(--color-balanceSat)"
+                type="monotone"
+              />
+            </AreaChart>
+          </ChartContainer>
+        )}
       </CardContent>
     </Card>
   )
