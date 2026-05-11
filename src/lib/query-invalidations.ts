@@ -18,3 +18,10 @@ export async function invalidateOnchainState(queryClient: QueryClient) {
 export async function invalidateWalletExistence(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: walletKeys.exists() })
 }
+
+export async function resetWalletQueriesAfterDelete(queryClient: QueryClient) {
+  queryClient.removeQueries({ queryKey: walletKeys.autoCreate() })
+  queryClient.removeQueries({ queryKey: walletKeys.balance() })
+  queryClient.removeQueries({ queryKey: walletKeys.transactions() })
+  await invalidateWalletExistence(queryClient)
+}

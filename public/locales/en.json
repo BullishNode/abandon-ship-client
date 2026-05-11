@@ -10,7 +10,9 @@
     "cancel": "Cancel",
     "continue": "Continue",
     "paste": "Paste",
-    "back": "Back"
+    "back": "Back",
+    "confirm": "Confirm",
+    "delete": "Delete"
   },
   "bitcoin": {
     "sats_unit_one": "sat",
@@ -209,6 +211,18 @@
     "discrete_mode": {
       "label": "Discrete mode",
       "description": "Hide balance and transaction amounts"
+    },
+    "danger": {
+      "title": "Danger zone",
+      "delete_wallet": {
+        "label": "Delete wallet",
+        "description": "Deletes this wallet and creates a new one. This cannot be undone.",
+        "button": "Delete wallet",
+        "confirm": {
+          "title": "Delete this wallet?",
+          "description": "Your current wallet will be deleted and a fresh wallet will be created. Make sure you have backed up your wallet first."
+        }
+      }
     }
   },
   "dashboard": {

@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
+import { ConfirmDialog } from '@/components/confirm-dialog'
+import { Button } from '@/components/ui/button'
 import { Field, FieldContent, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import {
@@ -12,6 +15,7 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { WALLET_NAME_MAX_LENGTH } from '@/constants/wallet'
+import { useResetWallet } from '@/hooks/barkd/use-reset-wallet'
 import { useSettingsStore } from '@/stores/settings'
 import { useWalletStore } from '@/stores/wallet'
 import type { BitcoinUnit } from '@/types/bitcoin'
@@ -23,6 +27,7 @@ const BITCOIN_UNITS: { value: BitcoinUnit; label: string }[] = [
 
 export default function SettingsPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [bitcoinUnit, setBitcoinUnit] = useSettingsStore(
     useShallow((state) => [state.bitcoinUnit, state.setBitcoinUnit])
   )
@@ -33,6 +38,13 @@ export default function SettingsPage() {
     useShallow((state) => [state.wallet, state.updateWalletName])
   )
   const [walletName, setWalletName] = useState(wallet?.name ?? '')
+  const [isDeleteOpen, setDeleteOpen] = useState(false)
+  const { mutate: resetWallet, isPending: isDeleting } = useResetWallet({
+    onSuccess: () => {
+      setDeleteOpen(false)
+      void navigate('/')
+    }
+  })
 
   function commitWalletName() {
     const trimmed = walletName.trim()
@@ -88,6 +100,32 @@ export default function SettingsPage() {
         </FieldContent>
         <Switch checked={discreteMode} id="discrete-mode" onCheckedChange={setDiscreteMode} />
       </Field>
+      <section className="space-y-4 rounded-lg border border-destructive/30 p-4">
+        <h2 className="font-semibold text-destructive text-lg">{t('settings.danger.title')}</h2>
+        <Field orientation="horizontal">
+          <FieldContent>
+            <FieldLabel>{t('settings.danger.delete_wallet.label')}</FieldLabel>
+            <FieldDescription>{t('settings.danger.delete_wallet.description')}</FieldDescription>
+          </FieldContent>
+          <Button onClick={() => setDeleteOpen(true)} variant="destructive">
+            {t('settings.danger.delete_wallet.button')}
+          </Button>
+        </Field>
+      </section>
+      <ConfirmDialog
+        confirmLabel={t('actions.delete')}
+        description={t('settings.danger.delete_wallet.confirm.description')}
+        loading={isDeleting}
+        onConfirm={() => resetWallet()}
+        onOpenChange={(open) => {
+          if (!isDeleting) {
+            setDeleteOpen(open)
+          }
+        }}
+        open={isDeleteOpen}
+        title={t('settings.danger.delete_wallet.confirm.title')}
+        variant="destructive"
+      />
     </div>
   )
 }
