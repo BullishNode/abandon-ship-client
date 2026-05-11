@@ -5,7 +5,7 @@ import { MovementAmountCell } from '@/components/movement-amount-cell'
 import { MovementLabelCell } from '@/components/movement-label-cell'
 import { MovementSourceBadge } from '@/components/movement-source-badge'
 import { MovementStatusBadge } from '@/components/movement-status-badge'
-import { getMovementCounterparty, getMovementSource, getMovementTxKey } from '@/utils/movement'
+import { getMovementCounterparty, getMovementSource } from '@/utils/movement'
 
 interface MovementColumnsOptions {
   t: TFunction
@@ -33,7 +33,7 @@ export function getMovementColumns({
       cell: ({ row }) => (
         <MovementLabelCell
           fallback={getMovementCounterparty(row.original)}
-          txKey={getMovementTxKey(row.original)}
+          movementId={row.original.id}
         />
       ),
       header: t('movements.columns.label'),

@@ -1,20 +1,81 @@
+import type { Movement } from '@secondts/barkd'
+import { z } from 'zod'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import type { Contact, Tag, TransactionAnnotation } from '@/types/metadata'
+import { BINDING_TTL_MS, MAX_BINDINGS } from '@/constants/metadata'
+import type {
+  AnnotationInput,
+  BindingDirection,
+  Contact,
+  DestinationBinding,
+  Tag,
+  TransactionAnnotation
+} from '@/types/metadata'
+import {
+  buildAnnotation,
+  dedupeNonEmpty,
+  movementDestinationValues,
+  movementDirection
+} from '@/utils/metadata'
+
+const STORE_VERSION = 1
+
+interface BindingInput {
+  id?: string
+  direction: BindingDirection
+  destinations: string[]
+  label?: string
+  tags: string[]
+  contactId?: string
+}
 
 interface MetadataStore {
   tags: Tag[]
-  addTag: (name: Tag['name']) => Tag['name']
-  removeTag: (name: Tag['name']) => void
   contacts: Contact[]
-  addContact: (name: Contact['name']) => Contact
-  removeContact: (id: Contact['id']) => void
-  annotations: TransactionAnnotation[]
-  setAnnotation: (
-    txKey: string,
-    data: { label?: string; tags: string[]; contactId?: string }
-  ) => void
-  getAnnotation: (txKey: string) => TransactionAnnotation | undefined
+  bindings: DestinationBinding[]
+  annotations: Record<number, TransactionAnnotation>
+  addTag: (name: string) => string
+  removeTag: (name: string) => void
+  addContact: (name: string) => Contact
+  removeContact: (id: string) => void
+  upsertBinding: (input: BindingInput) => string
+  removeBinding: (id: string) => void
+  pruneBindings: () => void
+  setManualAnnotation: (movementId: number, input: AnnotationInput) => void
+  getAnnotation: (movementId: number) => TransactionAnnotation | undefined
+  matchMovement: (movement: Movement) => void
+}
+
+const tagSchema = z.object({
+  createdAt: z.string(),
+  name: z.string()
+}) satisfies z.ZodType<Tag>
+
+const contactSchema = z.object({
+  createdAt: z.string(),
+  id: z.string(),
+  name: z.string()
+}) satisfies z.ZodType<Contact>
+
+const persistedSchema = z
+  .object({
+    contacts: z.array(z.unknown()).optional(),
+    tags: z.array(z.unknown()).optional()
+  })
+  .partial()
+
+function parseList<T>(values: unknown[] | undefined, schema: z.ZodType<T>): T[] {
+  if (values === undefined) {
+    return []
+  }
+  const out: T[] = []
+  for (const value of values) {
+    const result = schema.safeParse(value)
+    if (result.success) {
+      out.push(result.data)
+    }
+  }
+  return out
 }
 
 export const useMetadataStore = create<MetadataStore>()(
@@ -25,13 +86,11 @@ export const useMetadataStore = create<MetadataStore>()(
         if (trimmed.length === 0) {
           throw new Error('Contact name must not be empty')
         }
-
         const newContact: Contact = {
           createdAt: new Date().toISOString(),
           id: crypto.randomUUID(),
           name: trimmed
         }
-
         set((state) => ({ contacts: [...state.contacts, newContact] }))
         return newContact
       },
@@ -40,29 +99,72 @@ export const useMetadataStore = create<MetadataStore>()(
         if (trimmed.length === 0) {
           throw new Error('Tag must not be empty')
         }
-
         const normalized = trimmed.toLowerCase()
-        const existing = get().tags.find((t) => t.name.toLowerCase() === normalized)
-
+        const existing = get().tags.find((tag) => tag.name.toLowerCase() === normalized)
         if (existing) {
           return existing.name
         }
-
-        const newTag: Tag = {
-          createdAt: new Date().toISOString(),
-          name: trimmed
-        }
-
+        const newTag: Tag = { createdAt: new Date().toISOString(), name: trimmed }
         set((state) => ({ tags: [...state.tags, newTag] }))
         return trimmed
       },
-      annotations: [],
+      annotations: {},
+      bindings: [],
       contacts: [],
-      getAnnotation: (txKey) => get().annotations.find((a) => a.txKey === txKey),
-      removeContact: (id) => {
-        set((state) => ({
-          contacts: state.contacts.filter((contact) => contact.id !== id)
+      getAnnotation: (movementId) => get().annotations[movementId],
+      matchMovement: (movement) => {
+        const state = get()
+        if (state.annotations[movement.id] !== undefined) {
+          return
+        }
+        const direction = movementDirection(movement)
+        if (direction === null) {
+          return
+        }
+        const destinations = movementDestinationValues(movement, direction)
+        if (destinations.length === 0) {
+          return
+        }
+        const destinationSet = new Set(destinations)
+        let matched: DestinationBinding | undefined
+        for (const binding of state.bindings) {
+          if (binding.direction !== direction) {
+            continue
+          }
+          if (!binding.destinations.some((value) => destinationSet.has(value))) {
+            continue
+          }
+          if (matched === undefined || binding.createdAt > matched.createdAt) {
+            matched = binding
+          }
+        }
+        if (matched === undefined) {
+          return
+        }
+        set((current) => ({
+          annotations: {
+            ...current.annotations,
+            [movement.id]: buildAnnotation(movement.id, 'binding', {
+              contactId: matched.contactId,
+              label: matched.label,
+              tags: matched.tags
+            })
+          }
         }))
+      },
+      pruneBindings: () => {
+        const cutoff = Date.now() - BINDING_TTL_MS
+        set((state) => ({
+          bindings: state.bindings.filter(
+            (binding) => new Date(binding.createdAt).getTime() >= cutoff
+          )
+        }))
+      },
+      removeBinding: (id) => {
+        set((state) => ({ bindings: state.bindings.filter((binding) => binding.id !== id) }))
+      },
+      removeContact: (id) => {
+        set((state) => ({ contacts: state.contacts.filter((contact) => contact.id !== id) }))
       },
       removeTag: (name) => {
         const normalized = name.trim().toLowerCase()
@@ -70,29 +172,67 @@ export const useMetadataStore = create<MetadataStore>()(
           tags: state.tags.filter((tag) => tag.name.toLowerCase() !== normalized)
         }))
       },
-      setAnnotation: (txKey, data) => {
-        set((state) => {
-          const existing = state.annotations.findIndex((a) => a.txKey === txKey)
-          const annotation: TransactionAnnotation = {
-            ...data,
-            createdAt: new Date().toISOString(),
-            txKey
+      setManualAnnotation: (movementId, input) => {
+        set((state) => ({
+          annotations: {
+            ...state.annotations,
+            [movementId]: buildAnnotation(movementId, 'manual', input)
           }
-
-          if (existing !== -1) {
-            const updated = [...state.annotations]
-            updated[existing] = annotation
-            return { annotations: updated }
-          }
-
-          return { annotations: [...state.annotations, annotation] }
-        })
+        }))
       },
-      tags: []
+      tags: [],
+      upsertBinding: (input) => {
+        const id = input.id ?? crypto.randomUUID()
+        set((state) => {
+          const existingIndex = state.bindings.findIndex((binding) => binding.id === id)
+          const previous = existingIndex === -1 ? undefined : state.bindings[existingIndex]
+          const mergedDestinations = dedupeNonEmpty([
+            ...(previous?.destinations ?? []),
+            ...input.destinations
+          ])
+          const next: DestinationBinding = {
+            contactId: input.contactId,
+            createdAt: previous?.createdAt ?? new Date().toISOString(),
+            destinations: mergedDestinations,
+            direction: input.direction,
+            id,
+            label: input.label,
+            tags: input.tags
+          }
+          if (existingIndex === -1) {
+            const appended = [...state.bindings, next]
+            const trimmed =
+              appended.length > MAX_BINDINGS
+                ? appended.slice(appended.length - MAX_BINDINGS)
+                : appended
+            return { bindings: trimmed }
+          }
+          const bindings = [...state.bindings]
+          bindings[existingIndex] = next
+          return { bindings }
+        })
+        return id
+      }
     }),
     {
+      migrate: (persistedState) => {
+        const fresh = { annotations: {}, bindings: [], contacts: [], tags: [] }
+        const parsed = persistedSchema.safeParse(persistedState)
+        if (!parsed.success) {
+          return fresh
+        }
+        return {
+          ...fresh,
+          contacts: parseList(parsed.data.contacts, contactSchema),
+          tags: parseList(parsed.data.tags, tagSchema)
+        }
+      },
       name: 'bark-web-metadata-store',
-      storage: createJSONStorage(() => localStorage)
+      onRehydrateStorage: () => (state) => {
+        state?.pruneBindings()
+      },
+      storage: createJSONStorage(() => localStorage),
+      version: STORE_VERSION
     }
   )
 )

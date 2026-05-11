@@ -1,5 +1,5 @@
 import { encodeBIP321 } from 'bip-321'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLightningInvoice } from '@/hooks/barkd/use-lightning-invoice'
 import { useLightningReceiveFee } from '@/hooks/barkd/use-lightning-receive-fee'
 import { useOnchainAddress } from '@/hooks/barkd/use-onchain-address'
@@ -63,15 +63,34 @@ function getLoadingForTab(
   return isFetchingArkAddress || isFetchingOnchainAddress
 }
 
+function collectReceiveDestinations(
+  arkAddress: string | undefined,
+  onchainAddress: string | undefined,
+  lightningInvoice: string | undefined
+): string[] {
+  const values: string[] = []
+  if (arkAddress !== undefined && arkAddress !== '') {
+    values.push(arkAddress)
+  }
+  if (onchainAddress !== undefined && onchainAddress !== '') {
+    values.push(onchainAddress)
+  }
+  if (lightningInvoice !== undefined && lightningInvoice !== '') {
+    values.push(lightningInvoice)
+  }
+  return values
+}
+
 export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
   const formatBitcoin = useFormatBitcoin()
-  const setAnnotation = useMetadataStore((state) => state.setAnnotation)
+  const upsertBinding = useMetadataStore((state) => state.upsertBinding)
 
   const [activeTab, setActiveTab] = useState<ReceiveTab>('payto')
   const [amount, setAmount] = useState('')
   const [label, setLabel] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [receivedAmountSat, setReceivedAmountSat] = useState<number | undefined>()
+  const [bindingId, setBindingId] = useState<string | undefined>()
   const [prevOpen, setPrevOpen] = useState(open)
 
   const amountSat = Number.parseInt(amount, 10)
@@ -91,7 +110,7 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
     refetch: regenerateInvoice
   } = useLightningInvoice({
     amountSat: debouncedAmount,
-    enabled: activeTab === 'lightning'
+    enabled: debouncedAmount !== undefined
   })
 
   const {
@@ -106,6 +125,7 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
     setLabel('')
     setSelectedTags([])
     setReceivedAmountSat(undefined)
+    setBindingId(undefined)
     fetchArkAddress()
     fetchOnchainAddress()
   }
@@ -131,6 +151,39 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
 
   const paytoUri = buildPaytoUri(onchainAddress, arkAddress, lightningInvoice, amountBtc)
 
+  const trimmedLabel = label.trim()
+  const hasMetadata = trimmedLabel !== '' || selectedTags.length > 0
+
+  useEffect(() => {
+    if (!open || !hasMetadata) {
+      return
+    }
+    const destinations = collectReceiveDestinations(arkAddress, onchainAddress, lightningInvoice)
+    if (destinations.length === 0) {
+      return
+    }
+    const id = upsertBinding({
+      destinations,
+      direction: 'incoming',
+      id: bindingId,
+      label: trimmedLabel === '' ? undefined : trimmedLabel,
+      tags: selectedTags
+    })
+    if (id !== bindingId) {
+      setBindingId(id)
+    }
+  }, [
+    open,
+    hasMetadata,
+    arkAddress,
+    onchainAddress,
+    lightningInvoice,
+    trimmedLabel,
+    selectedTags,
+    bindingId,
+    upsertBinding
+  ])
+
   function handleTabChange(value: string) {
     if (value === 'payto' || value === 'ark' || value === 'lightning' || value === 'onchain') {
       setActiveTab(value)
@@ -142,18 +195,6 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
       return
     }
     void regenerateInvoice()
-  }
-
-  function saveAnnotation(txKey: string) {
-    const hasLabel = label !== ''
-    const hasTags = selectedTags.length > 0
-    if (!hasLabel && !hasTags) {
-      return
-    }
-    setAnnotation(txKey, {
-      label: hasLabel ? label : undefined,
-      tags: selectedTags
-    })
   }
 
   function handleNewAddress() {
@@ -176,24 +217,7 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
     }
   }
 
-  function getCurrentAddress(): string {
-    if (activeTab === 'ark') {
-      return arkAddress ?? ''
-    }
-    if (activeTab === 'lightning') {
-      return lightningInvoice ?? ''
-    }
-    if (activeTab === 'onchain') {
-      return onchainAddress ?? ''
-    }
-    return paytoUri ?? ''
-  }
-
   function handleClose() {
-    const currentAddress = getCurrentAddress()
-    if (currentAddress !== '') {
-      saveAnnotation(currentAddress)
-    }
     onOpenChange(false)
   }
 

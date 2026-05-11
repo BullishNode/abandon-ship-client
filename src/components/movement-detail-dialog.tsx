@@ -15,8 +15,7 @@ import {
   getMovementCounterpartyDestination,
   getMovementDirection,
   getMovementFeeSat,
-  getMovementSource,
-  getMovementTxKey
+  getMovementSource
 } from '@/utils/movement'
 
 const COPY_RESET_MS = 1500
@@ -73,11 +72,9 @@ function MovementDetailContent({
   discreteMode
 }: MovementDetailContentProps) {
   const { t } = useTranslation()
-  const txKey = getMovementTxKey(movement)
-  const annotation = useMetadataStore((state) =>
-    state.annotations.find((item) => item.txKey === txKey)
-  )
-  const setAnnotation = useMetadataStore((state) => state.setAnnotation)
+  const movementId = movement.id
+  const annotation = useMetadataStore((state) => state.annotations[movementId])
+  const setManualAnnotation = useMetadataStore((state) => state.setManualAnnotation)
   const direction = getMovementDirection(movement)
   const counterparty = getMovementCounterpartyDestination(movement)
   const source = getMovementSource(movement)
@@ -110,7 +107,7 @@ function MovementDetailContent({
         <LabelEditor
           label={annotation?.label ?? ''}
           onSave={(nextLabel) => {
-            setAnnotation(txKey, {
+            setManualAnnotation(movementId, {
               contactId: annotation?.contactId,
               label: nextLabel,
               tags: annotation?.tags ?? []
@@ -121,7 +118,7 @@ function MovementDetailContent({
           <Label>{t('movements.detail.tags')}</Label>
           <TagInput
             onChange={(nextTags) => {
-              setAnnotation(txKey, {
+              setManualAnnotation(movementId, {
                 contactId: annotation?.contactId,
                 label: annotation?.label,
                 tags: nextTags

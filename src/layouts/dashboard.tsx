@@ -8,6 +8,7 @@ import { SendModal } from '@/components/send-modal'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+import { useMetadataMatcher } from '@/hooks/use-metadata-matcher'
 
 const ROUTE_TITLE_KEYS: Record<string, string> = {
   '/dashboard': 'nav.transactions',
@@ -20,6 +21,7 @@ export default function DashboardLayout() {
   const [showReceiveModal, setShowReceiveModal] = useState(false)
   const [showSendModal, setShowSendModal] = useState(false)
   const [sendInitialStep, setSendInitialStep] = useState<'scan' | 'send'>('scan')
+  useMetadataMatcher()
 
   const routeTitleKey = ROUTE_TITLE_KEYS[pathname]
   const routeTitle = routeTitleKey ? t(routeTitleKey) : ''

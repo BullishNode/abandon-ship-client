@@ -2,14 +2,12 @@ import { Badge } from '@/components/ui/badge'
 import { useMetadataStore } from '@/stores/metadata'
 
 interface MovementLabelCellProps {
-  txKey: string
+  movementId: number
   fallback: string
 }
 
-export function MovementLabelCell({ txKey, fallback }: MovementLabelCellProps) {
-  const annotation = useMetadataStore((state) =>
-    state.annotations.find((item) => item.txKey === txKey)
-  )
+export function MovementLabelCell({ movementId, fallback }: MovementLabelCellProps) {
+  const annotation = useMetadataStore((state) => state.annotations[movementId])
   const label = annotation?.label?.trim() ?? ''
   const tags = annotation?.tags ?? []
   const hasLabel = label.length > 0

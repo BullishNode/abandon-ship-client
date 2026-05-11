@@ -68,10 +68,6 @@ export function getMovementSource(movement: Movement): MovementSource {
   return sourceFromSubsystemName(movement.subsystem.name) ?? 'unknown'
 }
 
-export function getMovementTxKey(movement: Movement): string {
-  return `movement:${movement.id}`
-}
-
 // barkd Movement type currently exposes only offchainFeeSat. Onchain fees may
 // live in `metadata` per subsystem; extend once the metadata schema is documented.
 export function getMovementFeeSat(movement: Movement): number | null {

@@ -26,7 +26,7 @@ interface UseSendFlowOptions {
 export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSendFlowOptions) {
   const { t } = useTranslation()
   const formatBitcoin = useFormatBitcoin()
-  const setAnnotation = useMetadataStore((state) => state.setAnnotation)
+  const upsertBinding = useMetadataStore((state) => state.upsertBinding)
 
   const [step, setStep] = useState<SendStep>(initialStep)
   const [direction, setDirection] = useState(1)
@@ -59,13 +59,18 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     setPrevOpen(open)
   }
 
+  const amountSat = Number.parseInt(amount, 10)
+  const validAmountSat = Number.isNaN(amountSat) || amountSat <= 0 ? undefined : amountSat
+
   function handleSendSuccess() {
-    const txKey = `${destination}:${amount}:${Date.now()}`
-    const hasLabel = label !== ''
+    const trimmedLabel = label.trim()
+    const hasLabel = trimmedLabel !== ''
     const hasTags = selectedTags.length > 0
-    if (hasLabel || hasTags) {
-      setAnnotation(txKey, {
-        label: hasLabel ? label : undefined,
+    if ((hasLabel || hasTags) && destination !== '') {
+      upsertBinding({
+        destinations: [destination],
+        direction: 'outgoing',
+        label: hasLabel ? trimmedLabel : undefined,
         tags: selectedTags
       })
     }
@@ -89,9 +94,6 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
       handleSendSuccess()
     }
   })
-
-  const amountSat = Number.parseInt(amount, 10)
-  const validAmountSat = Number.isNaN(amountSat) || amountSat <= 0 ? undefined : amountSat
 
   const isLightningRoute = sendRoute === 'lightning'
   const isOnchainRoute = sendRoute === 'onchain-from-ark' || sendRoute === 'onchain-from-wallet'
