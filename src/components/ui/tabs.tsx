@@ -75,7 +75,7 @@ function TabsTrigger({
   children,
   ...props
 }: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
-  const activeValue = React.useContext(TabsContext)
+  const activeValue = React.use(TabsContext)
   const isActive = activeValue === value
 
   return (

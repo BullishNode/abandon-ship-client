@@ -27,8 +27,10 @@ async function fetchPrice(currency: FiatCurrency): Promise<PriceData> {
     throw new Error('Failed to fetch Bitcoin price from Binance')
   }
 
-  const ticker: BinanceTickerResponse = await tickerResponse.json()
-  const klines: BinanceKline[] = await klinesResponse.json()
+  const [ticker, klines]: [BinanceTickerResponse, BinanceKline[]] = await Promise.all([
+    tickerResponse.json(),
+    klinesResponse.json()
+  ])
 
   const priceHistory = klines.map((kline) => Number.parseFloat(kline[4]))
 

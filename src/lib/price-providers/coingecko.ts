@@ -22,8 +22,8 @@ async function fetchPrice(currency: FiatCurrency): Promise<PriceData> {
     throw new Error('Failed to fetch Bitcoin price from CoinGecko')
   }
 
-  const priceData: CoinGeckoPriceResponse = await priceResponse.json()
-  const chartData: CoinGeckoChartResponse = await chartResponse.json()
+  const [priceData, chartData]: [CoinGeckoPriceResponse, CoinGeckoChartResponse] =
+    await Promise.all([priceResponse.json(), chartResponse.json()])
 
   const currentPrice = priceData.bitcoin[currency] ?? 0
   const changePercent24h = priceData.bitcoin[`${currency}_24h_change`] ?? 0

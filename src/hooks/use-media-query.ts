@@ -23,8 +23,8 @@ function getDimensions() {
 }
 
 export function useMediaQuery() {
-  const [device, setDevice] = useState<'mobile' | 'tablet' | 'desktop' | null>(getDevice())
-  const [dimensions, setDimensions] = useState(getDimensions())
+  const [device, setDevice] = useState<'mobile' | 'tablet' | 'desktop' | null>(() => getDevice())
+  const [dimensions, setDimensions] = useState(() => getDimensions())
 
   useEffect(() => {
     function checkDevice() {
