@@ -127,10 +127,9 @@ export function MovementsTable() {
                   <TrayIcon />
                 </EmptyMedia>
                 <EmptyTitle>{t('movements.empty')}</EmptyTitle>
-                <EmptyDescription>{t('movements.empty_description')}</EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
-                <div className="flex gap-2">
+                <div className="flex gap-2 mt-2">
                   <Button onClick={() => openSend('scan')} variant="outline">
                     <ScanIcon />
                     {t('actions.scan')}

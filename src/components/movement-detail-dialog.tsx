@@ -103,30 +103,6 @@ function MovementDetailContent({
             sats={movement.effectiveBalanceSat}
           />
         </div>
-        <LabelEditor
-          inputId="movement-label"
-          label={annotation?.label ?? ''}
-          onSave={(nextLabel) => {
-            setManualAnnotation(movementId, {
-              contactId: annotation?.contactId,
-              label: nextLabel,
-              tags: annotation?.tags ?? []
-            })
-          }}
-        />
-        <div className="flex flex-col gap-2">
-          <Label>{t('movements.detail.tags')}</Label>
-          <TagInput
-            onChange={(nextTags) => {
-              setManualAnnotation(movementId, {
-                contactId: annotation?.contactId,
-                label: annotation?.label,
-                tags: nextTags
-              })
-            }}
-            value={annotation?.tags ?? []}
-          />
-        </div>
         {counterparty ? (
           <CopyableValueRow label={counterpartyLabel} value={counterparty.destination.value} />
         ) : (
@@ -150,6 +126,30 @@ function MovementDetailContent({
             value={formatDateAbsolute(completedAt)}
           />
         ) : null}
+                <LabelEditor
+          inputId="movement-label"
+          label={annotation?.label ?? ''}
+          onSave={(nextLabel) => {
+            setManualAnnotation(movementId, {
+              contactId: annotation?.contactId,
+              label: nextLabel,
+              tags: annotation?.tags ?? []
+            })
+          }}
+        />
+        <div className="flex flex-col gap-2">
+          <Label>{t('movements.detail.tags')}</Label>
+          <TagInput
+            onChange={(nextTags) => {
+              setManualAnnotation(movementId, {
+                contactId: annotation?.contactId,
+                label: annotation?.label,
+                tags: nextTags
+              })
+            }}
+            value={annotation?.tags ?? []}
+          />
+        </div>
       </div>
     </>
   )

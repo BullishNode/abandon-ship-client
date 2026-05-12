@@ -119,7 +119,7 @@
   "send": {
     "title": "Send bitcoin",
     "scan": {
-      "description": "Scan any Bitcoin, Lightning, or Ark QR code to pay with bitcoin."
+      "description": "Scan any bitcoin, Lightning, or Ark QR code to pay."
     },
     "confirm": {
       "description": "Review the payment details before sending.",
@@ -161,8 +161,8 @@
     "create": "Create \"{{search}}\""
   },
   "movements": {
-    "title": "Movements",
-    "empty": "No movements yet",
+    "title": "History",
+    "empty": "No history yet",
     "empty_description": "Send or receive sats and they will show up here.",
     "options": {
       "label": "Movement options",

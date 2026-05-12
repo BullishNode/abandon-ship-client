@@ -12,7 +12,7 @@ export function StatCard({ icon: IconComponent, title, children }: StatCardProps
   return (
     <Card size="sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-muted-foreground">
+        <CardTitle className="flex items-center gap-2">
           <IconComponent size={16} weight="regular" />
           <span>{title}</span>
         </CardTitle>

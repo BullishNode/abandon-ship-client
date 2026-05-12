@@ -80,7 +80,6 @@ export function BalanceChart() {
                 <ChartLineIcon />
               </EmptyMedia>
               <EmptyTitle>{t('dashboard.chart.empty')}</EmptyTitle>
-              <EmptyDescription>{t('dashboard.chart.empty_description')}</EmptyDescription>
             </EmptyHeader>
           </Empty>
         ) : (
