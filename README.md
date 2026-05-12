@@ -62,6 +62,10 @@ Run the linter and auto-fix issues:
 npm run fix
 ```
 
+## Contributing
+
+Thinking of opening a pull request? See our [contribution guide](CONTRIBUTING.md) for dependencies, style guidelines, and code hygiene expectations.
+
 ## License
 
 Released under the **MIT** license — see the [LICENSE](LICENSE) file for details.
