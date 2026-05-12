@@ -10,7 +10,7 @@ Run `npm install` to install the necessary dependencies on your machine.
 
 # Environment variables
 
-Make sure you have the correct environment variables set in `.env.local` file. Check the [.env.example] file to see variables are required and their expected format.
+Make sure you have the correct environment variables set in `.env.local` file. Check the [.env.example](.env.example) file to see variables are required and their expected format.
 
 # Running tests
 
