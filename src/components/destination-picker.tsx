@@ -38,7 +38,7 @@ function getTypeLabelKey(type: Destination['type']): string {
     return 'send.route.ark'
   }
   if (type === 'bitcoin-address') {
-    return 'send.route.onchain_from_ark'
+    return 'send.route.onchain'
   }
   return 'send.route.lightning'
 }
@@ -52,22 +52,22 @@ function DestinationBadge({ destination, amountSat, isSelected, onSelect }: Dest
   let feeLabel = '—'
   if (destination.type === 'ark-address') {
     feeLabel = t('send.fee.free')
-  } else if (isFetching) {
-    feeLabel = '...'
   } else if (feeSat !== undefined) {
     feeLabel = formatBitcoin(feeSat)
+  } else if (isFetching) {
+    feeLabel = '...'
   }
 
   return (
     <button
       className={cn(
-        'rounded-full transition-opacity',
+        'cursor-pointer rounded-full transition-opacity',
         isSelected ? '' : 'opacity-60 hover:opacity-100'
       )}
       onClick={onSelect}
       type="button"
     >
-      <Badge variant={isSelected ? 'default' : 'outline'}>
+      <Badge className={cn(isSelected && 'border-[1.5px] border-primary')} variant="outline">
         <Icon />
         {t(getTypeLabelKey(destination.type))}
         <span className="opacity-70">· {feeLabel}</span>

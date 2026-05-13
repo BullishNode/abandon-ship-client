@@ -20,6 +20,7 @@ const ANCHORS = [
 
 interface MarbleAvatarProps {
   name: string
+  seed?: string
   size?: number
   colors?: readonly string[]
   variant?: 'circle' | 'square'
@@ -56,8 +57,8 @@ function getSignedUnit(num: number, range: number, index: number): number {
   return value
 }
 
-function generateBlobs(name: string, colors: readonly string[]): BlobProperties[] {
-  const seed = hashCode(name)
+function generateBlobs(source: string, colors: readonly string[]): BlobProperties[] {
+  const seed = hashCode(source)
   return ANCHORS.map((_, i) => ({
     color: colors[i % colors.length],
     translateX: getSignedUnit(seed * (i + 1), POSITION_RANGE / 2, 1),
@@ -67,13 +68,15 @@ function generateBlobs(name: string, colors: readonly string[]): BlobProperties[
 
 export function MarbleAvatar({
   name,
+  seed,
   size = 32,
   colors = DEFAULT_COLORS,
   variant = 'circle',
   className
 }: MarbleAvatarProps) {
-  const blobs = generateBlobs(name, colors)
-  const seedSuffix = hashCode(name)
+  const hashSource = seed ?? name
+  const blobs = generateBlobs(hashSource, colors)
+  const seedSuffix = hashCode(hashSource)
   const maskId = `marble-mask-${seedSuffix}`
   const filterId = `marble-filter-${seedSuffix}`
   const cornerRadius = variant === 'circle' ? SIZE * 2 : SIZE / 8

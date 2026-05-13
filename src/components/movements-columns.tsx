@@ -5,8 +5,7 @@ import { MovementLabelCell } from '@/components/movement-label-cell'
 import { MovementSourceBadge } from '@/components/movement-source-badge'
 import { MovementStatusBadge } from '@/components/movement-status-badge'
 import { OnchainLabelCell } from '@/components/onchain-label-cell'
-import { formatAddress } from '@/utils/format'
-import { getMovementCounterparty, getMovementSource } from '@/utils/movement'
+import { getMovementSource } from '@/utils/movement'
 import type { MovementsFeedRow } from '@/utils/movements-feed'
 
 interface MovementColumnsOptions {
@@ -31,10 +30,7 @@ export function getMovementColumns({
         if (entry.kind === 'movement') {
           return formatDate(entry.movement.time.createdAt)
         }
-        if (entry.status === 'pending') {
-          return t('movements.onchain.pending_date')
-        }
-        return t('movements.onchain.confirmed_date', { height: entry.confirmationHeight })
+        return formatDate(new Date(entry.approximateTimestampMs))
       },
       header: t('movements.columns.date'),
       id: 'date'
@@ -44,17 +40,10 @@ export function getMovementColumns({
         const entry = row.original
         if (entry.kind === 'movement') {
           const fallback =
-            entry.movement.subsystem.kind === 'refresh'
-              ? t('movements.kinds.refresh')
-              : getMovementCounterparty(entry.movement)
+            entry.movement.subsystem.kind === 'refresh' ? t('movements.kinds.refresh') : undefined
           return <MovementLabelCell fallback={fallback} movementId={entry.movement.id} />
         }
-        return (
-          <OnchainLabelCell
-            fallback={t('movements.onchain.label', { txid: formatAddress(entry.txid) })}
-            outpoint={entry.outpoint}
-          />
-        )
+        return <OnchainLabelCell outpoint={entry.outpoint} />
       },
       header: t('movements.columns.label'),
       id: 'label'

@@ -38,6 +38,7 @@ export function useAutoCreateWallet({ enabled }: UseAutoCreateWalletOptions) {
 
       useWalletStore.getState().setWallet({
         createdAt: new Date().toISOString(),
+        fingerprint: response.fingerprint,
         name: DEFAULT_WALLET_NAME
       })
 

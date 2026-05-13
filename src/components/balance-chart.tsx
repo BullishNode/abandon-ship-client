@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import type { ChartConfig } from '@/components/ui/chart'
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import {
   Select,
   SelectContent,
@@ -21,6 +21,7 @@ import { useOnchainUtxos } from '@/hooks/barkd/use-onchain-utxos'
 import { useWalletBalance } from '@/hooks/barkd/use-wallet-balance'
 import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
+import { getBalanceTotals } from '@/utils/balance'
 import { computeBalanceHistory, filterByTimeRange } from '@/utils/balance-history'
 import { utxoToOnchainEntry } from '@/utils/movements-feed'
 
@@ -41,9 +42,7 @@ export function BalanceChart() {
     }
   } satisfies ChartConfig
 
-  const onchainSpendableSat = onchainBalance?.trustedSpendableSat ?? 0
-  const onchainPendingSat = onchainBalance?.untrustedPendingSat ?? 0
-  const endpointTotalSat = (balance?.spendableSat ?? 0) + onchainSpendableSat + onchainPendingSat
+  const { totalSat: endpointTotalSat } = getBalanceTotals(balance, onchainBalance)
   const onchainEntries = utxos.map((utxo) => utxoToOnchainEntry(utxo, tip?.tipHeight))
   const balanceHistory = computeBalanceHistory(movements, onchainEntries, endpointTotalSat)
   const filteredData = filterByTimeRange(balanceHistory, timeRange)

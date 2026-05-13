@@ -12,6 +12,7 @@ import { useWalletBalance } from '@/hooks/barkd/use-wallet-balance'
 import { useBrantaVerification } from '@/hooks/branta/use-branta-verification'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
 import { useMetadataStore } from '@/stores/metadata'
+import { formatSatsDisplay, parseSatsInput } from '@/utils/format'
 import type { SendRoute } from '@/utils/payment'
 import {
   getSendRoute,
@@ -66,6 +67,11 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
 
   const amountSat = Number.parseInt(amount, 10)
   const validAmountSat = Number.isNaN(amountSat) || amountSat <= 0 ? undefined : amountSat
+  const amountDisplay = formatSatsDisplay(amount)
+
+  function handleAmountChange(value: string) {
+    setAmount(parseSatsInput(value))
+  }
 
   function handleSendSuccess() {
     const trimmedLabel = label.trim()
@@ -130,14 +136,18 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
   } else if (feeEstimate) {
     feeDisplay = formatBitcoin(feeEstimate.feeSat)
   }
+  const feeSat = sendRoute === 'ark' ? undefined : feeEstimate?.feeSat
 
   const { data: walletBalance } = useWalletBalance()
   const { data: onchainBalance } = useOnchainBalance()
 
-  const availableBalance =
-    sendRoute === 'onchain-from-wallet'
-      ? (onchainBalance?.trustedSpendableSat ?? 0)
-      : (walletBalance?.spendableSat ?? 0)
+  const arkBalanceSat = walletBalance?.spendableSat ?? 0
+  const onchainBalanceSat = onchainBalance?.trustedSpendableSat ?? 0
+
+  const availableBalance = sendRoute === 'onchain-from-wallet' ? onchainBalanceSat : arkBalanceSat
+
+  const isOnchainDestination =
+    sendRoute === 'onchain-from-ark' || sendRoute === 'onchain-from-wallet'
 
   const requiredSat =
     validAmountSat === undefined
@@ -252,7 +262,9 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
 
   return {
     amount,
+    amountDisplay,
     applyDestination,
+    arkBalanceSat,
     availableBalance,
     brantaPayment,
     canSend,
@@ -260,6 +272,7 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     destination,
     direction,
     feeDisplay,
+    feeSat,
     goToScan,
     goToSend,
     handleClose,
@@ -268,17 +281,20 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     insufficientFunds,
     isAmountLocked,
     isFetchingBranta,
+    isOnchainDestination,
     isSending,
     label,
     message,
+    onchainBalanceSat,
     selectedMethodType,
     selectedTags,
     sendRoute,
-    setAmount,
+    setAmount: handleAmountChange,
     setDestination,
     setLabel,
     setMessage,
     setSelectedTags,
+    setSendRoute,
     step,
     validAmountSat
   }

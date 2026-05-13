@@ -19,6 +19,7 @@ export function useSendOnchainFee(
       return fee
     },
     queryKey: feeKeys.onchainSend(amountSat, address),
+    staleTime: 30_000,
     ...options
   })
 }

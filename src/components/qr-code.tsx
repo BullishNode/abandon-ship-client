@@ -6,13 +6,6 @@ interface QRCodeProps {
 
 export function QRCode({ value }: QRCodeProps) {
   return (
-    <_QRCode
-      logoImage="/favicon.png"
-      logoPadding={4}
-      logoPaddingRadius={8}
-      logoWidth={32}
-      size={300}
-      value={value}
-    />
+    <_QRCode logoImage="/favicon.png" logoPadding={4} logoWidth={32} size={300} value={value} />
   )
 }

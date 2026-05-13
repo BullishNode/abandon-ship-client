@@ -18,6 +18,7 @@ export function useLightningSendFee(
       return fee
     },
     queryKey: feeKeys.lightningSend(amountSat),
+    staleTime: 30_000,
     ...options
   })
 }

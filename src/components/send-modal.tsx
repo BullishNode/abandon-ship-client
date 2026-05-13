@@ -16,7 +16,15 @@ import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
+import { useFormatFiat } from '@/hooks/use-format-fiat'
 import { useSendFlow } from '@/hooks/use-send-flow'
 import { cn } from '@/lib/utils'
 import type { SendRoute } from '@/utils/payment'
@@ -49,15 +57,13 @@ function getRouteLabel(route: SendRoute, t: (key: string) => string): string {
   if (route === 'lightning') {
     return t('send.route.lightning')
   }
-  if (route === 'onchain-from-ark') {
-    return t('send.route.onchain_from_ark')
-  }
-  return t('send.route.onchain_from_wallet')
+  return t('send.route.onchain')
 }
 
 export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModalProps) {
   const { t } = useTranslation()
   const formatBitcoin = useFormatBitcoin()
+  const formatFiat = useFormatFiat()
   const flow = useSendFlow({ initialStep, onOpenChange, open })
   const showPicker = flow.chooserDestinations.length > 1
   const isLnAddress = flow.selectedMethodType === 'lnaddress'
@@ -150,7 +156,14 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                   )}
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="send-amount">{t('send.amount')}</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="send-amount">{t('send.amount')}</Label>
+                    {flow.validAmountSat !== undefined && (
+                      <span className="text-muted-foreground text-xs">
+                        {formatFiat(flow.validAmountSat)}
+                      </span>
+                    )}
+                  </div>
                   <Input
                     aria-invalid={flow.insufficientFunds}
                     className={cn(
@@ -162,7 +175,7 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                     onChange={(e) => flow.setAmount(e.target.value)}
                     placeholder="0"
                     type="text"
-                    value={flow.amount}
+                    value={flow.amountDisplay}
                   />
                   {flow.insufficientFunds && (
                     <p className="text-destructive text-xs">
@@ -171,11 +184,38 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                       })}
                     </p>
                   )}
+                  <span className="text-muted-foreground text-xs">
+                    {t('send.fee.estimate')}: {flow.feeDisplay}
+                    {flow.feeSat !== undefined && flow.feeSat > 0 && (
+                      <> • {formatFiat(flow.feeSat)}</>
+                    )}
+                  </span>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <Label className="text-muted-foreground">{t('send.fee.estimate')}</Label>
-                  <span className="text-muted-foreground text-sm">{flow.feeDisplay}</span>
-                </div>
+                {flow.isOnchainDestination && (
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="send-source">{t('send.pay_from')}</Label>
+                    <Select
+                      onValueChange={(value) => {
+                        if (value === 'onchain-from-ark' || value === 'onchain-from-wallet') {
+                          flow.setSendRoute(value)
+                        }
+                      }}
+                      value={flow.sendRoute}
+                    >
+                      <SelectTrigger className="w-full" id="send-source">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="onchain-from-ark">
+                          {t('send.pay_from_ark')} • {formatBitcoin(flow.arkBalanceSat)}
+                        </SelectItem>
+                        <SelectItem value="onchain-from-wallet">
+                          {t('send.pay_from_onchain')} • {formatBitcoin(flow.onchainBalanceSat)}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 {flow.isFetchingBranta && (
                   <div className="flex flex-col gap-2">
                     <Label className="text-muted-foreground">{t('send.branta.title')}</Label>

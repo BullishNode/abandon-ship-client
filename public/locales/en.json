@@ -60,7 +60,9 @@
   },
   "welcome": {
     "title": "Welcome to $t(app.name)",
-    "description": "A web-based graphical user interface for managing bark wallet"
+    "description": "A web-based graphical user interface for managing bark wallet",
+    "settingUp": "Setting up your wallet",
+    "loading": "Loading your wallet"
   },
   "onboarding": {
     "create": "Create new wallet",
@@ -77,7 +79,6 @@
   },
   "receive": {
     "title": "Receive",
-    "description": "Scan the QR code or copy the address to receive funds.",
     "new": "New address",
     "tabs": {
       "payto": "Pay to",
@@ -90,8 +91,8 @@
       "amount": "To generate a Lightning invoice enter an amount"
     },
     "payto": {
-      "description": "Share this QR code to receive on any supported network.",
-      "needs_amount": "Enter an amount to include a Lightning invoice in the unified URI."
+      "error": "Unable to generate unified URI. Try again.",
+      "needs_amount": "Amount required to receive over Lightning."
     },
     "lightning": {
       "needs_amount": "Enter an amount to generate a Lightning invoice.",
@@ -147,8 +148,7 @@
     "route": {
       "lightning": "Lightning",
       "ark": "Ark",
-      "onchain_from_ark": "On-chain (from Ark)",
-      "onchain_from_wallet": "On-chain (from wallet)"
+      "onchain": "On-chain"
     },
     "pay_from": "Pay from",
     "pay_from_ark": "Ark balance",
@@ -173,12 +173,10 @@
     },
     "onchain": {
       "label": "On-chain receive · {{txid}}",
-      "pending_date": "Pending",
-      "confirmed_date": "Block {{height}}",
       "detail": {
         "title": "On-chain receive",
         "txid": "Transaction",
-        "height": "Confirmation",
+        "height": "Block Height",
         "pending": "Pending"
       }
     },
@@ -224,16 +222,14 @@
   },
   "settings": {
     "wallet_name": {
-      "label": "Wallet name",
-      "description": "Name shown in the sidebar"
+      "label": "Wallet name"
     },
     "price_provider": {
-      "label": "Bitcoin price source",
-      "description": "Where to fetch the BTC price"
+      "label": "Bitcoin price source"
     },
     "fiat_currency": {
       "label": "Fiat currency",
-      "description": "Currency used for fiat values"
+      "description": "Fiat amounts shown on history use the current bitcoin price, not the price at the time of the transaction"
     },
     "discrete_mode": {
       "label": "Discrete mode",

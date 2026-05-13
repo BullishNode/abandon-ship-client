@@ -38,7 +38,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <div className="flex items-center gap-2">
-              <MarbleAvatar className="size-8 rounded-lg" name={walletName} variant="square" />
+              <MarbleAvatar
+                className="size-8 rounded-lg"
+                name={walletName}
+                seed={wallet?.fingerprint}
+                variant="square"
+              />
               <span className="truncate font-medium text-sm">{walletName}</span>
             </div>
           </SidebarMenuItem>

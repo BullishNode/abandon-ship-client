@@ -33,7 +33,7 @@ import type { FiatCurrency, PriceProviderId } from '@/types/price-providers'
 import { estimateEmergencyExitFeeSat, summarizeExits } from '@/utils/exit-progress'
 
 const BITCOIN_UNITS: { value: BitcoinUnit; label: string }[] = [
-  { label: 'Satoshi', value: 'sats' },
+  { label: 'Sats', value: 'sats' },
   { label: 'Bitcoin', value: 'btc' }
 ]
 
@@ -201,7 +201,6 @@ export default function SettingsPage() {
           placeholder={t('wallet.name.placeholder')}
           value={walletName}
         />
-        <FieldDescription>{t('settings.wallet_name.description')}</FieldDescription>
       </Field>
       <Field>
         <FieldLabel htmlFor="bitcoin-unit">Bitcoin unit</FieldLabel>
@@ -232,7 +231,6 @@ export default function SettingsPage() {
             ))}
           </SelectContent>
         </Select>
-        <FieldDescription>{t('settings.price_provider.description')}</FieldDescription>
       </Field>
       <Field>
         <FieldLabel htmlFor="fiat-currency">{t('settings.fiat_currency.label')}</FieldLabel>
@@ -268,7 +266,7 @@ export default function SettingsPage() {
       </Field>
       <section className="space-y-4 rounded-lg border border-destructive/30 p-4">
         <h2 className="font-semibold text-destructive text-lg">{t('settings.danger.title')}</h2>
-        <Field orientation="horizontal">
+        <Field className="gap-4" orientation="horizontal">
           <FieldContent>
             <FieldLabel>{t('settings.danger.emergency_exit.label')}</FieldLabel>
             <FieldDescription>{emergencyExitDescription}</FieldDescription>
@@ -290,7 +288,7 @@ export default function SettingsPage() {
             summary={summary}
           />
         ) : null}
-        <Field orientation="horizontal">
+        <Field className="gap-4" orientation="horizontal">
           <FieldContent>
             <FieldLabel>{t('settings.danger.delete_wallet.label')}</FieldLabel>
             <FieldDescription>{t('settings.danger.delete_wallet.description')}</FieldDescription>
