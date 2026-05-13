@@ -38,7 +38,7 @@ export default function TransactionsPage() {
               {hasPending || hasOnchain || hasOnchainPending ? (
                 <m.p
                   animate={{ height: 'auto', opacity: 1 }}
-                  className="flex gap-2 overflow-hidden text-muted-foreground text-sm"
+                  className="flex flex-col overflow-hidden text-muted-foreground text-sm"
                   exit={{ height: 0, opacity: 0 }}
                   initial={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.25, ease: 'easeOut' }}

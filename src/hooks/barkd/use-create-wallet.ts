@@ -27,7 +27,7 @@ async function createWallet(params: CreateWalletParams) {
     return false
   }
 
-  setWallet({ createdAt: params.createdAt.toISOString(), name: params.name })
+  setWallet({ createdAt: params.createdAt.toISOString(), fingerprint, name: params.name })
   return true
 }
 

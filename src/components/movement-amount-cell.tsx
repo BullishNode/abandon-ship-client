@@ -11,7 +11,7 @@ function getAmountColorClass(sats: number, discreteMode: boolean): string {
   if (discreteMode) {
     return 'text-foreground'
   }
-  return sats >= 0 ? 'text-green-500' : 'text-red-500'
+  return sats >= 0 ? 'text-green-500' : 'text-foreground'
 }
 
 export function MovementAmountCell({

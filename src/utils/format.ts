@@ -3,8 +3,28 @@ import type { FiatCurrency } from '@/types/price-providers'
 import { satsToBTC } from './bitcoin'
 
 const TRAILING_ZEROS_REGEX = /\.?0+$/u
+const NON_DIGIT_REGEX = /\D/gu
 
 export const PRIVACY_MASK = '•••••'
+
+export function parseSatsInput(value: string): string {
+  const digits = value.replace(NON_DIGIT_REGEX, '')
+  if (digits === '') {
+    return ''
+  }
+  return String(Number.parseInt(digits, 10))
+}
+
+export function formatSatsDisplay(value: string): string {
+  if (value === '') {
+    return ''
+  }
+  const n = Number.parseInt(value, 10)
+  if (Number.isNaN(n)) {
+    return value
+  }
+  return new Intl.NumberFormat(undefined).format(n)
+}
 
 export function formatCurrency(value: number, currency: FiatCurrency): string {
   return new Intl.NumberFormat(undefined, {

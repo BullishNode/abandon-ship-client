@@ -5,6 +5,7 @@ import { WALLET_NAME_MAX_LENGTH } from '@/constants/wallet'
 interface WalletInfo {
   name: string
   createdAt: string
+  fingerprint: string
 }
 
 interface WalletStore {

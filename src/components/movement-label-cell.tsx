@@ -3,7 +3,7 @@ import { useMetadataStore } from '@/stores/metadata'
 
 interface MovementLabelCellProps {
   movementId: number
-  fallback: string
+  fallback?: string
 }
 
 export function MovementLabelCell({ movementId, fallback }: MovementLabelCellProps) {
@@ -11,11 +11,14 @@ export function MovementLabelCell({ movementId, fallback }: MovementLabelCellPro
   const label = annotation?.label?.trim() ?? ''
   const tags = annotation?.tags ?? []
   const hasLabel = label.length > 0
+  const displayText = hasLabel ? label : (fallback ?? '')
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      <span className={hasLabel ? 'text-foreground' : 'text-muted-foreground'}>
-        {hasLabel ? label : fallback}
-      </span>
+      {displayText.length > 0 ? (
+        <span className={hasLabel ? 'text-foreground' : 'text-muted-foreground'}>
+          {displayText}
+        </span>
+      ) : null}
       {tags.map((tag) => (
         <Badge key={tag} variant="muted">
           {tag}

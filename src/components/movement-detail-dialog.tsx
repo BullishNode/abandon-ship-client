@@ -126,7 +126,7 @@ function MovementDetailContent({
             value={formatDateAbsolute(completedAt)}
           />
         ) : null}
-                <LabelEditor
+        <LabelEditor
           inputId="movement-label"
           label={annotation?.label ?? ''}
           onSave={(nextLabel) => {

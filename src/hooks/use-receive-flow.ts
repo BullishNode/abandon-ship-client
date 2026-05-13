@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { encodeBIP321 } from 'bip-321'
 import { useEffect, useState } from 'react'
 import { useLightningInvoice } from '@/hooks/barkd/use-lightning-invoice'
@@ -5,7 +6,9 @@ import { useOnchainAddress } from '@/hooks/barkd/use-onchain-address'
 import { useReceivedPayment } from '@/hooks/barkd/use-received-payment'
 import { useWalletAddress } from '@/hooks/barkd/use-wallet-address'
 import { useDebounce } from '@/hooks/use-debounce'
+import { lightningKeys } from '@/lib/query-keys'
 import { useMetadataStore } from '@/stores/metadata'
+import { formatSatsDisplay, parseSatsInput } from '@/utils/format'
 
 const INVOICE_DEBOUNCE_MS = 300
 const RECEIVED_AUTO_CLOSE_MS = 3000
@@ -81,6 +84,7 @@ function collectReceiveDestinations(
 
 export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
   const upsertBinding = useMetadataStore((state) => state.upsertBinding)
+  const queryClient = useQueryClient()
 
   const [activeTab, setActiveTab] = useState<ReceiveTab>('payto')
   const [amount, setAmount] = useState('')
@@ -92,8 +96,13 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
 
   const amountSat = Number.parseInt(amount, 10)
   const validAmount = Number.isNaN(amountSat) || amountSat <= 0 ? undefined : amountSat
-  const amountBtc = validAmount === undefined ? undefined : validAmount / 1e8
+  const amountDisplay = formatSatsDisplay(amount)
   const debouncedAmount = useDebounce(validAmount, INVOICE_DEBOUNCE_MS)
+  const debouncedAmountBtc = debouncedAmount === undefined ? undefined : debouncedAmount / 1e8
+
+  function handleAmountChange(value: string) {
+    setAmount(parseSatsInput(value))
+  }
 
   const {
     mutate: fetchArkAddress,
@@ -102,13 +111,39 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
   } = useWalletAddress()
 
   const {
-    data: lightningInvoice,
+    data: lightningInvoiceData,
     isFetching: isGeneratingInvoice,
+    isPlaceholderData: isInvoicePlaceholder,
     refetch: regenerateInvoice
   } = useLightningInvoice({
     amountSat: debouncedAmount,
     enabled: debouncedAmount !== undefined
   })
+  const lightningInvoice = validAmount === undefined ? undefined : lightningInvoiceData
+
+  const [paired, setPaired] = useState<{
+    amountBtc: number | undefined
+    invoice: string | undefined
+  }>({ amountBtc: undefined, invoice: undefined })
+
+  if (
+    validAmount === undefined &&
+    (paired.amountBtc !== undefined || paired.invoice !== undefined)
+  ) {
+    setPaired({ amountBtc: undefined, invoice: undefined })
+  }
+
+  const hasFreshInvoice =
+    debouncedAmount !== undefined &&
+    !isGeneratingInvoice &&
+    !isInvoicePlaceholder &&
+    lightningInvoiceData !== undefined
+  if (
+    hasFreshInvoice &&
+    (paired.amountBtc !== debouncedAmountBtc || paired.invoice !== lightningInvoiceData)
+  ) {
+    setPaired({ amountBtc: debouncedAmountBtc, invoice: lightningInvoiceData })
+  }
 
   const {
     mutate: fetchOnchainAddress,
@@ -123,6 +158,7 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
     setSelectedTags([])
     setReceivedAmountSat(undefined)
     setBindingId(undefined)
+    queryClient.removeQueries({ queryKey: lightningKeys.all })
     fetchArkAddress()
     fetchOnchainAddress()
   }
@@ -144,7 +180,7 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
     setPrevOpen(open)
   }
 
-  const paytoUri = buildPaytoUri(onchainAddress, arkAddress, lightningInvoice, amountBtc)
+  const paytoUri = buildPaytoUri(onchainAddress, arkAddress, paired.invoice, paired.amountBtc)
 
   const trimmedLabel = label.trim()
   const hasMetadata = trimmedLabel !== '' || selectedTags.length > 0
@@ -223,16 +259,22 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
     isFetchingOnchainAddress
   )
   const showAmountField = activeTab === 'payto' || activeTab === 'lightning'
+  const hasArk = arkAddress !== undefined && arkAddress !== ''
+  const hasOnchain = onchainAddress !== undefined && onchainAddress !== ''
   const hasInvoice = lightningInvoice !== undefined && lightningInvoice !== ''
   const needsAmount = !hasInvoice && validAmount === undefined
 
   return {
     activeTab,
     amount,
+    amountDisplay,
     arkAddress,
     handleClose,
     handleNewAddress,
     handleTabChange,
+    hasArk,
+    hasInvoice,
+    hasOnchain,
     isFetchingArkAddress,
     isFetchingOnchainAddress,
     isLoading,
@@ -243,9 +285,10 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
     paytoUri,
     receivedAmountSat,
     selectedTags,
-    setAmount,
+    setAmount: handleAmountChange,
     setLabel,
     setSelectedTags,
-    showAmountField
+    showAmountField,
+    validAmount
   }
 }

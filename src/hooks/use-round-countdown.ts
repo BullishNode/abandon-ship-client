@@ -27,6 +27,11 @@ function formatRemaining(remainingMs: number): RoundCountdown {
     return { isPending: false, label: relativeTimeFormatter.format(hours, 'hour'), remainingMs }
   }
 
+  if (remainingMs < MS_PER_MINUTE) {
+    const seconds = Math.ceil(remainingMs / MS_PER_SECOND)
+    return { isPending: false, label: relativeTimeFormatter.format(seconds, 'second'), remainingMs }
+  }
+
   const minutes = Math.ceil(remainingMs / MS_PER_MINUTE)
   return { isPending: false, label: relativeTimeFormatter.format(minutes, 'minute'), remainingMs }
 }

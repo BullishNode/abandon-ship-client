@@ -22,9 +22,13 @@ export default function IndexPage() {
     )
   }
 
+  const isCreating = walletExists === false
   return (
     <div className="flex flex-col items-center gap-4">
       <Spinner className="size-8" />
+      <p className="text-muted-foreground text-sm">
+        {t(isCreating ? 'welcome.settingUp' : 'welcome.loading')}
+      </p>
     </div>
   )
 }
