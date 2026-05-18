@@ -92,9 +92,9 @@ export function ReceiveModal({ open, onOpenChange }: ReceiveModalProps) {
           )}
           <Collapsible>
             <CollapsibleTrigger asChild>
-              <Label className="flex items-center justify-between">
+              <Label className="group flex items-center justify-between">
                 {t('receive.details')}
-                <CaretDownIcon className="size-4" />
+                <CaretDownIcon className="size-4 transition-transform group-data-[state=open]:rotate-180" />
               </Label>
             </CollapsibleTrigger>
             <CollapsibleContent className="flex flex-col gap-4 pt-4">

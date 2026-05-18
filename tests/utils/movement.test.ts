@@ -1,25 +1,12 @@
-import type { Movement } from '@secondts/barkd'
-import { describe, expect, it } from 'vitest'
-import { getMovementCounterparty, getMovementDirection } from '../../src/utils/movement'
-
-const BASE_MOVEMENT: Movement = {
-  effectiveBalanceSat: 0,
-  exitedVtxos: [],
-  id: 1,
-  inputVtxos: [],
-  intendedBalanceSat: 0,
-  offchainFeeSat: 0,
-  outputVtxos: [],
-  receivedOn: [],
-  sentTo: [],
-  status: 'successful',
-  subsystem: { kind: 'ark', name: 'Ark' },
-  time: { createdAt: new Date(), updatedAt: new Date() }
-}
-
-function createMovement(overrides: Partial<Movement>): Movement {
-  return { ...BASE_MOVEMENT, ...overrides }
-}
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  countMovementsInLast30Days,
+  getMovementCounterparty,
+  getMovementDirection,
+  getMovementFeeSat,
+  getMovementSource
+} from '../../src/utils/movement'
+import { createMovement } from '../fixtures/movements'
 
 describe(getMovementDirection, () => {
   it('returns incoming for positive balance', () => {
@@ -81,5 +68,115 @@ describe(getMovementCounterparty, () => {
       subsystem: { kind: 'ark', name: 'Ark' }
     })
     expect(getMovementCounterparty(movement)).toBe('Ark')
+  })
+})
+
+describe(getMovementSource, () => {
+  it('returns ark when a destination has type ark', () => {
+    const movement = createMovement({
+      sentTo: [{ amountSat: 1, destination: { type: 'ark', value: 'ark1abc' } }]
+    })
+    expect(getMovementSource(movement)).toBe('ark')
+  })
+
+  it('returns onchain when a destination has type bitcoin', () => {
+    const movement = createMovement({
+      sentTo: [{ amountSat: 1, destination: { type: 'bitcoin', value: 'bc1qabc' } }]
+    })
+    expect(getMovementSource(movement)).toBe('onchain')
+  })
+
+  it('returns onchain when a destination has type output-script', () => {
+    const movement = createMovement({
+      sentTo: [{ amountSat: 1, destination: { type: 'output-script', value: '00' } }]
+    })
+    expect(getMovementSource(movement)).toBe('onchain')
+  })
+
+  it('returns lightning for invoice/offer/lightning-address destinations', () => {
+    const invoice = createMovement({
+      sentTo: [{ amountSat: 1, destination: { type: 'invoice', value: 'lnbc1' } }]
+    })
+    const offer = createMovement({
+      sentTo: [{ amountSat: 1, destination: { type: 'offer', value: 'lno1' } }]
+    })
+    const lnaddr = createMovement({
+      sentTo: [{ amountSat: 1, destination: { type: 'lightning-address', value: 'a@b' } }]
+    })
+    expect(getMovementSource(invoice)).toBe('lightning')
+    expect(getMovementSource(offer)).toBe('lightning')
+    expect(getMovementSource(lnaddr)).toBe('lightning')
+  })
+
+  it('falls back to subsystem name when destinations are absent or custom', () => {
+    const ln = createMovement({ subsystem: { kind: 'lightning', name: 'Lightning' } })
+    const onchain = createMovement({ subsystem: { kind: 'onchain', name: 'on-chain wallet' } })
+    const ark = createMovement({ subsystem: { kind: 'ark', name: 'Ark' } })
+    expect(getMovementSource(ln)).toBe('lightning')
+    expect(getMovementSource(onchain)).toBe('onchain')
+    expect(getMovementSource(ark)).toBe('ark')
+  })
+
+  it('matches subsystem name "ln" as lightning', () => {
+    const movement = createMovement({ subsystem: { kind: 'lightning', name: 'ln' } })
+    expect(getMovementSource(movement)).toBe('lightning')
+  })
+
+  it('returns unknown when nothing matches', () => {
+    const movement = createMovement({ subsystem: { kind: 'custom', name: 'mystery' } })
+    expect(getMovementSource(movement)).toBe('unknown')
+  })
+
+  it('prefers destination type over subsystem name', () => {
+    const movement = createMovement({
+      receivedOn: [{ amountSat: 1, destination: { type: 'invoice', value: 'lnbc' } }],
+      subsystem: { kind: 'ark', name: 'Ark' }
+    })
+    expect(getMovementSource(movement)).toBe('lightning')
+  })
+})
+
+describe(getMovementFeeSat, () => {
+  it('returns the offchainFeeSat when present', () => {
+    expect(getMovementFeeSat(createMovement({ offchainFeeSat: 250 }))).toBe(250)
+  })
+
+  it('returns zero when fee is zero', () => {
+    expect(getMovementFeeSat(createMovement({ offchainFeeSat: 0 }))).toBe(0)
+  })
+})
+
+describe(countMovementsInLast30Days, () => {
+  const NOW = new Date('2026-05-13T00:00:00Z')
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(NOW)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('returns zero for an empty list', () => {
+    expect(countMovementsInLast30Days([])).toBe(0)
+  })
+
+  it('counts only movements within the last 30 days', () => {
+    const recent = createMovement({
+      time: { createdAt: new Date('2026-05-01T00:00:00Z'), updatedAt: new Date() }
+    })
+    const old = createMovement({
+      time: { createdAt: new Date('2026-03-01T00:00:00Z'), updatedAt: new Date() }
+    })
+    expect(countMovementsInLast30Days([recent, old, recent])).toBe(2)
+  })
+
+  it('includes movements exactly at the cutoff', () => {
+    const cutoff = new Date(NOW.getTime() - 30 * 24 * 60 * 60 * 1000)
+    const movement = createMovement({
+      time: { createdAt: cutoff, updatedAt: cutoff }
+    })
+    expect(countMovementsInLast30Days([movement])).toBe(1)
   })
 })

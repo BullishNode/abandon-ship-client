@@ -16,8 +16,34 @@ const divisions: { amount: number; divisor: number; unit: Intl.RelativeTimeForma
   { amount: Number.POSITIVE_INFINITY, divisor: YEAR, unit: 'year' }
 ]
 
-export function formatRelativeTime(date: Date, locale?: string): string {
+const relativeFormatters = new Map<string | undefined, Intl.RelativeTimeFormat>()
+const dateTimeFormatters = new Map<string | undefined, Intl.DateTimeFormat>()
+
+function getRelativeFormatter(locale?: string): Intl.RelativeTimeFormat {
+  const cached = relativeFormatters.get(locale)
+  if (cached) {
+    return cached
+  }
   const formatter = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' })
+  relativeFormatters.set(locale, formatter)
+  return formatter
+}
+
+function getDateTimeFormatter(locale?: string): Intl.DateTimeFormat {
+  const cached = dateTimeFormatters.get(locale)
+  if (cached) {
+    return cached
+  }
+  const formatter = new Intl.DateTimeFormat(locale, {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  })
+  dateTimeFormatters.set(locale, formatter)
+  return formatter
+}
+
+export function formatRelativeTime(date: Date, locale?: string): string {
+  const formatter = getRelativeFormatter(locale)
   const elapsed = date.getTime() - Date.now()
 
   for (const { amount, divisor, unit } of divisions) {
@@ -30,8 +56,5 @@ export function formatRelativeTime(date: Date, locale?: string): string {
 }
 
 export function formatAbsoluteDateTime(date: Date, locale?: string): string {
-  return new Intl.DateTimeFormat(locale, {
-    dateStyle: 'medium',
-    timeStyle: 'short'
-  }).format(date)
+  return getDateTimeFormatter(locale).format(date)
 }

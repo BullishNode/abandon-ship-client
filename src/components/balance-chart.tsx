@@ -15,15 +15,17 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { config } from '@/config/barkd'
 import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
 import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
+import { useOnchainTransactions } from '@/hooks/barkd/use-onchain-transactions'
 import { useOnchainUtxos } from '@/hooks/barkd/use-onchain-utxos'
 import { useWalletBalance } from '@/hooks/barkd/use-wallet-balance'
 import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
 import { getBalanceTotals } from '@/utils/balance'
 import { computeBalanceHistory, filterByTimeRange } from '@/utils/balance-history'
-import { utxoToOnchainEntry } from '@/utils/movements-feed'
+import { buildOnchainTxEntries } from '@/utils/movements-feed'
 
 export function BalanceChart() {
   const { t } = useTranslation()
@@ -31,6 +33,7 @@ export function BalanceChart() {
   const { data: movements = [] } = useWalletTransactions()
   const { data: balance } = useWalletBalance()
   const { data: utxos = [] } = useOnchainUtxos()
+  const { data: transactions = [] } = useOnchainTransactions()
   const { data: onchainBalance } = useOnchainBalance()
   const { data: tip } = useBitcoinTip()
   const formatBitcoin = useFormatBitcoin()
@@ -43,7 +46,10 @@ export function BalanceChart() {
   } satisfies ChartConfig
 
   const { totalSat: endpointTotalSat } = getBalanceTotals(balance, onchainBalance)
-  const onchainEntries = utxos.map((utxo) => utxoToOnchainEntry(utxo, tip?.tipHeight))
+  const onchainEntries = buildOnchainTxEntries(transactions, utxos, {
+    network: config.network,
+    tipHeight: tip?.tipHeight
+  })
   const balanceHistory = computeBalanceHistory(movements, onchainEntries, endpointTotalSat)
   const filteredData = filterByTimeRange(balanceHistory, timeRange)
 

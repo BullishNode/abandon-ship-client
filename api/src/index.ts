@@ -1,7 +1,6 @@
 import { createReadStream } from 'node:fs'
 import { readFile, stat } from 'node:fs/promises'
 import { Readable } from 'node:stream'
-import { timingSafeEqual } from 'node:crypto'
 import { serve } from '@hono/node-server'
 import archiver from 'archiver'
 import { Hono } from 'hono'
@@ -9,27 +8,47 @@ import { cors } from 'hono/cors'
 
 const WALLET_DIR = process.env.WALLET_DIR ?? '/wallet-data/.bark'
 const PORT = Number.parseInt(process.env.PORT ?? '4001', 10)
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? 'http://localhost:5173')
-  .split(',')
-  .map((origin) => origin.trim())
+const BARKD_URL = process.env.BARKD_URL ?? 'http://barkd:4000'
+const ARK_SERVER = process.env.ARK_SERVER ?? ''
+const CHAIN_SOURCE = process.env.CHAIN_SOURCE ?? ''
+const BARK_NETWORK = process.env.BARK_NETWORK ?? 'signet'
 
 const TOKEN_PATH = `${WALLET_DIR}/auth_token`
 const MNEMONIC_PATH = `${WALLET_DIR}/mnemonic`
 const DB_PATH = `${WALLET_DIR}/db.sqlite`
 
-async function readAuthToken(): Promise<string> {
-  const token = await readFile(TOKEN_PATH, 'utf-8')
-  return token.trim()
+let cachedToken: string | null = null
+
+async function getToken(): Promise<string | null> {
+  if (cachedToken !== null) {
+    return cachedToken
+  }
+  try {
+    const raw = await readFile(TOKEN_PATH, 'utf-8')
+    const value = raw.trim()
+    if (value.length > 0) {
+      cachedToken = value
+    }
+    return cachedToken
+  } catch {
+    return null
+  }
 }
 
-function compareTokens(provided: string, expected: string): boolean {
-  const providedBuf = Buffer.from(provided)
-  const expectedBuf = Buffer.from(expected)
-  if (providedBuf.length !== expectedBuf.length) {
-    return false
-  }
-  return timingSafeEqual(providedBuf, expectedBuf)
-}
+const HOP_BY_HOP_HEADERS = new Set([
+  'connection',
+  'content-length',
+  'host',
+  'keep-alive',
+  'proxy-authenticate',
+  'proxy-authorization',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade'
+])
+
+const BARKD_PATH_PREFIX = /^\/api\/barkd/u
 
 const app = new Hono()
 
@@ -37,31 +56,20 @@ app.use(
   '*',
   cors({
     allowHeaders: ['Authorization', 'Content-Type'],
-    allowMethods: ['GET', 'OPTIONS'],
-    origin: ALLOWED_ORIGINS
+    allowMethods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    origin: (origin) => origin ?? '*'
   })
 )
 
-app.use('/api/*', async (c, next) => {
-  const header = c.req.header('Authorization') ?? ''
-  const provided = header.startsWith('Bearer ') ? header.slice(7) : ''
-  if (provided.length === 0) {
-    return c.json({ error: 'Missing bearer token' }, 401)
-  }
-  let expected: string
-  try {
-    expected = await readAuthToken()
-  } catch {
-    return c.json({ error: 'Auth token unavailable' }, 503)
-  }
-  if (!compareTokens(provided, expected)) {
-    return c.json({ error: 'Invalid token' }, 401)
-  }
-  await next()
-  return c.res
-})
-
 app.get('/health', (c) => c.json({ ok: true }))
+
+app.get('/api/config', (c) =>
+  c.json({
+    arkServer: ARK_SERVER,
+    chainSource: CHAIN_SOURCE,
+    network: BARK_NETWORK
+  })
+)
 
 app.get('/api/backup', async (c) => {
   try {
@@ -90,6 +98,52 @@ app.get('/api/backup', async (c) => {
       'Content-Disposition': `attachment; filename="bark-wallet-backup-${timestamp}.zip"`,
       'Content-Type': 'application/zip'
     }
+  })
+})
+
+app.all('/api/barkd/*', async (c) => {
+  const subPath = c.req.path.replace(BARKD_PATH_PREFIX, '')
+  const incoming = new URL(c.req.url)
+  const upstreamUrl = `${BARKD_URL}${subPath}${incoming.search}`
+
+  const headers = new Headers()
+  for (const [key, value] of Object.entries(c.req.header())) {
+    const lower = key.toLowerCase()
+    if (HOP_BY_HOP_HEADERS.has(lower) || lower === 'authorization') {
+      continue
+    }
+    headers.set(key, value)
+  }
+  const token = await getToken()
+  if (token !== null) {
+    headers.set('authorization', `Bearer ${token}`)
+  }
+
+  const { method } = c.req
+  const hasBody = !(method === 'GET' || method === 'HEAD')
+  const init: RequestInit & { duplex?: 'half' } = {
+    headers,
+    method
+  }
+  if (hasBody) {
+    init.body = c.req.raw.body
+    init.duplex = 'half'
+  }
+
+  const upstream = await fetch(upstreamUrl, init)
+
+  const responseHeaders = new Headers()
+  for (const [key, value] of upstream.headers.entries()) {
+    if (HOP_BY_HOP_HEADERS.has(key.toLowerCase())) {
+      continue
+    }
+    responseHeaders.set(key, value)
+  }
+
+  return new Response(upstream.body, {
+    headers: responseHeaders,
+    status: upstream.status,
+    statusText: upstream.statusText
   })
 })
 

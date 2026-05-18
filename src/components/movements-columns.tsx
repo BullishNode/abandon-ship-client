@@ -1,4 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table'
+import type { Movement } from '@secondts/barkd'
 import type { TFunction } from 'i18next'
 import { MovementAmountCell } from '@/components/movement-amount-cell'
 import { MovementLabelCell } from '@/components/movement-label-cell'
@@ -14,6 +15,16 @@ interface MovementColumnsOptions {
   formatFiat: (sats: number) => string
   formatDate: (date: Date) => string
   discreteMode: boolean
+}
+
+function getSubsystemFallback(subsystem: Movement['subsystem'], t: TFunction): string | undefined {
+  if (subsystem.kind === 'refresh') {
+    return t('movements.kinds.refresh')
+  }
+  if (subsystem.name === 'bark.exit') {
+    return t('movements.kinds.exit')
+  }
+  return undefined
 }
 
 export function getMovementColumns({
@@ -39,11 +50,10 @@ export function getMovementColumns({
       cell: ({ row }) => {
         const entry = row.original
         if (entry.kind === 'movement') {
-          const fallback =
-            entry.movement.subsystem.kind === 'refresh' ? t('movements.kinds.refresh') : undefined
+          const fallback = getSubsystemFallback(entry.movement.subsystem, t)
           return <MovementLabelCell fallback={fallback} movementId={entry.movement.id} />
         }
-        return <OnchainLabelCell outpoint={entry.outpoint} />
+        return <OnchainLabelCell bindingAddress={entry.bindingAddress} txid={entry.txid} />
       },
       header: t('movements.columns.label'),
       id: 'label'

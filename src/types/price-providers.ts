@@ -7,7 +7,7 @@ export interface PriceData {
 
 export type FiatCurrency = 'usd' | 'eur'
 
-export type PriceProviderId = 'binance' | 'coingecko'
+export type PriceProviderId = 'binance' | 'coingecko' | 'kraken'
 
 export interface PriceProvider {
   id: string

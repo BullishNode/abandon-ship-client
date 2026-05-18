@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { encodeBIP321 } from 'bip-321'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLightningInvoice } from '@/hooks/barkd/use-lightning-invoice'
 import { useOnchainAddress } from '@/hooks/barkd/use-onchain-address'
 import { useReceivedPayment } from '@/hooks/barkd/use-received-payment'
@@ -91,7 +91,7 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
   const [label, setLabel] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [receivedAmountSat, setReceivedAmountSat] = useState<number | undefined>()
-  const [bindingId, setBindingId] = useState<string | undefined>()
+  const bindingIdRef = useRef<string | null>(null)
   const [prevOpen, setPrevOpen] = useState(open)
 
   const amountSat = Number.parseInt(amount, 10)
@@ -157,7 +157,7 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
     setLabel('')
     setSelectedTags([])
     setReceivedAmountSat(undefined)
-    setBindingId(undefined)
+    bindingIdRef.current = null
     queryClient.removeQueries({ queryKey: lightningKeys.all })
     fetchArkAddress()
     fetchOnchainAddress()
@@ -196,13 +196,11 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
     const id = upsertBinding({
       destinations,
       direction: 'incoming',
-      id: bindingId,
+      id: bindingIdRef.current ?? undefined,
       label: trimmedLabel === '' ? undefined : trimmedLabel,
       tags: selectedTags
     })
-    if (id !== bindingId) {
-      setBindingId(id)
-    }
+    bindingIdRef.current = id
   }, [
     open,
     hasMetadata,
@@ -211,7 +209,6 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
     lightningInvoice,
     trimmedLabel,
     selectedTags,
-    bindingId,
     upsertBinding
   ])
 

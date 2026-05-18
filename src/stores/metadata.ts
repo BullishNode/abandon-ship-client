@@ -20,7 +20,7 @@ import {
   movementDirection
 } from '@/utils/metadata'
 
-const STORE_VERSION = 1
+const STORE_VERSION = 2
 
 interface BindingInput {
   id?: string
@@ -31,7 +31,7 @@ interface BindingInput {
   contactId?: string
 }
 
-interface MetadataStore {
+export interface MetadataStore {
   tags: Tag[]
   contacts: Contact[]
   bindings: DestinationBinding[]
@@ -46,8 +46,8 @@ interface MetadataStore {
   pruneBindings: () => void
   setManualAnnotation: (movementId: number, input: AnnotationInput) => void
   getAnnotation: (movementId: number) => TransactionAnnotation | undefined
-  setOnchainAnnotation: (outpoint: string, input: AnnotationInput) => void
-  getOnchainAnnotation: (outpoint: string) => OnchainAnnotation | undefined
+  setOnchainAnnotation: (txid: string, input: AnnotationInput) => void
+  getOnchainAnnotation: (txid: string) => OnchainAnnotation | undefined
   matchMovement: (movement: Movement) => void
 }
 
@@ -62,12 +62,59 @@ const contactSchema = z.object({
   name: z.string()
 }) satisfies z.ZodType<Contact>
 
+const bindingSchema = z.object({
+  contactId: z.string().optional(),
+  createdAt: z.string(),
+  destinations: z.array(z.string()),
+  direction: z.enum(['incoming', 'outgoing']),
+  id: z.string(),
+  label: z.string().optional(),
+  tags: z.array(z.string())
+}) satisfies z.ZodType<DestinationBinding>
+
+const annotationSchema = z.object({
+  contactId: z.string().optional(),
+  createdAt: z.string(),
+  label: z.string().optional(),
+  movementId: z.number(),
+  source: z.enum(['binding', 'manual']),
+  tags: z.array(z.string())
+}) satisfies z.ZodType<TransactionAnnotation>
+
+const onchainAnnotationSchema = z.object({
+  contactId: z.string().optional(),
+  createdAt: z.string(),
+  label: z.string().optional(),
+  tags: z.array(z.string()),
+  txid: z.string()
+}) satisfies z.ZodType<OnchainAnnotation>
+
 const persistedSchema = z
   .object({
+    annotations: z.record(z.string(), z.unknown()).optional(),
+    bindings: z.array(z.unknown()).optional(),
     contacts: z.array(z.unknown()).optional(),
+    onchainAnnotations: z.record(z.string(), z.unknown()).optional(),
     tags: z.array(z.unknown()).optional()
   })
   .partial()
+
+function parseRecord<T>(
+  values: Record<string, unknown> | undefined,
+  schema: z.ZodType<T>
+): Record<string, T> {
+  if (values === undefined) {
+    return {}
+  }
+  const out: Record<string, T> = {}
+  for (const [key, value] of Object.entries(values)) {
+    const result = schema.safeParse(value)
+    if (result.success) {
+      out[key] = result.data
+    }
+  }
+  return out
+}
 
 function parseList<T>(values: unknown[] | undefined, schema: z.ZodType<T>): T[] {
   if (values === undefined) {
@@ -117,7 +164,7 @@ export const useMetadataStore = create<MetadataStore>()(
       bindings: [],
       contacts: [],
       getAnnotation: (movementId) => get().annotations[movementId],
-      getOnchainAnnotation: (outpoint) => get().onchainAnnotations[outpoint],
+      getOnchainAnnotation: (txid) => get().onchainAnnotations[txid],
       matchMovement: (movement) => {
         const state = get()
         if (state.annotations[movement.id] !== undefined) {
@@ -187,11 +234,11 @@ export const useMetadataStore = create<MetadataStore>()(
           }
         }))
       },
-      setOnchainAnnotation: (outpoint, input) => {
+      setOnchainAnnotation: (txid, input) => {
         set((state) => ({
           onchainAnnotations: {
             ...state.onchainAnnotations,
-            [outpoint]: buildOnchainAnnotation(outpoint, input)
+            [txid]: buildOnchainAnnotation(txid, input)
           }
         }))
       },
@@ -244,7 +291,10 @@ export const useMetadataStore = create<MetadataStore>()(
         }
         return {
           ...fresh,
+          annotations: parseRecord(parsed.data.annotations, annotationSchema),
+          bindings: parseList(parsed.data.bindings, bindingSchema),
           contacts: parseList(parsed.data.contacts, contactSchema),
+          onchainAnnotations: parseRecord(parsed.data.onchainAnnotations, onchainAnnotationSchema),
           tags: parseList(parsed.data.tags, tagSchema)
         }
       },

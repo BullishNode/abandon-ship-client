@@ -131,7 +131,7 @@ export function EmergencyExitStartDialog({
                   <span className="font-medium">
                     {t('settings.danger.emergency_exit.estimate.title')}
                   </span>
-                  <span className="font-mono">
+                  <span>
                     {t('settings.danger.emergency_exit.estimate.value', {
                       feeRate: feeEstimate.feeRateSatPerVb,
                       sats: feeEstimate.estimatedFeeSat.toLocaleString()
@@ -144,7 +144,7 @@ export function EmergencyExitStartDialog({
                       count: feeEstimate.vtxoCount
                     })}
                   </span>
-                  <span className="font-mono">
+                  <span>
                     {t('settings.danger.emergency_exit.estimate.balance', {
                       sats: feeEstimate.onchainSat.toLocaleString()
                     })}

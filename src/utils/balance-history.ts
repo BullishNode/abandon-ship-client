@@ -1,5 +1,5 @@
 import type { Movement } from '@secondts/barkd'
-import type { OnchainEntry } from '@/utils/movements-feed'
+import type { OnchainTxEntry } from '@/utils/movements-feed'
 
 export interface BalanceDataPoint {
   date: string
@@ -25,19 +25,26 @@ function movementEvents(movements: Movement[]): BalanceEvent[] {
   return out
 }
 
-function onchainEvents(entries: OnchainEntry[]): BalanceEvent[] {
-  return entries.map((entry) => ({
-    deltaSat: entry.amountSat,
-    timestampMs: entry.approximateTimestampMs
-  }))
+function onchainTxEvents(entries: OnchainTxEntry[]): BalanceEvent[] {
+  const out: BalanceEvent[] = []
+  for (const entry of entries) {
+    if (entry.status !== 'successful') {
+      continue
+    }
+    out.push({
+      deltaSat: entry.amountSat,
+      timestampMs: entry.approximateTimestampMs
+    })
+  }
+  return out
 }
 
 export function computeBalanceHistory(
   movements: Movement[],
-  onchainEntries: OnchainEntry[],
+  onchainEntries: OnchainTxEntry[],
   endpointTotalSat: number
 ): BalanceDataPoint[] {
-  const events = [...movementEvents(movements), ...onchainEvents(onchainEntries)]
+  const events = [...movementEvents(movements), ...onchainTxEvents(onchainEntries)]
   if (events.length === 0) {
     return []
   }

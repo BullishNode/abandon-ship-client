@@ -35,7 +35,14 @@ export function movementDestinationValues(
   direction: BindingDirection
 ): string[] {
   const entries = direction === 'incoming' ? movement.receivedOn : movement.sentTo
-  return entries.map((entry) => entry.destination.value).filter((value) => value !== '')
+  const values: string[] = []
+  for (const entry of entries) {
+    const { value } = entry.destination
+    if (value !== '') {
+      values.push(value)
+    }
+  }
+  return values
 }
 
 export function buildAnnotation(
@@ -55,13 +62,13 @@ export function buildAnnotation(
   }
 }
 
-export function buildOnchainAnnotation(outpoint: string, data: AnnotationInput): OnchainAnnotation {
+export function buildOnchainAnnotation(txid: string, data: AnnotationInput): OnchainAnnotation {
   const trimmedLabel = data.label?.trim()
   const hasLabel = trimmedLabel !== undefined && trimmedLabel.length > 0
   return {
     createdAt: new Date().toISOString(),
     label: hasLabel ? trimmedLabel : undefined,
-    outpoint,
-    tags: data.tags
+    tags: data.tags,
+    txid
   }
 }

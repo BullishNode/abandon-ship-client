@@ -13,6 +13,7 @@ export function useOnchainTransactions(
       return transactions
     },
     queryKey: onchainKeys.transactions(),
+    refetchInterval: 30_000,
     ...options
   })
 }

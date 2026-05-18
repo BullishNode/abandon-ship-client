@@ -1,60 +1,52 @@
 services:
-  bark-web:
+  web:
     build:
       context: .
-      dockerfile: docker/bark-web.Dockerfile
+      dockerfile: docker/bark-web.dev.Dockerfile
     ports:
       - '5173:5173'
     volumes:
       - .:/app
       - /app/node_modules
-      - wallet-data:/wallet-data:ro
     environment:
       - CHOKIDAR_USEPOLLING=true
+      - VITE_DEV_API_TARGET=http://api:4001
+      - VITE_DEV_BARKD_TARGET=http://barkd:4000
     depends_on:
-      - barkd
-      - bark-web-api
-    entrypoint: ['/bin/sh', '/app/docker/bark-web-entrypoint.sh']
+      - api
 
-  bark-web-api:
-    container_name: bark-web-api
+  api:
     build:
       context: .
-      dockerfile: docker/bark-web-api.Dockerfile
+      dockerfile: docker/bark-web-api.dev.Dockerfile
     ports:
       - '4001:4001'
     volumes:
+      - ./api:/app/api
+      - /app/api/node_modules
       - wallet-data:/wallet-data:ro
     environment:
-      - ALLOWED_ORIGINS=http://localhost:5173
       - PORT=4001
       - WALLET_DIR=/wallet-data/.bark
+      - BARKD_URL=http://barkd:4000
+      - ARK_SERVER=${ARK_SERVER:-}
+      - CHAIN_SOURCE=${CHAIN_SOURCE:-}
+      - BARK_NETWORK=${BARK_NETWORK:-signet}
     depends_on:
       - barkd
 
-  bark:
-    container_name: bark
-    build:
-      context: .
-      dockerfile: docker/bark.Dockerfile
-      args:
-        BARK_VERSION: ${BARK_VERSION:-0.1.4}
-    volumes:
-      - wallet-data:/root
-
   barkd:
-    container_name: barkd
     build:
       context: .
       dockerfile: docker/barkd.Dockerfile
       args:
         BARK_VERSION: ${BARK_VERSION:-0.1.4}
-    environment:
-      - BARKD_ALLOWED_ORIGINS=http://localhost:5173
+        BARKD_SHA256_AMD64: ${BARKD_SHA256_AMD64:-}
+        BARKD_SHA256_ARM64: ${BARKD_SHA256_ARM64:-}
     ports:
       - '4000:4000'
     volumes:
-      - wallet-data:/root
+      - wallet-data:/data
 
 volumes:
   wallet-data:

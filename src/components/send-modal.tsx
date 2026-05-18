@@ -120,7 +120,6 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
             >
               <ModalHeader>
                 <ModalTitle>{t('send.title')}</ModalTitle>
-                <ModalDescription>{t('send.confirm.description')}</ModalDescription>
               </ModalHeader>
               <ModalBody className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
@@ -184,6 +183,11 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                       })}
                     </p>
                   )}
+                  {flow.usesPendingOnchain && (
+                    <p className="text-muted-foreground text-xs">
+                      {t('send.warnings.uses_pending_onchain')}
+                    </p>
+                  )}
                   <span className="text-muted-foreground text-xs">
                     {t('send.fee.estimate')}: {flow.feeDisplay}
                     {flow.feeSat !== undefined && flow.feeSat > 0 && (
@@ -210,7 +214,14 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                           {t('send.pay_from_ark')} • {formatBitcoin(flow.arkBalanceSat)}
                         </SelectItem>
                         <SelectItem value="onchain-from-wallet">
-                          {t('send.pay_from_onchain')} • {formatBitcoin(flow.onchainBalanceSat)}
+                          {t('send.pay_from_onchain')} •{' '}
+                          {formatBitcoin(flow.onchainTrustedSpendableSat)}
+                          {flow.onchainPendingTotalSat > 0 && (
+                            <>
+                              {' + '}
+                              {formatBitcoin(flow.onchainPendingTotalSat)} {t('send.pending')}
+                            </>
+                          )}
                         </SelectItem>
                       </SelectContent>
                     </Select>
@@ -250,9 +261,9 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                 )}
                 <Collapsible>
                   <CollapsibleTrigger asChild>
-                    <Label className="flex items-center justify-between">
+                    <Label className="group flex items-center justify-between">
                       {t('send.details')}
-                      <CaretDownIcon className="size-4" />
+                      <CaretDownIcon className="size-4 transition-transform group-data-[state=open]:rotate-180" />
                     </Label>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="flex flex-col gap-4 pt-4">

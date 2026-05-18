@@ -5,7 +5,8 @@ import {
   SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem
+  SidebarMenuItem,
+  useSidebar
 } from './ui/sidebar'
 
 export interface NavGroupProps extends React.ComponentPropsWithoutRef<typeof SidebarGroup> {
@@ -15,6 +16,13 @@ export interface NavGroupProps extends React.ComponentPropsWithoutRef<typeof Sid
 
 export function NavGroup({ items, label, ...props }: NavGroupProps) {
   const location = useLocation()
+  const { isMobile, setOpenMobile } = useSidebar()
+
+  function handleLinkClick() {
+    if (isMobile) {
+      setOpenMobile(false)
+    }
+  }
 
   return (
     <SidebarGroup {...props}>
@@ -23,7 +31,7 @@ export function NavGroup({ items, label, ...props }: NavGroupProps) {
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild isActive={location.pathname === item.url}>
-              <Link to={item.url}>
+              <Link onClick={handleLinkClick} to={item.url}>
                 <item.icon />
                 <span>{item.name}</span>
               </Link>

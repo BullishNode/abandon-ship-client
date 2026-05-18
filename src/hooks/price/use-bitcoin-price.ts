@@ -1,21 +1,25 @@
 import { useQuery } from '@tanstack/react-query'
 import type { UseQueryOptions } from '@tanstack/react-query'
+import { useShallow } from 'zustand/react/shallow'
 import { binanceProvider } from '@/lib/price-providers/binance'
 import { coingeckoProvider } from '@/lib/price-providers/coingecko'
+import { krakenProvider } from '@/lib/price-providers/kraken'
 import { bitcoinKeys } from '@/lib/query-keys'
 import { useSettingsStore } from '@/stores/settings'
 import type { PriceData, PriceProvider } from '@/types/price-providers'
 
 const providers: Record<string, PriceProvider> = {
   binance: binanceProvider,
-  coingecko: coingeckoProvider
+  coingecko: coingeckoProvider,
+  kraken: krakenProvider
 }
 
 export function useBitcoinPrice(
   options?: Omit<UseQueryOptions<PriceData>, 'queryKey' | 'queryFn'>
 ) {
-  const priceProviderId = useSettingsStore((state) => state.priceProvider)
-  const fiatCurrency = useSettingsStore((state) => state.fiatCurrency)
+  const [priceProviderId, fiatCurrency] = useSettingsStore(
+    useShallow((state) => [state.priceProvider, state.fiatCurrency])
+  )
   const provider = providers[priceProviderId]
 
   return useQuery({

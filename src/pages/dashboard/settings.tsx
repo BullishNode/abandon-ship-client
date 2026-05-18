@@ -1,3 +1,4 @@
+import { ArrowSquareOutIcon } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -39,7 +40,8 @@ const BITCOIN_UNITS: { value: BitcoinUnit; label: string }[] = [
 
 const PRICE_PROVIDERS: { value: PriceProviderId; label: string }[] = [
   { label: 'Binance', value: 'binance' },
-  { label: 'CoinGecko', value: 'coingecko' }
+  { label: 'CoinGecko', value: 'coingecko' },
+  { label: 'Kraken', value: 'kraken' }
 ]
 
 const FIAT_CURRENCIES: { value: FiatCurrency; label: string }[] = [
@@ -52,24 +54,36 @@ type ExitDialogMode = 'start' | 'edit'
 export default function SettingsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [bitcoinUnit, setBitcoinUnit] = useSettingsStore(
-    useShallow((state) => [state.bitcoinUnit, state.setBitcoinUnit])
+  const [
+    bitcoinUnit,
+    setBitcoinUnit,
+    priceProvider,
+    setPriceProvider,
+    fiatCurrency,
+    setFiatCurrency,
+    discreteMode,
+    setDiscreteMode
+  ] = useSettingsStore(
+    useShallow((state) => [
+      state.bitcoinUnit,
+      state.setBitcoinUnit,
+      state.priceProvider,
+      state.setPriceProvider,
+      state.fiatCurrency,
+      state.setFiatCurrency,
+      state.discreteMode,
+      state.setDiscreteMode
+    ])
   )
-  const [priceProvider, setPriceProvider] = useSettingsStore(
-    useShallow((state) => [state.priceProvider, state.setPriceProvider])
-  )
-  const [fiatCurrency, setFiatCurrency] = useSettingsStore(
-    useShallow((state) => [state.fiatCurrency, state.setFiatCurrency])
-  )
-  const [discreteMode, setDiscreteMode] = useSettingsStore(
-    useShallow((state) => [state.discreteMode, state.setDiscreteMode])
-  )
-  const [wallet, updateWalletName] = useWalletStore(
-    useShallow((state) => [state.wallet, state.updateWalletName])
-  )
-  const [pendingExitClaimAddress, setPendingExitClaimAddress] = useWalletStore(
-    useShallow((state) => [state.pendingExitClaimAddress, state.setPendingExitClaimAddress])
-  )
+  const [wallet, updateWalletName, pendingExitClaimAddress, setPendingExitClaimAddress] =
+    useWalletStore(
+      useShallow((state) => [
+        state.wallet,
+        state.updateWalletName,
+        state.pendingExitClaimAddress,
+        state.setPendingExitClaimAddress
+      ])
+    )
 
   const [walletName, setWalletName] = useState(wallet?.name ?? '')
   const [isDeleteOpen, setDeleteOpen] = useState(false)
@@ -182,7 +196,7 @@ export default function SettingsPage() {
       : t('settings.danger.emergency_exit.description')
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
+    <div className="mx-auto @container/field-group max-w-2xl space-y-8">
       <h1 className="font-bold text-2xl">Settings</h1>
       <Field>
         <FieldLabel htmlFor="wallet-name">{t('settings.wallet_name.label')}</FieldLabel>
@@ -255,7 +269,7 @@ export default function SettingsPage() {
         </FieldContent>
         <Switch checked={discreteMode} id="discrete-mode" onCheckedChange={setDiscreteMode} />
       </Field>
-      <Field orientation="horizontal">
+      <Field orientation="responsive">
         <FieldContent>
           <FieldLabel>{t('settings.backup.label')}</FieldLabel>
           <FieldDescription>{t('settings.backup.description')}</FieldDescription>
@@ -264,9 +278,25 @@ export default function SettingsPage() {
           {t('settings.backup.button')}
         </Button>
       </Field>
+      <Field orientation="responsive">
+        <FieldContent>
+          <FieldLabel>{t('settings.report_issues.label')}</FieldLabel>
+          <FieldDescription>{t('settings.report_issues.description')}</FieldDescription>
+        </FieldContent>
+        <Button asChild variant="outline">
+          <a
+            href="https://gitlab.com/ark-bitcoin/labs/bark-web/-/work_items"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {t('settings.report_issues.button')}
+            <ArrowSquareOutIcon />
+          </a>
+        </Button>
+      </Field>
       <section className="space-y-4 rounded-lg border border-destructive/30 p-4">
         <h2 className="font-semibold text-destructive text-lg">{t('settings.danger.title')}</h2>
-        <Field className="gap-4" orientation="horizontal">
+        <Field className="gap-4" orientation="responsive">
           <FieldContent>
             <FieldLabel>{t('settings.danger.emergency_exit.label')}</FieldLabel>
             <FieldDescription>{emergencyExitDescription}</FieldDescription>
@@ -288,7 +318,7 @@ export default function SettingsPage() {
             summary={summary}
           />
         ) : null}
-        <Field className="gap-4" orientation="horizontal">
+        <Field className="gap-4" orientation="responsive">
           <FieldContent>
             <FieldLabel>{t('settings.danger.delete_wallet.label')}</FieldLabel>
             <FieldDescription>{t('settings.danger.delete_wallet.description')}</FieldDescription>

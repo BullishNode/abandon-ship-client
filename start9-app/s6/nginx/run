@@ -1,0 +1,6 @@
+#!/command/with-contenv sh
+# Runs as root (s6-overlay default) so nginx master can bind 8080 and write its
+# pid file. The Debian nginx package's `user www-data` directive drops workers
+# automatically. We don't s6-setuidgid here for that reason.
+exec 2>&1
+exec /usr/sbin/nginx -g "daemon off;"

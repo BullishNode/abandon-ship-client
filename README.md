@@ -20,31 +20,52 @@
 npm install
 ```
 
-2. Create `.env.local` at the root of the repository and add the required environment variables.
+2. Pick an environment file. The repo ships two committed presets:
 
-Take a look at the `.env.example` file.
+- `.env.signet`
+- `.env.mainnet`
+
+You can use them directly via the shortcuts below, or copy one to `.env.local` and tweak for custom setups. See `.env.example` for the full set of variables.
 
 ### Run
 
-Make sure you have `Docker Desktop` running and execute the following command:
+Make sure you have `Docker Desktop` running. Then pick a network:
 
 ```bash
-npm run dev
+npm run dev:signet     # docker compose --env-file .env.signet up --build
+npm run dev:mainnet    # docker compose --env-file .env.mainnet up --build
+npm run dev            # docker compose --env-file .env.local up --build
 ```
 
-The application will be running on `http://localhost:5173`.
+The application will be running on `http://localhost:5173`. At boot it fetches its runtime config (Ark server, chain source, network) from `GET /api/config`.
 
-To stop, run `docker compose down`.
+To stop, use the matching down script (containers stop, wallet data persists):
+
+```bash
+npm run down:signet    # docker compose --env-file .env.signet down
+npm run down:mainnet   # docker compose --env-file .env.mainnet down
+npm run down           # docker compose --env-file .env.local down
+```
+
+#### Without Docker
+
+Run the API and the web app directly in two terminals (assumes a running `barkd` you control):
+
+```bash
+npm run dev:api
+npm run dev:web
+```
 
 ### Reset / Start from Scratch
 
-Remove all containers and the shared `wallet-data` volume to start with a clean state:
+Each network uses its own docker volume (via `COMPOSE_PROJECT_NAME`), so wipe the one you used:
 
 ```bash
-docker compose --env-file .env.local down -v
+docker compose --env-file .env.signet down -v
+docker compose --env-file .env.mainnet down -v
 ```
 
-Then run `npm run dev` again.
+Then run `npm run dev:signet` (or `:mainnet`) again.
 
 ### Lint and Format
 
@@ -61,6 +82,19 @@ Run the linter and auto-fix issues:
 ```bash
 npm run fix
 ```
+
+## Tech Stack
+
+- [Vite](https://vite.dev/) — build tool and dev server
+- [React](https://react.dev/) — UI library
+- [shadcn/ui](https://ui.shadcn.com/) — component library
+- [TanStack](https://tanstack.com/) — Query and Table
+- [Zustand](https://zustand.docs.pmnd.rs/) — state management
+- [Zod](https://zod.dev/) — runtime config and schema validation
+- [Hono](https://hono.dev/) — HTTP server for the bark-web API
+- [nginx](https://nginx.org/) — static asset server and reverse proxy in the production image
+- [barkd](https://www.npmjs.com/package/@secondts/barkd) — Bark daemon client
+- [Branta](https://branta.pro/) — wallet address verification
 
 ## Contributing
 

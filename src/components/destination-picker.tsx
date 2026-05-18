@@ -1,5 +1,4 @@
 import type { Destination } from 'bitcoin-decoder'
-import type { ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CircleArkIcon } from '@/components/icons/circle-ark'
 import { CircleLightningIcon } from '@/components/icons/circle-lightning'
@@ -9,14 +8,14 @@ import { useDestinationFee } from '@/hooks/use-destination-fee'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
 import { cn } from '@/lib/utils'
 
-function getDestinationIcon(type: Destination['type']): ComponentType {
+function renderDestinationIcon(type: Destination['type']) {
   if (type === 'ark-address') {
-    return CircleArkIcon
+    return <CircleArkIcon />
   }
   if (type === 'bitcoin-address') {
-    return CircleOnchainIcon
+    return <CircleOnchainIcon />
   }
-  return CircleLightningIcon
+  return <CircleLightningIcon />
 }
 
 interface DestinationPickerProps {
@@ -47,7 +46,6 @@ function DestinationBadge({ destination, amountSat, isSelected, onSelect }: Dest
   const { t } = useTranslation()
   const formatBitcoin = useFormatBitcoin()
   const { feeSat, isFetching } = useDestinationFee(destination, amountSat)
-  const Icon = getDestinationIcon(destination.type)
 
   let feeLabel = '—'
   if (destination.type === 'ark-address') {
@@ -68,7 +66,7 @@ function DestinationBadge({ destination, amountSat, isSelected, onSelect }: Dest
       type="button"
     >
       <Badge className={cn(isSelected && 'border-[1.5px] border-primary')} variant="outline">
-        <Icon />
+        {renderDestinationIcon(destination.type)}
         {t(getTypeLabelKey(destination.type))}
         <span className="opacity-70">· {feeLabel}</span>
       </Badge>
