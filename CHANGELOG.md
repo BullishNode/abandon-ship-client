@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.2] - 2026-05-14
+## [0.1.2] - 2026-05-18
 
 ### Added
 
@@ -13,16 +13,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pagination on the movements table.
 - Package for Umbrel.
 - Package for Start9.
+- Report issues field in settings.
+- Send modal can spend the on-chain pending balance.
+- Auto-labelling for exit transactions in the movements list.
 
 ### Changed
 
-- How the balance and breakdown is displayed
+- How the balance breakdown is displayed.
+- Movements list now shows one row per on-chain transaction, with addresses decoded from the raw transaction.
+- Render performance improvements across the app.
 
 ### Fixed
 
 - Movements list now refreshes on `movement-created` and `movement-updated` notifications.
 - Emergency exit dialog no longer uses a monospaced font for fee and balance values.
 - Mobile responsiveness.
+- Detail dialog now places label and tags below the created date.
+- Metadata bindings persist and re-match against movements on poll.
+- Modal scroll fade now aligns with the inner content edge.
 
 ## [0.1.1] - 2026-05-13
 
