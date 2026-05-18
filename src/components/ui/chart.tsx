@@ -181,14 +181,15 @@ function ChartTooltipContent({
     >
       {!nestLabel ? tooltipLabel : null}
       <div className="grid gap-1.5">
-        {payload
-          .filter((item) => item.type !== "none")
-          .map((item, index) => {
-            const key = `${nameKey ?? item.name ?? item.dataKey ?? "value"}`
-            const itemConfig = getPayloadConfigFromPayload(config, item, key)
-            const indicatorColor = color ?? item.payload?.fill ?? item.color
+        {payload.flatMap((item, index) => {
+          if (item.type === "none") {
+            return []
+          }
+          const key = `${nameKey ?? item.name ?? item.dataKey ?? "value"}`
+          const itemConfig = getPayloadConfigFromPayload(config, item, key)
+          const indicatorColor = color ?? item.payload?.fill ?? item.color
 
-            return (
+          return (
               <div
                 key={index}
                 className={cn(
@@ -256,6 +257,7 @@ function ChartTooltipContent({
 
 const ChartLegend = RechartsPrimitive.Legend
 
+
 function ChartLegendContent({
   className,
   hideIcon = false,
@@ -280,13 +282,14 @@ function ChartLegendContent({
         className
       )}
     >
-      {payload
-        .filter((item) => item.type !== "none")
-        .map((item, index) => {
-          const key = `${nameKey ?? item.dataKey ?? "value"}`
-          const itemConfig = getPayloadConfigFromPayload(config, item, key)
+      {payload.flatMap((item, index) => {
+        if (item.type === "none") {
+          return []
+        }
+        const key = `${nameKey ?? item.dataKey ?? "value"}`
+        const itemConfig = getPayloadConfigFromPayload(config, item, key)
 
-          return (
+        return (
             <div
               key={index}
               className={cn(

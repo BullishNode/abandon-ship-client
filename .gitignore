@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+api/dist
 *.local
 coverage
 
@@ -27,3 +28,11 @@ coverage
 
 # Claude
 .claude/settings.local.json
+
+# Umbrel build artifacts
+.umbrel-digests
+
+# Start9 build artifacts
+start9-app/docker-images/
+start9-app/image.tar
+start9-app/*.s9pk

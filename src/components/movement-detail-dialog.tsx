@@ -1,5 +1,6 @@
 import type { Movement } from '@secondts/barkd'
 import { useTranslation } from 'react-i18next'
+import { useShallow } from 'zustand/react/shallow'
 import { MovementAmountCell } from '@/components/movement-amount-cell'
 import { CopyableValueRow, DetailRow, LabelEditor } from '@/components/movement-detail-shared'
 import { MovementSourceBadge } from '@/components/movement-source-badge'
@@ -72,8 +73,9 @@ function MovementDetailContent({
 }: MovementDetailContentProps) {
   const { t } = useTranslation()
   const movementId = movement.id
-  const annotation = useMetadataStore((state) => state.annotations[movementId])
-  const setManualAnnotation = useMetadataStore((state) => state.setManualAnnotation)
+  const [annotation, setManualAnnotation] = useMetadataStore(
+    useShallow((state) => [state.annotations[movementId], state.setManualAnnotation])
+  )
   const direction = getMovementDirection(movement)
   const counterparty = getMovementCounterpartyDestination(movement)
   const source = getMovementSource(movement)

@@ -8,6 +8,7 @@ import { SendModal } from '@/components/send-modal'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+import { useMovementSync } from '@/hooks/barkd/use-movement-sync'
 import { useMetadataMatcher } from '@/hooks/use-metadata-matcher'
 import { useModalsStore } from '@/stores/modals'
 
@@ -39,6 +40,7 @@ export default function DashboardLayout() {
     ])
   )
   useMetadataMatcher()
+  useMovementSync()
 
   const routeTitleKey = ROUTE_TITLE_KEYS[pathname]
   const routeTitle = routeTitleKey ? t(routeTitleKey) : ''
@@ -48,31 +50,35 @@ export default function DashboardLayout() {
       <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
+          <div className="flex min-w-0 items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator
               className="mt-2 mr-2 data-[orientation=vertical]:h-4"
               orientation="vertical"
             />
-            <h3>{routeTitle}</h3>
+            <h3 className="truncate">{routeTitle}</h3>
           </div>
-          <ul className="flex gap-2 pr-4">
+          <ul className="flex shrink-0 gap-2 pr-4">
             <li>
-              <Button onClick={() => openSend('scan')} variant="outline">
+              <Button
+                aria-label={t('actions.scan')}
+                onClick={() => openSend('scan')}
+                variant="outline"
+              >
                 <ScanIcon />
-                {t('actions.scan')}
+                <span className="hidden md:inline">{t('actions.scan')}</span>
               </Button>
             </li>
             <li>
-              <Button onClick={openReceive}>
+              <Button aria-label={t('actions.receive')} onClick={openReceive}>
                 <QrCodeIcon />
-                {t('actions.receive')}
+                <span className="hidden md:inline">{t('actions.receive')}</span>
               </Button>
             </li>
             <li>
-              <Button onClick={() => openSend('send')}>
+              <Button aria-label={t('actions.send')} onClick={() => openSend('send')}>
                 <PaperPlaneTiltIcon />
-                {t('actions.send')}
+                <span className="hidden md:inline">{t('actions.send')}</span>
               </Button>
             </li>
           </ul>

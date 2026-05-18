@@ -21,7 +21,7 @@ export interface TransactionAnnotation {
 }
 
 export interface OnchainAnnotation {
-  outpoint: string
+  txid: string
   label?: string
   tags: string[]
   createdAt: string

@@ -39,6 +39,13 @@ export default defineConfig({
         '@typescript-eslint/no-empty-interface': 'off',
         '@typescript-eslint/no-empty-object-type': 'off'
       }
+    },
+    {
+      files: ['tests/**', 'src/**/*.test.ts', 'src/**/*.test.tsx'],
+      rules: {
+        '@typescript-eslint/unbound-method': 'off',
+        'import/no-named-as-default-member': 'off'
+      }
     }
   ],
   rules: {

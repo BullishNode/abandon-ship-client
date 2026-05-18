@@ -1,0 +1,10 @@
+#!/command/with-contenv sh
+exec 2>&1
+cd /app/api
+export PORT=4001
+export WALLET_DIR=/data/.bark
+export BARKD_URL=http://127.0.0.1:4000
+export ARK_SERVER=https://ark.second.tech
+export CHAIN_SOURCE=https://mempool.second.tech/api
+export BARK_NETWORK=mainnet
+exec s6-setuidgid app /usr/bin/node dist/index.js

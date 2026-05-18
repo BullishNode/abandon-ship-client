@@ -15,9 +15,8 @@ let socket: ReconnectingWebSocket | null = null
 
 async function urlProvider(): Promise<string> {
   const ticket = await notificationsApi.websocketTicket()
-  const baseUrl: string = import.meta.env.VITE_BARKD_URL
-  const wsBase = baseUrl.replace(/^https:\/\//iu, 'wss://').replace(/^http:\/\//iu, 'ws://')
-  return `${wsBase}/api/v1/notifications/ws?ticket=${encodeURIComponent(ticket)}`
+  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${proto}//${window.location.host}/barkd-ws/api/v1/notifications/ws?ticket=${encodeURIComponent(ticket)}`
 }
 
 function handleMessage(event: MessageEvent): void {

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useShallow } from 'zustand/react/shallow'
 import { DataTable } from '@/components/data-table'
+import { MOVEMENTS_PAGE_SIZE } from '@/constants/movements'
 import { MovementDetailDialog } from '@/components/movement-detail-dialog'
 import { OnchainEntryDetailDialog } from '@/components/onchain-entry-detail-dialog'
 import { Button } from '@/components/ui/button'
@@ -13,13 +14,15 @@ import { Empty, EmptyContent, EmptyHeader, EmptyMedia, EmptyTitle } from '@/comp
 import { Label } from '@/components/ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
+import { useOnchainTransactions } from '@/hooks/barkd/use-onchain-transactions'
 import { useOnchainUtxos } from '@/hooks/barkd/use-onchain-utxos'
 import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
+import { config } from '@/config/barkd'
 import { usePrivateAmount } from '@/hooks/use-private-amount'
 import { useModalsStore } from '@/stores/modals'
 import { useSettingsStore } from '@/stores/settings'
 import { buildMovementsFeed } from '@/utils/movements-feed'
-import type { MovementsFeedRow, OnchainEntry } from '@/utils/movements-feed'
+import type { MovementsFeedRow, OnchainTxEntry } from '@/utils/movements-feed'
 import { formatAbsoluteDateTime, formatRelativeTime } from '@/utils/relative-time'
 import { getMovementColumns } from './movements-columns'
 
@@ -27,23 +30,33 @@ export function MovementsTable() {
   const { t, i18n } = useTranslation()
   const { data: movements = [] } = useWalletTransactions()
   const { data: utxos = [] } = useOnchainUtxos()
+  const { data: transactions = [] } = useOnchainTransactions()
   const { data: tip } = useBitcoinTip()
-  const discreteMode = useSettingsStore((state) => state.discreteMode)
-  const hideRefreshMovements = useSettingsStore((state) => state.hideRefreshMovements)
-  const setHideRefreshMovements = useSettingsStore((state) => state.setHideRefreshMovements)
+  const [discreteMode, hideRefreshMovements, setHideRefreshMovements] = useSettingsStore(
+    useShallow((state) => [
+      state.discreteMode,
+      state.hideRefreshMovements,
+      state.setHideRefreshMovements
+    ])
+  )
   const [openSend, openReceive] = useModalsStore(
     useShallow((state) => [state.openSend, state.openReceive])
   )
   const { sats: formatSats, fiat: formatFiat } = usePrivateAmount()
   const [selectedMovement, setSelectedMovement] = useState<Movement | null>(null)
   const [movementOpen, setMovementOpen] = useState(false)
-  const [selectedOnchain, setSelectedOnchain] = useState<OnchainEntry | null>(null)
+  const [selectedOnchain, setSelectedOnchain] = useState<OnchainTxEntry | null>(null)
   const [onchainOpen, setOnchainOpen] = useState(false)
 
   const visibleMovements = hideRefreshMovements
     ? movements.filter((movement) => movement.subsystem.kind !== 'refresh')
     : movements
-  const feed = buildMovementsFeed(visibleMovements, utxos, tip?.tipHeight)
+  const feed = buildMovementsFeed(visibleMovements, {
+    network: config.network,
+    tipHeight: tip?.tipHeight,
+    transactions,
+    utxos
+  })
 
   function formatDate(date: Date): string {
     return formatRelativeTime(date, i18n.language)
@@ -135,7 +148,12 @@ export function MovementsTable() {
               </EmptyContent>
             </Empty>
           ) : (
-            <DataTable columns={columns} data={feed} onRowClick={handleRowClick} />
+            <DataTable
+              columns={columns}
+              data={feed}
+              onRowClick={handleRowClick}
+              pageSize={MOVEMENTS_PAGE_SIZE}
+            />
           )}
         </CardContent>
       </Card>

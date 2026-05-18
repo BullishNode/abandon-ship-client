@@ -101,6 +101,9 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
   })
 
   const { mutate: onchainSend, isPending: isSendingFromWallet } = useOnchainSend({
+    onError: (error) => {
+      toast.error(t('send.errors.send_failed'), { description: error.message })
+    },
     onSuccess: () => {
       handleSendSuccess()
     }
@@ -142,7 +145,11 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
   const { data: onchainBalance } = useOnchainBalance()
 
   const arkBalanceSat = walletBalance?.spendableSat ?? 0
-  const onchainBalanceSat = onchainBalance?.trustedSpendableSat ?? 0
+  const onchainTrustedSpendableSat = onchainBalance?.trustedSpendableSat ?? 0
+  const onchainTrustedPendingSat = onchainBalance?.trustedPendingSat ?? 0
+  const onchainUntrustedPendingSat = onchainBalance?.untrustedPendingSat ?? 0
+  const onchainPendingTotalSat = onchainTrustedPendingSat + onchainUntrustedPendingSat
+  const onchainBalanceSat = onchainTrustedSpendableSat + onchainPendingTotalSat
 
   const availableBalance = sendRoute === 'onchain-from-wallet' ? onchainBalanceSat : arkBalanceSat
 
@@ -156,6 +163,11 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
 
   const hasEnoughFunds = requiredSat === undefined ? true : availableBalance >= requiredSat
   const insufficientFunds = requiredSat !== undefined && !hasEnoughFunds
+  const usesPendingOnchain =
+    sendRoute === 'onchain-from-wallet' &&
+    requiredSat !== undefined &&
+    hasEnoughFunds &&
+    requiredSat > onchainTrustedSpendableSat
 
   const { data: brantaPayments, isFetching: isFetchingBranta } = useBrantaVerification(
     step === 'send' ? rawQrInput : undefined
@@ -286,6 +298,8 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     label,
     message,
     onchainBalanceSat,
+    onchainPendingTotalSat,
+    onchainTrustedSpendableSat,
     selectedMethodType,
     selectedTags,
     sendRoute,
@@ -296,6 +310,7 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     setSelectedTags,
     setSendRoute,
     step,
+    usesPendingOnchain,
     validAmountSat
   }
 }

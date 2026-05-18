@@ -1,0 +1,38 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bark-web_web_1
+      APP_PORT: 8080
+
+  web:
+    image: secondark/bark-web:0.1.2
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      - api
+      - barkd
+
+  api:
+    image: secondark/bark-web-api:0.1.2
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/wallet:/wallet-data:ro
+    environment:
+      PORT: 4001
+      WALLET_DIR: /wallet-data/.bark
+      BARKD_URL: http://barkd:4000
+      ARK_SERVER: https://ark.second.tech
+      CHAIN_SOURCE: https://mempool.second.tech/api
+      BARK_NETWORK: mainnet
+    depends_on:
+      - barkd
+
+  barkd:
+    image: secondark/barkd:0.1.4
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/wallet:/data

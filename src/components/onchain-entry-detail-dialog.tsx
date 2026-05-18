@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { useShallow } from 'zustand/react/shallow'
 import { MovementAmountCell } from '@/components/movement-amount-cell'
 import { CopyableValueRow, DetailRow, LabelEditor } from '@/components/movement-detail-shared'
 import { MovementSourceBadge } from '@/components/movement-source-badge'
@@ -7,10 +8,10 @@ import { TagInput } from '@/components/tag-input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { useMetadataStore } from '@/stores/metadata'
-import type { OnchainEntry } from '@/utils/movements-feed'
+import type { OnchainTxEntry } from '@/utils/movements-feed'
 
 interface OnchainEntryDetailDialogProps {
-  entry: OnchainEntry | null
+  entry: OnchainTxEntry | null
   open: boolean
   onOpenChange: (open: boolean) => void
   formatSats: (sats: number) => string
@@ -50,7 +51,7 @@ export function OnchainEntryDetailDialog({
 }
 
 interface OnchainEntryDetailContentProps {
-  entry: OnchainEntry
+  entry: OnchainTxEntry
   formatSats: (sats: number) => string
   formatFiat: (sats: number) => string
   formatDateAbsolute: (date: Date) => string
@@ -65,8 +66,9 @@ function OnchainEntryDetailContent({
   discreteMode
 }: OnchainEntryDetailContentProps) {
   const { t } = useTranslation()
-  const annotation = useMetadataStore((state) => state.onchainAnnotations[entry.outpoint])
-  const setOnchainAnnotation = useMetadataStore((state) => state.setOnchainAnnotation)
+  const [annotation, setOnchainAnnotation] = useMetadataStore(
+    useShallow((state) => [state.onchainAnnotations[entry.txid], state.setOnchainAnnotation])
+  )
   const heightValue =
     entry.confirmationHeight === null
       ? t('movements.onchain.detail.pending')
@@ -89,11 +91,17 @@ function OnchainEntryDetailContent({
             sats={entry.amountSat}
           />
         </div>
+        <CopyableValueRow label={t('movements.onchain.detail.txid')} value={entry.txid} />
+        <DetailRow label={t('movements.onchain.detail.height')} value={heightValue} />
+        <DetailRow
+          label={t('movements.detail.dateCreated')}
+          value={formatDateAbsolute(new Date(entry.approximateTimestampMs))}
+        />
         <LabelEditor
           inputId="onchain-label"
           label={annotation?.label ?? ''}
           onSave={(nextLabel) => {
-            setOnchainAnnotation(entry.outpoint, {
+            setOnchainAnnotation(entry.txid, {
               label: nextLabel,
               tags: annotation?.tags ?? []
             })
@@ -103,7 +111,7 @@ function OnchainEntryDetailContent({
           <Label>{t('movements.detail.tags')}</Label>
           <TagInput
             onChange={(nextTags) => {
-              setOnchainAnnotation(entry.outpoint, {
+              setOnchainAnnotation(entry.txid, {
                 label: annotation?.label,
                 tags: nextTags
               })
@@ -111,12 +119,6 @@ function OnchainEntryDetailContent({
             value={annotation?.tags ?? []}
           />
         </div>
-        <CopyableValueRow label={t('movements.onchain.detail.txid')} value={entry.txid} />
-        <DetailRow label={t('movements.onchain.detail.height')} value={heightValue} />
-        <DetailRow
-          label={t('movements.detail.dateCreated')}
-          value={formatDateAbsolute(new Date(entry.approximateTimestampMs))}
-        />
       </div>
     </>
   )

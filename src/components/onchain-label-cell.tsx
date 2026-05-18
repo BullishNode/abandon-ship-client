@@ -1,14 +1,38 @@
+import { useShallow } from 'zustand/react/shallow'
 import { Badge } from '@/components/ui/badge'
+import type { MetadataStore } from '@/stores/metadata'
 import { useMetadataStore } from '@/stores/metadata'
 
 interface OnchainLabelCellProps {
-  outpoint: string
+  txid: string
+  bindingAddress: string | undefined
 }
 
-export function OnchainLabelCell({ outpoint }: OnchainLabelCellProps) {
-  const annotation = useMetadataStore((state) => state.onchainAnnotations[outpoint])
-  const label = annotation?.label?.trim() ?? ''
-  const tags = annotation?.tags ?? []
+const EMPTY_TAGS: string[] = []
+
+function selectLabelSource(
+  state: MetadataStore,
+  txid: string,
+  bindingAddress: string | undefined
+): { label: string; tags: string[] } {
+  const annotation = state.onchainAnnotations[txid]
+  if (annotation !== undefined) {
+    return { label: annotation.label?.trim() ?? '', tags: annotation.tags }
+  }
+  if (bindingAddress === undefined) {
+    return { label: '', tags: EMPTY_TAGS }
+  }
+  const binding = state.bindings.find((b) => b.destinations.includes(bindingAddress))
+  if (binding === undefined) {
+    return { label: '', tags: EMPTY_TAGS }
+  }
+  return { label: binding.label?.trim() ?? '', tags: binding.tags }
+}
+
+export function OnchainLabelCell({ txid, bindingAddress }: OnchainLabelCellProps) {
+  const { label, tags } = useMetadataStore(
+    useShallow((state) => selectLabelSource(state, txid, bindingAddress))
+  )
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {label.length > 0 ? <span className="text-foreground">{label}</span> : null}

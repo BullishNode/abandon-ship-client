@@ -1,0 +1,84 @@
+id: bark-web
+title: Bark
+version: 0.1.2
+release-notes: |
+  Initial Start9 release. Self-custodial Ark wallet for Bitcoin mainnet.
+license: mit
+wrapper-repo: https://gitlab.com/ark-bitcoin/labs/bark-web
+upstream-repo: https://gitlab.com/ark-bitcoin/bark
+support-site: https://gitlab.com/ark-bitcoin/labs/bark-web/-/issues
+marketing-site: https://second.tech
+build:
+  - make
+description:
+  short: Self-custodial Ark wallet for fast Bitcoin payments
+  long: |
+    Bark is a self-custodial Bitcoin wallet built on the Ark protocol. Send and
+    receive Bitcoin off-chain through Ark rounds for fast, low-fee payments
+    while retaining unilateral exit to the base chain. Connects to a hosted
+    Ark server (ark.second.tech) and chain source (mempool.second.tech) on
+    Bitcoin mainnet. All keys stay in the wallet volume on your server.
+assets:
+  license: LICENSE
+  icon: icon.png
+  instructions: instructions.md
+main:
+  type: docker
+  image: main
+  entrypoint: docker_entrypoint.sh
+  args: []
+  mounts:
+    main: /data
+  sigterm-timeout: 60s
+  system: false
+health-checks: {}
+config: ~
+properties: ~
+volumes:
+  main:
+    type: data
+interfaces:
+  main:
+    name: Web UI
+    description: Open the Bark wallet in your browser.
+    tor-config:
+      port-mapping:
+        80: '8080'
+    lan-config:
+      443:
+        ssl: true
+        internal: 8080
+    ui: true
+    protocols:
+      - tcp
+      - http
+dependencies: {}
+backup:
+  create:
+    type: docker
+    image: compat
+    system: true
+    entrypoint: compat
+    args:
+      - duplicity
+      - create
+      - /mnt/backup
+      - /data
+    mounts:
+      BACKUP: /mnt/backup
+      main: /data
+  restore:
+    type: docker
+    image: compat
+    system: true
+    entrypoint: compat
+    args:
+      - duplicity
+      - restore
+      - /mnt/backup
+      - /data
+    mounts:
+      BACKUP: /mnt/backup
+      main: /data
+migrations: ~
+actions: {}

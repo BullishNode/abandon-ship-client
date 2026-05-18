@@ -92,6 +92,7 @@ function ModalBody({
   ref,
   ...props
 }: ComponentProps<'div'> & { ref?: Ref<HTMLDivElement> }) {
+  const { isMobile } = useMediaQuery()
   const innerRef = useRef<HTMLDivElement>(null)
   const { canScrollUp, canScrollDown, update: updateScrollState } = useScrollOverflow(innerRef)
 
@@ -104,10 +105,24 @@ function ModalBody({
     }
   }
 
+  if (isMobile) {
+    return (
+      <div
+        className={cn('no-scrollbar min-h-0 flex-1 overflow-y-auto px-4 pb-4', className)}
+        data-slot="modal-body"
+        onScroll={updateScrollState}
+        ref={setRefs}
+        {...props}
+      >
+        {children}
+      </div>
+    )
+  }
+
   return (
     <div className="relative flex min-h-0 flex-1 flex-col" data-slot="modal-body">
       {canScrollUp && (
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-6 bg-linear-to-b from-background to-transparent" />
+        <div className="pointer-events-none absolute -top-1.5 -left-1 -right-1 z-10 h-6 bg-linear-to-b from-background to-transparent" />
       )}
       <div
         className={cn(
@@ -122,7 +137,7 @@ function ModalBody({
         {children}
       </div>
       {canScrollDown && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-6 bg-linear-to-t from-background to-transparent" />
+        <div className="pointer-events-none absolute -bottom-1.5 -left-1 -right-1 z-10 h-6 bg-linear-to-t from-background to-transparent" />
       )}
     </div>
   )

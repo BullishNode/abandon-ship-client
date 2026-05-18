@@ -131,7 +131,11 @@
     "amount": "Amount",
     "errors": {
       "invalid_qr": "Invalid QR code",
-      "insufficient_funds": "Insufficient funds. Available: {{balance}}"
+      "insufficient_funds": "Insufficient funds. Available: {{balance}}",
+      "send_failed": "Send failed"
+    },
+    "warnings": {
+      "uses_pending_onchain": "Spending unconfirmed funds"
     },
     "fee": {
       "estimate": "Estimated fee",
@@ -152,7 +156,8 @@
     },
     "pay_from": "Pay from",
     "pay_from_ark": "Ark balance",
-    "pay_from_onchain": "On-chain wallet"
+    "pay_from_onchain": "On-chain wallet",
+    "pending": "pending"
   },
   "contacts": {
     "label": "Contacts",
@@ -169,6 +174,7 @@
       "hide_refreshes": "Hide refreshes"
     },
     "kinds": {
+      "exit": "Exit",
       "refresh": "Refresh"
     },
     "onchain": {
@@ -245,6 +251,11 @@
         "button": "Download"
       }
     },
+    "report_issues": {
+      "label": "Report issues",
+      "description": "Open an issue on GitLab",
+      "button": "GitLab"
+    },
     "danger": {
       "title": "Danger zone",
       "emergency_exit": {
@@ -268,7 +279,7 @@
         "address_help": "Funds will be swept to this address when exits become claimable.",
         "use_wallet_address": "Use my wallet",
         "estimate": {
-          "title": "Estimated cost",
+          "title": "Estimated total cost",
           "value": "~{{sats}} sats at {{feeRate}} sat/vB",
           "balance_one": "On-chain balance: {{sats}} sats",
           "balance_other": "On-chain balance: {{sats}} sats",
@@ -310,9 +321,13 @@
   },
   "dashboard": {
     "balance": {
-      "pending": "Pending {{amount}}",
-      "onchain": "On-chain {{amount}}",
-      "onchain_pending": "On-chain pending {{amount}}",
+      "offchain": "Off-chain",
+      "onchain": "On-chain",
+      "onchain_pending": "On-chain pending",
+      "pending_board": "Pending board",
+      "pending_in_round": "Pending in round",
+      "pending_lightning_send": "Pending Lightning send",
+      "pending_exit": "Pending exit",
       "show_amounts": "Show amounts",
       "hide_amounts": "Hide amounts"
     },

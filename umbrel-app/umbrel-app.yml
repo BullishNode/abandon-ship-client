@@ -1,0 +1,24 @@
+manifestVersion: 1
+id: bark-web
+category: finance
+name: Bark
+version: '0.1.2'
+tagline: Self-custodial Ark wallet
+description: >-
+  Bark is a self-custodial Bitcoin wallet built on the Ark protocol for
+  fast, low-fee off-chain payments while keeping unilateral exit
+  guarantees. Send and receive Bitcoin instantly via Ark rounds with
+  full control of your keys.
+releaseNotes: ''
+developer: Second
+website: https://second.tech
+dependencies: []
+repo: https://gitlab.com/ark-bitcoin/labs/bark-web
+support: https://gitlab.com/ark-bitcoin/labs/bark-web/-/issues
+port: 4000
+gallery: []
+path: ''
+defaultUsername: ''
+defaultPassword: ''
+submitter: Second
+submission: ''
