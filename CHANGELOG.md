@@ -5,6 +5,30 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-05-20
+
+### Added
+
+- Community forum and community chat links in settings.
+- Combined next-round and bitcoin price card with a circular countdown ring.
+- Auto-claim of emergency exit outputs once an on-chain destination address is set.
+- Branta destination verification now also runs when the destination input loses focus.
+
+### Changed
+
+- Dashboard cards reorganized into a two-column layout; balance breakdown lays out horizontally on wider screens.
+- Balance chart uses a numeric time scale with evenly spaced day ticks for more consistent axis labels.
+- Emergency exit description in settings clarifies that on-chain bitcoin is needed to cover fees.
+- Round countdown now exposes a progress value driven by the server's `roundInterval`.
+- Movements from the `offboard` subsystem are classified as Ark transactions.
+- Updated `@branta-ops/branta` and `@secondts/barkd`.
+
+### Fixed
+
+- Emergency exit progress card no longer shows a stale "done" state after completion.
+- Claim address prompt opens automatically when outputs become ripe without a destination set, and is cleared when a new exit is started after a previous one finished.
+- Branta verification result is cleared when the send destination is edited, avoiding stale matches.
+
 ## [0.1.2] - 2026-05-18
 
 ### Added
@@ -64,5 +88,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - UI flickers on modal transitions.
 - Multi-row display for long content.
 
+[0.1.3]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.1.3
 [0.1.2]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.1.2
 [0.1.1]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.1.1
