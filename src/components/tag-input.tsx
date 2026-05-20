@@ -1,5 +1,5 @@
 import { PlusIcon, XIcon } from '@phosphor-icons/react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, m } from 'motion/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { buttonVariants } from '@/components/ui/button'
@@ -90,7 +90,7 @@ export function TagInput({ value, onChange, disabled = false }: TagInputProps) {
           <AnimatePresence initial={false} mode="popLayout">
             {selectedTags.map((tag) => (
               // biome-ignore lint/a11y/noStaticElementInteractions: don't open popover when clicking on the tag text
-              <motion.div
+              <m.div
                 animate={{ filter: 'blur(0px)', opacity: 1, scale: 1 }}
                 className="inline-flex cursor-default items-center gap-1 whitespace-nowrap rounded-md bg-muted px-2 py-0.5 text-foreground text-xs"
                 exit={{ filter: 'blur(8px)', opacity: 0, scale: 0.92 }}
@@ -116,7 +116,7 @@ export function TagInput({ value, onChange, disabled = false }: TagInputProps) {
                 >
                   <XIcon className="size-3 rounded-sm hover:bg-foreground/20" />
                 </button>
-              </motion.div>
+              </m.div>
             ))}
           </AnimatePresence>
         </div>

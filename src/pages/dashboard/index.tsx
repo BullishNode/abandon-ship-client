@@ -1,12 +1,18 @@
+import { lazy, Suspense } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { BalanceChart } from '@/components/balance-chart'
 import { BalanceCard } from '@/components/dashboard/balance-card'
 import { RoundPriceCard } from '@/components/dashboard/round-price-card'
 import { MovementsTable } from '@/components/movements-table'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
 import { useWalletBalance } from '@/hooks/barkd/use-wallet-balance'
 import { useSettingsStore } from '@/stores/settings'
 import { getBalanceTotals } from '@/utils/balance'
+
+const BalanceChart = lazy(async () => {
+  const mod = await import('@/components/balance-chart')
+  return { default: mod.BalanceChart }
+})
 
 export default function TransactionsPage() {
   const { data: balance } = useWalletBalance()
@@ -27,7 +33,9 @@ export default function TransactionsPage() {
         <RoundPriceCard />
       </div>
       <MovementsTable />
-      <BalanceChart />
+      <Suspense fallback={<Skeleton className="h-80 w-full" />}>
+        <BalanceChart />
+      </Suspense>
     </div>
   )
 }
