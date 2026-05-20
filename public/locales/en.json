@@ -251,16 +251,26 @@
         "button": "Download"
       }
     },
+    "community_forum": {
+      "label": "Community forum",
+      "description": "Ask questions and discuss with other users",
+      "button": "Open forum"
+    },
+    "community_chat": {
+      "label": "Community chat",
+      "description": "Join the chat for real-time conversation",
+      "button": "Open chat"
+    },
     "report_issues": {
       "label": "Report issues",
       "description": "Open an issue on GitLab",
-      "button": "GitLab"
+      "button": "Open GitLab"
     },
     "danger": {
       "title": "Danger zone",
       "emergency_exit": {
         "label": "Emergency exit all",
-        "description": "Unilaterally exit every VTXO back on-chain. Use only when the Ark server is unreachable. Process is slow (waits on timelocks) and pays on-chain fees.",
+        "description": "Use only when the Ark server is unresponsive. Requires multiple on-chain transactions—ensure you have on-chain bitcoin to cover the fees.",
         "button": "Emergency exit all",
         "in_progress_button": "Exit in progress",
         "no_vtxos": "No VTXOs to exit.",
@@ -291,14 +301,12 @@
         },
         "progress": {
           "title": "Emergency exit in progress",
-          "done": "Emergency exit complete",
-          "summary": "{{claimed}}/{{total}} claimed"
+          "summary": "{{claimed}}/{{total}} claimed",
+          "claim_address_required": "Add address to claim"
         },
         "destination_label": "Destination address",
         "destination_missing": "No address set",
         "change_address": "Change",
-        "claim_button_one": "Claim {{count}} output",
-        "claim_button_other": "Claim {{count}} outputs",
         "states": {
           "start": "Starting",
           "processing": "Broadcasting",

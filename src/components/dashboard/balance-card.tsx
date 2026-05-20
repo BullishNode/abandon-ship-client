@@ -79,65 +79,69 @@ export function BalanceCard({
 
   return (
     <Card
-      className={cn('h-full min-w-65 max-w-md bg-transparent shadow-none ring-0 pr-4', className)}
+      className={cn(
+        'h-full min-w-65 bg-transparent shadow-none ring-0 lg:max-w-none',
+        showBreakdown && 'lg:grid lg:grid-rows-[1fr_auto_1fr]',
+        className
+      )}
       size="sm"
     >
-      <CardContent className="flex h-full flex-col">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex flex-col">
-            <p className="font-bold text-4xl">{formatSats(totals.totalSat)}</p>
-            <p className="text-sm font-medium">
-              <span aria-hidden="true">≈ </span>
-              {formatFiat(totals.totalSat)}
-            </p>
-          </div>
-          <Button
-            aria-label={
-              discreteMode
-                ? t('dashboard.balance.show_amounts')
-                : t('dashboard.balance.hide_amounts')
-            }
-            onClick={onToggleDiscreteMode}
-            size="icon"
-            variant="ghost"
-          >
-            {discreteMode ? <EyeSlashIcon /> : <EyeIcon />}
-          </Button>
+      <CardContent className="flex items-start justify-between gap-2 pr-4">
+        <div className="flex flex-col gap-1">
+          <p className="font-bold text-4xl">{formatSats(totals.totalSat)}</p>
+          <p className="text-sm font-medium">
+            <span aria-hidden="true">≈ </span>
+            {formatFiat(totals.totalSat)}
+          </p>
         </div>
-        <AnimatePresence initial={false}>
-          {showBreakdown ? (
-            <m.div
-              animate={{ height: 'auto', opacity: 1 }}
-              className="overflow-hidden"
-              exit={{ height: 0, opacity: 0 }}
-              initial={{ height: 0, opacity: 0 }}
-              key="breakdown"
-              transition={{ duration: 0.25, ease: 'easeOut' }}
-            >
-              <Separator className="my-3" />
-              <div className="flex flex-col text-sm">
-                <AnimatePresence initial={false}>
-                  {rows.map((row) => (
-                    <m.div
-                      animate={{ height: 'auto', opacity: 1 }}
-                      className="overflow-hidden"
-                      exit={{ height: 0, opacity: 0 }}
-                      initial={{ height: 0, opacity: 0 }}
-                      key={row.key}
-                      transition={{ duration: 0.2, ease: 'easeOut' }}
-                    >
-                      <div className="flex items-center justify-between gap-4 py-1 font-medium">
-                        <span>{row.label}</span>
-                        <span>{formatSats(row.amount)}</span>
-                      </div>
-                    </m.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            </m.div>
-          ) : null}
-        </AnimatePresence>
+        <Button
+          aria-label={
+            discreteMode ? t('dashboard.balance.show_amounts') : t('dashboard.balance.hide_amounts')
+          }
+          onClick={onToggleDiscreteMode}
+          size="icon"
+          variant="outline"
+        >
+          {discreteMode ? <EyeSlashIcon /> : <EyeIcon />}
+        </Button>
       </CardContent>
+      {showBreakdown ? (
+        <>
+          <Separator className="mx-4 w-auto" />
+          <CardContent className="pr-4">
+            <AnimatePresence initial={false}>
+              <m.div
+                animate={{ height: 'auto', opacity: 1 }}
+                className="overflow-hidden"
+                exit={{ height: 0, opacity: 0 }}
+                initial={{ height: 0, opacity: 0 }}
+                key="breakdown"
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+              >
+                <div className="flex flex-col text-sm lg:flex-row lg:flex-wrap lg:gap-x-8 lg:gap-y-3">
+                  <AnimatePresence initial={false}>
+                    {rows.map((row) => (
+                      <m.div
+                        animate={{ height: 'auto', opacity: 1 }}
+                        className="overflow-hidden lg:h-auto"
+                        exit={{ height: 0, opacity: 0 }}
+                        initial={{ height: 0, opacity: 0 }}
+                        key={row.key}
+                        transition={{ duration: 0.2, ease: 'easeOut' }}
+                      >
+                        <div className="flex flex-row items-center justify-between gap-4 py-1 font-medium lg:flex-col lg:items-start lg:justify-start lg:gap-1 lg:py-0">
+                          <span className="text-muted-foreground">{row.label}</span>
+                          <span className="text-base">{formatSats(row.amount)}</span>
+                        </div>
+                      </m.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </m.div>
+            </AnimatePresence>
+          </CardContent>
+        </>
+      ) : null}
     </Card>
   )
 }

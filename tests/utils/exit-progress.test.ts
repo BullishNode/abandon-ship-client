@@ -106,6 +106,14 @@ describe(summarizeExits, () => {
     expect(result.isDone).toBeFalsy()
   })
 
+  it('keeps inProgress while a claim is broadcast but not confirmed', () => {
+    const exits = [makeExit('claim-in-progress'), makeExit('claimed')]
+    const result = summarizeExits(exits)
+    expect(result.inProgress).toBeTruthy()
+    expect(result.isDone).toBeFalsy()
+    expect(result.claimed).toBe(1)
+  })
+
   it('marks isDone when every exit is claimed', () => {
     const exits = [makeExit('claimed'), makeExit('claimed')]
     const result = summarizeExits(exits)

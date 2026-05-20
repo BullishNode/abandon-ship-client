@@ -1,5 +1,5 @@
 import { ArrowSquareOutIcon } from '@phosphor-icons/react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
@@ -17,6 +17,7 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { externalLinks } from '@/config/links'
 import { WALLET_NAME_MAX_LENGTH } from '@/constants/wallet'
 import { useClaimEmergencyExit } from '@/hooks/barkd/use-claim-emergency-exit'
 import { useExitStatus } from '@/hooks/barkd/use-exit-status'
@@ -50,6 +51,8 @@ const FIAT_CURRENCIES: { value: FiatCurrency; label: string }[] = [
 ]
 
 type ExitDialogMode = 'start' | 'edit'
+
+const AUTO_CLAIM_THROTTLE_MS = 30_000
 
 export default function SettingsPage() {
   const { t } = useTranslation()
@@ -91,6 +94,11 @@ export default function SettingsPage() {
   const [isExitDialogOpen, setExitDialogOpen] = useState(false)
   const [exitDialogMode, setExitDialogMode] = useState<ExitDialogMode>('start')
   const [draftExitAddress, setDraftExitAddress] = useState('')
+  const [claimAddressDismissed, setClaimAddressDismissed] = useState(false)
+  const lastAutoClaimRef = useRef<{ claimableCount: number; attemptedAt: number }>({
+    attemptedAt: 0,
+    claimableCount: 0
+  })
 
   const { mutate: downloadBackup, isPending: isDownloadingBackup } = useDownloadBackup({
     onSuccess: () => {
@@ -127,7 +135,7 @@ export default function SettingsPage() {
   const onchainSpendable = onchainBalance?.trustedSpendableSat ?? 0
   const hasNoVtxos = (vtxos?.length ?? 0) === 0
 
-  const shouldShowProgress = summary.total > 0
+  const shouldShowProgress = summary.total > 0 && !summary.isDone
 
   const disableStartButton = summary.inProgress || isStartingExit || hasNoVtxos
 
@@ -153,7 +161,12 @@ export default function SettingsPage() {
 
   function openExitDialog(mode: ExitDialogMode) {
     setExitDialogMode(mode)
-    setDraftExitAddress(pendingExitClaimAddress ?? '')
+    if (mode === 'start' && summary.isDone) {
+      setPendingExitClaimAddress(null)
+      setDraftExitAddress('')
+    } else {
+      setDraftExitAddress(pendingExitClaimAddress ?? '')
+    }
     setExitDialogOpen(true)
   }
 
@@ -165,12 +178,9 @@ export default function SettingsPage() {
     })
   }
 
-  function handleExitDialogOpenChange(nextOpen: boolean) {
-    setExitDialogOpen(nextOpen)
-  }
-
   function handleSubmitExitAddress(address: string) {
     setPendingExitClaimAddress(address)
+    setClaimAddressDismissed(false)
     if (exitDialogMode === 'start') {
       startEmergencyExit()
       return
@@ -178,13 +188,55 @@ export default function SettingsPage() {
     setExitDialogOpen(false)
   }
 
-  function handleClaim() {
-    if (pendingExitClaimAddress === null || pendingExitClaimAddress.length === 0) {
-      openExitDialog('edit')
+  function handleExitDialogOpenChange(nextOpen: boolean) {
+    if (!nextOpen && exitDialogMode === 'edit' && summary.claimable > 0) {
+      const hasAddress = pendingExitClaimAddress !== null && pendingExitClaimAddress.length > 0
+      if (!hasAddress) {
+        setClaimAddressDismissed(true)
+      }
+    }
+    setExitDialogOpen(nextOpen)
+  }
+
+  const hasClaimAddress = pendingExitClaimAddress !== null && pendingExitClaimAddress.length > 0
+  const stillRipeningCount =
+    summary.counts.start + summary.counts.processing + summary.counts['awaiting-delta']
+  const allRipe = stillRipeningCount === 0
+  const needsClaimAddress = allRipe && summary.claimable > 0 && !hasClaimAddress
+
+  useEffect(() => {
+    if (!allRipe || summary.claimable === 0 || !hasClaimAddress || isClaimingExit) {
       return
     }
-    claimEmergencyExit({ destination: pendingExitClaimAddress })
-  }
+    const now = Date.now()
+    const last = lastAutoClaimRef.current
+    if (
+      last.claimableCount === summary.claimable &&
+      now - last.attemptedAt < AUTO_CLAIM_THROTTLE_MS
+    ) {
+      return
+    }
+    lastAutoClaimRef.current = { attemptedAt: now, claimableCount: summary.claimable }
+    if (pendingExitClaimAddress !== null) {
+      claimEmergencyExit({ destination: pendingExitClaimAddress })
+    }
+  }, [
+    allRipe,
+    summary.claimable,
+    hasClaimAddress,
+    pendingExitClaimAddress,
+    isClaimingExit,
+    claimEmergencyExit
+  ])
+
+  useEffect(() => {
+    if (!needsClaimAddress || claimAddressDismissed || isExitDialogOpen) {
+      return
+    }
+    setExitDialogMode('edit')
+    setDraftExitAddress('')
+    setExitDialogOpen(true)
+  }, [needsClaimAddress, claimAddressDismissed, isExitDialogOpen])
 
   const startButtonLabel = summary.inProgress
     ? t('settings.danger.emergency_exit.in_progress_button')
@@ -280,15 +332,35 @@ export default function SettingsPage() {
       </Field>
       <Field orientation="responsive">
         <FieldContent>
+          <FieldLabel>{t('settings.community_forum.label')}</FieldLabel>
+          <FieldDescription>{t('settings.community_forum.description')}</FieldDescription>
+        </FieldContent>
+        <Button asChild variant="outline">
+          <a href={externalLinks.forum} rel="noopener noreferrer" target="_blank">
+            {t('settings.community_forum.button')}
+            <ArrowSquareOutIcon />
+          </a>
+        </Button>
+      </Field>
+      <Field orientation="responsive">
+        <FieldContent>
+          <FieldLabel>{t('settings.community_chat.label')}</FieldLabel>
+          <FieldDescription>{t('settings.community_chat.description')}</FieldDescription>
+        </FieldContent>
+        <Button asChild variant="outline">
+          <a href={externalLinks.chat} rel="noopener noreferrer" target="_blank">
+            {t('settings.community_chat.button')}
+            <ArrowSquareOutIcon />
+          </a>
+        </Button>
+      </Field>
+      <Field orientation="responsive">
+        <FieldContent>
           <FieldLabel>{t('settings.report_issues.label')}</FieldLabel>
           <FieldDescription>{t('settings.report_issues.description')}</FieldDescription>
         </FieldContent>
         <Button asChild variant="outline">
-          <a
-            href="https://gitlab.com/ark-bitcoin/labs/bark-web/-/work_items"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
+          <a href={externalLinks.reportIssues} rel="noopener noreferrer" target="_blank">
             {t('settings.report_issues.button')}
             <ArrowSquareOutIcon />
           </a>
@@ -312,9 +384,8 @@ export default function SettingsPage() {
         {shouldShowProgress ? (
           <ExitProgressCard
             destinationAddress={pendingExitClaimAddress}
-            isClaiming={isClaimingExit}
+            needsClaimAddress={needsClaimAddress}
             onChangeAddress={() => openExitDialog('edit')}
-            onClaim={handleClaim}
             summary={summary}
           />
         ) : null}

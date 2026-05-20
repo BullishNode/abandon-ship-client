@@ -1,6 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
-  countMovementsInLast30Days,
   getMovementCounterparty,
   getMovementDirection,
   getMovementFeeSat,
@@ -134,6 +133,13 @@ describe(getMovementSource, () => {
     })
     expect(getMovementSource(movement)).toBe('lightning')
   })
+  it('classifies bark.offboard as ark even with bitcoin destination', () => {
+    const movement = createMovement({
+      sentTo: [{ amountSat: 5000, destination: { type: 'bitcoin', value: 'tb1p9lwzpy' } }],
+      subsystem: { kind: 'send_onchain', name: 'bark.offboard' }
+    })
+    expect(getMovementSource(movement)).toBe('ark')
+  })
 })
 
 describe(getMovementFeeSat, () => {
@@ -143,40 +149,5 @@ describe(getMovementFeeSat, () => {
 
   it('returns zero when fee is zero', () => {
     expect(getMovementFeeSat(createMovement({ offchainFeeSat: 0 }))).toBe(0)
-  })
-})
-
-describe(countMovementsInLast30Days, () => {
-  const NOW = new Date('2026-05-13T00:00:00Z')
-
-  beforeEach(() => {
-    vi.useFakeTimers()
-    vi.setSystemTime(NOW)
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
-  })
-
-  it('returns zero for an empty list', () => {
-    expect(countMovementsInLast30Days([])).toBe(0)
-  })
-
-  it('counts only movements within the last 30 days', () => {
-    const recent = createMovement({
-      time: { createdAt: new Date('2026-05-01T00:00:00Z'), updatedAt: new Date() }
-    })
-    const old = createMovement({
-      time: { createdAt: new Date('2026-03-01T00:00:00Z'), updatedAt: new Date() }
-    })
-    expect(countMovementsInLast30Days([recent, old, recent])).toBe(2)
-  })
-
-  it('includes movements exactly at the cutoff', () => {
-    const cutoff = new Date(NOW.getTime() - 30 * 24 * 60 * 60 * 1000)
-    const movement = createMovement({
-      time: { createdAt: cutoff, updatedAt: cutoff }
-    })
-    expect(countMovementsInLast30Days([movement])).toBe(1)
   })
 })

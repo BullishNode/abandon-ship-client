@@ -24,7 +24,13 @@ import { useWalletBalance } from '@/hooks/barkd/use-wallet-balance'
 import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
 import { getBalanceTotals } from '@/utils/balance'
-import { computeBalanceHistory, filterByTimeRange } from '@/utils/balance-history'
+import {
+  buildDayTicks,
+  computeBalanceHistory,
+  extractTimestampMs,
+  filterByTimeRange,
+  rangeWindow
+} from '@/utils/balance-history'
 import { buildOnchainTxEntries } from '@/utils/movements-feed'
 
 export function BalanceChart() {
@@ -52,6 +58,9 @@ export function BalanceChart() {
   })
   const balanceHistory = computeBalanceHistory(movements, onchainEntries, endpointTotalSat)
   const filteredData = filterByTimeRange(balanceHistory, timeRange)
+  const { startMs: windowStartMs, endMs: domainEndMs } = rangeWindow(timeRange)
+  const domainStartMs = filteredData[0]?.timestampMs ?? windowStartMs
+  const dayTicks = buildDayTicks(domainStartMs, domainEndMs)
 
   return (
     <Card className="pt-0 gap-2">
@@ -101,18 +110,21 @@ export function BalanceChart() {
               </defs>
               <CartesianGrid vertical={false} />
               <XAxis
-                dataKey="date"
+                dataKey="timestampMs"
+                type="number"
+                scale="time"
+                domain={[domainStartMs, domainEndMs]}
+                ticks={dayTicks}
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
                 minTickGap={32}
-                tickFormatter={(value: string) => {
-                  const date = new Date(value)
-                  return date.toLocaleDateString('en-US', {
+                tickFormatter={(value: number) =>
+                  new Date(value).toLocaleDateString('en-US', {
                     day: 'numeric',
                     month: 'short'
                   })
-                }}
+                }
               />
               <YAxis
                 tickLine={false}
@@ -124,14 +136,18 @@ export function BalanceChart() {
                 cursor={false}
                 content={
                   <ChartTooltipContent
-                    labelFormatter={(value) =>
-                      new Date(String(value)).toLocaleDateString('en-US', {
+                    labelFormatter={(_, payload) => {
+                      const ts = extractTimestampMs(payload?.[0]?.payload)
+                      if (ts === undefined) {
+                        return ''
+                      }
+                      return new Date(ts).toLocaleDateString('en-US', {
                         day: 'numeric',
                         hour: 'numeric',
                         minute: '2-digit',
                         month: 'short'
                       })
-                    }
+                    }}
                     formatter={(value) => [
                       formatBitcoin(Number(value)),
                       t('dashboard.chart.balance')
