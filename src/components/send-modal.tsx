@@ -133,7 +133,11 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                   </div>
                   <Input
                     id="destination"
-                    onChange={(e) => flow.setDestination(e.target.value)}
+                    onBlur={(e) => void flow.verifyDestination(e.currentTarget.value)}
+                    onChange={(e) => {
+                      flow.setDestination(e.target.value)
+                      flow.clearBrantaVerification()
+                    }}
                     onPaste={(e) => {
                       const text = e.clipboardData.getData('text').trim()
                       if (text !== '') {
@@ -238,7 +242,7 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                     <Label className="text-muted-foreground">{t('send.branta.title')}</Label>
                     <a
                       className="flex items-center gap-2 text-sm"
-                      href={flow.brantaPayment.verifyUrl}
+                      href={flow.brantaVerifyUrl}
                       rel="noopener"
                       target="_blank"
                     >

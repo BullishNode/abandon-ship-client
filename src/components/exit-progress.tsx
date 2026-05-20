@@ -14,30 +14,23 @@ const STATE_ENTRIES: { type: ExitStateType; key: string }[] = [
 interface ExitProgressCardProps {
   summary: ExitProgressSummary
   destinationAddress: string | null
-  isClaiming: boolean
-  onClaim: () => void
+  needsClaimAddress: boolean
   onChangeAddress: () => void
 }
 
 export function ExitProgressCard({
   summary,
   destinationAddress,
-  isClaiming,
-  onClaim,
+  needsClaimAddress,
   onChangeAddress
 }: ExitProgressCardProps) {
   const { t } = useTranslation()
   const percent = summary.total === 0 ? 0 : Math.round((summary.claimed / summary.total) * 100)
-  const canClaim = summary.claimable > 0
 
   return (
     <div className="space-y-4 rounded-md border bg-muted/30 p-4">
       <div className="flex items-center justify-between gap-4">
-        <p className="font-medium text-sm">
-          {summary.isDone
-            ? t('settings.danger.emergency_exit.progress.done')
-            : t('settings.danger.emergency_exit.progress.title')}
-        </p>
+        <p className="font-medium text-sm">{t('settings.danger.emergency_exit.progress.title')}</p>
         <p className="text-muted-foreground text-sm">
           {t('settings.danger.emergency_exit.progress.summary', {
             claimed: summary.claimed,
@@ -73,19 +66,12 @@ export function ExitProgressCard({
             {t('settings.danger.emergency_exit.change_address')}
           </Button>
         </div>
+        {needsClaimAddress ? (
+          <p className="font-medium text-destructive text-xs">
+            {t('settings.danger.emergency_exit.progress.claim_address_required')}
+          </p>
+        ) : null}
       </div>
-      {canClaim ? (
-        <div className="flex justify-end">
-          <Button
-            disabled={destinationAddress === null || destinationAddress.length === 0}
-            loading={isClaiming}
-            onClick={onClaim}
-            variant="destructive"
-          >
-            {t('settings.danger.emergency_exit.claim_button', { count: summary.claimable })}
-          </Button>
-        </div>
-      ) : null}
     </div>
   )
 }

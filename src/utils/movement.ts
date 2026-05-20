@@ -57,7 +57,14 @@ function sourceFromSubsystemName(name: string): MovementSource | null {
   return null
 }
 
+function isArkBridgeSubsystem(name: string): boolean {
+  return name.toLowerCase().includes('offboard')
+}
+
 export function getMovementSource(movement: Movement): MovementSource {
+  if (isArkBridgeSubsystem(movement.subsystem.name)) {
+    return 'ark'
+  }
   const destinations = [...movement.sentTo, ...movement.receivedOn]
   for (const destination of destinations) {
     const source = sourceFromPaymentType(destination.destination.type)
@@ -75,17 +82,4 @@ export function getMovementFeeSat(movement: Movement): number | null {
     return movement.offchainFeeSat
   }
   return null
-}
-
-const DAYS_30_MS = 30 * 24 * 60 * 60 * 1000
-
-export function countMovementsInLast30Days(movements: Movement[]): number {
-  const cutoff = Date.now() - DAYS_30_MS
-  let count = 0
-  for (const movement of movements) {
-    if (movement.time.createdAt.getTime() >= cutoff) {
-      count += 1
-    }
-  }
-  return count
 }

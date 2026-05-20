@@ -2,7 +2,7 @@ import type { Movement } from '@secondts/barkd'
 import type { OnchainTxEntry } from '@/utils/movements-feed'
 
 export interface BalanceDataPoint {
-  date: string
+  timestampMs: number
   balanceSat: number
 }
 
@@ -58,28 +58,67 @@ export function computeBalanceHistory(
     runningBalance += event.deltaSat
     points.push({
       balanceSat: runningBalance,
-      date: new Date(event.timestampMs).toISOString()
+      timestampMs: event.timestampMs
     })
   }
   return points
+}
+
+const DAYS_BY_RANGE: Record<string, number> = {
+  '30d': 30,
+  '7d': 7,
+  '90d': 90
+}
+
+export function rangeWindow(
+  timeRange: string,
+  nowMs: number = Date.now()
+): {
+  startMs: number
+  endMs: number
+} {
+  const days = DAYS_BY_RANGE[timeRange] ?? 90
+  const startMs = nowMs - days * 24 * 60 * 60 * 1000
+  return { endMs: nowMs, startMs }
+}
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000
+
+export function extractTimestampMs(point: unknown): number | undefined {
+  if (typeof point !== 'object' || point === null) {
+    return undefined
+  }
+  if (!('timestampMs' in point)) {
+    return undefined
+  }
+  const ts = point.timestampMs
+  return typeof ts === 'number' ? ts : undefined
+}
+
+export function buildDayTicks(startMs: number, endMs: number): number[] {
+  if (endMs <= startMs) {
+    return []
+  }
+  const rangeDays = Math.ceil((endMs - startMs) / MS_PER_DAY)
+  const stepDays = Math.max(1, Math.ceil(rangeDays / 8))
+  const firstDay = new Date(startMs)
+  firstDay.setHours(0, 0, 0, 0)
+  let cursor = firstDay.getTime()
+  if (cursor < startMs) {
+    cursor += MS_PER_DAY
+  }
+  const ticks: number[] = []
+  while (cursor <= endMs) {
+    ticks.push(cursor)
+    cursor += stepDays * MS_PER_DAY
+  }
+  return ticks
 }
 
 export function filterByTimeRange(data: BalanceDataPoint[], timeRange: string): BalanceDataPoint[] {
   if (data.length === 0) {
     return []
   }
-
-  const now = new Date()
-  let daysToSubtract = 90
-
-  if (timeRange === '30d') {
-    daysToSubtract = 30
-  } else if (timeRange === '7d') {
-    daysToSubtract = 7
-  }
-
-  const startDate = new Date(now)
-  startDate.setDate(startDate.getDate() - daysToSubtract)
-
-  return data.filter((point) => new Date(point.date) >= startDate)
+  const { startMs } = rangeWindow(timeRange)
+  return data.filter((point) => point.timestampMs >= startMs)
 }

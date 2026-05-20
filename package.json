@@ -43,14 +43,14 @@
     "start9:build": "bash scripts/start9-build.sh"
   },
   "dependencies": {
-    "@branta-ops/branta": "^2.0.0",
+    "@branta-ops/branta": "^3.1.2",
     "@chenglou/pretext": "^0.0.6",
     "@fontsource-variable/dm-sans": "^5.2.8",
     "@fontsource-variable/source-code-pro": "^5.2.7",
     "@hookform/resolvers": "^5.2.2",
     "@phosphor-icons/react": "^2.1.10",
     "@scure/bip39": "^2.0.1",
-    "@secondts/barkd": "^0.1.4",
+    "@secondts/barkd": "^0.1.5",
     "@stepperize/react": "^5.1.9",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-query": "^5.90.16",

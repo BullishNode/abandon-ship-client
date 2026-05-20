@@ -1,9 +1,7 @@
-import { BrantaServerBaseUrl, V2BrantaClient } from '@branta-ops/branta'
+import { BrantaServerBaseUrl } from '@branta-ops/branta'
+import { BrantaService } from '@branta-ops/branta/v2'
 
-export const brantaClient = new V2BrantaClient({
-  baseUrl:
-    import.meta.env.MODE === 'production'
-      ? BrantaServerBaseUrl.Production
-      : BrantaServerBaseUrl.Staging,
+export const brantaClient = new BrantaService({
+  baseUrl: BrantaServerBaseUrl.Production,
   privacy: 'strict'
 })

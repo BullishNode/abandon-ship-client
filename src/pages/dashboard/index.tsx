@@ -1,9 +1,7 @@
 import { useShallow } from 'zustand/react/shallow'
 import { BalanceChart } from '@/components/balance-chart'
 import { BalanceCard } from '@/components/dashboard/balance-card'
-import { BitcoinPriceCard } from '@/components/dashboard/bitcoin-price-card'
-import { NumberTransactionsCard } from '@/components/dashboard/number-transactions-card'
-import { RoundTimerCard } from '@/components/dashboard/round-timer-card'
+import { RoundPriceCard } from '@/components/dashboard/round-price-card'
 import { MovementsTable } from '@/components/movements-table'
 import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
 import { useWalletBalance } from '@/hooks/barkd/use-wallet-balance'
@@ -20,16 +18,13 @@ export default function TransactionsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 items-end gap-4 md:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <BalanceCard
           discreteMode={discreteMode}
           onToggleDiscreteMode={toggleDiscreteMode}
           totals={totals}
-          className="md:col-span-3 xl:col-span-1"
         />
-        <BitcoinPriceCard />
-        <NumberTransactionsCard />
-        <RoundTimerCard />
+        <RoundPriceCard />
       </div>
       <MovementsTable />
       <BalanceChart />

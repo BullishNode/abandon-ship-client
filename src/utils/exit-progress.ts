@@ -1,4 +1,6 @@
-import type { ExitTransactionStatus, WalletVtxoInfo } from '@secondts/barkd'
+import type { ExitState, ExitTransactionStatus, WalletVtxoInfo } from '@secondts/barkd'
+
+export type ExitStateType = ExitState['type']
 
 const EXIT_VBYTES_PER_LEVEL = 300
 const CLAIM_BASE_VBYTES = 50
@@ -18,14 +20,6 @@ export function estimateEmergencyExitFeeSat(
   const claimVbytes = CLAIM_BASE_VBYTES + CLAIM_VBYTES_PER_VTXO * vtxos.length
   return Math.ceil((exitVbytes + claimVbytes) * feeRateSatPerVb)
 }
-
-export type ExitStateType =
-  | 'start'
-  | 'processing'
-  | 'awaiting-delta'
-  | 'claimable'
-  | 'claim-in-progress'
-  | 'claimed'
 
 export interface ExitProgressSummary {
   total: number

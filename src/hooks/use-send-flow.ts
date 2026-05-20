@@ -169,10 +169,11 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     hasEnoughFunds &&
     requiredSat > onchainTrustedSpendableSat
 
-  const { data: brantaPayments, isFetching: isFetchingBranta } = useBrantaVerification(
+  const { data: brantaResult, isFetching: isFetchingBranta } = useBrantaVerification(
     step === 'send' ? rawQrInput : undefined
   )
-  const brantaPayment = brantaPayments?.[0]
+  const brantaPayment = brantaResult?.payments[0]
+  const brantaVerifyUrl = brantaResult?.verifyUrl
 
   const isSending = isSendingArk || isSendingOnchain || isSendingFromWallet
 
@@ -232,6 +233,23 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     }
   }
 
+  function clearBrantaVerification() {
+    if (rawQrInput !== '') {
+      setRawQrInput('')
+    }
+  }
+
+  async function verifyDestination(value: string) {
+    const trimmed = value.trim()
+    if (trimmed === '' || trimmed === rawQrInput) {
+      return
+    }
+    const decoded = await parsePaymentInput(trimmed)
+    if (decoded.valid) {
+      setRawQrInput(trimmed)
+    }
+  }
+
   function handleConfirmSend() {
     const sendAmountSat = validAmountSat
 
@@ -279,8 +297,10 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     arkBalanceSat,
     availableBalance,
     brantaPayment,
+    brantaVerifyUrl,
     canSend,
     chooserDestinations,
+    clearBrantaVerification,
     destination,
     direction,
     feeDisplay,
@@ -311,6 +331,7 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     setSendRoute,
     step,
     usesPendingOnchain,
-    validAmountSat
+    validAmountSat,
+    verifyDestination
   }
 }

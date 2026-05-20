@@ -62,7 +62,7 @@ describe(computeBalanceHistory, () => {
     })
     const result = computeBalanceHistory([movement], [onchain], 700)
     expect(result).toHaveLength(2)
-    expect(new Date(result[0].date).getTime()).toBeLessThan(new Date(result[1].date).getTime())
+    expect(result[0].timestampMs).toBeLessThan(result[1].timestampMs)
     expect(result[0].balanceSat).toBe(200)
     expect(result[1].balanceSat).toBe(700)
   })
@@ -85,20 +85,20 @@ describe(filterByTimeRange, () => {
   })
 
   it('keeps points within the 7d window', () => {
-    const within = { balanceSat: 1, date: new Date('2026-05-10T00:00:00Z').toISOString() }
-    const outside = { balanceSat: 2, date: new Date('2026-05-01T00:00:00Z').toISOString() }
+    const within = { balanceSat: 1, timestampMs: new Date('2026-05-10T00:00:00Z').getTime() }
+    const outside = { balanceSat: 2, timestampMs: new Date('2026-05-01T00:00:00Z').getTime() }
     expect(filterByTimeRange([within, outside], '7d')).toStrictEqual([within])
   })
 
   it('keeps points within the 30d window', () => {
-    const within = { balanceSat: 1, date: new Date('2026-04-20T00:00:00Z').toISOString() }
-    const outside = { balanceSat: 2, date: new Date('2026-03-01T00:00:00Z').toISOString() }
+    const within = { balanceSat: 1, timestampMs: new Date('2026-04-20T00:00:00Z').getTime() }
+    const outside = { balanceSat: 2, timestampMs: new Date('2026-03-01T00:00:00Z').getTime() }
     expect(filterByTimeRange([within, outside], '30d')).toStrictEqual([within])
   })
 
   it('defaults to a 90d window', () => {
-    const within = { balanceSat: 1, date: new Date('2026-03-15T00:00:00Z').toISOString() }
-    const outside = { balanceSat: 2, date: new Date('2025-12-01T00:00:00Z').toISOString() }
+    const within = { balanceSat: 1, timestampMs: new Date('2026-03-15T00:00:00Z').getTime() }
+    const outside = { balanceSat: 2, timestampMs: new Date('2025-12-01T00:00:00Z').getTime() }
     expect(filterByTimeRange([within, outside], 'unknown')).toStrictEqual([within])
   })
 })

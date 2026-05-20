@@ -1,5 +1,6 @@
 export const walletKeys = {
   all: ['wallet'] as const,
+  arkInfo: () => [...walletKeys.all, 'ark-info'] as const,
   autoCreate: () => [...walletKeys.all, 'auto-create'] as const,
   balance: () => [...walletKeys.all, 'balance'] as const,
   exists: () => [...walletKeys.all, 'exists'] as const,
