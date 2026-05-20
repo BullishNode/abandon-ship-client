@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi, expectTypeOf } from 'vitest'
-import { formatRelativeTime } from '../../src/utils/relative-time'
+import { formatAbsoluteDateTime, formatRelativeTime } from '../../src/utils/relative-time'
 
 describe(formatRelativeTime, () => {
   beforeEach(() => {
@@ -70,5 +70,42 @@ describe(formatRelativeTime, () => {
   it('returns a string', () => {
     const result = formatRelativeTime(new Date())
     expectTypeOf(result).toBeString()
+  })
+
+  it('caches the relative formatter per locale across calls', () => {
+    const date = new Date('2026-01-15T11:55:00Z')
+    const first = formatRelativeTime(date, 'en-US')
+    const second = formatRelativeTime(date, 'en-US')
+    expect(first).toBe(second)
+  })
+
+  it('honors the locale argument', () => {
+    const date = new Date('2026-01-15T11:55:00Z')
+    const en = formatRelativeTime(date, 'en')
+    const fr = formatRelativeTime(date, 'fr')
+    expect(en).not.toBe(fr)
+  })
+})
+
+describe(formatAbsoluteDateTime, () => {
+  it('returns a formatted date-time string', () => {
+    const date = new Date('2026-05-13T15:30:00Z')
+    const result = formatAbsoluteDateTime(date, 'en-US')
+    expectTypeOf(result).toBeString()
+    expect(result.length).toBeGreaterThan(0)
+  })
+
+  it('caches the formatter per locale across calls', () => {
+    const date = new Date('2026-05-13T15:30:00Z')
+    const a = formatAbsoluteDateTime(date, 'en-US')
+    const b = formatAbsoluteDateTime(date, 'en-US')
+    expect(a).toBe(b)
+  })
+
+  it('produces different output for different locales', () => {
+    const date = new Date('2026-05-13T15:30:00Z')
+    const en = formatAbsoluteDateTime(date, 'en-US')
+    const de = formatAbsoluteDateTime(date, 'de-DE')
+    expect(en).not.toBe(de)
   })
 })
