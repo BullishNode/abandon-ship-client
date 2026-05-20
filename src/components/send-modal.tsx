@@ -157,6 +157,37 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                       selectedDestination={flow.destination}
                     />
                   )}
+                  {flow.isFetchingBranta && (
+                    <span className="text-muted-foreground animate-pulse text-xs">
+                      {t('send.branta.title')}: ...
+                    </span>
+                  )}
+                  {!flow.isFetchingBranta && flow.brantaPayment !== undefined && (
+                    <span className="text-muted-foreground text-xs">
+                      {t('send.branta.title')}:{' '}
+                      <a
+                        className="inline-flex items-center gap-1 align-middle"
+                        href={flow.brantaVerifyUrl}
+                        rel="noopener"
+                        target="_blank"
+                      >
+                        {(flow.brantaPayment.platformLogoLightUrl ??
+                          flow.brantaPayment.platformLogoUrl) !== undefined &&
+                          (flow.brantaPayment.platformLogoLightUrl ??
+                            flow.brantaPayment.platformLogoUrl) !== '' && (
+                            <img
+                              alt={flow.brantaPayment.platform ?? ''}
+                              className="inline-block h-4 w-auto rounded object-contain"
+                              src={
+                                flow.brantaPayment.platformLogoLightUrl ??
+                                flow.brantaPayment.platformLogoUrl
+                              }
+                            />
+                          )}
+                        {flow.brantaPayment.platform}
+                      </a>
+                    </span>
+                  )}
                 </div>
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
@@ -229,38 +260,6 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                         </SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                )}
-                {flow.isFetchingBranta && (
-                  <div className="flex flex-col gap-2">
-                    <Label className="text-muted-foreground">{t('send.branta.title')}</Label>
-                    <span className="text-muted-foreground animate-pulse text-sm">...</span>
-                  </div>
-                )}
-                {!flow.isFetchingBranta && flow.brantaPayment !== undefined && (
-                  <div className="flex flex-col gap-2">
-                    <Label className="text-muted-foreground">{t('send.branta.title')}</Label>
-                    <a
-                      className="flex items-center gap-2 text-sm"
-                      href={flow.brantaVerifyUrl}
-                      rel="noopener"
-                      target="_blank"
-                    >
-                      {(flow.brantaPayment.platformLogoLightUrl ??
-                        flow.brantaPayment.platformLogoUrl) !== undefined &&
-                        (flow.brantaPayment.platformLogoLightUrl ??
-                          flow.brantaPayment.platformLogoUrl) !== '' && (
-                          <img
-                            alt={flow.brantaPayment.platform ?? ''}
-                            className={`max-h-6 w-auto rounded object-contain p-0.5${flow.brantaPayment.platformLogoLightUrl !== undefined && flow.brantaPayment.platformLogoLightUrl !== '' ? '' : ' bg-black'}`}
-                            src={
-                              flow.brantaPayment.platformLogoLightUrl ??
-                              flow.brantaPayment.platformLogoUrl
-                            }
-                          />
-                        )}
-                      {flow.brantaPayment.platform}
-                    </a>
                   </div>
                 )}
                 <Collapsible>
