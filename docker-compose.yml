@@ -8,12 +8,14 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
+      - vite-cache:/app/node_modules/.vite
     environment:
       - CHOKIDAR_USEPOLLING=true
       - VITE_DEV_API_TARGET=http://api:4001
       - VITE_DEV_BARKD_TARGET=http://barkd:4000
     depends_on:
-      - api
+      api:
+        condition: service_healthy
 
   api:
     build:
@@ -32,6 +34,12 @@ services:
       - ARK_SERVER=${ARK_SERVER:-}
       - CHAIN_SOURCE=${CHAIN_SOURCE:-}
       - BARK_NETWORK=${BARK_NETWORK:-signet}
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O- http://127.0.0.1:4001/health >/dev/null 2>&1 || exit 1']
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
     depends_on:
       - barkd
 
@@ -50,3 +58,4 @@ services:
 
 volumes:
   wallet-data:
+  vite-cache:

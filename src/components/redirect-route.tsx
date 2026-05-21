@@ -1,8 +1,10 @@
+import { useTranslation } from 'react-i18next'
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
-import { Spinner } from '@/components/ui/spinner'
+import { LoadingScreen } from '@/components/loading-screen'
 import { useCheckWallet } from '@/hooks/barkd/use-check-wallet'
 
 export function RedirectRoute() {
+  const { t } = useTranslation()
   const { data: walletExists, isPending } = useCheckWallet({ staleTime: 0 })
   const location = useLocation()
 
@@ -10,11 +12,7 @@ export function RedirectRoute() {
   const isDashboard = location.pathname.startsWith('/dashboard')
 
   if (isPending) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center">
-        <Spinner className="size-8" />
-      </div>
-    )
+    return <LoadingScreen text={t('welcome.loading')} />
   }
 
   if (isOnboarding) {
