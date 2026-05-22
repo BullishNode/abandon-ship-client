@@ -8,6 +8,7 @@ import { TagInput } from '@/components/tag-input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { useMetadataStore } from '@/stores/metadata'
+import { useWalletStore } from '@/stores/wallet'
 import type { OnchainTxEntry } from '@/utils/movements-feed'
 
 interface OnchainEntryDetailDialogProps {
@@ -66,8 +67,12 @@ function OnchainEntryDetailContent({
   discreteMode
 }: OnchainEntryDetailContentProps) {
   const { t } = useTranslation()
+  const fingerprint = useWalletStore((state) => state.wallet?.fingerprint)
   const [annotation, setOnchainAnnotation] = useMetadataStore(
-    useShallow((state) => [state.onchainAnnotations[entry.txid], state.setOnchainAnnotation])
+    useShallow((state) => [
+      fingerprint === undefined ? undefined : state.onchainAnnotations[fingerprint]?.[entry.txid],
+      state.setOnchainAnnotation
+    ])
   )
   const heightValue =
     entry.confirmationHeight === null

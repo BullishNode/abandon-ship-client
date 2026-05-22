@@ -14,9 +14,9 @@ if (!root) {
 
 const CONFIG_RETRY_DELAYS_MS = [0, 250, 500, 1000, 2000, 4000]
 
- async function delay(ms: number): Promise<void> {
+async function delay(ms: number): Promise<void> {
   // oxlint-disable-next-line promise/avoid-new, eslint/no-promise-executor-return
-  return new Promise((resolve) => {
+  return await new Promise((resolve) => {
     setTimeout(resolve, ms)
   })
 }

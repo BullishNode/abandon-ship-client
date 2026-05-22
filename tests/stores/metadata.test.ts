@@ -1,12 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BINDING_TTL_MS, MAX_BINDINGS } from '../../src/constants/metadata'
 import { useMetadataStore } from '../../src/stores/metadata'
+import { useWalletStore } from '../../src/stores/wallet'
 import { createMovement } from '../fixtures/movements'
 
+const TEST_FP = 'test-fingerprint'
+
 function resetStore() {
+  useWalletStore.setState({
+    pendingExitClaimAddress: null,
+    wallet: { createdAt: '2026-01-01T00:00:00.000Z', fingerprint: TEST_FP, name: 'Test' }
+  })
   useMetadataStore.setState({
     annotations: {},
-    bindings: [],
+    bindings: {},
     contacts: [],
     onchainAnnotations: {},
     tags: []
@@ -78,7 +85,7 @@ describe('metadata store', () => {
         direction: 'incoming',
         tags: ['t1']
       })
-      const binding = useMetadataStore.getState().bindings.find((b) => b.id === id)
+      const binding = useMetadataStore.getState().bindings[TEST_FP]?.find((b) => b.id === id)
       expect(binding?.destinations).toStrictEqual(['a', 'b'])
     })
 
@@ -94,7 +101,7 @@ describe('metadata store', () => {
         id,
         tags: []
       })
-      const binding = useMetadataStore.getState().bindings.find((b) => b.id === id)
+      const binding = useMetadataStore.getState().bindings[TEST_FP]?.find((b) => b.id === id)
       expect(binding?.destinations).toStrictEqual(['a', 'b'])
     })
 
@@ -106,8 +113,27 @@ describe('metadata store', () => {
           tags: []
         })
       }
-      expect(useMetadataStore.getState().bindings).toHaveLength(MAX_BINDINGS)
-      expect(useMetadataStore.getState().bindings[0].destinations[0]).toBe('addr-5')
+      const walletBindings = useMetadataStore.getState().bindings[TEST_FP] ?? []
+      expect(walletBindings).toHaveLength(MAX_BINDINGS)
+      expect(walletBindings[0].destinations[0]).toBe('addr-5')
+    })
+
+    it('scopes bindings by wallet fingerprint', () => {
+      useMetadataStore.getState().upsertBinding({
+        destinations: ['addr-a'],
+        direction: 'incoming',
+        tags: []
+      })
+      useWalletStore.setState({
+        wallet: { createdAt: '2026-01-01T00:00:00.000Z', fingerprint: 'other-fp', name: 'Other' }
+      })
+      useMetadataStore.getState().upsertBinding({
+        destinations: ['addr-b'],
+        direction: 'incoming',
+        tags: []
+      })
+      expect(useMetadataStore.getState().bindings[TEST_FP]).toHaveLength(1)
+      expect(useMetadataStore.getState().bindings['other-fp']).toHaveLength(1)
     })
   })
 
@@ -119,7 +145,7 @@ describe('metadata store', () => {
         tags: []
       })
       useMetadataStore.getState().removeBinding(id)
-      expect(useMetadataStore.getState().bindings).toHaveLength(0)
+      expect(useMetadataStore.getState().bindings[TEST_FP] ?? []).toHaveLength(0)
     })
   })
 
@@ -137,25 +163,27 @@ describe('metadata store', () => {
 
     it('drops bindings older than BINDING_TTL_MS', () => {
       useMetadataStore.setState({
-        bindings: [
-          {
-            createdAt: new Date(NOW.getTime() - BINDING_TTL_MS - 1).toISOString(),
-            destinations: ['a'],
-            direction: 'incoming',
-            id: '1',
-            tags: []
-          },
-          {
-            createdAt: NOW.toISOString(),
-            destinations: ['b'],
-            direction: 'incoming',
-            id: '2',
-            tags: []
-          }
-        ]
+        bindings: {
+          [TEST_FP]: [
+            {
+              createdAt: new Date(NOW.getTime() - BINDING_TTL_MS - 1).toISOString(),
+              destinations: ['a'],
+              direction: 'incoming',
+              id: '1',
+              tags: []
+            },
+            {
+              createdAt: NOW.toISOString(),
+              destinations: ['b'],
+              direction: 'incoming',
+              id: '2',
+              tags: []
+            }
+          ]
+        }
       })
       useMetadataStore.getState().pruneBindings()
-      expect(useMetadataStore.getState().bindings.map((b) => b.id)).toStrictEqual(['2'])
+      expect(useMetadataStore.getState().bindings[TEST_FP]?.map((b) => b.id)).toStrictEqual(['2'])
     })
   })
 
@@ -170,6 +198,14 @@ describe('metadata store', () => {
 
     it('returns undefined for unknown movement', () => {
       expect(useMetadataStore.getState().getAnnotation(999)).toBeUndefined()
+    })
+
+    it('isolates annotations by wallet fingerprint', () => {
+      useMetadataStore.getState().setManualAnnotation(1, { label: 'first', tags: [] })
+      useWalletStore.setState({
+        wallet: { createdAt: '2026-01-01T00:00:00.000Z', fingerprint: 'other-fp', name: 'Other' }
+      })
+      expect(useMetadataStore.getState().getAnnotation(1)).toBeUndefined()
     })
   })
 
@@ -233,24 +269,26 @@ describe('metadata store', () => {
 
     it('picks the newest binding when multiple match', () => {
       useMetadataStore.setState({
-        bindings: [
-          {
-            createdAt: '2026-01-01T00:00:00.000Z',
-            destinations: ['addr-a'],
-            direction: 'incoming',
-            id: 'old',
-            label: 'old-label',
-            tags: []
-          },
-          {
-            createdAt: '2026-05-01T00:00:00.000Z',
-            destinations: ['addr-a'],
-            direction: 'incoming',
-            id: 'new',
-            label: 'new-label',
-            tags: []
-          }
-        ]
+        bindings: {
+          [TEST_FP]: [
+            {
+              createdAt: '2026-01-01T00:00:00.000Z',
+              destinations: ['addr-a'],
+              direction: 'incoming',
+              id: 'old',
+              label: 'old-label',
+              tags: []
+            },
+            {
+              createdAt: '2026-05-01T00:00:00.000Z',
+              destinations: ['addr-a'],
+              direction: 'incoming',
+              id: 'new',
+              label: 'new-label',
+              tags: []
+            }
+          ]
+        }
       })
       useMetadataStore.getState().matchMovement(
         createMovement({
@@ -260,6 +298,26 @@ describe('metadata store', () => {
         })
       )
       expect(useMetadataStore.getState().getAnnotation(5)?.label).toBe('new-label')
+    })
+
+    it('does not match bindings from another wallet fingerprint', () => {
+      useMetadataStore.getState().upsertBinding({
+        destinations: ['addr-a'],
+        direction: 'incoming',
+        label: 'wrong-wallet',
+        tags: []
+      })
+      useWalletStore.setState({
+        wallet: { createdAt: '2026-01-01T00:00:00.000Z', fingerprint: 'other-fp', name: 'Other' }
+      })
+      useMetadataStore.getState().matchMovement(
+        createMovement({
+          effectiveBalanceSat: 100,
+          id: 1,
+          receivedOn: [{ amountSat: 100, destination: { type: 'bitcoin', value: 'addr-a' } }]
+        })
+      )
+      expect(useMetadataStore.getState().getAnnotation(1)).toBeUndefined()
     })
   })
 })

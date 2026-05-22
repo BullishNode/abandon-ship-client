@@ -9,6 +9,7 @@ import { TagInput } from '@/components/tag-input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { useMetadataStore } from '@/stores/metadata'
+import { useWalletStore } from '@/stores/wallet'
 import {
   getMovementCounterpartyDestination,
   getMovementDirection,
@@ -73,8 +74,12 @@ function MovementDetailContent({
 }: MovementDetailContentProps) {
   const { t } = useTranslation()
   const movementId = movement.id
+  const fingerprint = useWalletStore((state) => state.wallet?.fingerprint)
   const [annotation, setManualAnnotation] = useMetadataStore(
-    useShallow((state) => [state.annotations[movementId], state.setManualAnnotation])
+    useShallow((state) => [
+      fingerprint === undefined ? undefined : state.annotations[fingerprint]?.[movementId],
+      state.setManualAnnotation
+    ])
   )
   const direction = getMovementDirection(movement)
   const counterparty = getMovementCounterpartyDestination(movement)

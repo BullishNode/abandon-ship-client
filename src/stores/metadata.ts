@@ -1,8 +1,8 @@
 import type { Movement } from '@secondts/barkd'
-import { z } from 'zod'
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { BINDING_TTL_MS, MAX_BINDINGS } from '@/constants/metadata'
+import { useWalletStore } from '@/stores/wallet'
 import type {
   AnnotationInput,
   BindingDirection,
@@ -20,8 +20,6 @@ import {
   movementDirection
 } from '@/utils/metadata'
 
-const STORE_VERSION = 2
-
 interface BindingInput {
   id?: string
   direction: BindingDirection
@@ -34,9 +32,9 @@ interface BindingInput {
 export interface MetadataStore {
   tags: Tag[]
   contacts: Contact[]
-  bindings: DestinationBinding[]
-  annotations: Record<number, TransactionAnnotation>
-  onchainAnnotations: Record<string, OnchainAnnotation>
+  bindings: Record<string, DestinationBinding[]>
+  annotations: Record<string, Record<number, TransactionAnnotation>>
+  onchainAnnotations: Record<string, Record<string, OnchainAnnotation>>
   addTag: (name: string) => string
   removeTag: (name: string) => void
   addContact: (name: string) => Contact
@@ -51,83 +49,8 @@ export interface MetadataStore {
   matchMovement: (movement: Movement) => void
 }
 
-const tagSchema = z.object({
-  createdAt: z.string(),
-  name: z.string()
-}) satisfies z.ZodType<Tag>
-
-const contactSchema = z.object({
-  createdAt: z.string(),
-  id: z.string(),
-  name: z.string()
-}) satisfies z.ZodType<Contact>
-
-const bindingSchema = z.object({
-  contactId: z.string().optional(),
-  createdAt: z.string(),
-  destinations: z.array(z.string()),
-  direction: z.enum(['incoming', 'outgoing']),
-  id: z.string(),
-  label: z.string().optional(),
-  tags: z.array(z.string())
-}) satisfies z.ZodType<DestinationBinding>
-
-const annotationSchema = z.object({
-  contactId: z.string().optional(),
-  createdAt: z.string(),
-  label: z.string().optional(),
-  movementId: z.number(),
-  source: z.enum(['binding', 'manual']),
-  tags: z.array(z.string())
-}) satisfies z.ZodType<TransactionAnnotation>
-
-const onchainAnnotationSchema = z.object({
-  contactId: z.string().optional(),
-  createdAt: z.string(),
-  label: z.string().optional(),
-  tags: z.array(z.string()),
-  txid: z.string()
-}) satisfies z.ZodType<OnchainAnnotation>
-
-const persistedSchema = z
-  .object({
-    annotations: z.record(z.string(), z.unknown()).optional(),
-    bindings: z.array(z.unknown()).optional(),
-    contacts: z.array(z.unknown()).optional(),
-    onchainAnnotations: z.record(z.string(), z.unknown()).optional(),
-    tags: z.array(z.unknown()).optional()
-  })
-  .partial()
-
-function parseRecord<T>(
-  values: Record<string, unknown> | undefined,
-  schema: z.ZodType<T>
-): Record<string, T> {
-  if (values === undefined) {
-    return {}
-  }
-  const out: Record<string, T> = {}
-  for (const [key, value] of Object.entries(values)) {
-    const result = schema.safeParse(value)
-    if (result.success) {
-      out[key] = result.data
-    }
-  }
-  return out
-}
-
-function parseList<T>(values: unknown[] | undefined, schema: z.ZodType<T>): T[] {
-  if (values === undefined) {
-    return []
-  }
-  const out: T[] = []
-  for (const value of values) {
-    const result = schema.safeParse(value)
-    if (result.success) {
-      out.push(result.data)
-    }
-  }
-  return out
+function getCurrentFingerprint(): string | undefined {
+  return useWalletStore.getState().wallet?.fingerprint
 }
 
 export const useMetadataStore = create<MetadataStore>()(
@@ -161,13 +84,25 @@ export const useMetadataStore = create<MetadataStore>()(
         return trimmed
       },
       annotations: {},
-      bindings: [],
+      bindings: {},
       contacts: [],
-      getAnnotation: (movementId) => get().annotations[movementId],
-      getOnchainAnnotation: (txid) => get().onchainAnnotations[txid],
+      getAnnotation: (movementId) => {
+        const fp = getCurrentFingerprint()
+        const namespace = fp === undefined ? undefined : get().annotations[fp]
+        return namespace?.[movementId]
+      },
+      getOnchainAnnotation: (txid) => {
+        const fp = getCurrentFingerprint()
+        const namespace = fp === undefined ? undefined : get().onchainAnnotations[fp]
+        return namespace?.[txid]
+      },
       matchMovement: (movement) => {
+        const fp = getCurrentFingerprint()
+        if (fp === undefined) {
+          return
+        }
         const state = get()
-        if (state.annotations[movement.id] !== undefined) {
+        if (state.annotations[fp]?.[movement.id] !== undefined) {
           return
         }
         const direction = movementDirection(movement)
@@ -179,8 +114,9 @@ export const useMetadataStore = create<MetadataStore>()(
           return
         }
         const destinationSet = new Set(destinations)
+        const walletBindings = state.bindings[fp] ?? []
         let matched: DestinationBinding | undefined
-        for (const binding of state.bindings) {
+        for (const binding of walletBindings) {
           if (binding.direction !== direction) {
             continue
           }
@@ -197,25 +133,45 @@ export const useMetadataStore = create<MetadataStore>()(
         set((current) => ({
           annotations: {
             ...current.annotations,
-            [movement.id]: buildAnnotation(movement.id, 'binding', {
-              contactId: matched.contactId,
-              label: matched.label,
-              tags: matched.tags
-            })
+            [fp]: {
+              ...current.annotations[fp],
+              [movement.id]: buildAnnotation(movement.id, 'binding', {
+                contactId: matched.contactId,
+                label: matched.label,
+                tags: matched.tags
+              })
+            }
           }
         }))
       },
       onchainAnnotations: {},
       pruneBindings: () => {
         const cutoff = Date.now() - BINDING_TTL_MS
-        set((state) => ({
-          bindings: state.bindings.filter(
-            (binding) => new Date(binding.createdAt).getTime() >= cutoff
-          )
-        }))
+        set((state) => {
+          const next: Record<string, DestinationBinding[]> = {}
+          for (const [fp, list] of Object.entries(state.bindings)) {
+            next[fp] = list.filter((binding) => new Date(binding.createdAt).getTime() >= cutoff)
+          }
+          return { bindings: next }
+        })
       },
       removeBinding: (id) => {
-        set((state) => ({ bindings: state.bindings.filter((binding) => binding.id !== id) }))
+        const fp = getCurrentFingerprint()
+        if (fp === undefined) {
+          return
+        }
+        set((state) => {
+          const list = state.bindings[fp]
+          if (list === undefined) {
+            return state
+          }
+          return {
+            bindings: {
+              ...state.bindings,
+              [fp]: list.filter((binding) => binding.id !== id)
+            }
+          }
+        })
       },
       removeContact: (id) => {
         set((state) => ({ contacts: state.contacts.filter((contact) => contact.id !== id) }))
@@ -227,27 +183,46 @@ export const useMetadataStore = create<MetadataStore>()(
         }))
       },
       setManualAnnotation: (movementId, input) => {
+        const fp = getCurrentFingerprint()
+        if (fp === undefined) {
+          return
+        }
         set((state) => ({
           annotations: {
             ...state.annotations,
-            [movementId]: buildAnnotation(movementId, 'manual', input)
+            [fp]: {
+              ...state.annotations[fp],
+              [movementId]: buildAnnotation(movementId, 'manual', input)
+            }
           }
         }))
       },
       setOnchainAnnotation: (txid, input) => {
+        const fp = getCurrentFingerprint()
+        if (fp === undefined) {
+          return
+        }
         set((state) => ({
           onchainAnnotations: {
             ...state.onchainAnnotations,
-            [txid]: buildOnchainAnnotation(txid, input)
+            [fp]: {
+              ...state.onchainAnnotations[fp],
+              [txid]: buildOnchainAnnotation(txid, input)
+            }
           }
         }))
       },
       tags: [],
       upsertBinding: (input) => {
+        const fp = getCurrentFingerprint()
         const id = input.id ?? crypto.randomUUID()
+        if (fp === undefined) {
+          return id
+        }
         set((state) => {
-          const existingIndex = state.bindings.findIndex((binding) => binding.id === id)
-          const previous = existingIndex === -1 ? undefined : state.bindings[existingIndex]
+          const list = state.bindings[fp] ?? []
+          const existingIndex = list.findIndex((binding) => binding.id === id)
+          const previous = existingIndex === -1 ? undefined : list[existingIndex]
           const mergedDestinations = dedupeNonEmpty([
             ...(previous?.destinations ?? []),
             ...input.destinations
@@ -262,48 +237,27 @@ export const useMetadataStore = create<MetadataStore>()(
             tags: input.tags
           }
           if (existingIndex === -1) {
-            const appended = [...state.bindings, next]
+            const appended = [...list, next]
             const trimmed =
               appended.length > MAX_BINDINGS
                 ? appended.slice(appended.length - MAX_BINDINGS)
                 : appended
-            return { bindings: trimmed }
+            return { bindings: { ...state.bindings, [fp]: trimmed } }
           }
-          const bindings = [...state.bindings]
-          bindings[existingIndex] = next
-          return { bindings }
+          const updated = [...list]
+          updated[existingIndex] = next
+          return { bindings: { ...state.bindings, [fp]: updated } }
         })
         return id
       }
     }),
     {
-      migrate: (persistedState) => {
-        const fresh = {
-          annotations: {},
-          bindings: [],
-          contacts: [],
-          onchainAnnotations: {},
-          tags: []
-        }
-        const parsed = persistedSchema.safeParse(persistedState)
-        if (!parsed.success) {
-          return fresh
-        }
-        return {
-          ...fresh,
-          annotations: parseRecord(parsed.data.annotations, annotationSchema),
-          bindings: parseList(parsed.data.bindings, bindingSchema),
-          contacts: parseList(parsed.data.contacts, contactSchema),
-          onchainAnnotations: parseRecord(parsed.data.onchainAnnotations, onchainAnnotationSchema),
-          tags: parseList(parsed.data.tags, tagSchema)
-        }
-      },
       name: 'bark-web-metadata-store',
       onRehydrateStorage: () => (state) => {
         state?.pruneBindings()
       },
       storage: createJSONStorage(() => localStorage),
-      version: STORE_VERSION
+      version: 1
     }
   )
 )
