@@ -172,32 +172,20 @@ interface PaytoTabProps {
 
 function PaytoTab({ uri, isLoading, hasArk, hasOnchain, hasLightning }: PaytoTabProps) {
   const { t } = useTranslation()
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center py-4">
-        <div className="flex aspect-square w-75 items-center justify-center">
-          <span className="text-muted-foreground text-sm">Loading...</span>
-        </div>
-      </div>
-    )
-  }
-
   const hasUri = uri !== undefined && uri !== ''
+  const showError = !isLoading && !hasUri
 
   return (
     <div className="flex flex-col items-center gap-0 py-4">
-      {hasUri ? (
-        <>
-          <QRCode value={uri} />
-          <NetworkPills hasArk={hasArk} hasLightning={hasLightning} hasOnchain={hasOnchain} />
-          <CopyAddressButton text={uri} />
-        </>
-      ) : (
-        <div className="flex aspect-square w-75 items-center justify-center">
+      <div className="flex aspect-square w-80 items-center justify-center">
+        {isLoading && <span className="text-muted-foreground text-sm">Loading...</span>}
+        {!isLoading && hasUri && <QRCode value={uri} />}
+        {showError && (
           <span className="text-destructive text-center text-sm">{t('receive.payto.error')}</span>
-        </div>
-      )}
+        )}
+      </div>
+      <NetworkPills hasArk={hasArk} hasLightning={hasLightning} hasOnchain={hasOnchain} />
+      {hasUri ? <CopyAddressButton text={uri} /> : <div aria-hidden className="h-9 w-full" />}
     </div>
   )
 }
