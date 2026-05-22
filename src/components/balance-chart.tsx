@@ -25,11 +25,9 @@ import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
 import { getBalanceTotals } from '@/utils/balance'
 import {
-  buildDayTicks,
+  buildChartSeries,
   computeBalanceHistory,
-  extractTimestampMs,
-  filterByTimeRange,
-  rangeWindow
+  extractTimestampMs
 } from '@/utils/balance-history'
 import { buildOnchainTxEntries } from '@/utils/movements-feed'
 
@@ -57,10 +55,11 @@ export function BalanceChart() {
     tipHeight: tip?.tipHeight
   })
   const balanceHistory = computeBalanceHistory(movements, onchainEntries, endpointTotalSat)
-  const filteredData = filterByTimeRange(balanceHistory, timeRange)
-  const { startMs: windowStartMs, endMs: domainEndMs } = rangeWindow(timeRange)
-  const domainStartMs = filteredData[0]?.timestampMs ?? windowStartMs
-  const dayTicks = buildDayTicks(domainStartMs, domainEndMs)
+  const { data, domainStartMs, domainEndMs, ticks } = buildChartSeries(
+    balanceHistory,
+    timeRange,
+    endpointTotalSat
+  )
 
   return (
     <Card className="pt-0 gap-2">
@@ -87,7 +86,7 @@ export function BalanceChart() {
         </Select>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        {balanceHistory.length === 0 ? (
+        {balanceHistory.points.length === 0 ? (
           <Empty className="h-62.5 border-0 py-0">
             <EmptyHeader>
               <EmptyMedia variant="icon">
@@ -101,7 +100,7 @@ export function BalanceChart() {
             config={chartConfig}
             className="aspect-auto h-62.5 w-full [&_svg]:overflow-visible"
           >
-            <AreaChart data={filteredData}>
+            <AreaChart data={data}>
               <defs>
                 <linearGradient id="fillBalance" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="var(--color-balanceSat)" stopOpacity={0.3} />
@@ -114,7 +113,7 @@ export function BalanceChart() {
                 type="number"
                 scale="time"
                 domain={[domainStartMs, domainEndMs]}
-                ticks={dayTicks}
+                ticks={ticks}
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
@@ -160,7 +159,7 @@ export function BalanceChart() {
                 dataKey="balanceSat"
                 fill="url(#fillBalance)"
                 stroke="var(--color-balanceSat)"
-                type="monotone"
+                type="stepAfter"
               />
             </AreaChart>
           </ChartContainer>

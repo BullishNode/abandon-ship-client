@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  buildChartSeries,
   buildDayTicks,
   computeBalanceHistory,
   extractTimestampMs,
@@ -23,8 +24,10 @@ function makeOnchainEntry(overrides: Partial<OnchainTxEntry> = {}): OnchainTxEnt
 }
 
 describe(computeBalanceHistory, () => {
-  it('returns an empty array when there are no events', () => {
-    expect(computeBalanceHistory([], [], 10_000)).toStrictEqual([])
+  it('returns no points and endpoint as initial balance when there are no events', () => {
+    const result = computeBalanceHistory([], [], 10_000)
+    expect(result.points).toStrictEqual([])
+    expect(result.initialBalanceSat).toBe(10_000)
   })
 
   it('filters out non-successful movements', () => {
@@ -36,7 +39,7 @@ describe(computeBalanceHistory, () => {
         updatedAt: new Date('2026-01-01')
       }
     })
-    expect(computeBalanceHistory([failed], [], 0)).toStrictEqual([])
+    expect(computeBalanceHistory([failed], [], 0).points).toStrictEqual([])
   })
 
   it('produces a running balance ending at the endpoint total', () => {
@@ -51,9 +54,10 @@ describe(computeBalanceHistory, () => {
       time: { createdAt: new Date('2026-01-02'), updatedAt: new Date('2026-01-02') }
     })
     const result = computeBalanceHistory([m1, m2], [], 75)
-    expect(result).toHaveLength(2)
-    expect(result.at(-1)?.balanceSat).toBe(75)
-    expect(result.at(0)?.balanceSat).toBe(100)
+    expect(result.points).toHaveLength(2)
+    expect(result.points.at(-1)?.balanceSat).toBe(75)
+    expect(result.points.at(0)?.balanceSat).toBe(100)
+    expect(result.initialBalanceSat).toBe(0)
   })
 
   it('merges onchain entries and sorts by time ascending', () => {
@@ -66,10 +70,16 @@ describe(computeBalanceHistory, () => {
       approximateTimestampMs: new Date('2026-01-01').getTime()
     })
     const result = computeBalanceHistory([movement], [onchain], 700)
-    expect(result).toHaveLength(2)
-    expect(result[0].timestampMs).toBeLessThan(result[1].timestampMs)
-    expect(result[0].balanceSat).toBe(200)
-    expect(result[1].balanceSat).toBe(700)
+    expect(result.points).toHaveLength(2)
+    expect(result.points[0].timestampMs).toBeLessThan(result.points[1].timestampMs)
+    expect(result.points[0].balanceSat).toBe(200)
+    expect(result.points[1].balanceSat).toBe(700)
+    expect(result.initialBalanceSat).toBe(0)
+  })
+
+  it('filters out non-successful onchain entries', () => {
+    const failed = makeOnchainEntry({ amountSat: 500, status: 'pending' })
+    expect(computeBalanceHistory([], [failed], 0).points).toStrictEqual([])
   })
 })
 
@@ -105,13 +115,6 @@ describe(filterByTimeRange, () => {
     const within = { balanceSat: 1, timestampMs: new Date('2026-03-15T00:00:00Z').getTime() }
     const outside = { balanceSat: 2, timestampMs: new Date('2025-12-01T00:00:00Z').getTime() }
     expect(filterByTimeRange([within, outside], 'unknown')).toStrictEqual([within])
-  })
-})
-
-describe(computeBalanceHistory, () => {
-  it('filters out non-successful onchain entries', () => {
-    const failed = makeOnchainEntry({ amountSat: 500, status: 'pending' })
-    expect(computeBalanceHistory([], [failed], 0)).toStrictEqual([])
   })
 })
 
@@ -158,8 +161,67 @@ describe(buildDayTicks, () => {
     const start = new Date('2026-01-01T00:00:00').getTime()
     const end = new Date('2026-04-01T00:00:00').getTime()
     const ticks = buildDayTicks(start, end)
-    // step = ceil(rangeDays / 8) → ticks count ≤ rangeDays / step ≈ 8 + some slack
     expect(ticks.length).toBeLessThanOrEqual(20)
     expect(ticks.length).toBeGreaterThan(0)
+  })
+})
+
+describe(buildChartSeries, () => {
+  const NOW = new Date('2026-05-13T00:00:00Z')
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(NOW)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('spans full window with synthetic start and end when only same-day points exist', () => {
+    const sameDay = new Date('2026-05-12T10:00:00Z').getTime()
+    const history = {
+      initialBalanceSat: 0,
+      points: [
+        { balanceSat: 10_000, timestampMs: sameDay },
+        { balanceSat: 20_000, timestampMs: sameDay + 60_000 }
+      ]
+    }
+    const series = buildChartSeries(history, '90d', 20_000)
+    expect(series.domainEndMs).toBe(NOW.getTime())
+    expect(series.domainStartMs).toBe(NOW.getTime() - 90 * 24 * 60 * 60 * 1000)
+    expect(series.data.at(0)).toStrictEqual({
+      balanceSat: 0,
+      timestampMs: series.domainStartMs
+    })
+    expect(series.data.at(-1)).toStrictEqual({
+      balanceSat: 20_000,
+      timestampMs: series.domainEndMs
+    })
+    expect(series.ticks.length).toBeGreaterThan(0)
+  })
+
+  it('uses last pre-window point balance as the starting balance', () => {
+    const prior = new Date('2026-01-01T00:00:00Z').getTime()
+    const within = new Date('2026-05-10T00:00:00Z').getTime()
+    const history = {
+      initialBalanceSat: 0,
+      points: [
+        { balanceSat: 5000, timestampMs: prior },
+        { balanceSat: 7500, timestampMs: within }
+      ]
+    }
+    const series = buildChartSeries(history, '7d', 7500)
+    expect(series.data.at(0)?.balanceSat).toBe(5000)
+    expect(series.data.at(0)?.timestampMs).toBe(series.domainStartMs)
+    expect(series.data.at(-1)?.balanceSat).toBe(7500)
+  })
+
+  it('returns flat series at endpoint when there are no points', () => {
+    const series = buildChartSeries({ initialBalanceSat: 1234, points: [] }, '30d', 1234)
+    expect(series.data).toStrictEqual([
+      { balanceSat: 1234, timestampMs: series.domainStartMs },
+      { balanceSat: 1234, timestampMs: series.domainEndMs }
+    ])
   })
 })

@@ -6,6 +6,18 @@ export interface BalanceDataPoint {
   balanceSat: number
 }
 
+export interface BalanceHistory {
+  initialBalanceSat: number
+  points: BalanceDataPoint[]
+}
+
+export interface ChartSeries {
+  data: BalanceDataPoint[]
+  domainStartMs: number
+  domainEndMs: number
+  ticks: number[]
+}
+
 interface BalanceEvent {
   timestampMs: number
   deltaSat: number
@@ -43,15 +55,16 @@ export function computeBalanceHistory(
   movements: Movement[],
   onchainEntries: OnchainTxEntry[],
   endpointTotalSat: number
-): BalanceDataPoint[] {
+): BalanceHistory {
   const events = [...movementEvents(movements), ...onchainTxEvents(onchainEntries)]
   if (events.length === 0) {
-    return []
+    return { initialBalanceSat: endpointTotalSat, points: [] }
   }
   events.sort((a, b) => a.timestampMs - b.timestampMs)
 
   const totalDelta = events.reduce((sum, event) => sum + event.deltaSat, 0)
-  let runningBalance = endpointTotalSat - totalDelta
+  const initialBalanceSat = endpointTotalSat - totalDelta
+  let runningBalance = initialBalanceSat
 
   const points: BalanceDataPoint[] = []
   for (const event of events) {
@@ -61,7 +74,7 @@ export function computeBalanceHistory(
       timestampMs: event.timestampMs
     })
   }
-  return points
+  return { initialBalanceSat, points }
 }
 
 const DAYS_BY_RANGE: Record<string, number> = {
@@ -121,4 +134,32 @@ export function filterByTimeRange(data: BalanceDataPoint[], timeRange: string): 
   }
   const { startMs } = rangeWindow(timeRange)
   return data.filter((point) => point.timestampMs >= startMs)
+}
+
+export function buildChartSeries(
+  history: BalanceHistory,
+  timeRange: string,
+  endpointTotalSat: number
+): ChartSeries {
+  const { startMs, endMs } = rangeWindow(timeRange)
+  let preWindowBalance = history.initialBalanceSat
+  const inRange: BalanceDataPoint[] = []
+  for (const point of history.points) {
+    if (point.timestampMs < startMs) {
+      preWindowBalance = point.balanceSat
+    } else if (point.timestampMs <= endMs) {
+      inRange.push(point)
+    }
+  }
+  const data: BalanceDataPoint[] = [
+    { balanceSat: preWindowBalance, timestampMs: startMs },
+    ...inRange,
+    { balanceSat: endpointTotalSat, timestampMs: endMs }
+  ]
+  return {
+    data,
+    domainEndMs: endMs,
+    domainStartMs: startMs,
+    ticks: buildDayTicks(startMs, endMs)
+  }
 }
