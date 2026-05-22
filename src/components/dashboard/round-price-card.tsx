@@ -46,7 +46,7 @@ export function RoundPriceCard({ className }: RoundPriceCardProps) {
           <span className="font-bold text-2xl">{countdownLabel}</span>
         </div>
       </CardContent>
-      <Separator className="mx-4 w-auto" />
+      <Separator className="mx-4 data-[orientation=horizontal]:w-auto" />
       <CardContent className="flex flex-col gap-2">
         <span className="text-muted-foreground text-sm font-medium">Bitcoin price</span>
         <span className="font-bold text-2xl">{priceLabel}</span>
