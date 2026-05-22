@@ -3,12 +3,11 @@ import { wordlist } from '@scure/bip39/wordlists/english.js'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { config } from '@/config/barkd'
+import { DEFAULT_WALLET_NAME } from '@/constants/wallet'
 import { walletApi } from '@/lib/barkd-client'
 import { invalidateWalletExistence } from '@/lib/query-invalidations'
 import { walletKeys } from '@/lib/query-keys'
 import { useWalletStore } from '@/stores/wallet'
-
-const DEFAULT_WALLET_NAME = 'My Wallet'
 
 interface UseAutoCreateWalletOptions {
   enabled: boolean

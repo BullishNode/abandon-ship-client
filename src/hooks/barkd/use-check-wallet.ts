@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import type { UseQueryOptions } from '@tanstack/react-query'
+import { DEFAULT_WALLET_NAME } from '@/constants/wallet'
 import { walletApi } from '@/lib/barkd-client'
 import { walletKeys } from '@/lib/query-keys'
 import { useWalletStore } from '@/stores/wallet'
@@ -10,11 +11,21 @@ async function checkWallet() {
   if (fingerprint === null || fingerprint === undefined || fingerprint.length === 0) {
     return false
   }
-  useWalletStore.setState((state) =>
-    state.wallet && state.wallet.fingerprint !== fingerprint
-      ? { wallet: { ...state.wallet, fingerprint } }
-      : state
-  )
+  useWalletStore.setState((state) => {
+    if (state.wallet === null) {
+      return {
+        wallet: {
+          createdAt: new Date().toISOString(),
+          fingerprint,
+          name: DEFAULT_WALLET_NAME
+        }
+      }
+    }
+    if (state.wallet.fingerprint !== fingerprint) {
+      return { wallet: { ...state.wallet, fingerprint } }
+    }
+    return state
+  })
   return true
 }
 
