@@ -1,4 +1,4 @@
-import type { DecodedData, Destination } from 'bitcoin-decoder'
+import type { DecodedData, DecodedPayment, Destination } from 'bitcoin-decoder'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -52,7 +52,7 @@ export function useSendDestination({ open, initialStep = 'scan' }: UseSendDestin
 
   async function goToSend(
     input: string,
-    applyParsedMetadata?: (decoded: Extract<DecodedData, { valid: true }>) => void
+    applyParsedMetadata?: (decoded: DecodedPayment) => void
   ): Promise<DecodedData | undefined> {
     setRawQrInput(input)
     const decoded = await parsePaymentInput(input)
@@ -62,6 +62,11 @@ export function useSendDestination({ open, initialStep = 'scan' }: UseSendDestin
       toast.error(t('send.errors.invalid_qr'), {
         description: decoded.errorMessage
       })
+      return decoded
+    }
+
+    if (decoded.kind !== 'payment') {
+      toast.error(t('send.errors.invalid_qr'))
       return decoded
     }
 
@@ -100,12 +105,12 @@ export function useSendDestination({ open, initialStep = 'scan' }: UseSendDestin
     step === 'send' ? rawQrInput : undefined
   )
 
-  const chooserDestinations =
-    parsed?.valid === true ? sortDestinationsByPriority(parsed.destinations) : []
+  const isPayment = parsed?.valid === true && parsed.kind === 'payment'
+  const chooserDestinations = isPayment ? sortDestinationsByPriority(parsed.destinations) : []
   const currentDestinationType =
-    selectedMethodType ?? (parsed?.valid === true ? parsed.destination.type : undefined)
+    selectedMethodType ?? (isPayment ? parsed.destination.type : undefined)
   const isAmountLocked =
-    parsed?.valid === true &&
+    isPayment &&
     (currentDestinationType === 'bolt11' || currentDestinationType === 'bolt12') &&
     parsed.metadata?.amount !== undefined &&
     parsed.metadata.amount > 0

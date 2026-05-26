@@ -52,6 +52,7 @@ describe(parsePaymentInput, () => {
       destination: bolt11Dest,
       destinations: [bolt11Dest],
       input: 'lnbc1abc',
+      kind: 'payment',
       network: 'mainnet',
       valid: true
     })
@@ -65,6 +66,7 @@ describe(parsePaymentInput, () => {
       destination: arkDest,
       destinations: [arkDest, btcDest],
       input: 'bitcoin:bc1qabc?ark=ark1abc',
+      kind: 'payment' as const,
       metadata: { amount: 50_000, description: 'test' },
       network: 'mainnet' as const,
       valid: true as const
