@@ -241,15 +241,15 @@
       "label": "Discrete mode",
       "description": "Hide balance and transaction amounts"
     },
-    "backup": {
-      "label": "Wallet backup",
-      "description": "Download a zip containing your seed phrase and wallet database",
-      "button": "Download backup",
-      "confirm": {
-        "title": "Download wallet backup?",
-        "description": "The backup includes your seed phrase in plain text and your wallet database. Save it to an encrypted location and never share it. Anyone with this file can spend your funds.",
-        "button": "Download"
-      }
+    "seed_phrase": {
+      "label": "Seed phrase",
+      "description": "Your wallet's 12-word recovery phrase.",
+      "reveal_aria": "Reveal seed phrase",
+      "hide_aria": "Hide seed phrase"
+    },
+    "backup_warning": {
+      "title": "Seed phrase alone is not enough",
+      "description": "Your seed phrase recovers wallet keys but not your VTXOs. To fully restore on a fresh device, you must also continuously back up the wallet data directory at <code>{{path}}</code>."
     },
     "community_forum": {
       "label": "Community forum",

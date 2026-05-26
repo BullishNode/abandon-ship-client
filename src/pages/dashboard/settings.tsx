@@ -1,11 +1,13 @@
-import { ArrowSquareOutIcon } from '@phosphor-icons/react'
+import { ArrowSquareOutIcon, WarningIcon } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { Trans, useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { EmergencyExitStartDialog } from '@/components/emergency-exit-start-dialog'
 import { ExitProgressCard } from '@/components/exit-progress'
+import { SeedPhraseInput } from '@/components/seed-phrase-input'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Field, FieldContent, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -27,12 +29,17 @@ import { useOnchainFeeRates } from '@/hooks/barkd/use-onchain-fee-rates'
 import { useResetWallet } from '@/hooks/barkd/use-reset-wallet'
 import { useStartEmergencyExit } from '@/hooks/barkd/use-start-emergency-exit'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
-import { useDownloadBackup } from '@/hooks/use-download-backup'
+import { useWalletMnemonic } from '@/hooks/use-wallet-mnemonic'
 import { useSettingsStore } from '@/stores/settings'
 import { useWalletStore } from '@/stores/wallet'
 import type { BitcoinUnit } from '@/types/bitcoin'
 import type { FiatCurrency, PriceProviderId } from '@/types/price-providers'
 import { estimateEmergencyExitFeeSat, summarizeExits } from '@/utils/exit-progress'
+
+const WALLET_DATA_PATH = '/wallet-data/.bark/'
+const SEED_HIDDEN_PLACEHOLDER = Array.from({ length: 12 }, () =>
+  '•'.repeat(4 + Math.floor(Math.random() * 5))
+).join(' ')
 
 const BITCOIN_UNITS: { value: BitcoinUnit; label: string }[] = [
   { label: 'Sats', value: 'sats' },
@@ -90,7 +97,7 @@ export default function SettingsPage() {
 
   const [walletName, setWalletName] = useState(wallet?.name ?? '')
   const [isDeleteOpen, setDeleteOpen] = useState(false)
-  const [isBackupOpen, setBackupOpen] = useState(false)
+  const [isSeedRevealed, setSeedRevealed] = useState(false)
   const [isExitDialogOpen, setExitDialogOpen] = useState(false)
   const [exitDialogMode, setExitDialogMode] = useState<ExitDialogMode>('start')
   const [draftExitAddress, setDraftExitAddress] = useState('')
@@ -100,11 +107,11 @@ export default function SettingsPage() {
     claimableCount: 0
   })
 
-  const { mutate: downloadBackup, isPending: isDownloadingBackup } = useDownloadBackup({
-    onSuccess: () => {
-      setBackupOpen(false)
-    }
-  })
+  const { data: mnemonic, isFetching: isFetchingMnemonic } = useWalletMnemonic(isSeedRevealed)
+
+  function handleToggleSeed() {
+    setSeedRevealed((value) => !value)
+  }
 
   const { data: exitStatuses } = useExitStatus()
   const { data: onchainBalance } = useOnchainBalance()
@@ -321,14 +328,29 @@ export default function SettingsPage() {
         </FieldContent>
         <Switch checked={discreteMode} id="discrete-mode" onCheckedChange={setDiscreteMode} />
       </Field>
-      <Field orientation="responsive">
-        <FieldContent>
-          <FieldLabel>{t('settings.backup.label')}</FieldLabel>
-          <FieldDescription>{t('settings.backup.description')}</FieldDescription>
-        </FieldContent>
-        <Button onClick={() => setBackupOpen(true)} variant="outline">
-          {t('settings.backup.button')}
-        </Button>
+      <Field>
+        <FieldLabel htmlFor="seed-phrase">{t('settings.seed_phrase.label')}</FieldLabel>
+        <FieldDescription>{t('settings.seed_phrase.description')}</FieldDescription>
+        <SeedPhraseInput
+          hideAriaLabel={t('settings.seed_phrase.hide_aria')}
+          hiddenPlaceholder={SEED_HIDDEN_PLACEHOLDER}
+          isLoading={isFetchingMnemonic}
+          isRevealed={isSeedRevealed && mnemonic !== undefined}
+          mnemonic={mnemonic}
+          onToggle={handleToggleSeed}
+          revealAriaLabel={t('settings.seed_phrase.reveal_aria')}
+        />
+        <Alert className="mt-2" variant="destructive">
+          <WarningIcon />
+          <AlertTitle>{t('settings.backup_warning.title')}</AlertTitle>
+          <AlertDescription>
+            <Trans
+              components={{ code: <code className="font-mono text-xs" /> }}
+              i18nKey="settings.backup_warning.description"
+              values={{ path: WALLET_DATA_PATH }}
+            />
+          </AlertDescription>
+        </Alert>
       </Field>
       <Field orientation="responsive">
         <FieldContent>
@@ -425,19 +447,6 @@ export default function SettingsPage() {
         open={isDeleteOpen}
         title={t('settings.danger.delete_wallet.confirm.title')}
         variant="destructive"
-      />
-      <ConfirmDialog
-        confirmLabel={t('settings.backup.confirm.button')}
-        description={t('settings.backup.confirm.description')}
-        loading={isDownloadingBackup}
-        onConfirm={() => downloadBackup()}
-        onOpenChange={(open) => {
-          if (!isDownloadingBackup) {
-            setBackupOpen(open)
-          }
-        }}
-        open={isBackupOpen}
-        title={t('settings.backup.confirm.title')}
       />
     </div>
   )

@@ -7,11 +7,21 @@ async function apiFetch(path: string): Promise<Response> {
   return response
 }
 
-export async function downloadWalletBackup(): Promise<{ blob: Blob; filename: string }> {
-  const response = await apiFetch('/backup')
-  const disposition = response.headers.get('Content-Disposition') ?? ''
-  const filenameMatch = /filename="([^"]+)"/u.exec(disposition)
-  const filename = filenameMatch?.[1] ?? 'bark-wallet-backup.zip'
-  const blob = await response.blob()
-  return { blob, filename }
+function isMnemonicResponse(value: unknown): value is { mnemonic: string } {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+  if (!('mnemonic' in value)) {
+    return false
+  }
+  return typeof value.mnemonic === 'string'
+}
+
+export async function getWalletMnemonic(): Promise<string> {
+  const response = await apiFetch('/mnemonic')
+  const data: unknown = await response.json()
+  if (!isMnemonicResponse(data)) {
+    throw new Error('Invalid mnemonic response')
+  }
+  return data.mnemonic
 }

@@ -4,6 +4,7 @@ export const walletKeys = {
   autoCreate: () => [...walletKeys.all, 'auto-create'] as const,
   balance: () => [...walletKeys.all, 'balance'] as const,
   exists: () => [...walletKeys.all, 'exists'] as const,
+  mnemonic: () => [...walletKeys.all, 'mnemonic'] as const,
   nextRound: () => [...walletKeys.all, 'next-round'] as const,
   transactions: () => [...walletKeys.all, 'transactions'] as const,
   vtxos: () => [...walletKeys.all, 'vtxos'] as const

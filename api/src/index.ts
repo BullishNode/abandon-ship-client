@@ -1,8 +1,5 @@
-import { createReadStream } from 'node:fs'
-import { readFile, stat } from 'node:fs/promises'
-import { Readable } from 'node:stream'
+import { readFile } from 'node:fs/promises'
 import { serve } from '@hono/node-server'
-import archiver from 'archiver'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 
@@ -15,7 +12,6 @@ const BARK_NETWORK = process.env.BARK_NETWORK ?? 'signet'
 
 const TOKEN_PATH = `${WALLET_DIR}/auth_token`
 const MNEMONIC_PATH = `${WALLET_DIR}/mnemonic`
-const DB_PATH = `${WALLET_DIR}/db.sqlite`
 
 let cachedToken: string | null = null
 
@@ -71,34 +67,17 @@ app.get('/api/config', (c) =>
   })
 )
 
-app.get('/api/backup', async (c) => {
+app.get('/api/mnemonic', async (c) => {
   try {
-    await stat(MNEMONIC_PATH)
-    await stat(DB_PATH)
+    const raw = await readFile(MNEMONIC_PATH, 'utf-8')
+    const mnemonic = raw.trim()
+    if (mnemonic.length === 0) {
+      return c.json({ error: 'Mnemonic file is empty' }, 404)
+    }
+    return c.json({ mnemonic })
   } catch {
-    return c.json({ error: 'Wallet files not found' }, 404)
+    return c.json({ error: 'Mnemonic file not found' }, 404)
   }
-
-  const archive = archiver('zip', { zlib: { level: 9 } })
-  archive.file(MNEMONIC_PATH, { name: 'mnemonic' })
-  archive.append(createReadStream(DB_PATH), { name: 'db.sqlite' })
-  void (async () => {
-    try {
-      await archive.finalize()
-    } catch (error: unknown) {
-      console.error('Archive finalize failed', error)
-    }
-  })()
-
-  const webStream = Readable.toWeb(archive) as ReadableStream
-  const timestamp = new Date().toISOString().replaceAll(/[:.]/gu, '-')
-
-  return new Response(webStream, {
-    headers: {
-      'Content-Disposition': `attachment; filename="bark-wallet-backup-${timestamp}.zip"`,
-      'Content-Type': 'application/zip'
-    }
-  })
 })
 
 app.all('/api/barkd/*', async (c) => {
