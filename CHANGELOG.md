@@ -5,6 +5,30 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-05-26
+
+### Added
+
+- Wallet backup replaces the zip download with a masked seed reveal flow and a warning.
+- Pre-React boot loader with config retry and API readiness wait, so the app no longer flashes on a cold start.
+- Balance breakdown items animate in and out as balances change.
+
+### Changed
+
+- Movements table column renamed from "Source" to "Payment type".
+- Branta destination verification is shown inline on the send modal.
+- Dashboard chart is lazy-loaded and `motion` imports are tree-shaken for a smaller initial bundle.
+- Bumped `bitcoin-decoder` to 0.6.1 for a BIP-321 metadata fix.
+
+### Fixed
+
+- Balance-history chart uses a step interpolation and a full-window domain so flat periods no longer collapse.
+- Round-and-price card divider is symmetric again.
+- Receive modal layout no longer shifts when the QR code or route badge updates.
+- Metadata annotations and bindings are scoped by wallet fingerprint, preventing cross-wallet leakage.
+- Wallet fingerprint is persisted when a pre-existing wallet is detected on startup.
+- `DecodedData` is narrowed by `kind` to match the updated `bitcoin-decoder` type surface.
+
 ## [0.1.3] - 2026-05-20
 
 ### Added
@@ -88,6 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - UI flickers on modal transitions.
 - Multi-row display for long content.
 
+[0.1.4]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.1.4
 [0.1.3]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.1.3
 [0.1.2]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.1.2
 [0.1.1]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.1.1
