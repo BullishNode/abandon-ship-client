@@ -194,7 +194,7 @@
       "label": "Label",
       "status": "Status",
       "amount": "Amount",
-      "source": "Source"
+      "source": "Payment type"
     },
     "status": {
       "pending": "Pending",
