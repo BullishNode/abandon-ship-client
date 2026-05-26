@@ -105,43 +105,52 @@ export function BalanceCard({
           {discreteMode ? <EyeSlashIcon /> : <EyeIcon />}
         </Button>
       </CardContent>
-      {showBreakdown ? (
-        <>
-          <Separator className="mx-4 w-auto" />
-          <CardContent className="pr-4">
-            <AnimatePresence initial={false}>
-              <m.div
-                animate={{ height: 'auto', opacity: 1 }}
-                className="overflow-hidden"
-                exit={{ height: 0, opacity: 0 }}
-                initial={{ height: 0, opacity: 0 }}
-                key="breakdown"
-                transition={{ duration: 0.25, ease: 'easeOut' }}
-              >
-                <div className="flex flex-col text-sm lg:flex-row lg:flex-wrap lg:gap-x-8 lg:gap-y-3">
-                  <AnimatePresence initial={false}>
-                    {rows.map((row) => (
-                      <m.div
-                        animate={{ height: 'auto', opacity: 1 }}
-                        className="overflow-hidden lg:h-auto"
-                        exit={{ height: 0, opacity: 0 }}
-                        initial={{ height: 0, opacity: 0 }}
-                        key={row.key}
-                        transition={{ duration: 0.2, ease: 'easeOut' }}
-                      >
-                        <div className="flex flex-row items-center justify-between gap-4 py-1 font-medium lg:flex-col lg:items-start lg:justify-start lg:gap-1 lg:py-0">
-                          <span className="text-muted-foreground">{row.label}</span>
-                          <span className="text-base">{formatSats(row.amount)}</span>
-                        </div>
-                      </m.div>
-                    ))}
-                  </AnimatePresence>
-                </div>
-              </m.div>
-            </AnimatePresence>
-          </CardContent>
-        </>
-      ) : null}
+      <AnimatePresence initial={false}>
+        {showBreakdown ? (
+          <m.div
+            animate={{ height: 'auto', opacity: 1 }}
+            className="overflow-hidden"
+            exit={{ height: 0, opacity: 0 }}
+            initial={{ height: 0, opacity: 0 }}
+            key="separator"
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+          >
+            <Separator className="mx-4 w-auto" />
+          </m.div>
+        ) : null}
+        {showBreakdown ? (
+          <m.div
+            animate={{ height: 'auto', opacity: 1 }}
+            className="overflow-hidden"
+            exit={{ height: 0, opacity: 0 }}
+            initial={{ height: 0, opacity: 0 }}
+            key="breakdown"
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+          >
+            <CardContent className="pr-4">
+              <div className="flex flex-col text-sm lg:flex-row lg:flex-wrap lg:gap-x-8 lg:gap-y-3">
+                <AnimatePresence initial={false}>
+                  {rows.map((row) => (
+                    <m.div
+                      animate={{ height: 'auto', opacity: 1 }}
+                      className="overflow-hidden lg:h-auto"
+                      exit={{ height: 0, opacity: 0 }}
+                      initial={{ height: 0, opacity: 0 }}
+                      key={row.key}
+                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                    >
+                      <div className="flex flex-row items-center justify-between gap-4 py-1 font-medium lg:flex-col lg:items-start lg:justify-start lg:gap-1 lg:py-0">
+                        <span className="text-muted-foreground">{row.label}</span>
+                        <span className="text-base">{formatSats(row.amount)}</span>
+                      </div>
+                    </m.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </CardContent>
+          </m.div>
+        ) : null}
+      </AnimatePresence>
     </Card>
   )
 }
