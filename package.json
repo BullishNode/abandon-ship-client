@@ -57,7 +57,7 @@
     "@tanstack/react-table": "^8.21.3",
     "@yudiel/react-qr-scanner": "^2.5.1",
     "bip-321": "^0.0.10",
-    "bitcoin-decoder": "^0.3.0",
+    "bitcoin-decoder": "^0.6.1",
     "bitcoinjs-lib": "^7.0.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
