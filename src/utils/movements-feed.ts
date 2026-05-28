@@ -11,6 +11,7 @@ export interface OnchainTxEntry {
   bindingAddress: string | undefined
   confirmationHeight: number | null
   approximateTimestampMs: number
+  feeSat: number | null
 }
 
 export interface MovementEntry {
@@ -93,6 +94,7 @@ export function buildOnchainTxEntries(
       bindingAddress: findBindingAddress(tx, ownedOutpoints, direction, options.network),
       confirmationHeight,
       direction,
+      feeSat: tx.onchainFeeSat ?? null,
       kind: 'onchain',
       status,
       txid: tx.txid

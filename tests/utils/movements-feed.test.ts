@@ -167,7 +167,8 @@ describe(buildOnchainTxEntries, () => {
       }),
       makeTx(sendTx, sendTxid, {
         balanceChangeSat: -61_000,
-        confirmation: { hash: 'block-200', height: 200 }
+        confirmation: { hash: 'block-200', height: 200 },
+        onchainFeeSat: 1234
       })
     ]
     const changeUtxo = makeUtxo(`${sendTxid}:1`, { amountSat: 39_000, confirmationHeight: 200 })
@@ -181,6 +182,20 @@ describe(buildOnchainTxEntries, () => {
     expect(sendEntry?.amountSat).toBe(-61_000)
     expect(sendEntry?.status).toBe('successful')
     expect(sendEntry?.confirmationHeight).toBe(200)
+    expect(sendEntry?.feeSat).toBe(1234)
+  })
+
+  it('exposes feeSat from tx.onchainFeeSat, null when unknown', () => {
+    const rawTx = buildRawTx([], [{ programHex: REGTEST_PROGRAM_A, valueSat: 1000 }])
+    const txid = deriveTxid(rawTx)
+    const [withFee] = buildOnchainTxEntries([makeTx(rawTx, txid, { onchainFeeSat: 250 })], [], {
+      network: BarkNetwork.Regtest
+    })
+    const [withoutFee] = buildOnchainTxEntries([makeTx(rawTx, txid)], [], {
+      network: BarkNetwork.Regtest
+    })
+    expect(withFee.feeSat).toBe(250)
+    expect(withoutFee.feeSat).toBeNull()
   })
 
   it('marks status pending when the tx is unconfirmed', () => {

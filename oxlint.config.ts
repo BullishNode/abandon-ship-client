@@ -46,6 +46,13 @@ export default defineConfig({
         '@typescript-eslint/unbound-method': 'off',
         'import/no-named-as-default-member': 'off'
       }
+    },
+    {
+      files: ['**/*.{test,spec}.{ts,tsx,js,jsx}', '**/__tests__/**/*.{ts,tsx,js,jsx}'],
+      plugins: ['vitest'],
+      rules: {
+        'vitest/max-expects': ['error', { max: 10 }]
+      }
     }
   ],
   rules: {

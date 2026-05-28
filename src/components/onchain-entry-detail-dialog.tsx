@@ -78,6 +78,10 @@ function OnchainEntryDetailContent({
     entry.confirmationHeight === null
       ? t('movements.onchain.detail.pending')
       : String(entry.confirmationHeight)
+  const feeValue =
+    entry.feeSat === null
+      ? t('movements.detail.feeUnavailable')
+      : `${formatSats(entry.feeSat)} · ${formatFiat(entry.feeSat)}`
   return (
     <>
       <DialogHeader>
@@ -98,6 +102,7 @@ function OnchainEntryDetailContent({
         </div>
         <CopyableValueRow label={t('movements.onchain.detail.txid')} value={entry.txid} />
         <DetailRow label={t('movements.onchain.detail.height')} value={heightValue} />
+        <DetailRow label={t('movements.detail.fee')} value={feeValue} />
         <DetailRow
           label={t('movements.detail.dateCreated')}
           value={formatDateAbsolute(new Date(entry.approximateTimestampMs))}

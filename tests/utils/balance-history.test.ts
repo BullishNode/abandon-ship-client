@@ -16,6 +16,7 @@ function makeOnchainEntry(overrides: Partial<OnchainTxEntry> = {}): OnchainTxEnt
     bindingAddress: undefined,
     confirmationHeight: null,
     direction: 'incoming',
+    feeSat: null,
     kind: 'onchain',
     status: 'successful',
     txid: 'tx',
