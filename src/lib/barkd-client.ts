@@ -2,6 +2,7 @@ import {
   BitcoinApi,
   ExitsApi,
   FeesApi,
+  HistoryApi,
   LightningApi,
   NotificationsApi,
   OnchainApi,
@@ -10,6 +11,7 @@ import {
 import { config } from '@/config/barkd'
 
 export const walletApi = new WalletApi(config.client)
+export const historyApi = new HistoryApi(config.client)
 export const onchainApi = new OnchainApi(config.client)
 export const feesApi = new FeesApi(config.client)
 export const lightningApi = new LightningApi(config.client)

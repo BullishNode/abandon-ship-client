@@ -1,10 +1,4 @@
-import type {
-  BarkNetwork,
-  Movement,
-  MovementStatus,
-  TransactionInfo,
-  UtxoInfo
-} from '@secondts/barkd'
+import type { BarkNetwork, Movement, MovementStatus, UtxoInfo, WalletTxInfo } from '@secondts/barkd'
 import { AVERAGE_BLOCK_INTERVAL_MS } from '@/constants/btc'
 import { decodeInputs, decodeOutputs } from '@/utils/tx-address'
 
@@ -44,73 +38,36 @@ function approximateTimestampMs(
   return Date.now() - elapsedBlocks * AVERAGE_BLOCK_INTERVAL_MS
 }
 
-function indexUtxosByTxid(utxos: UtxoInfo[]): Map<string, UtxoInfo[]> {
-  const byTxid = new Map<string, UtxoInfo[]>()
-  for (const utxo of utxos) {
-    const [txid = ''] = utxo.outpoint.split(':')
-    const bucket = byTxid.get(txid)
-    if (bucket === undefined) {
-      byTxid.set(txid, [utxo])
-    } else {
-      bucket.push(utxo)
-    }
-  }
-  return byTxid
-}
-
-interface OwnedOutpointMap {
-  ownedOutpoints: Set<string>
-  outputValueByOutpoint: Map<string, number>
-}
-
-function buildOwnedOutpointMap(
-  transactions: TransactionInfo[],
-  utxos: UtxoInfo[],
-  network: BarkNetwork
-): OwnedOutpointMap {
+function buildOwnedOutpoints(transactions: WalletTxInfo[], utxos: UtxoInfo[]): Set<string> {
   const ownedOutpoints = new Set<string>()
-  const outputValueByOutpoint = new Map<string, number>()
   for (const utxo of utxos) {
     ownedOutpoints.add(utxo.outpoint)
   }
   const ourTxids = new Set(transactions.map((tx) => tx.txid))
   for (const tx of transactions) {
-    const outputs = decodeOutputs(tx.tx, network)
-    for (const out of outputs) {
-      const outpoint = makeOutpoint(tx.txid, out.vout)
-      outputValueByOutpoint.set(outpoint, out.valueSat)
-    }
-    const inputs = decodeInputs(tx.tx)
-    for (const input of inputs) {
+    for (const input of decodeInputs(tx.tx)) {
       if (ourTxids.has(input.prevTxid)) {
         ownedOutpoints.add(makeOutpoint(input.prevTxid, input.prevVout))
       }
     }
   }
-  return { outputValueByOutpoint, ownedOutpoints }
+  return ownedOutpoints
 }
 
-function txStatus(utxoBucket: UtxoInfo[] | undefined): {
-  status: MovementStatus
-  confirmationHeight: number | null
-} {
-  if (utxoBucket === undefined || utxoBucket.length === 0) {
-    return { confirmationHeight: null, status: 'successful' }
-  }
-  let maxHeight: number | null = null
-  let anyUnconfirmed = false
-  for (const utxo of utxoBucket) {
-    const height = utxo.confirmationHeight ?? null
-    if (height === null) {
-      anyUnconfirmed = true
-    } else if (maxHeight === null || height > maxHeight) {
-      maxHeight = height
+function findBindingAddress(
+  tx: WalletTxInfo,
+  ownedOutpoints: Set<string>,
+  direction: 'incoming' | 'outgoing',
+  network: BarkNetwork
+): string | undefined {
+  const lookForOwned = direction === 'incoming'
+  for (const out of decodeOutputs(tx.tx, network)) {
+    const isOwned = ownedOutpoints.has(makeOutpoint(tx.txid, out.vout))
+    if (isOwned === lookForOwned && out.address !== undefined) {
+      return out.address
     }
   }
-  if (anyUnconfirmed) {
-    return { confirmationHeight: maxHeight, status: 'pending' }
-  }
-  return { confirmationHeight: maxHeight, status: 'successful' }
+  return undefined
 }
 
 interface BuildOnchainOptions {
@@ -119,52 +76,21 @@ interface BuildOnchainOptions {
 }
 
 export function buildOnchainTxEntries(
-  transactions: TransactionInfo[],
+  transactions: WalletTxInfo[],
   utxos: UtxoInfo[],
   options: BuildOnchainOptions
 ): OnchainTxEntry[] {
-  const owned = buildOwnedOutpointMap(transactions, utxos, options.network)
-  const utxosByTxid = indexUtxosByTxid(utxos)
+  const ownedOutpoints = buildOwnedOutpoints(transactions, utxos)
   const entries: OnchainTxEntry[] = []
   for (const tx of transactions) {
-    const outputs = decodeOutputs(tx.tx, options.network)
-    const inputs = decodeInputs(tx.tx)
-
-    let outputsToUsSat = 0
-    for (const out of outputs) {
-      const outpoint = makeOutpoint(tx.txid, out.vout)
-      if (owned.ownedOutpoints.has(outpoint)) {
-        outputsToUsSat += out.valueSat
-      }
-    }
-
-    let inputsFromUsSat = 0
-    for (const input of inputs) {
-      const prevOutpoint = makeOutpoint(input.prevTxid, input.prevVout)
-      if (owned.ownedOutpoints.has(prevOutpoint)) {
-        inputsFromUsSat += owned.outputValueByOutpoint.get(prevOutpoint) ?? 0
-      }
-    }
-
-    const amountSat = outputsToUsSat - inputsFromUsSat
+    const amountSat = tx.balanceChangeSat
     const direction: 'incoming' | 'outgoing' = amountSat >= 0 ? 'incoming' : 'outgoing'
-
-    const lookForOwned = direction === 'incoming'
-    let bindingAddress: string | undefined
-    for (const out of outputs) {
-      const outpoint = makeOutpoint(tx.txid, out.vout)
-      const isOwned = owned.ownedOutpoints.has(outpoint)
-      if (isOwned === lookForOwned && out.address !== undefined) {
-        bindingAddress = out.address
-        break
-      }
-    }
-
-    const { status, confirmationHeight } = txStatus(utxosByTxid.get(tx.txid))
+    const confirmationHeight = tx.confirmation?.height ?? null
+    const status: MovementStatus = confirmationHeight === null ? 'pending' : 'successful'
     entries.push({
       amountSat,
       approximateTimestampMs: approximateTimestampMs(confirmationHeight, options.tipHeight),
-      bindingAddress,
+      bindingAddress: findBindingAddress(tx, ownedOutpoints, direction, options.network),
       confirmationHeight,
       direction,
       kind: 'onchain',
@@ -184,7 +110,7 @@ function rowTimestampMs(row: MovementsFeedRow): number {
 
 interface BuildFeedOptions {
   tipHeight?: number
-  transactions?: TransactionInfo[]
+  transactions?: WalletTxInfo[]
   utxos?: UtxoInfo[]
   network?: BarkNetwork
 }

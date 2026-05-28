@@ -1,5 +1,5 @@
 import { BarkNetwork } from '@secondts/barkd'
-import type { TransactionInfo, UtxoInfo } from '@secondts/barkd'
+import type { UtxoInfo, WalletTxInfo } from '@secondts/barkd'
 import { Transaction } from 'bitcoinjs-lib'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { buildMovementsFeed, buildOnchainTxEntries } from '../../src/utils/movements-feed'
@@ -62,6 +62,10 @@ function makeUtxo(outpoint: string, overrides: Partial<UtxoInfo> = {}): UtxoInfo
   }
 }
 
+function makeTx(tx: string, txid: string, overrides: Partial<WalletTxInfo> = {}): WalletTxInfo {
+  return { balanceChangeSat: 0, tx, txid, ...overrides }
+}
+
 const REGTEST_PROGRAM_A = '0000000000000000000000000000000000000001'
 const REGTEST_PROGRAM_B = '0000000000000000000000000000000000000002'
 
@@ -100,7 +104,7 @@ describe(buildMovementsFeed, () => {
   it('interleaves movements with onchain entries by timestamp', () => {
     const rawTx = buildRawTx([], [{ programHex: REGTEST_PROGRAM_A, valueSat: 1000 }])
     const txid = deriveTxid(rawTx)
-    const transactions: TransactionInfo[] = [{ tx: rawTx, txid }]
+    const transactions: WalletTxInfo[] = [makeTx(rawTx, txid)]
     const utxo = makeUtxo(`${txid}:0`, { amountSat: 1000, confirmationHeight: 100 })
     const movement = createMovement({ time: { createdAt: NOW, updatedAt: NOW } })
     const result = buildMovementsFeed([movement], {
@@ -131,9 +135,13 @@ describe(buildOnchainTxEntries, () => {
     const rawTx = buildRawTx([], [{ programHex: REGTEST_PROGRAM_A, valueSat: 50_000 }])
     const txid = deriveTxid(rawTx)
     const utxo = makeUtxo(`${txid}:0`, { amountSat: 50_000, confirmationHeight: null })
-    const entries = buildOnchainTxEntries([{ tx: rawTx, txid }], [utxo], {
-      network: BarkNetwork.Regtest
-    })
+    const entries = buildOnchainTxEntries(
+      [makeTx(rawTx, txid, { balanceChangeSat: 50_000 })],
+      [utxo],
+      {
+        network: BarkNetwork.Regtest
+      }
+    )
     expect(entries).toHaveLength(1)
     expect(entries[0].direction).toBe('incoming')
     expect(entries[0].amountSat).toBe(50_000)
@@ -152,9 +160,15 @@ describe(buildOnchainTxEntries, () => {
       ]
     )
     const sendTxid = deriveTxid(sendTx)
-    const transactions: TransactionInfo[] = [
-      { tx: fundingTx, txid: fundingTxid },
-      { tx: sendTx, txid: sendTxid }
+    const transactions: WalletTxInfo[] = [
+      makeTx(fundingTx, fundingTxid, {
+        balanceChangeSat: 100_000,
+        confirmation: { hash: 'block-100', height: 100 }
+      }),
+      makeTx(sendTx, sendTxid, {
+        balanceChangeSat: -61_000,
+        confirmation: { hash: 'block-200', height: 200 }
+      })
     ]
     const changeUtxo = makeUtxo(`${sendTxid}:1`, { amountSat: 39_000, confirmationHeight: 200 })
     const entries = buildOnchainTxEntries(transactions, [changeUtxo], {
@@ -166,24 +180,29 @@ describe(buildOnchainTxEntries, () => {
     expect(sendEntry?.direction).toBe('outgoing')
     expect(sendEntry?.amountSat).toBe(-61_000)
     expect(sendEntry?.status).toBe('successful')
+    expect(sendEntry?.confirmationHeight).toBe(200)
   })
 
-  it('marks status pending when any related utxo is unconfirmed', () => {
+  it('marks status pending when the tx is unconfirmed', () => {
     const rawTx = buildRawTx([], [{ programHex: REGTEST_PROGRAM_A, valueSat: 1000 }])
     const txid = deriveTxid(rawTx)
     const utxo = makeUtxo(`${txid}:0`, { amountSat: 1000, confirmationHeight: null })
-    const entries = buildOnchainTxEntries([{ tx: rawTx, txid }], [utxo], {
+    const entries = buildOnchainTxEntries([makeTx(rawTx, txid, { confirmation: null })], [utxo], {
       network: BarkNetwork.Regtest
     })
     expect(entries[0].status).toBe('pending')
+    expect(entries[0].confirmationHeight).toBeNull()
   })
 
-  it('defaults to successful when no utxos exist for txid', () => {
+  it('marks status successful when the tx is confirmed', () => {
     const rawTx = buildRawTx([], [{ programHex: REGTEST_PROGRAM_A, valueSat: 1000 }])
     const txid = deriveTxid(rawTx)
-    const entries = buildOnchainTxEntries([{ tx: rawTx, txid }], [], {
-      network: BarkNetwork.Regtest
-    })
+    const entries = buildOnchainTxEntries(
+      [makeTx(rawTx, txid, { confirmation: { hash: 'block-300', height: 300 } })],
+      [],
+      { network: BarkNetwork.Regtest }
+    )
     expect(entries[0].status).toBe('successful')
+    expect(entries[0].confirmationHeight).toBe(300)
   })
 })
