@@ -1,14 +1,25 @@
 manifestVersion: 1
-id: bark-web
-category: finance
-name: Bark
+id: bark-wallet
+category: bitcoin
+name: Bark Wallet
 version: '0.1.2'
-tagline: Self-custodial Ark wallet
+tagline: One wallet for Lightning, Ark, and on-chain
 description: >-
-  Bark is a self-custodial Bitcoin wallet built on the Ark protocol for
-  fast, low-fee off-chain payments while keeping unilateral exit
-  guarantees. Send and receive Bitcoin instantly via Ark rounds with
-  full control of your keys.
+  Send and receive bitcoin across Lightning, Ark, and on-chain from a single, simple wallet. Bark Wallet is self-custodial with no channels to open or liquidity to manage. Just install the wallet and start making payments.
+
+
+  Powered by Bark, Second's implementation of the Ark protocol. Bitcoin is held in your Ark balance and can be spent instantly across any of the supported protocols.
+
+
+  - **Pays to anything:** LNURL, BOLT 11, BOLT 12, BIP 321, you name it.
+  - **Low fees:** Competitive Lightning fees, and Ark payments are free.
+  - **Micropayments:** Send as little as a single sat over Ark for free, or via Lightning with standard routing fees.
+  - **Automatic refreshes:** Ark balances need periodic refreshes; Bark Wallet handles them in the background.
+  - **Always in control:** Trigger an emergency exit at any time to move your balance on-chain, even if the Ark server is offline.
+
+
+  Proudly open source, built as a reference implementation for developers. Fork the code and ship your own.
+
 releaseNotes: ''
 developer: Second
 website: https://second.tech
