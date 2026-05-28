@@ -32,4 +32,4 @@ USER barkd
 
 EXPOSE 4000
 
-CMD ["./barkd", "--port", "4000", "--host", "0.0.0.0", "--datadir", "/data/.bark"]
+CMD ["sh", "-c", "mkdir -p /data/.bark && exec ./barkd --port 4000 --host 0.0.0.0 --datadir /data/.bark"]

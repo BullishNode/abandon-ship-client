@@ -1,5 +1,7 @@
 #!/command/with-contenv sh
 exec 2>&1
+mkdir -p /data/.bark
+chown app:app /data/.bark
 exec s6-setuidgid app /usr/local/bin/barkd \
   --port 4000 \
   --host 127.0.0.1 \
