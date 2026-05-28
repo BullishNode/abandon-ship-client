@@ -36,7 +36,7 @@ import type { BitcoinUnit } from '@/types/bitcoin'
 import type { FiatCurrency, PriceProviderId } from '@/types/price-providers'
 import { estimateEmergencyExitFeeSat, summarizeExits } from '@/utils/exit-progress'
 
-const WALLET_DATA_PATH = '/wallet-data/.bark/'
+const WALLET_DATA_PATH = '/data/.bark/'
 const SEED_HIDDEN_PLACEHOLDER = Array.from({ length: 12 }, () =>
   '•'.repeat(4 + Math.floor(Math.random() * 5))
 ).join(' ')
