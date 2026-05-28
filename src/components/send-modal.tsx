@@ -1,6 +1,7 @@
 import { CaretDownIcon, ClipboardTextIcon } from '@phosphor-icons/react'
 import { AnimatePresence, m } from 'motion/react'
 import { useTranslation } from 'react-i18next'
+import { BrantaVerificationStatus } from '@/components/branta-verification-status'
 import { DestinationPicker } from '@/components/destination-picker'
 import {
   Modal,
@@ -157,37 +158,16 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                       selectedDestination={flow.destination}
                     />
                   )}
-                  {flow.isFetchingBranta && (
-                    <span className="text-muted-foreground animate-pulse text-xs">
-                      {t('send.branta.title')}: ...
-                    </span>
-                  )}
-                  {!flow.isFetchingBranta && flow.brantaPayment !== undefined && (
-                    <span className="text-muted-foreground text-xs">
-                      {t('send.branta.title')}:{' '}
-                      <a
-                        className="inline-flex items-center gap-1 align-middle"
-                        href={flow.brantaVerifyUrl}
-                        rel="noopener"
-                        target="_blank"
-                      >
-                        {(flow.brantaPayment.platformLogoLightUrl ??
-                          flow.brantaPayment.platformLogoUrl) !== undefined &&
-                          (flow.brantaPayment.platformLogoLightUrl ??
-                            flow.brantaPayment.platformLogoUrl) !== '' && (
-                            <img
-                              alt={flow.brantaPayment.platform ?? ''}
-                              className="inline-block h-4 w-auto rounded object-contain"
-                              src={
-                                flow.brantaPayment.platformLogoLightUrl ??
-                                flow.brantaPayment.platformLogoUrl
-                              }
-                            />
-                          )}
-                        {flow.brantaPayment.platform}
-                      </a>
-                    </span>
-                  )}
+                  <BrantaVerificationStatus
+                    isFetching={flow.isFetchingBranta}
+                    key={
+                      flow.brantaPayment?.platformLogoLightUrl ??
+                      flow.brantaPayment?.platformLogoUrl ??
+                      'pending'
+                    }
+                    payment={flow.brantaPayment}
+                    verifyUrl={flow.brantaVerifyUrl}
+                  />
                 </div>
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
