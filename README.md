@@ -67,6 +67,14 @@ docker compose --env-file .env.mainnet down -v
 
 Then run `npm run dev:signet` (or `:mainnet`) again.
 
+### Bump bark versions
+
+Use the helper script to bump bark/barkd versions:
+
+```bash
+bash scripts/bump-bark-version.sh <new-version>
+```
+
 ### Lint and Format
 
 We use [ultracite](https://docs.ultracite.ai/) with [oxlint](https://oxc.rs/docs/guide/usage/linter) and [oxfmt](https://oxc.rs/docs/guide/usage/formatter) for the linting and formatting.
