@@ -9,6 +9,12 @@ const BARKD_URL = process.env.BARKD_URL ?? 'http://barkd:4000'
 const ARK_SERVER = process.env.ARK_SERVER ?? ''
 const CHAIN_SOURCE = process.env.CHAIN_SOURCE ?? ''
 const BARK_NETWORK = process.env.BARK_NETWORK ?? 'signet'
+const ALLOWED_ORIGINS = new Set(
+  (process.env.ALLOWED_ORIGINS ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0)
+)
 
 const TOKEN_PATH = `${WALLET_DIR}/auth_token`
 const MNEMONIC_PATH = `${WALLET_DIR}/mnemonic`
@@ -53,7 +59,12 @@ app.use(
   cors({
     allowHeaders: ['Authorization', 'Content-Type'],
     allowMethods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    origin: (origin) => origin ?? '*'
+    origin: (origin) => {
+      if (origin === undefined) {
+        return origin
+      }
+      return ALLOWED_ORIGINS.has(origin) ? origin : null
+    }
   })
 )
 

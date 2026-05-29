@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: docker/bark-web.dev.Dockerfile
     ports:
-      - '5173:5173'
+      - "5173:5173"
     volumes:
       - .:/app
       - /app/node_modules
@@ -22,7 +22,7 @@ services:
       context: .
       dockerfile: docker/bark-web-api.dev.Dockerfile
     ports:
-      - '4001:4001'
+      - "127.0.0.1:4001:4001"
     volumes:
       - ./api:/app/api
       - /app/api/node_modules
@@ -35,7 +35,11 @@ services:
       - CHAIN_SOURCE=${CHAIN_SOURCE:-}
       - BARK_NETWORK=${BARK_NETWORK:-signet}
     healthcheck:
-      test: ['CMD-SHELL', 'wget -q -O- http://127.0.0.1:4001/health >/dev/null 2>&1 || exit 1']
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O- http://127.0.0.1:4001/health >/dev/null 2>&1 || exit 1",
+        ]
       interval: 2s
       timeout: 3s
       retries: 30
@@ -48,11 +52,11 @@ services:
       context: .
       dockerfile: docker/barkd.Dockerfile
       args:
-        BARK_VERSION: ${BARK_VERSION:-0.2.0}
+        BARK_VERSION: ${BARK_VERSION:-0.2.1}
         BARKD_SHA256_AMD64: ${BARKD_SHA256_AMD64:-}
         BARKD_SHA256_ARM64: ${BARKD_SHA256_ARM64:-}
     ports:
-      - '4000:4000'
+      - "127.0.0.1:4000:4000"
     volumes:
       - wallet-data:/data
 
