@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { useMovementSync } from '@/hooks/barkd/use-movement-sync'
-import { useMetadataMatcher } from '@/hooks/use-metadata-matcher'
 import { useModalsStore } from '@/stores/modals'
 
 const ROUTE_TITLE_KEYS: Record<string, string> = {
@@ -39,7 +38,6 @@ export default function DashboardLayout() {
       state.setReceiveOpen
     ])
   )
-  useMetadataMatcher()
   useMovementSync()
 
   const routeTitleKey = ROUTE_TITLE_KEYS[pathname]

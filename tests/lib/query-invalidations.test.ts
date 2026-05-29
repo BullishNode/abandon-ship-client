@@ -4,6 +4,7 @@ import type { MockInstance } from 'vitest'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   invalidateExitState,
+  invalidateMovements,
   invalidateOnchainState,
   invalidateWalletExistence,
   invalidateWalletState,
@@ -39,6 +40,13 @@ describe('query invalidations', () => {
     it('invalidates balance and transactions', async () => {
       await invalidateWalletState(queryClient)
       expect(invalidatedKeys()).toStrictEqual([walletKeys.balance(), walletKeys.transactions()])
+    })
+  })
+
+  describe(invalidateMovements, () => {
+    it('invalidates the wallet transactions key', async () => {
+      await invalidateMovements(queryClient)
+      expect(invalidatedKeys()).toStrictEqual([walletKeys.transactions()])
     })
   })
 

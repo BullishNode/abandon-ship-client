@@ -1,10 +1,11 @@
 import type { Movement } from '@secondts/barkd'
+import { BARK_WEB_METADATA_KEY } from '@/constants/metadata'
 import type {
-  AnnotationInput,
-  AnnotationSource,
+  BarkWebMovementMetadata,
   BindingDirection,
+  DestinationBinding,
   OnchainAnnotation,
-  TransactionAnnotation
+  OnchainAnnotationInput
 } from '@/types/metadata'
 
 export function dedupeNonEmpty(values: string[]): string[] {
@@ -45,24 +46,72 @@ export function movementDestinationValues(
   return values
 }
 
-export function buildAnnotation(
-  movementId: number,
-  source: AnnotationSource,
-  data: AnnotationInput
-): TransactionAnnotation {
-  const trimmedLabel = data.label?.trim()
-  const hasLabel = trimmedLabel !== undefined && trimmedLabel.length > 0
-  return {
-    contactId: data.contactId,
-    createdAt: new Date().toISOString(),
-    label: hasLabel ? trimmedLabel : undefined,
-    movementId,
-    source,
-    tags: data.tags
-  }
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-export function buildOnchainAnnotation(txid: string, data: AnnotationInput): OnchainAnnotation {
+function readStringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined
+  }
+  const out: string[] = []
+  for (const item of value) {
+    if (typeof item === 'string') {
+      out.push(item)
+    }
+  }
+  return out
+}
+
+export function getMovementMetadata(movement: Movement): BarkWebMovementMetadata | undefined {
+  const raw = movement.metadata?.[BARK_WEB_METADATA_KEY]
+  if (!isPlainObject(raw)) {
+    return undefined
+  }
+  const result: BarkWebMovementMetadata = {}
+  if (typeof raw.label === 'string') {
+    result.label = raw.label
+  }
+  const tags = readStringArray(raw.tags)
+  if (tags !== undefined) {
+    result.tags = tags
+  }
+  if (typeof raw.contactId === 'string') {
+    result.contactId = raw.contactId
+  }
+  if (typeof raw.updatedAt === 'string') {
+    result.updatedAt = raw.updatedAt
+  }
+  return result
+}
+
+export interface MovementMetadataPatch {
+  label?: string | null
+  tags?: string[] | null
+  contactId?: string | null
+}
+
+export function buildMovementMetadataPatchBody(
+  patch: MovementMetadataPatch
+): Record<string, unknown> {
+  const inner: Record<string, unknown> = {}
+  if ('label' in patch) {
+    inner.label = patch.label === undefined ? null : patch.label
+  }
+  if ('tags' in patch) {
+    inner.tags = patch.tags === undefined ? null : patch.tags
+  }
+  if ('contactId' in patch) {
+    inner.contactId = patch.contactId === undefined ? null : patch.contactId
+  }
+  inner.updatedAt = new Date().toISOString()
+  return { [BARK_WEB_METADATA_KEY]: inner }
+}
+
+export function buildOnchainAnnotation(
+  txid: string,
+  data: OnchainAnnotationInput
+): OnchainAnnotation {
   const trimmedLabel = data.label?.trim()
   const hasLabel = trimmedLabel !== undefined && trimmedLabel.length > 0
   return {
@@ -71,4 +120,93 @@ export function buildOnchainAnnotation(txid: string, data: AnnotationInput): Onc
     tags: data.tags,
     txid
   }
+}
+
+export interface BindingPromotion {
+  bindingId: string
+  movementId: number
+  metadata: BarkWebMovementMetadata
+}
+
+function bindingToMetadata(binding: DestinationBinding): BarkWebMovementMetadata {
+  const trimmedLabel = binding.label?.trim()
+  const hasLabel = trimmedLabel !== undefined && trimmedLabel.length > 0
+  return {
+    contactId: binding.contactId,
+    label: hasLabel ? trimmedLabel : undefined,
+    tags: binding.tags
+  }
+}
+
+export function computeBindingPromotions(
+  movements: Movement[],
+  bindings: DestinationBinding[]
+): BindingPromotion[] {
+  if (bindings.length === 0) {
+    return []
+  }
+  const promotions: BindingPromotion[] = []
+  const consumed = new Set<string>()
+  for (const movement of movements) {
+    if (getMovementMetadata(movement) !== undefined) {
+      continue
+    }
+    const direction = movementDirection(movement)
+    if (direction === null) {
+      continue
+    }
+    const destinations = movementDestinationValues(movement, direction)
+    if (destinations.length === 0) {
+      continue
+    }
+    const destinationSet = new Set(destinations)
+    let matched: DestinationBinding | undefined
+    for (const binding of bindings) {
+      if (consumed.has(binding.id) || binding.direction !== direction) {
+        continue
+      }
+      if (!binding.destinations.some((value) => destinationSet.has(value))) {
+        continue
+      }
+      if (matched === undefined || binding.createdAt > matched.createdAt) {
+        matched = binding
+      }
+    }
+    if (matched === undefined) {
+      continue
+    }
+    consumed.add(matched.id)
+    promotions.push({
+      bindingId: matched.id,
+      metadata: bindingToMetadata(matched),
+      movementId: movement.id
+    })
+  }
+  return promotions
+}
+
+export function applyBindingPromotions(
+  movements: Movement[],
+  promotions: BindingPromotion[]
+): Movement[] {
+  if (promotions.length === 0) {
+    return movements
+  }
+  const byId = new Map<number, BarkWebMovementMetadata>()
+  for (const promotion of promotions) {
+    byId.set(promotion.movementId, promotion.metadata)
+  }
+  return movements.map((movement) => {
+    const promoted = byId.get(movement.id)
+    if (promoted === undefined) {
+      return movement
+    }
+    return {
+      ...movement,
+      metadata: {
+        ...movement.metadata,
+        [BARK_WEB_METADATA_KEY]: { ...promoted, updatedAt: new Date().toISOString() }
+      }
+    }
+  })
 }

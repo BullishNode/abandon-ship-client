@@ -8,6 +8,10 @@ export async function invalidateWalletState(queryClient: QueryClient) {
   ])
 }
 
+export async function invalidateMovements(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: walletKeys.transactions() })
+}
+
 export async function invalidateOnchainState(queryClient: QueryClient) {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: onchainKeys.balance() }),

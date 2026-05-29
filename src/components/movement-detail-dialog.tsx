@@ -1,6 +1,5 @@
 import type { Movement } from '@secondts/barkd'
 import { useTranslation } from 'react-i18next'
-import { useShallow } from 'zustand/react/shallow'
 import { MovementAmountCell } from '@/components/movement-amount-cell'
 import { CopyableValueRow, DetailRow, LabelEditor } from '@/components/movement-detail-shared'
 import { MovementSourceBadge } from '@/components/movement-source-badge'
@@ -8,8 +7,8 @@ import { MovementStatusBadge } from '@/components/movement-status-badge'
 import { TagInput } from '@/components/tag-input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { useMetadataStore } from '@/stores/metadata'
-import { useWalletStore } from '@/stores/wallet'
+import { useUpdateMovementMetadata } from '@/hooks/barkd/use-update-movement-metadata'
+import { getMovementMetadata } from '@/utils/metadata'
 import {
   getMovementCounterpartyDestination,
   getMovementDirection,
@@ -74,13 +73,8 @@ function MovementDetailContent({
 }: MovementDetailContentProps) {
   const { t } = useTranslation()
   const movementId = movement.id
-  const fingerprint = useWalletStore((state) => state.wallet?.fingerprint)
-  const [annotation, setManualAnnotation] = useMetadataStore(
-    useShallow((state) => [
-      fingerprint === undefined ? undefined : state.annotations[fingerprint]?.[movementId],
-      state.setManualAnnotation
-    ])
-  )
+  const metadata = getMovementMetadata(movement)
+  const updateMetadata = useUpdateMovementMetadata()
   const direction = getMovementDirection(movement)
   const counterparty = getMovementCounterpartyDestination(movement)
   const source = getMovementSource(movement)
@@ -135,12 +129,11 @@ function MovementDetailContent({
         ) : null}
         <LabelEditor
           inputId="movement-label"
-          label={annotation?.label ?? ''}
+          label={metadata?.label ?? ''}
           onSave={(nextLabel) => {
-            setManualAnnotation(movementId, {
-              contactId: annotation?.contactId,
-              label: nextLabel,
-              tags: annotation?.tags ?? []
+            updateMetadata.mutate({
+              id: movementId,
+              patch: { label: nextLabel.length > 0 ? nextLabel : null }
             })
           }}
         />
@@ -148,13 +141,12 @@ function MovementDetailContent({
           <Label>{t('movements.detail.tags')}</Label>
           <TagInput
             onChange={(nextTags) => {
-              setManualAnnotation(movementId, {
-                contactId: annotation?.contactId,
-                label: annotation?.label,
-                tags: nextTags
+              updateMetadata.mutate({
+                id: movementId,
+                patch: { tags: nextTags.length > 0 ? nextTags : null }
               })
             }}
-            value={annotation?.tags ?? []}
+            value={metadata?.tags ?? []}
           />
         </div>
       </div>

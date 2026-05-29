@@ -1,5 +1,4 @@
 import { DotsThreeVerticalIcon, QrCodeIcon, ScanIcon, TrayIcon } from '@phosphor-icons/react'
-import type { Movement } from '@secondts/barkd'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useShallow } from 'zustand/react/shallow'
@@ -43,7 +42,7 @@ export function MovementsTable() {
     useShallow((state) => [state.openSend, state.openReceive])
   )
   const { sats: formatSats, fiat: formatFiat } = usePrivateAmount()
-  const [selectedMovement, setSelectedMovement] = useState<Movement | null>(null)
+  const [selectedMovementId, setSelectedMovementId] = useState<number | null>(null)
   const [movementOpen, setMovementOpen] = useState(false)
   const [selectedOnchain, setSelectedOnchain] = useState<OnchainTxEntry | null>(null)
   const [onchainOpen, setOnchainOpen] = useState(false)
@@ -57,6 +56,10 @@ export function MovementsTable() {
     transactions,
     utxos
   })
+  const selectedMovement =
+    selectedMovementId === null
+      ? null
+      : (movements.find((movement) => movement.id === selectedMovementId) ?? null)
 
   function formatDate(date: Date): string {
     return formatRelativeTime(date, i18n.language)
@@ -68,7 +71,7 @@ export function MovementsTable() {
 
   function handleRowClick(row: MovementsFeedRow) {
     if (row.kind === 'movement') {
-      setSelectedMovement(row.movement)
+      setSelectedMovementId(row.movement.id)
       setMovementOpen(true)
       return
     }
@@ -79,7 +82,7 @@ export function MovementsTable() {
   function handleMovementOpenChange(nextOpen: boolean) {
     setMovementOpen(nextOpen)
     if (!nextOpen) {
-      setSelectedMovement(null)
+      setSelectedMovementId(null)
     }
   }
 

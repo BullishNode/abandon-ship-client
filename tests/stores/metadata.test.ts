@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BINDING_TTL_MS, MAX_BINDINGS } from '../../src/constants/metadata'
 import { useMetadataStore } from '../../src/stores/metadata'
 import { useWalletStore } from '../../src/stores/wallet'
-import { createMovement } from '../fixtures/movements'
 
 const TEST_FP = 'test-fingerprint'
 
@@ -12,7 +11,6 @@ function resetStore() {
     wallet: { createdAt: '2026-01-01T00:00:00.000Z', fingerprint: TEST_FP, name: 'Test' }
   })
   useMetadataStore.setState({
-    annotations: {},
     bindings: {},
     contacts: [],
     onchainAnnotations: {},
@@ -187,137 +185,18 @@ describe('metadata store', () => {
     })
   })
 
-  describe('setManualAnnotation / getAnnotation', () => {
-    it('roundtrips a manual annotation', () => {
-      useMetadataStore.getState().setManualAnnotation(42, { label: 'Coffee', tags: ['food'] })
-      const annotation = useMetadataStore.getState().getAnnotation(42)
-      expect(annotation?.label).toBe('Coffee')
-      expect(annotation?.source).toBe('manual')
-      expect(annotation?.movementId).toBe(42)
-    })
-
-    it('returns undefined for unknown movement', () => {
-      expect(useMetadataStore.getState().getAnnotation(999)).toBeUndefined()
-    })
-
-    it('isolates annotations by wallet fingerprint', () => {
-      useMetadataStore.getState().setManualAnnotation(1, { label: 'first', tags: [] })
-      useWalletStore.setState({
-        wallet: { createdAt: '2026-01-01T00:00:00.000Z', fingerprint: 'other-fp', name: 'Other' }
-      })
-      expect(useMetadataStore.getState().getAnnotation(1)).toBeUndefined()
-    })
-  })
-
   describe('setOnchainAnnotation / getOnchainAnnotation', () => {
     it('roundtrips an onchain annotation', () => {
       useMetadataStore.getState().setOnchainAnnotation('tx:0', { label: 'cold', tags: [] })
       expect(useMetadataStore.getState().getOnchainAnnotation('tx:0')?.label).toBe('cold')
     })
-  })
 
-  describe('matchMovement', () => {
-    it('skips when an annotation already exists', () => {
-      useMetadataStore.getState().setManualAnnotation(1, { label: 'manual', tags: [] })
-      useMetadataStore.getState().upsertBinding({
-        destinations: ['addr-a'],
-        direction: 'incoming',
-        label: 'binding',
-        tags: []
-      })
-      useMetadataStore.getState().matchMovement(
-        createMovement({
-          effectiveBalanceSat: 100,
-          id: 1,
-          receivedOn: [{ amountSat: 100, destination: { type: 'bitcoin', value: 'addr-a' } }]
-        })
-      )
-      expect(useMetadataStore.getState().getAnnotation(1)?.label).toBe('manual')
-    })
-
-    it('skips when direction is null (zero balance)', () => {
-      useMetadataStore.getState().upsertBinding({
-        destinations: ['addr-a'],
-        direction: 'incoming',
-        tags: []
-      })
-      useMetadataStore.getState().matchMovement(
-        createMovement({
-          effectiveBalanceSat: 0,
-          id: 2,
-          receivedOn: [{ amountSat: 0, destination: { type: 'bitcoin', value: 'addr-a' } }]
-        })
-      )
-      expect(useMetadataStore.getState().getAnnotation(2)).toBeUndefined()
-    })
-
-    it('skips when no binding matches the direction', () => {
-      useMetadataStore.getState().upsertBinding({
-        destinations: ['addr-a'],
-        direction: 'outgoing',
-        tags: []
-      })
-      useMetadataStore.getState().matchMovement(
-        createMovement({
-          effectiveBalanceSat: 100,
-          id: 3,
-          receivedOn: [{ amountSat: 100, destination: { type: 'bitcoin', value: 'addr-a' } }]
-        })
-      )
-      expect(useMetadataStore.getState().getAnnotation(3)).toBeUndefined()
-    })
-
-    it('picks the newest binding when multiple match', () => {
-      useMetadataStore.setState({
-        bindings: {
-          [TEST_FP]: [
-            {
-              createdAt: '2026-01-01T00:00:00.000Z',
-              destinations: ['addr-a'],
-              direction: 'incoming',
-              id: 'old',
-              label: 'old-label',
-              tags: []
-            },
-            {
-              createdAt: '2026-05-01T00:00:00.000Z',
-              destinations: ['addr-a'],
-              direction: 'incoming',
-              id: 'new',
-              label: 'new-label',
-              tags: []
-            }
-          ]
-        }
-      })
-      useMetadataStore.getState().matchMovement(
-        createMovement({
-          effectiveBalanceSat: 100,
-          id: 5,
-          receivedOn: [{ amountSat: 100, destination: { type: 'bitcoin', value: 'addr-a' } }]
-        })
-      )
-      expect(useMetadataStore.getState().getAnnotation(5)?.label).toBe('new-label')
-    })
-
-    it('does not match bindings from another wallet fingerprint', () => {
-      useMetadataStore.getState().upsertBinding({
-        destinations: ['addr-a'],
-        direction: 'incoming',
-        label: 'wrong-wallet',
-        tags: []
-      })
+    it('isolates onchain annotations by wallet fingerprint', () => {
+      useMetadataStore.getState().setOnchainAnnotation('tx:0', { label: 'first', tags: [] })
       useWalletStore.setState({
         wallet: { createdAt: '2026-01-01T00:00:00.000Z', fingerprint: 'other-fp', name: 'Other' }
       })
-      useMetadataStore.getState().matchMovement(
-        createMovement({
-          effectiveBalanceSat: 100,
-          id: 1,
-          receivedOn: [{ amountSat: 100, destination: { type: 'bitcoin', value: 'addr-a' } }]
-        })
-      )
-      expect(useMetadataStore.getState().getAnnotation(1)).toBeUndefined()
+      expect(useMetadataStore.getState().getOnchainAnnotation('tx:0')).toBeUndefined()
     })
   })
 })

@@ -51,7 +51,7 @@ export function getMovementColumns({
         const entry = row.original
         if (entry.kind === 'movement') {
           const fallback = getSubsystemFallback(entry.movement.subsystem, t)
-          return <MovementLabelCell fallback={fallback} movementId={entry.movement.id} />
+          return <MovementLabelCell fallback={fallback} movement={entry.movement} />
         }
         return <OnchainLabelCell bindingAddress={entry.bindingAddress} txid={entry.txid} />
       },
