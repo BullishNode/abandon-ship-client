@@ -5,6 +5,28 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.5] - 2026-05-29
+
+### Added
+
+- Movement metadata (labels and tags) is now persisted in the bark database via new endpoints.
+- On-chain fees are shown in the movement detail dialog.
+
+### Changed
+
+- Updated `@secondts/barkd` to 0.2.1.
+- Bumped `bip-321` to `0.0.11` for an encoding fix.
+
+### Fixed
+
+- Send modal now renders a skeleton while Branta verification is in flight, instead of an empty area.
+- Settings shows the correct `/data/.bark` backup path.
+- `barkd` data directory is created at container startup, so first-run no longer fails when the volume is empty.
+
+### Security
+
+- API CORS is restricted to the configured web origin and dev ports bind to `localhost` only, preventing other hosts on the network from reaching the local dev API.
+
 ## [0.1.4] - 2026-05-26
 
 ### Added
@@ -112,6 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - UI flickers on modal transitions.
 - Multi-row display for long content.
 
+[0.1.5]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.1.5
 [0.1.4]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.1.4
 [0.1.3]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.1.3
 [0.1.2]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.1.2
