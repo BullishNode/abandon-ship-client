@@ -17,6 +17,7 @@ function makeOnchainEntry(overrides: Partial<OnchainTxEntry> = {}): OnchainTxEnt
     confirmationHeight: null,
     direction: 'incoming',
     feeSat: null,
+    firstSeenMs: null,
     kind: 'onchain',
     status: 'successful',
     txid: 'tx',
@@ -52,13 +53,19 @@ describe(computeBalanceHistory, () => {
       effectiveBalanceSat: 30_000,
       id: 1,
       status: 'successful',
-      time: { createdAt: new Date('2026-06-02T11:48:43Z'), updatedAt: new Date('2026-06-02T11:48:44Z') }
+      time: {
+        createdAt: new Date('2026-06-02T11:48:43Z'),
+        updatedAt: new Date('2026-06-02T11:48:44Z')
+      }
     })
     const pendingBoard = createMovement({
       effectiveBalanceSat: 10_000,
       id: 2,
       status: 'pending',
-      time: { createdAt: new Date('2026-06-02T12:07:52Z'), updatedAt: new Date('2026-06-02T12:07:52Z') }
+      time: {
+        createdAt: new Date('2026-06-02T12:07:52Z'),
+        updatedAt: new Date('2026-06-02T12:07:52Z')
+      }
     })
     const result = computeBalanceHistory([received, pendingBoard], [], 40_000)
     expect(result.initialBalanceSat).toBe(0)

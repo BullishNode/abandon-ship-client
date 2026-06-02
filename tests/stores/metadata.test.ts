@@ -14,6 +14,7 @@ function resetStore() {
     bindings: {},
     contacts: [],
     onchainAnnotations: {},
+    onchainFirstSeen: {},
     tags: []
   })
 }
@@ -197,6 +198,50 @@ describe('metadata store', () => {
         wallet: { createdAt: '2026-01-01T00:00:00.000Z', fingerprint: 'other-fp', name: 'Other' }
       })
       expect(useMetadataStore.getState().getOnchainAnnotation('tx:0')).toBeUndefined()
+    })
+  })
+
+  describe('recordOnchainFirstSeen', () => {
+    const NOW = new Date('2026-05-13T00:00:00Z')
+
+    beforeEach(() => {
+      vi.useFakeTimers()
+      vi.setSystemTime(NOW)
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('stamps newly seen txids with the current time', () => {
+      useMetadataStore.getState().recordOnchainFirstSeen(['txa', 'txb'])
+      expect(useMetadataStore.getState().onchainFirstSeen[TEST_FP]).toStrictEqual({
+        txa: NOW.toISOString(),
+        txb: NOW.toISOString()
+      })
+    })
+
+    it('does not overwrite the first-seen time of an already known txid', () => {
+      useMetadataStore.getState().recordOnchainFirstSeen(['txa'])
+      vi.setSystemTime(new Date('2026-05-13T01:00:00Z'))
+      useMetadataStore.getState().recordOnchainFirstSeen(['txa', 'txb'])
+      const map = useMetadataStore.getState().onchainFirstSeen[TEST_FP]
+      expect(map?.txa).toBe(NOW.toISOString())
+      expect(map?.txb).toBe('2026-05-13T01:00:00.000Z')
+    })
+
+    it('scopes first-seen records by wallet fingerprint', () => {
+      useMetadataStore.getState().recordOnchainFirstSeen(['txa'])
+      useWalletStore.setState({
+        wallet: { createdAt: '2026-01-01T00:00:00.000Z', fingerprint: 'other-fp', name: 'Other' }
+      })
+      useMetadataStore.getState().recordOnchainFirstSeen(['txb'])
+      expect(
+        Object.keys(useMetadataStore.getState().onchainFirstSeen[TEST_FP] ?? {})
+      ).toStrictEqual(['txa'])
+      expect(
+        Object.keys(useMetadataStore.getState().onchainFirstSeen['other-fp'] ?? {})
+      ).toStrictEqual(['txb'])
     })
   })
 })

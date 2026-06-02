@@ -18,6 +18,7 @@ import { useOnchainUtxos } from '@/hooks/barkd/use-onchain-utxos'
 import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
 import { config } from '@/config/barkd'
 import { usePrivateAmount } from '@/hooks/use-private-amount'
+import { useOnchainFirstSeen } from '@/stores/metadata'
 import { useModalsStore } from '@/stores/modals'
 import { useSettingsStore } from '@/stores/settings'
 import { buildMovementsFeed } from '@/utils/movements-feed'
@@ -31,6 +32,7 @@ export function MovementsTable() {
   const { data: utxos = [] } = useOnchainUtxos()
   const { data: transactions = [] } = useOnchainTransactions()
   const { data: tip } = useBitcoinTip()
+  const firstSeenAt = useOnchainFirstSeen()
   const [discreteMode, hideRefreshMovements, setHideRefreshMovements] = useSettingsStore(
     useShallow((state) => [
       state.discreteMode,
@@ -51,6 +53,7 @@ export function MovementsTable() {
     ? movements.filter((movement) => movement.subsystem.kind !== 'refresh')
     : movements
   const feed = buildMovementsFeed(visibleMovements, {
+    firstSeenAt,
     network: config.network,
     tipHeight: tip?.tipHeight,
     transactions,

@@ -25,6 +25,7 @@ export interface MetadataStore {
   contacts: Contact[]
   bindings: Record<string, DestinationBinding[]>
   onchainAnnotations: Record<string, Record<string, OnchainAnnotation>>
+  onchainFirstSeen: Record<string, Record<string, string>>
   addTag: (name: string) => string
   removeTag: (name: string) => void
   addContact: (name: string) => Contact
@@ -34,7 +35,10 @@ export interface MetadataStore {
   pruneBindings: () => void
   setOnchainAnnotation: (txid: string, input: OnchainAnnotationInput) => void
   getOnchainAnnotation: (txid: string) => OnchainAnnotation | undefined
+  recordOnchainFirstSeen: (txids: string[]) => void
 }
+
+const EMPTY_FIRST_SEEN: Record<string, string> = {}
 
 function getCurrentFingerprint(): string | undefined {
   return useWalletStore.getState().wallet?.fingerprint
@@ -78,6 +82,7 @@ export const useMetadataStore = create<MetadataStore>()(
         return namespace?.[txid]
       },
       onchainAnnotations: {},
+      onchainFirstSeen: {},
       pruneBindings: () => {
         const cutoff = Date.now() - BINDING_TTL_MS
         set((state) => {
@@ -86,6 +91,28 @@ export const useMetadataStore = create<MetadataStore>()(
             next[fp] = list.filter((binding) => new Date(binding.createdAt).getTime() >= cutoff)
           }
           return { bindings: next }
+        })
+      },
+      recordOnchainFirstSeen: (txids) => {
+        const fp = getCurrentFingerprint()
+        if (fp === undefined) {
+          return
+        }
+        set((state) => {
+          const existing = state.onchainFirstSeen[fp] ?? {}
+          const now = new Date().toISOString()
+          let changed = false
+          const next = { ...existing }
+          for (const txid of txids) {
+            if (next[txid] === undefined) {
+              next[txid] = now
+              changed = true
+            }
+          }
+          if (!changed) {
+            return state
+          }
+          return { onchainFirstSeen: { ...state.onchainFirstSeen, [fp]: next } }
         })
       },
       removeBinding: (id) => {
@@ -179,3 +206,12 @@ export const useMetadataStore = create<MetadataStore>()(
     }
   )
 )
+
+export function useOnchainFirstSeen(): Record<string, string> {
+  const fingerprint = useWalletStore((state) => state.wallet?.fingerprint)
+  const firstSeen = useMetadataStore((state) => state.onchainFirstSeen)
+  if (fingerprint === undefined) {
+    return EMPTY_FIRST_SEEN
+  }
+  return firstSeen[fingerprint] ?? EMPTY_FIRST_SEEN
+}

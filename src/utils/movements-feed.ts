@@ -11,6 +11,7 @@ export interface OnchainTxEntry {
   bindingAddress: string | undefined
   confirmationHeight: number | null
   approximateTimestampMs: number
+  firstSeenMs: number | null
   feeSat: number | null
 }
 
@@ -25,15 +26,22 @@ function makeOutpoint(txid: string, vout: number): string {
   return `${txid}:${vout}`
 }
 
+function firstSeenMs(txid: string, firstSeenAt: Record<string, string>): number | null {
+  const iso = firstSeenAt[txid]
+  if (iso === undefined) {
+    return null
+  }
+  const ms = new Date(iso).getTime()
+  return Number.isNaN(ms) ? null : ms
+}
+
 function approximateTimestampMs(
   confirmationHeight: number | null,
-  tipHeight: number | undefined
+  tipHeight: number | undefined,
+  firstSeen: number | null
 ): number {
-  if (confirmationHeight === null) {
-    return Date.now()
-  }
-  if (tipHeight === undefined || tipHeight < confirmationHeight) {
-    return Date.now()
+  if (confirmationHeight === null || tipHeight === undefined || tipHeight < confirmationHeight) {
+    return firstSeen ?? Date.now()
   }
   const elapsedBlocks = tipHeight - confirmationHeight
   return Date.now() - elapsedBlocks * AVERAGE_BLOCK_INTERVAL_MS
@@ -74,6 +82,7 @@ function findBindingAddress(
 interface BuildOnchainOptions {
   tipHeight?: number
   network: BarkNetwork
+  firstSeenAt?: Record<string, string>
 }
 
 export function buildOnchainTxEntries(
@@ -82,19 +91,26 @@ export function buildOnchainTxEntries(
   options: BuildOnchainOptions
 ): OnchainTxEntry[] {
   const ownedOutpoints = buildOwnedOutpoints(transactions, utxos)
+  const firstSeenAt = options.firstSeenAt ?? {}
   const entries: OnchainTxEntry[] = []
   for (const tx of transactions) {
     const amountSat = tx.balanceChangeSat
     const direction: 'incoming' | 'outgoing' = amountSat >= 0 ? 'incoming' : 'outgoing'
     const confirmationHeight = tx.confirmation?.height ?? null
     const status: MovementStatus = confirmationHeight === null ? 'pending' : 'successful'
+    const firstSeen = firstSeenMs(tx.txid, firstSeenAt)
     entries.push({
       amountSat,
-      approximateTimestampMs: approximateTimestampMs(confirmationHeight, options.tipHeight),
+      approximateTimestampMs: approximateTimestampMs(
+        confirmationHeight,
+        options.tipHeight,
+        firstSeen
+      ),
       bindingAddress: findBindingAddress(tx, ownedOutpoints, direction, options.network),
       confirmationHeight,
       direction,
       feeSat: tx.onchainFeeSat ?? null,
+      firstSeenMs: firstSeen,
       kind: 'onchain',
       status,
       txid: tx.txid
@@ -110,11 +126,30 @@ function rowTimestampMs(row: MovementsFeedRow): number {
   return row.approximateTimestampMs
 }
 
+function rowTieBreak(row: MovementsFeedRow): number {
+  if (row.kind === 'movement') {
+    return row.movement.time.createdAt.getTime()
+  }
+  if (row.firstSeenMs !== null) {
+    return row.firstSeenMs
+  }
+  return row.confirmationHeight ?? 0
+}
+
+function compareRows(a: MovementsFeedRow, b: MovementsFeedRow): number {
+  const byTimestamp = rowTimestampMs(b) - rowTimestampMs(a)
+  if (byTimestamp !== 0) {
+    return byTimestamp
+  }
+  return rowTieBreak(b) - rowTieBreak(a)
+}
+
 interface BuildFeedOptions {
   tipHeight?: number
   transactions?: WalletTxInfo[]
   utxos?: UtxoInfo[]
   network?: BarkNetwork
+  firstSeenAt?: Record<string, string>
 }
 
 export function buildMovementsFeed(
@@ -128,11 +163,12 @@ export function buildMovementsFeed(
   let onchainEntries: MovementsFeedRow[] = []
   if (options.network !== undefined && options.transactions !== undefined) {
     onchainEntries = buildOnchainTxEntries(options.transactions, options.utxos ?? [], {
+      firstSeenAt: options.firstSeenAt,
       network: options.network,
       tipHeight: options.tipHeight
     })
   }
   const combined = [...movementEntries, ...onchainEntries]
-  combined.sort((a, b) => rowTimestampMs(b) - rowTimestampMs(a))
+  combined.sort(compareRows)
   return combined
 }

@@ -117,6 +117,66 @@ describe(buildMovementsFeed, () => {
     expect(result.some((row) => row.kind === 'movement')).toBeTruthy()
     expect(result.some((row) => row.kind === 'onchain')).toBeTruthy()
   })
+
+  it('orders two pending onchain txs by first-seen time, newest first', () => {
+    const txA = buildRawTx([], [{ programHex: REGTEST_PROGRAM_A, valueSat: 1000 }])
+    const txidA = deriveTxid(txA)
+    const txB = buildRawTx([], [{ programHex: REGTEST_PROGRAM_B, valueSat: 2000 }])
+    const txidB = deriveTxid(txB)
+    const transactions: WalletTxInfo[] = [
+      makeTx(txA, txidA, { balanceChangeSat: 1000 }),
+      makeTx(txB, txidB, { balanceChangeSat: 2000 })
+    ]
+    const result = buildMovementsFeed([], {
+      firstSeenAt: {
+        [txidA]: '2026-05-12T10:00:00Z',
+        [txidB]: '2026-05-12T10:05:00Z'
+      },
+      network: BarkNetwork.Regtest,
+      transactions
+    })
+    const txids = result.flatMap((row) => (row.kind === 'onchain' ? [row.txid] : []))
+    expect(txids).toStrictEqual([txidB, txidA])
+  })
+
+  it('breaks same-block confirmed ties by first-seen time', () => {
+    const txA = buildRawTx([], [{ programHex: REGTEST_PROGRAM_A, valueSat: 1000 }])
+    const txidA = deriveTxid(txA)
+    const txB = buildRawTx([], [{ programHex: REGTEST_PROGRAM_B, valueSat: 2000 }])
+    const txidB = deriveTxid(txB)
+    const transactions: WalletTxInfo[] = [
+      makeTx(txA, txidA, { balanceChangeSat: 1000, confirmation: { hash: 'b', height: 100 } }),
+      makeTx(txB, txidB, { balanceChangeSat: 2000, confirmation: { hash: 'b', height: 100 } })
+    ]
+    const result = buildMovementsFeed([], {
+      firstSeenAt: {
+        [txidA]: '2026-05-12T10:00:00Z',
+        [txidB]: '2026-05-12T10:05:00Z'
+      },
+      network: BarkNetwork.Regtest,
+      tipHeight: 110,
+      transactions
+    })
+    const txids = result.flatMap((row) => (row.kind === 'onchain' ? [row.txid] : []))
+    expect(txids).toStrictEqual([txidB, txidA])
+  })
+
+  it('keeps API order for pending txs without first-seen data', () => {
+    const txA = buildRawTx([], [{ programHex: REGTEST_PROGRAM_A, valueSat: 1000 }])
+    const txidA = deriveTxid(txA)
+    const txB = buildRawTx([], [{ programHex: REGTEST_PROGRAM_B, valueSat: 2000 }])
+    const txidB = deriveTxid(txB)
+    const transactions: WalletTxInfo[] = [
+      makeTx(txA, txidA, { balanceChangeSat: 1000 }),
+      makeTx(txB, txidB, { balanceChangeSat: 2000 })
+    ]
+    const result = buildMovementsFeed([], {
+      network: BarkNetwork.Regtest,
+      transactions
+    })
+    const txids = result.flatMap((row) => (row.kind === 'onchain' ? [row.txid] : []))
+    expect(txids).toStrictEqual([txidA, txidB])
+  })
 })
 
 describe(buildOnchainTxEntries, () => {
@@ -219,5 +279,27 @@ describe(buildOnchainTxEntries, () => {
     )
     expect(entries[0].status).toBe('successful')
     expect(entries[0].confirmationHeight).toBe(300)
+  })
+
+  it('uses the first-seen time as the timestamp for pending txs', () => {
+    const rawTx = buildRawTx([], [{ programHex: REGTEST_PROGRAM_A, valueSat: 1000 }])
+    const txid = deriveTxid(rawTx)
+    const seenMs = new Date('2026-05-10T00:00:00Z').getTime()
+    const [entry] = buildOnchainTxEntries([makeTx(rawTx, txid)], [], {
+      firstSeenAt: { [txid]: '2026-05-10T00:00:00Z' },
+      network: BarkNetwork.Regtest
+    })
+    expect(entry.firstSeenMs).toBe(seenMs)
+    expect(entry.approximateTimestampMs).toBe(seenMs)
+  })
+
+  it('falls back to now for the timestamp when no first-seen time exists', () => {
+    const rawTx = buildRawTx([], [{ programHex: REGTEST_PROGRAM_A, valueSat: 1000 }])
+    const txid = deriveTxid(rawTx)
+    const [entry] = buildOnchainTxEntries([makeTx(rawTx, txid)], [], {
+      network: BarkNetwork.Regtest
+    })
+    expect(entry.firstSeenMs).toBeNull()
+    expect(entry.approximateTimestampMs).toBe(NOW.getTime())
   })
 })
