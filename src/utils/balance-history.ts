@@ -1,4 +1,4 @@
-import type { Movement } from '@secondts/barkd'
+import type { Movement, MovementStatus } from '@secondts/barkd'
 import type { OnchainTxEntry } from '@/utils/movements-feed'
 
 export interface BalanceDataPoint {
@@ -23,10 +23,12 @@ interface BalanceEvent {
   deltaSat: number
 }
 
+const NON_BALANCE_MOVEMENT_STATUSES = new Set<MovementStatus>(['failed', 'canceled'])
+
 function movementEvents(movements: Movement[]): BalanceEvent[] {
   const out: BalanceEvent[] = []
   for (const movement of movements) {
-    if (movement.status !== 'successful') {
+    if (NON_BALANCE_MOVEMENT_STATUSES.has(movement.status)) {
       continue
     }
     out.push({

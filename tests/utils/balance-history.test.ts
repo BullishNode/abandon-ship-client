@@ -31,16 +31,38 @@ describe(computeBalanceHistory, () => {
     expect(result.initialBalanceSat).toBe(10_000)
   })
 
-  it('filters out non-successful movements', () => {
+  it('filters out failed and canceled movements', () => {
     const failed = createMovement({
       effectiveBalanceSat: 1000,
+      id: 1,
       status: 'failed',
-      time: {
-        createdAt: new Date('2026-01-01'),
-        updatedAt: new Date('2026-01-01')
-      }
+      time: { createdAt: new Date('2026-01-01'), updatedAt: new Date('2026-01-01') }
     })
-    expect(computeBalanceHistory([failed], [], 0).points).toStrictEqual([])
+    const canceled = createMovement({
+      effectiveBalanceSat: 1000,
+      id: 2,
+      status: 'canceled',
+      time: { createdAt: new Date('2026-01-01'), updatedAt: new Date('2026-01-01') }
+    })
+    expect(computeBalanceHistory([failed, canceled], [], 0).points).toStrictEqual([])
+  })
+
+  it('keeps pending movements so pending board sats are not absorbed into the initial balance', () => {
+    const received = createMovement({
+      effectiveBalanceSat: 30_000,
+      id: 1,
+      status: 'successful',
+      time: { createdAt: new Date('2026-06-02T11:48:43Z'), updatedAt: new Date('2026-06-02T11:48:44Z') }
+    })
+    const pendingBoard = createMovement({
+      effectiveBalanceSat: 10_000,
+      id: 2,
+      status: 'pending',
+      time: { createdAt: new Date('2026-06-02T12:07:52Z'), updatedAt: new Date('2026-06-02T12:07:52Z') }
+    })
+    const result = computeBalanceHistory([received, pendingBoard], [], 40_000)
+    expect(result.initialBalanceSat).toBe(0)
+    expect(result.points.map((point) => point.balanceSat)).toStrictEqual([30_000, 40_000])
   })
 
   it('produces a running balance ending at the endpoint total', () => {
