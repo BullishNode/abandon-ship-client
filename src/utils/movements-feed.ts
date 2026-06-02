@@ -40,8 +40,11 @@ function approximateTimestampMs(
   tipHeight: number | undefined,
   firstSeen: number | null
 ): number {
+  if (firstSeen !== null) {
+    return firstSeen
+  }
   if (confirmationHeight === null || tipHeight === undefined || tipHeight < confirmationHeight) {
-    return firstSeen ?? Date.now()
+    return Date.now()
   }
   const elapsedBlocks = tipHeight - confirmationHeight
   return Date.now() - elapsedBlocks * AVERAGE_BLOCK_INTERVAL_MS

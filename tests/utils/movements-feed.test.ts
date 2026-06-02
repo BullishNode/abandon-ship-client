@@ -293,6 +293,22 @@ describe(buildOnchainTxEntries, () => {
     expect(entry.approximateTimestampMs).toBe(seenMs)
   })
 
+  it('prefers first-seen over the block-height estimate for confirmed txs', () => {
+    const rawTx = buildRawTx([], [{ programHex: REGTEST_PROGRAM_A, valueSat: 1000 }])
+    const txid = deriveTxid(rawTx)
+    const seenMs = new Date('2026-05-12T23:59:00Z').getTime()
+    const [entry] = buildOnchainTxEntries(
+      [makeTx(rawTx, txid, { confirmation: { hash: 'tip', height: 100 } })],
+      [],
+      {
+        firstSeenAt: { [txid]: '2026-05-12T23:59:00Z' },
+        network: BarkNetwork.Regtest,
+        tipHeight: 100
+      }
+    )
+    expect(entry.approximateTimestampMs).toBe(seenMs)
+  })
+
   it('falls back to now for the timestamp when no first-seen time exists', () => {
     const rawTx = buildRawTx([], [{ programHex: REGTEST_PROGRAM_A, valueSat: 1000 }])
     const txid = deriveTxid(rawTx)
