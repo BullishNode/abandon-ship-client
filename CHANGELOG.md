@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] - 2026-06-02
+
+### Changed
+
+- Umbrel app listing tagline, description, and category refreshed, and now mentions Branta destination verification.
+
+### Fixed
+
+- Movements list orders on-chain transactions by first-seen time.
+- Balance-history chart counts pending on-chain funds, so the balance no longer dips while transactions are unconfirmed.
+
 ## [0.1.5] - 2026-05-29
 
 ### Added
