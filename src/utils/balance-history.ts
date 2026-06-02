@@ -40,9 +40,6 @@ function movementEvents(movements: Movement[]): BalanceEvent[] {
 function onchainTxEvents(entries: OnchainTxEntry[]): BalanceEvent[] {
   const out: BalanceEvent[] = []
   for (const entry of entries) {
-    if (entry.status !== 'successful') {
-      continue
-    }
     out.push({
       deltaSat: entry.amountSat,
       timestampMs: entry.approximateTimestampMs

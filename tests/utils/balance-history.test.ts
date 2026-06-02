@@ -78,9 +78,16 @@ describe(computeBalanceHistory, () => {
     expect(result.initialBalanceSat).toBe(0)
   })
 
-  it('filters out non-successful onchain entries', () => {
-    const failed = makeOnchainEntry({ amountSat: 500, status: 'pending' })
-    expect(computeBalanceHistory([], [failed], 0).points).toStrictEqual([])
+  it('includes pending onchain entries so they are not absorbed into the initial balance', () => {
+    const pending = makeOnchainEntry({
+      amountSat: 500,
+      approximateTimestampMs: new Date('2026-01-01').getTime(),
+      status: 'pending'
+    })
+    const result = computeBalanceHistory([], [pending], 500)
+    expect(result.points).toHaveLength(1)
+    expect(result.points[0].balanceSat).toBe(500)
+    expect(result.initialBalanceSat).toBe(0)
   })
 })
 
