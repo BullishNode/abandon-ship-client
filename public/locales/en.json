@@ -171,7 +171,8 @@
     "empty_description": "Send or receive sats and they will show up here.",
     "options": {
       "label": "Movement options",
-      "hide_refreshes": "Hide refreshes"
+      "hide_refreshes": "Hide refreshes",
+      "hide_exit_fees": "Hide exit fee transactions"
     },
     "kinds": {
       "exit": "Exit",

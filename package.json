@@ -27,6 +27,7 @@
     "down": "node scripts/compose.mjs --env-file .env.local down",
     "down:signet": "node scripts/compose.mjs --env-file .env.signet down",
     "down:mainnet": "node scripts/compose.mjs --env-file .env.mainnet down",
+    "dev:byob": "vite --mode byob",
     "dev:web": "vite",
     "dev:api": "npm --workspace api run dev",
     "build": "tsc -b && vite build",

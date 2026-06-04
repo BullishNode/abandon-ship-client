@@ -155,17 +155,23 @@ interface BuildFeedOptions {
   utxos?: UtxoInfo[]
   network?: BarkNetwork
   firstSeenAt?: Record<string, string>
+  hideRefresh?: boolean
+  hideExitFee?: boolean
 }
 
 export function buildMovementsFeed(
   movements: Movement[],
   options: BuildFeedOptions = {}
 ): MovementsFeedRow[] {
-  const movementEntries: MovementsFeedRow[] = movements.map((movement) => ({
+  const visibleMovements =
+    options.hideRefresh === true
+      ? movements.filter((movement) => movement.subsystem.kind !== 'refresh')
+      : movements
+  const movementEntries: MovementsFeedRow[] = visibleMovements.map((movement) => ({
     kind: 'movement',
     movement
   }))
-  let onchainEntries: MovementsFeedRow[] = []
+  let onchainEntries: OnchainTxEntry[] = []
   if (options.network !== undefined && options.transactions !== undefined) {
     onchainEntries = buildOnchainTxEntries(options.transactions, options.utxos ?? [], {
       firstSeenAt: options.firstSeenAt,
@@ -173,7 +179,9 @@ export function buildMovementsFeed(
       tipHeight: options.tipHeight
     })
   }
-  const combined = [...movementEntries, ...onchainEntries]
+  const visibleOnchainEntries =
+    options.hideExitFee === true ? onchainEntries.filter((entry) => !entry.isCpfp) : onchainEntries
+  const combined = [...movementEntries, ...visibleOnchainEntries]
   combined.sort(compareRows)
   return combined
 }

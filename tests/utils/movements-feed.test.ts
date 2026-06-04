@@ -161,6 +161,25 @@ describe(buildMovementsFeed, () => {
     expect(txids).toStrictEqual([txidB, txidA])
   })
 
+  it('hides refresh movements when hideRefresh is set', () => {
+    const refresh = createMovement({ id: 1, subsystem: { kind: 'refresh', name: 'Ark' } })
+    const exit = createMovement({ id: 2, subsystem: { kind: 'exit', name: 'Ark' } })
+    const result = buildMovementsFeed([refresh, exit], { hideRefresh: true })
+    expect(result).toMatchObject([{ kind: 'movement', movement: { id: 2 } }])
+  })
+
+  it('hides cpfp exit-fee onchain txs when hideExitFee is set', () => {
+    const rawTx = buildRawTx([], [{ programHex: REGTEST_PROGRAM_A, valueSat: 1000 }])
+    const txid = deriveTxid(rawTx)
+    const transactions: WalletTxInfo[] = [makeTx(rawTx, txid, { isCpfp: true })]
+    const result = buildMovementsFeed([], {
+      hideExitFee: true,
+      network: BarkNetwork.Regtest,
+      transactions
+    })
+    expect(result).toStrictEqual([])
+  })
+
   it('keeps API order for pending txs without first-seen data', () => {
     const txA = buildRawTx([], [{ programHex: REGTEST_PROGRAM_A, valueSat: 1000 }])
     const txidA = deriveTxid(txA)
