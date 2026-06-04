@@ -48,7 +48,7 @@ services:
       context: .
       dockerfile: docker/barkd.Dockerfile
       args:
-        BARK_VERSION: ${BARK_VERSION:-0.2.1}
+        BARK_VERSION: ${BARK_VERSION:-0.2.2}
         BARKD_SHA256_AMD64: ${BARKD_SHA256_AMD64:-}
         BARKD_SHA256_ARM64: ${BARKD_SHA256_ARM64:-}
     ports:
