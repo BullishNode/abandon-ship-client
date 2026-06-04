@@ -6,7 +6,7 @@ import vitest from 'ultracite/oxlint/vitest'
 
 export default defineConfig({
   extends: [core, react, vitest],
-  ignorePatterns: ['.claude/skills', 'src/components/ui'],
+  ignorePatterns: ['.claude/skills', 'src/components/ui', 'scripts/compose.mjs'],
   overrides: [
     {
       files: ['**/*.tsx'],
