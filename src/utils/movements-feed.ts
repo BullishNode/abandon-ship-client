@@ -13,6 +13,7 @@ export interface OnchainTxEntry {
   approximateTimestampMs: number
   firstSeenMs: number | null
   feeSat: number | null
+  isCpfp: boolean
 }
 
 export interface MovementEntry {
@@ -114,6 +115,7 @@ export function buildOnchainTxEntries(
       direction,
       feeSat: tx.onchainFeeSat ?? null,
       firstSeenMs: firstSeen,
+      isCpfp: tx.isCpfp,
       kind: 'onchain',
       status,
       txid: tx.txid

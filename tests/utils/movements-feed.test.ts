@@ -63,7 +63,7 @@ function makeUtxo(outpoint: string, overrides: Partial<UtxoInfo> = {}): UtxoInfo
 }
 
 function makeTx(tx: string, txid: string, overrides: Partial<WalletTxInfo> = {}): WalletTxInfo {
-  return { balanceChangeSat: 0, tx, txid, ...overrides }
+  return { balanceChangeSat: 0, isCpfp: false, tx, txid, ...overrides }
 }
 
 const REGTEST_PROGRAM_A = '0000000000000000000000000000000000000001'
@@ -256,6 +256,19 @@ describe(buildOnchainTxEntries, () => {
     })
     expect(withFee.feeSat).toBe(250)
     expect(withoutFee.feeSat).toBeNull()
+  })
+
+  it('propagates isCpfp from tx.isCpfp', () => {
+    const rawTx = buildRawTx([], [{ programHex: REGTEST_PROGRAM_A, valueSat: 1000 }])
+    const txid = deriveTxid(rawTx)
+    const [cpfp] = buildOnchainTxEntries([makeTx(rawTx, txid, { isCpfp: true })], [], {
+      network: BarkNetwork.Regtest
+    })
+    const [plain] = buildOnchainTxEntries([makeTx(rawTx, txid)], [], {
+      network: BarkNetwork.Regtest
+    })
+    expect(cpfp.isCpfp).toBeTruthy()
+    expect(plain.isCpfp).toBeFalsy()
   })
 
   it('marks status pending when the tx is unconfirmed', () => {

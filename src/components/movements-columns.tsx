@@ -53,7 +53,13 @@ export function getMovementColumns({
           const fallback = getSubsystemFallback(entry.movement.subsystem, t)
           return <MovementLabelCell fallback={fallback} movement={entry.movement} />
         }
-        return <OnchainLabelCell bindingAddress={entry.bindingAddress} txid={entry.txid} />
+        return (
+          <OnchainLabelCell
+            bindingAddress={entry.bindingAddress}
+            isCpfp={entry.isCpfp}
+            txid={entry.txid}
+          />
+        )
       },
       header: t('movements.columns.label'),
       id: 'label'

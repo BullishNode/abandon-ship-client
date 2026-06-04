@@ -18,6 +18,7 @@ function makeOnchainEntry(overrides: Partial<OnchainTxEntry> = {}): OnchainTxEnt
     direction: 'incoming',
     feeSat: null,
     firstSeenMs: null,
+    isCpfp: false,
     kind: 'onchain',
     status: 'successful',
     txid: 'tx',
