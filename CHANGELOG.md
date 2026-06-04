@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.7] - 2026-06-04
+
+### Added
+
+- On-chain CPFP transactions that pay an exit fee are auto-labeled "Exit fee" in the movements list when no custom label is set.
+- Nix flake and Podman support for building and running the app.
+
+### Changed
+
+- Updated `@secondts/barkd` to 0.2.2.
+- Wallet mnemonic is now fetched through the barkd client instead of the web API.
+
 ## [0.1.6] - 2026-06-02
 
 ### Changed
