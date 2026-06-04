@@ -17,7 +17,6 @@ const ALLOWED_ORIGINS = new Set(
 )
 
 const TOKEN_PATH = `${WALLET_DIR}/auth_token`
-const MNEMONIC_PATH = `${WALLET_DIR}/mnemonic`
 
 let cachedToken: string | null = null
 
@@ -77,19 +76,6 @@ app.get('/api/config', (c) =>
     network: BARK_NETWORK
   })
 )
-
-app.get('/api/mnemonic', async (c) => {
-  try {
-    const raw = await readFile(MNEMONIC_PATH, 'utf-8')
-    const mnemonic = raw.trim()
-    if (mnemonic.length === 0) {
-      return c.json({ error: 'Mnemonic file is empty' }, 404)
-    }
-    return c.json({ mnemonic })
-  } catch {
-    return c.json({ error: 'Mnemonic file not found' }, 404)
-  }
-})
 
 app.all('/api/barkd/*', async (c) => {
   const subPath = c.req.path.replace(BARKD_PATH_PREFIX, '')
