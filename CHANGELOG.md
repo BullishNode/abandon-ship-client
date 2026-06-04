@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - On-chain CPFP transactions that pay an exit fee are auto-labeled "Exit fee" in the movements list when no custom label is set.
+- "Hide exit fee transactions" toggle in the movements options menu, which hides on-chain CPFP exit-fee transactions (on by default).
 - Nix flake and Podman support for building and running the app.
 
 ### Changed

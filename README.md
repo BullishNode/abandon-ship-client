@@ -47,13 +47,18 @@ npm run down:mainnet   # docker compose --env-file .env.mainnet down
 npm run down           # docker compose --env-file .env.local down
 ```
 
-#### Without Docker
+If you already have a `barkd` running, you can launch just the web UI against it.
 
-Run the API and the web app directly in two terminals (assumes a running `barkd` you control):
+1. Copy the example env file and fill in your barkd's details:
 
 ```bash
-npm run dev:api
-npm run dev:web
+cp .env.byob.example .env.byob
+```
+
+2. Start the web UI:
+
+```bash
+npm run dev:byob
 ```
 
 ### Reset / Start from Scratch

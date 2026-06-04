@@ -33,11 +33,19 @@ export function MovementsTable() {
   const { data: transactions = [] } = useOnchainTransactions()
   const { data: tip } = useBitcoinTip()
   const firstSeenAt = useOnchainFirstSeen()
-  const [discreteMode, hideRefreshMovements, setHideRefreshMovements] = useSettingsStore(
+  const [
+    discreteMode,
+    hideRefreshMovements,
+    setHideRefreshMovements,
+    hideExitFeeMovements,
+    setHideExitFeeMovements
+  ] = useSettingsStore(
     useShallow((state) => [
       state.discreteMode,
       state.hideRefreshMovements,
-      state.setHideRefreshMovements
+      state.setHideRefreshMovements,
+      state.hideExitFeeMovements,
+      state.setHideExitFeeMovements
     ])
   )
   const [openSend, openReceive] = useModalsStore(
@@ -49,11 +57,10 @@ export function MovementsTable() {
   const [selectedOnchain, setSelectedOnchain] = useState<OnchainTxEntry | null>(null)
   const [onchainOpen, setOnchainOpen] = useState(false)
 
-  const visibleMovements = hideRefreshMovements
-    ? movements.filter((movement) => movement.subsystem.kind !== 'refresh')
-    : movements
-  const feed = buildMovementsFeed(visibleMovements, {
+  const feed = buildMovementsFeed(movements, {
     firstSeenAt,
+    hideExitFee: hideExitFeeMovements,
+    hideRefresh: hideRefreshMovements,
     network: config.network,
     tipHeight: tip?.tipHeight,
     transactions,
@@ -120,13 +127,20 @@ export function MovementsTable() {
                 <DotsThreeVerticalIcon weight="bold" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-56 p-2">
+            <PopoverContent align="end" className="w-auto p-2">
               <Label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted">
                 <Checkbox
                   checked={hideRefreshMovements}
                   onCheckedChange={(checked) => setHideRefreshMovements(checked === true)}
                 />
-                <span>{t('movements.options.hide_refreshes')}</span>
+                <span className="whitespace-nowrap">{t('movements.options.hide_refreshes')}</span>
+              </Label>
+              <Label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted">
+                <Checkbox
+                  checked={hideExitFeeMovements}
+                  onCheckedChange={(checked) => setHideExitFeeMovements(checked === true)}
+                />
+                <span className="whitespace-nowrap">{t('movements.options.hide_exit_fees')}</span>
               </Label>
             </PopoverContent>
           </Popover>

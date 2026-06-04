@@ -12,6 +12,7 @@ dist
 dist-ssr
 api/dist
 *.local
+.env.byob
 coverage
 
 # Editor directories and files

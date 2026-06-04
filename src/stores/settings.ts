@@ -15,6 +15,8 @@ interface SettingsStore {
   toggleDiscreteMode: () => void
   hideRefreshMovements: boolean
   setHideRefreshMovements: (value: boolean) => void
+  hideExitFeeMovements: boolean
+  setHideExitFeeMovements: (value: boolean) => void
 }
 
 export const useSettingsStore = create<SettingsStore>()(
@@ -23,6 +25,7 @@ export const useSettingsStore = create<SettingsStore>()(
       bitcoinUnit: 'sats',
       discreteMode: false,
       fiatCurrency: 'usd',
+      hideExitFeeMovements: true,
       hideRefreshMovements: true,
       priceProvider: 'binance',
       setBitcoinUnit: (bitcoinUnit) => {
@@ -33,6 +36,9 @@ export const useSettingsStore = create<SettingsStore>()(
       },
       setFiatCurrency: (fiatCurrency) => {
         set({ fiatCurrency })
+      },
+      setHideExitFeeMovements: (hideExitFeeMovements) => {
+        set({ hideExitFeeMovements })
       },
       setHideRefreshMovements: (hideRefreshMovements) => {
         set({ hideRefreshMovements })
