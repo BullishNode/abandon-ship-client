@@ -16,8 +16,8 @@ export function useSendOnchain(
     },
     ...options,
     onSuccess: async (...args) => {
+      await options?.onSuccess?.(...args)
       await invalidateWalletState(queryClient)
-      options?.onSuccess?.(...args)
     }
   })
 }

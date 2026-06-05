@@ -16,8 +16,8 @@ export function useOnchainSend(
     },
     ...options,
     onSuccess: async (...args) => {
+      await options?.onSuccess?.(...args)
       await invalidateOnchainState(queryClient)
-      options?.onSuccess?.(...args)
     }
   })
 }
