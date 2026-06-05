@@ -3,6 +3,9 @@ import { StrictMode } from 'react'
 import type { Root } from 'react-dom/client'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './i18n'
+import { ErrorBoundary } from './components/error-boundary'
+import { FullScreenLayout } from './components/full-screen-layout'
 import { LoadingScreen } from './components/loading-screen'
 import { initConfig } from './config/barkd'
 import { queryClient } from './lib/query-client'
@@ -39,17 +42,19 @@ async function initConfigWithRetry(): Promise<void> {
 
 function BootError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
-      <p className="font-medium text-foreground text-lg">Failed to load app</p>
-      <p className="max-w-md text-muted-foreground text-sm">{message}</p>
-      <button
-        className="rounded-md border border-border px-4 py-2 font-medium text-sm hover:bg-accent"
-        onClick={onRetry}
-        type="button"
-      >
-        Retry
-      </button>
-    </div>
+    <FullScreenLayout>
+      <div className="flex flex-col items-center justify-center gap-4 text-center">
+        <p className="font-medium text-foreground text-lg">Failed to load app</p>
+        <p className="max-w-md text-muted-foreground text-sm">{message}</p>
+        <button
+          className="rounded-md border border-border px-4 py-2 font-medium text-sm hover:bg-accent"
+          onClick={onRetry}
+          type="button"
+        >
+          Retry
+        </button>
+      </div>
+    </FullScreenLayout>
   )
 }
 
@@ -60,9 +65,11 @@ async function bootstrap(reactRoot: Root): Promise<void> {
     const { default: App } = await import('./App.tsx')
     reactRoot.render(
       <StrictMode>
-        <QueryClientProvider client={queryClient}>
-          <App />
-        </QueryClientProvider>
+        <ErrorBoundary>
+          <QueryClientProvider client={queryClient}>
+            <App />
+          </QueryClientProvider>
+        </ErrorBoundary>
       </StrictMode>
     )
   } catch (error: unknown) {

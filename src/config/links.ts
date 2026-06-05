@@ -6,10 +6,12 @@ const externalLinks = {
 
 const footerLinks = {
   chat: {
+    fallback: 'Community chat',
     i18n: 'links.chat',
     link: externalLinks.chat
   },
   forum: {
+    fallback: 'Community forum',
     i18n: 'links.forum',
     link: externalLinks.forum
   }

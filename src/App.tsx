@@ -10,7 +10,6 @@ import CreateWalletPage from './pages/create'
 import TransactionsPage from './pages/dashboard/index'
 import SettingsPage from './pages/dashboard/settings'
 import ImportWalletPage from './pages/import'
-import './i18n'
 
 export function App() {
   return (
