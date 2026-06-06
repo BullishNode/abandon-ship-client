@@ -60,7 +60,6 @@
   },
   "welcome": {
     "title": "Welcome to $t(app.name)",
-    "description": "A web-based graphical user interface for managing bark wallet",
     "settingUp": "Setting up your wallet",
     "loading": "Loading your wallet"
   },
@@ -131,11 +130,11 @@
     "amount": "Amount",
     "errors": {
       "invalid_qr": "Invalid QR code",
-      "insufficient_funds": "Insufficient funds. Available: {{balance}}",
+      "insufficient_funds": "Insufficient bitcoin. Available: {{balance}}",
       "send_failed": "Send failed"
     },
     "warnings": {
-      "uses_pending_onchain": "Spending unconfirmed funds"
+      "uses_pending_onchain": "Spending unconfirmed bitcoin"
     },
     "fee": {
       "estimate": "Estimated fee",
@@ -184,7 +183,7 @@
       "detail": {
         "title": "On-chain receive",
         "txid": "Transaction",
-        "height": "Block Height",
+        "height": "Block height",
         "pending": "Pending"
       }
     },
@@ -240,7 +239,7 @@
       "description": "Fiat amounts shown on history use the current bitcoin price, not the price at the time of the transaction"
     },
     "discrete_mode": {
-      "label": "Discrete mode",
+      "label": "Discreet mode",
       "description": "Hide balance and transaction amounts"
     },
     "seed_phrase": {
@@ -278,17 +277,17 @@
         "no_vtxos": "No VTXOs to exit.",
         "confirm": {
           "title": "Emergency exit all?",
-          "description": "This unilaterally exits every VTXO back on-chain. The process is slow because it waits on Bitcoin timelocks and pays on-chain fees from your on-chain balance, and cannot be cancelled once started. Ensure your on-chain wallet has enough bitcoin for fees and double-check the destination address that will receive the funds once exits are claimable.",
+          "description": "This exits all your VTXOs back on-chain. The process is slow because it typically requires multiple bitcoin transactions broadcast in consecutive order, and it needs to wait on a bitcoin timelock for each one. Each transaction pays an on-chain fee from your on-chain balance, so make sure your on-chain wallet has enough bitcoin to cover the fees. Note that offboards are the cooperative option and are cheaper. Emergency exits should only be reserved for when the Ark server is unresponsive. Once started, it cannot be cancelled, so double-check that the destination address is correct before proceeding.",
           "button": "Start emergency exit"
         },
         "edit": {
           "title": "Change destination address",
-          "description": "Update the address that will receive the swept funds once exit outputs are claimable.",
+          "description": "Update the address that will receive the swept bitcoin once exit outputs are claimable.",
           "button": "Save address"
         },
         "address_label": "Destination address",
         "address_placeholder": "Bitcoin on-chain address",
-        "address_help": "Funds will be swept to this address when exits become claimable.",
+        "address_help": "Bitcoin will be swept to this address when exits become claimable.",
         "use_wallet_address": "Use my wallet",
         "estimate": {
           "title": "Estimated total cost",
@@ -342,7 +341,7 @@
       "hide_amounts": "Hide amounts"
     },
     "chart": {
-      "title": "Balance Over Time",
+      "title": "Balance over time",
       "balance": "Balance",
       "select_range": "Select time range",
       "last_3_months": "Last 3 months",
@@ -354,6 +353,6 @@
   },
   "errors": {
     "create_wallet_failed": "Failed to create wallet",
-    "price_fetch_failed": "Failed to fetch Bitcoin price from {{provider}}"
+    "price_fetch_failed": "Failed to fetch bitcoin price from {{provider}}"
   }
 }
