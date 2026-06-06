@@ -7,7 +7,7 @@ function resetStore() {
     discreteMode: false,
     fiatCurrency: 'usd',
     hideRefreshMovements: true,
-    priceProvider: 'binance'
+    priceProvider: 'kraken'
   })
 }
 
