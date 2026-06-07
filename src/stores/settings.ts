@@ -10,9 +10,9 @@ interface SettingsStore {
   setFiatCurrency: (currency: FiatCurrency) => void
   bitcoinUnit: BitcoinUnit
   setBitcoinUnit: (unit: BitcoinUnit) => void
-  discreteMode: boolean
-  setDiscreteMode: (value: boolean) => void
-  toggleDiscreteMode: () => void
+  discreetMode: boolean
+  setDiscreetMode: (value: boolean) => void
+  toggleDiscreetMode: () => void
   hideRefreshMovements: boolean
   setHideRefreshMovements: (value: boolean) => void
   hideExitFeeMovements: boolean
@@ -23,7 +23,7 @@ export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set) => ({
       bitcoinUnit: 'sats',
-      discreteMode: false,
+      discreetMode: false,
       fiatCurrency: 'usd',
       hideExitFeeMovements: true,
       hideRefreshMovements: true,
@@ -31,8 +31,8 @@ export const useSettingsStore = create<SettingsStore>()(
       setBitcoinUnit: (bitcoinUnit) => {
         set({ bitcoinUnit })
       },
-      setDiscreteMode: (discreteMode) => {
-        set({ discreteMode })
+      setDiscreetMode: (discreetMode) => {
+        set({ discreetMode })
       },
       setFiatCurrency: (fiatCurrency) => {
         set({ fiatCurrency })
@@ -46,8 +46,8 @@ export const useSettingsStore = create<SettingsStore>()(
       setPriceProvider: (priceProvider) => {
         set({ priceProvider })
       },
-      toggleDiscreteMode: () => {
-        set((state) => ({ discreteMode: !state.discreteMode }))
+      toggleDiscreetMode: () => {
+        set((state) => ({ discreetMode: !state.discreetMode }))
       }
     }),
     {

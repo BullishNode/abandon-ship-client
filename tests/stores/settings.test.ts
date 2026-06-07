@@ -4,7 +4,7 @@ import { useSettingsStore } from '../../src/stores/settings'
 function resetStore() {
   useSettingsStore.setState({
     bitcoinUnit: 'sats',
-    discreteMode: false,
+    discreetMode: false,
     fiatCurrency: 'usd',
     hideRefreshMovements: true,
     priceProvider: 'kraken'
@@ -36,15 +36,15 @@ describe('settings store setters', () => {
     expect(useSettingsStore.getState().hideRefreshMovements).toBeFalsy()
   })
 
-  it('updates discreteMode', () => {
-    useSettingsStore.getState().setDiscreteMode(true)
-    expect(useSettingsStore.getState().discreteMode).toBeTruthy()
+  it('updates discreetMode', () => {
+    useSettingsStore.getState().setDiscreetMode(true)
+    expect(useSettingsStore.getState().discreetMode).toBeTruthy()
   })
 
-  it('toggles discreteMode', () => {
-    useSettingsStore.getState().toggleDiscreteMode()
-    expect(useSettingsStore.getState().discreteMode).toBeTruthy()
-    useSettingsStore.getState().toggleDiscreteMode()
-    expect(useSettingsStore.getState().discreteMode).toBeFalsy()
+  it('toggles discreetMode', () => {
+    useSettingsStore.getState().toggleDiscreetMode()
+    expect(useSettingsStore.getState().discreetMode).toBeTruthy()
+    useSettingsStore.getState().toggleDiscreetMode()
+    expect(useSettingsStore.getState().discreetMode).toBeFalsy()
   })
 })

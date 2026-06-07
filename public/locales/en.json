@@ -238,7 +238,7 @@
       "label": "Fiat currency",
       "description": "Transaction history rates are based on the latest bitcoin price, not the price at transaction time."
     },
-    "discrete_mode": {
+    "discreet_mode": {
       "label": "Discreet mode",
       "description": "Hide balance and transaction amounts"
     },

@@ -23,7 +23,7 @@ interface MovementDetailDialogProps {
   formatSats: (sats: number) => string
   formatFiat: (sats: number) => string
   formatDateAbsolute: (date: Date) => string
-  discreteMode: boolean
+  discreetMode: boolean
 }
 
 export function MovementDetailDialog({
@@ -33,7 +33,7 @@ export function MovementDetailDialog({
   formatSats,
   formatFiat,
   formatDateAbsolute,
-  discreteMode
+  discreetMode
 }: MovementDetailDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -44,7 +44,7 @@ export function MovementDetailDialog({
       >
         {movement ? (
           <MovementDetailContent
-            discreteMode={discreteMode}
+            discreetMode={discreetMode}
             formatDateAbsolute={formatDateAbsolute}
             formatFiat={formatFiat}
             formatSats={formatSats}
@@ -61,7 +61,7 @@ interface MovementDetailContentProps {
   formatSats: (sats: number) => string
   formatFiat: (sats: number) => string
   formatDateAbsolute: (date: Date) => string
-  discreteMode: boolean
+  discreetMode: boolean
 }
 
 function MovementDetailContent({
@@ -69,7 +69,7 @@ function MovementDetailContent({
   formatSats,
   formatFiat,
   formatDateAbsolute,
-  discreteMode
+  discreetMode
 }: MovementDetailContentProps) {
   const { t } = useTranslation()
   const movementId = movement.id
@@ -98,7 +98,7 @@ function MovementDetailContent({
             <MovementSourceBadge source={source} />
           </div>
           <MovementAmountCell
-            discreteMode={discreteMode}
+            discreetMode={discreetMode}
             formatFiat={formatFiat}
             formatSats={formatSats}
             sats={movement.effectiveBalanceSat}

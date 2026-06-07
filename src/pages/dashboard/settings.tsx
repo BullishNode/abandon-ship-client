@@ -71,8 +71,8 @@ export default function SettingsPage() {
     setPriceProvider,
     fiatCurrency,
     setFiatCurrency,
-    discreteMode,
-    setDiscreteMode
+    discreetMode,
+    setDiscreetMode
   ] = useSettingsStore(
     useShallow((state) => [
       state.bitcoinUnit,
@@ -81,8 +81,8 @@ export default function SettingsPage() {
       state.setPriceProvider,
       state.fiatCurrency,
       state.setFiatCurrency,
-      state.discreteMode,
-      state.setDiscreteMode
+      state.discreetMode,
+      state.setDiscreetMode
     ])
   )
   const [wallet, updateWalletName, pendingExitClaimAddress, setPendingExitClaimAddress] =
@@ -323,10 +323,10 @@ export default function SettingsPage() {
       </Field>
       <Field orientation="horizontal">
         <FieldContent>
-          <FieldLabel htmlFor="discrete-mode">{t('settings.discrete_mode.label')}</FieldLabel>
-          <FieldDescription>{t('settings.discrete_mode.description')}</FieldDescription>
+          <FieldLabel htmlFor="discreet-mode">{t('settings.discreet_mode.label')}</FieldLabel>
+          <FieldDescription>{t('settings.discreet_mode.description')}</FieldDescription>
         </FieldContent>
-        <Switch checked={discreteMode} id="discrete-mode" onCheckedChange={setDiscreteMode} />
+        <Switch checked={discreetMode} id="discreet-mode" onCheckedChange={setDiscreetMode} />
       </Field>
       <Field>
         <FieldLabel htmlFor="seed-phrase">{t('settings.seed_phrase.label')}</FieldLabel>

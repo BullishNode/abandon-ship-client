@@ -18,7 +18,7 @@ interface OnchainEntryDetailDialogProps {
   formatSats: (sats: number) => string
   formatFiat: (sats: number) => string
   formatDateAbsolute: (date: Date) => string
-  discreteMode: boolean
+  discreetMode: boolean
 }
 
 export function OnchainEntryDetailDialog({
@@ -28,7 +28,7 @@ export function OnchainEntryDetailDialog({
   formatSats,
   formatFiat,
   formatDateAbsolute,
-  discreteMode
+  discreetMode
 }: OnchainEntryDetailDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -39,7 +39,7 @@ export function OnchainEntryDetailDialog({
       >
         {entry ? (
           <OnchainEntryDetailContent
-            discreteMode={discreteMode}
+            discreetMode={discreetMode}
             entry={entry}
             formatDateAbsolute={formatDateAbsolute}
             formatFiat={formatFiat}
@@ -56,7 +56,7 @@ interface OnchainEntryDetailContentProps {
   formatSats: (sats: number) => string
   formatFiat: (sats: number) => string
   formatDateAbsolute: (date: Date) => string
-  discreteMode: boolean
+  discreetMode: boolean
 }
 
 function OnchainEntryDetailContent({
@@ -64,7 +64,7 @@ function OnchainEntryDetailContent({
   formatSats,
   formatFiat,
   formatDateAbsolute,
-  discreteMode
+  discreetMode
 }: OnchainEntryDetailContentProps) {
   const { t } = useTranslation()
   const fingerprint = useWalletStore((state) => state.wallet?.fingerprint)
@@ -94,7 +94,7 @@ function OnchainEntryDetailContent({
             <MovementSourceBadge source="onchain" />
           </div>
           <MovementAmountCell
-            discreteMode={discreteMode}
+            discreetMode={discreetMode}
             formatFiat={formatFiat}
             formatSats={formatSats}
             sats={entry.amountSat}
