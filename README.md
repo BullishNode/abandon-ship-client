@@ -29,7 +29,7 @@ You can use them directly via the shortcuts below, or copy one to `.env.local` a
 
 ### Run
 
-Make sure you have `Docker Desktop` running. Then pick a network:
+Make sure you have `Docker Desktop` running. Then pick a network. Use `signet` for testing, `mainnet` for real bitcoin:
 
 ```bash
 npm run dev:signet     # docker compose --env-file .env.signet up --build
@@ -61,7 +61,7 @@ cp .env.byob.example .env.byob
 npm run dev:byob
 ```
 
-### Reset / Start from Scratch
+### Reset / start from scratch
 
 Each network uses its own docker volume (via `COMPOSE_PROJECT_NAME`), so wipe the one you used:
 
@@ -80,7 +80,7 @@ Use the helper script to bump bark/barkd versions:
 bash scripts/bump-bark-version.sh <new-version>
 ```
 
-### Lint and Format
+### Lint and format
 
 We use [ultracite](https://docs.ultracite.ai/) with [oxlint](https://oxc.rs/docs/guide/usage/linter) and [oxfmt](https://oxc.rs/docs/guide/usage/formatter) for the linting and formatting.
 
@@ -96,7 +96,7 @@ Run the linter and auto-fix issues:
 npm run fix
 ```
 
-## Tech Stack
+## Tech stack
 
 - [Vite](https://vite.dev/) — build tool and dev server
 - [React](https://react.dev/) — UI library
