@@ -1,7 +1,7 @@
 {
   "language": "English",
   "app": {
-    "name": "bark-web"
+    "name": "Bark Wallet"
   },
   "actions": {
     "scan": "Scan",
@@ -21,7 +21,7 @@
   },
   "nav": {
     "wallet_one": "Wallet",
-    "transactions": "Transactions",
+    "transactions": "Dashboard",
     "vtxos": "VTXOs",
     "contacts": "Contacts",
     "console": "Console",
@@ -60,7 +60,6 @@
   },
   "welcome": {
     "title": "Welcome to $t(app.name)",
-    "description": "A web-based graphical user interface for managing bark wallet",
     "settingUp": "Setting up your wallet",
     "loading": "Loading your wallet"
   },
@@ -88,18 +87,18 @@
     },
     "details": "Additional details",
     "require": {
-      "amount": "To generate a Lightning invoice enter an amount"
+      "amount": "To generate a Lightning invoice, enter an amount"
     },
     "payto": {
-      "error": "Unable to generate unified URI. Try again.",
-      "needs_amount": "Amount required to receive over Lightning."
+      "error": "Unable to generate unified pay-to address. Try again.",
+      "needs_amount": "Enter an amount to receive over Lightning."
     },
     "lightning": {
       "needs_amount": "Enter an amount to generate a Lightning invoice.",
       "generating": "Generating invoice..."
     },
     "onchain": {
-      "description": "Receives on-chain bitcoin. You can board it into Ark later."
+      "description": "Receives on-chain bitcoin. You can board it onto Ark later."
     },
     "success": {
       "title": "Payment received"
@@ -127,15 +126,15 @@
       "button": "Confirm send"
     },
     "destination": "Destination",
-    "destination.placeholder": "Address, invoice, or Lightning address",
+    "destination.placeholder": "Ark, Lightning, or on-chain",
     "amount": "Amount",
     "errors": {
       "invalid_qr": "Invalid QR code",
-      "insufficient_funds": "Insufficient funds. Available: {{balance}}",
+      "insufficient_funds": "Insufficient bitcoin. Available: {{balance}}",
       "send_failed": "Send failed"
     },
     "warnings": {
-      "uses_pending_onchain": "Spending unconfirmed funds"
+      "uses_pending_onchain": "Spending unconfirmed bitcoin"
     },
     "fee": {
       "estimate": "Estimated fee",
@@ -170,7 +169,7 @@
     "empty": "No history yet",
     "empty_description": "Send or receive sats and they will show up here.",
     "options": {
-      "label": "Movement options",
+      "label": "History options",
       "hide_refreshes": "Hide refreshes",
       "hide_exit_fees": "Hide exit fee transactions"
     },
@@ -184,7 +183,7 @@
       "detail": {
         "title": "On-chain receive",
         "txid": "Transaction",
-        "height": "Block Height",
+        "height": "Block height",
         "pending": "Pending"
       }
     },
@@ -210,15 +209,15 @@
       "ark": "Ark"
     },
     "detail": {
-      "title": "Movement details",
+      "title": "Transaction details",
       "sentTo": "Sent to",
-      "receivedOn": "Received on",
+      "receivedOn": "Received to",
       "fee": "Fee",
       "feeUnavailable": "Not available",
       "dateCreated": "Created",
       "dateCompleted": "Completed",
       "label": "Label",
-      "labelPlaceholder": "Add a label",
+      "labelPlaceholder": "No label",
       "tags": "Tags",
       "copy": "Copy",
       "copied": "Copied",
@@ -237,59 +236,59 @@
     },
     "fiat_currency": {
       "label": "Fiat currency",
-      "description": "Fiat amounts shown on history use the current bitcoin price, not the price at the time of the transaction"
+      "description": "Transaction history rates are based on the latest bitcoin price, not the price at transaction time."
     },
     "discrete_mode": {
-      "label": "Discrete mode",
+      "label": "Discreet mode",
       "description": "Hide balance and transaction amounts"
     },
     "seed_phrase": {
       "label": "Seed phrase",
-      "description": "Your wallet's 12-word recovery phrase.",
+      "description": "Write this down to back up your wallet's keys",
       "reveal_aria": "Reveal seed phrase",
       "hide_aria": "Hide seed phrase"
     },
     "backup_warning": {
-      "title": "Seed phrase alone is not enough",
-      "description": "Your seed phrase recovers wallet keys but not your VTXOs. To fully restore on a fresh device, you must also continuously back up the wallet data directory at <code>{{path}}</code>."
+      "title": "Your seed phrase is not a complete backup",
+      "description": "To recover your wallet, you'll need both your seed phrase and a continuous backup of the wallet data directory at <code>{{path}}</code>."
     },
     "community_forum": {
       "label": "Community forum",
-      "description": "Ask questions and discuss with other users",
+      "description": "Ask questions and get advice from the community",
       "button": "Open forum"
     },
     "community_chat": {
       "label": "Community chat",
-      "description": "Join the chat for real-time conversation",
+      "description": "Technical support for developers building on Bark",
       "button": "Open chat"
     },
     "report_issues": {
-      "label": "Report issues",
-      "description": "Open an issue on GitLab",
+      "label": "Report an issue",
+      "description": "Report a bug or request a feature",
       "button": "Open GitLab"
     },
     "danger": {
       "title": "Danger zone",
       "emergency_exit": {
         "label": "Emergency exit all",
-        "description": "Use only when the Ark server is unresponsive. Requires multiple on-chain transactions—ensure you have on-chain bitcoin to cover the fees.",
+        "description": "Use only when the Ark server is unresponsive. Making an on-chain payment is a faster, cheaper way to move your bitcoin on-chain.",
         "button": "Emergency exit all",
         "in_progress_button": "Exit in progress",
         "no_vtxos": "No VTXOs to exit.",
         "confirm": {
           "title": "Emergency exit all?",
-          "description": "This unilaterally exits every VTXO back on-chain. The process is slow because it waits on Bitcoin timelocks and pays on-chain fees from your on-chain balance, and cannot be cancelled once started. Ensure your on-chain wallet has enough bitcoin for fees and double-check the destination address that will receive the funds once exits are claimable.",
+          "description": "Emergency exits can take time. Your wallet will broadcast multiple on-chain transactions in consecutive order, and each transaction has its own timelock delay.",
           "button": "Start emergency exit"
         },
         "edit": {
           "title": "Change destination address",
-          "description": "Update the address that will receive the swept funds once exit outputs are claimable.",
+          "description": "Update the address that will receive the swept bitcoin once exit outputs are claimable.",
           "button": "Save address"
         },
         "address_label": "Destination address",
         "address_placeholder": "Bitcoin on-chain address",
-        "address_help": "Funds will be swept to this address when exits become claimable.",
-        "use_wallet_address": "Use my wallet",
+        "address_help": "Double-check the address before proceeding. An emergency exit cannot be canceled once started.",
+        "use_wallet_address": "Use my Bark on-chain wallet",
         "estimate": {
           "title": "Estimated total cost",
           "value": "~{{sats}} sats at {{feeRate}} sat/vB",
@@ -298,8 +297,8 @@
           "balance": "On-chain balance: {{sats}} sats",
           "vtxos_one": "{{count}} VTXO to exit",
           "vtxos_other": "{{count}} VTXOs to exit",
-          "hint": "Rough upper-bound estimate. Actual cost depends on confirmation timing and on-chain congestion.",
-          "insufficient": "Not enough on-chain bitcoin for estimated fees. Deposit more before starting."
+          "hint": "Roughly the most you'll pay. The final cost depends on the on-chain fee rate when each transaction is broadcast.",
+          "insufficient": "You don't have enough on-chain bitcoin to cover the exit fees. Deposit more to continue."
         },
         "progress": {
           "title": "Emergency exit in progress",
@@ -320,7 +319,7 @@
       },
       "delete_wallet": {
         "label": "Delete wallet",
-        "description": "Deletes this wallet and creates a new one. This cannot be undone.",
+        "description": "Delete this wallet and create a new one. This cannot be undone.",
         "button": "Delete wallet",
         "confirm": {
           "title": "Delete this wallet?",
@@ -333,7 +332,7 @@
     "balance": {
       "offchain": "Off-chain",
       "onchain": "On-chain",
-      "onchain_pending": "On-chain pending",
+      "onchain_pending": "Pending on-chain",
       "pending_board": "Pending board",
       "pending_in_round": "Pending in round",
       "pending_lightning_send": "Pending Lightning send",
@@ -342,18 +341,18 @@
       "hide_amounts": "Hide amounts"
     },
     "chart": {
-      "title": "Balance Over Time",
+      "title": "Balance over time",
       "balance": "Balance",
       "select_range": "Select time range",
       "last_3_months": "Last 3 months",
       "last_30_days": "Last 30 days",
       "last_7_days": "Last 7 days",
       "empty": "No balance history yet",
-      "empty_description": "Your balance over time will appear here once you start using the wallet."
+      "empty_description": "Your balance over time will appear once you start using the wallet."
     }
   },
   "errors": {
     "create_wallet_failed": "Failed to create wallet",
-    "price_fetch_failed": "Failed to fetch Bitcoin price from {{provider}}"
+    "price_fetch_failed": "Failed to fetch bitcoin price from {{provider}}"
   }
 }
