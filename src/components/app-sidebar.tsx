@@ -5,8 +5,10 @@ import {
   SidebarContent,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuButton,
   SidebarMenuItem
 } from '@/components/ui/sidebar'
+import { config } from '@/config/barkd'
 import { useWalletStore } from '@/stores/wallet'
 import { MarbleAvatar } from './marble-avatar'
 import { NavGroup } from './nav-group'
@@ -23,9 +25,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: SquaresFourIcon,
       name: t('nav.transactions'),
       url: '/dashboard'
-    }
-  ]
-  const navSecondaryItems: NavGroupProps['items'] = [
+    },
     {
       icon: GearIcon,
       name: t('nav.settings'),
@@ -37,21 +37,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="flex items-center gap-2">
-              <MarbleAvatar
-                className="size-8 rounded-lg"
-                name={walletName}
-                seed={wallet?.fingerprint}
-                variant="square"
-              />
-              <span className="truncate font-medium text-sm">{walletName}</span>
-            </div>
+            <SidebarMenuButton
+              className="cursor-default hover:bg-transparent hover:text-sidebar-foreground active:bg-transparent active:text-sidebar-foreground"
+              size="lg"
+            >
+              <div className="flex aspect-square size-8 items-center justify-center overflow-hidden rounded-lg">
+                <MarbleAvatar
+                  className="size-full!"
+                  name={walletName}
+                  seed={wallet?.fingerprint}
+                  variant="square"
+                />
+              </div>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">{walletName}</span>
+                <span className="truncate text-xs">{t(`network.${config.network}`)}</span>
+              </div>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavGroup items={navMainItems} label={t('nav.wallet', { count: 1 })} />
-        <NavGroup className="mt-auto" items={navSecondaryItems} />
       </SidebarContent>
     </Sidebar>
   )
