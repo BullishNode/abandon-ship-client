@@ -29,6 +29,7 @@ coverage
 
 # Claude
 .claude/settings.local.json
+.claude/worktrees/
 
 # Umbrel build artifacts
 .umbrel-digests
