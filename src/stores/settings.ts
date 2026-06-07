@@ -27,7 +27,7 @@ export const useSettingsStore = create<SettingsStore>()(
       fiatCurrency: 'usd',
       hideExitFeeMovements: true,
       hideRefreshMovements: true,
-      priceProvider: 'binance',
+      priceProvider: 'kraken',
       setBitcoinUnit: (bitcoinUnit) => {
         set({ bitcoinUnit })
       },
