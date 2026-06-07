@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.8] - 2026-06-05
+
+### Added
+
+- App-wide error boundary that catches render errors and shows a fallback screen with the error message and a "Reload app" button.
+
+### Changed
+
+- Updated the favicon.
+
+### Fixed
+
+- Send labels are now applied to the movements history immediately, without a reload.
+
 ## [0.1.7] - 2026-06-04
 
 ### Added
