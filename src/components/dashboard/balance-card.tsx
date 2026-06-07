@@ -10,8 +10,8 @@ import type { BalanceTotals } from '@/utils/balance'
 
 interface BalanceCardProps {
   totals: BalanceTotals
-  discreteMode: boolean
-  onToggleDiscreteMode: () => void
+  discreetMode: boolean
+  onToggleDiscreetMode: () => void
   className?: string
 }
 
@@ -23,8 +23,8 @@ interface BreakdownRow {
 
 export function BalanceCard({
   totals,
-  discreteMode,
-  onToggleDiscreteMode,
+  discreetMode,
+  onToggleDiscreetMode,
   className
 }: BalanceCardProps) {
   const { t } = useTranslation()
@@ -96,13 +96,13 @@ export function BalanceCard({
         </div>
         <Button
           aria-label={
-            discreteMode ? t('dashboard.balance.show_amounts') : t('dashboard.balance.hide_amounts')
+            discreetMode ? t('dashboard.balance.show_amounts') : t('dashboard.balance.hide_amounts')
           }
-          onClick={onToggleDiscreteMode}
+          onClick={onToggleDiscreetMode}
           size="icon"
           variant="outline"
         >
-          {discreteMode ? <EyeSlashIcon /> : <EyeIcon />}
+          {discreetMode ? <EyeSlashIcon /> : <EyeIcon />}
         </Button>
       </CardContent>
       <AnimatePresence initial={false}>

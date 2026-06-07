@@ -34,14 +34,14 @@ export function MovementsTable() {
   const { data: tip } = useBitcoinTip()
   const firstSeenAt = useOnchainFirstSeen()
   const [
-    discreteMode,
+    discreetMode,
     hideRefreshMovements,
     setHideRefreshMovements,
     hideExitFeeMovements,
     setHideExitFeeMovements
   ] = useSettingsStore(
     useShallow((state) => [
-      state.discreteMode,
+      state.discreetMode,
       state.hideRefreshMovements,
       state.setHideRefreshMovements,
       state.hideExitFeeMovements,
@@ -104,7 +104,7 @@ export function MovementsTable() {
   }
 
   const columns = getMovementColumns({
-    discreteMode,
+    discreetMode,
     formatDate,
     formatFiat,
     formatSats,
@@ -178,7 +178,7 @@ export function MovementsTable() {
         </CardContent>
       </Card>
       <MovementDetailDialog
-        discreteMode={discreteMode}
+        discreetMode={discreetMode}
         formatDateAbsolute={formatDateAbsolute}
         formatFiat={formatFiat}
         formatSats={formatSats}
@@ -187,7 +187,7 @@ export function MovementsTable() {
         open={movementOpen}
       />
       <OnchainEntryDetailDialog
-        discreteMode={discreteMode}
+        discreetMode={discreetMode}
         entry={selectedOnchain}
         formatDateAbsolute={formatDateAbsolute}
         formatFiat={formatFiat}

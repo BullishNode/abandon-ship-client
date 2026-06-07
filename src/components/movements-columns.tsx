@@ -14,7 +14,7 @@ interface MovementColumnsOptions {
   formatSats: (sats: number) => string
   formatFiat: (sats: number) => string
   formatDate: (date: Date) => string
-  discreteMode: boolean
+  discreetMode: boolean
 }
 
 function getSubsystemFallback(subsystem: Movement['subsystem'], t: TFunction): string | undefined {
@@ -32,7 +32,7 @@ export function getMovementColumns({
   formatSats,
   formatFiat,
   formatDate,
-  discreteMode
+  discreetMode
 }: MovementColumnsOptions): ColumnDef<MovementsFeedRow>[] {
   return [
     {
@@ -89,7 +89,7 @@ export function getMovementColumns({
           entry.kind === 'movement' ? entry.movement.effectiveBalanceSat : entry.amountSat
         return (
           <MovementAmountCell
-            discreteMode={discreteMode}
+            discreetMode={discreetMode}
             formatFiat={formatFiat}
             formatSats={formatSats}
             sats={sats}
