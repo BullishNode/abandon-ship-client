@@ -79,7 +79,7 @@ export function MarbleAvatar({
   const seedSuffix = hashCode(hashSource)
   const maskId = `marble-mask-${seedSuffix}`
   const filterId = `marble-filter-${seedSuffix}`
-  const cornerRadius = variant === 'circle' ? SIZE * 2 : SIZE / 8
+  const cornerRadius = variant === 'circle' ? SIZE * 2 : SIZE / 4
   const baseColor = colors[seedSuffix % colors.length]
   return (
     <svg
