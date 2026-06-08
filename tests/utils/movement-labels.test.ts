@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { getMovementDefaultLabel, getOnchainDefaultLabel } from '../../src/utils/movement-labels'
 import { createMovement } from '../fixtures/movements'
 
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion
 const t = ((key: string) => key) as unknown as TFunction
 
 describe(getMovementDefaultLabel, () => {

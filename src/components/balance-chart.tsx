@@ -2,19 +2,11 @@
 
 import { ChartLineIcon } from '@phosphor-icons/react'
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import type { ChartConfig } from '@/components/ui/chart'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
 import { config } from '@/config/barkd'
 import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
 import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
@@ -33,7 +25,6 @@ import { buildOnchainTxEntries } from '@/utils/movements-feed'
 
 export function BalanceChart() {
   const { t } = useTranslation()
-  const [timeRange, setTimeRange] = useState('90d')
   const { data: movements = [] } = useWalletTransactions()
   const { data: balance } = useWalletBalance()
   const { data: utxos = [] } = useOnchainUtxos()
@@ -57,7 +48,6 @@ export function BalanceChart() {
   const balanceHistory = computeBalanceHistory(movements, onchainEntries, endpointTotalSat)
   const { data, domainStartMs, domainEndMs, ticks } = buildChartSeries(
     balanceHistory,
-    timeRange,
     endpointTotalSat
   )
 
@@ -65,25 +55,6 @@ export function BalanceChart() {
     <Card className="pt-0 gap-2">
       <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
         <CardTitle>{t('dashboard.chart.title')}</CardTitle>
-        <Select value={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger
-            className="hidden w-40 rounded-lg sm:ml-auto sm:flex"
-            aria-label={t('dashboard.chart.select_range')}
-          >
-            <SelectValue placeholder={t('dashboard.chart.last_3_months')} />
-          </SelectTrigger>
-          <SelectContent className="rounded-xl">
-            <SelectItem value="90d" className="rounded-lg">
-              {t('dashboard.chart.last_3_months')}
-            </SelectItem>
-            <SelectItem value="30d" className="rounded-lg">
-              {t('dashboard.chart.last_30_days')}
-            </SelectItem>
-            <SelectItem value="7d" className="rounded-lg">
-              {t('dashboard.chart.last_7_days')}
-            </SelectItem>
-          </SelectContent>
-        </Select>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         {balanceHistory.points.length === 0 ? (

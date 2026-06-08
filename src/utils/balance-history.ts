@@ -76,25 +76,22 @@ export function computeBalanceHistory(
   return { initialBalanceSat, points }
 }
 
-const DAYS_BY_RANGE: Record<string, number> = {
-  '30d': 30,
-  '7d': 7,
-  '90d': 90
-}
+const MS_PER_DAY = 24 * 60 * 60 * 1000
+const MIN_WINDOW_DAYS = 1
+const MAX_WINDOW_DAYS = 90
 
-export function rangeWindow(
-  timeRange: string,
+export function computeWindow(
+  history: BalanceHistory,
   nowMs: number = Date.now()
 ): {
   startMs: number
   endMs: number
 } {
-  const days = DAYS_BY_RANGE[timeRange] ?? 90
-  const startMs = nowMs - days * 24 * 60 * 60 * 1000
-  return { endMs: nowMs, startMs }
+  const oldest = history.points[0]?.timestampMs ?? nowMs
+  const spanDays = (nowMs - oldest) / MS_PER_DAY
+  const windowDays = Math.min(MAX_WINDOW_DAYS, Math.max(MIN_WINDOW_DAYS, spanDays))
+  return { endMs: nowMs, startMs: nowMs - windowDays * MS_PER_DAY }
 }
-
-const MS_PER_DAY = 24 * 60 * 60 * 1000
 
 export function extractTimestampMs(point: unknown): number | undefined {
   if (typeof point !== 'object' || point === null) {
@@ -127,20 +124,8 @@ export function buildDayTicks(startMs: number, endMs: number): number[] {
   return ticks
 }
 
-export function filterByTimeRange(data: BalanceDataPoint[], timeRange: string): BalanceDataPoint[] {
-  if (data.length === 0) {
-    return []
-  }
-  const { startMs } = rangeWindow(timeRange)
-  return data.filter((point) => point.timestampMs >= startMs)
-}
-
-export function buildChartSeries(
-  history: BalanceHistory,
-  timeRange: string,
-  endpointTotalSat: number
-): ChartSeries {
-  const { startMs, endMs } = rangeWindow(timeRange)
+export function buildChartSeries(history: BalanceHistory, endpointTotalSat: number): ChartSeries {
+  const { startMs, endMs } = computeWindow(history)
   let preWindowBalance = history.initialBalanceSat
   const inRange: BalanceDataPoint[] = []
   for (const point of history.points) {

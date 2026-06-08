@@ -3,8 +3,8 @@ import {
   buildChartSeries,
   buildDayTicks,
   computeBalanceHistory,
-  extractTimestampMs,
-  filterByTimeRange
+  computeWindow,
+  extractTimestampMs
 } from '../../src/utils/balance-history'
 import type { OnchainTxEntry } from '../../src/utils/movements-feed'
 import { createMovement } from '../fixtures/movements'
@@ -121,8 +121,9 @@ describe(computeBalanceHistory, () => {
   })
 })
 
-describe(filterByTimeRange, () => {
+describe(computeWindow, () => {
   const NOW = new Date('2026-05-13T00:00:00Z')
+  const DAY_MS = 24 * 60 * 60 * 1000
 
   beforeEach(() => {
     vi.useFakeTimers()
@@ -133,26 +134,37 @@ describe(filterByTimeRange, () => {
     vi.useRealTimers()
   })
 
-  it('returns empty for empty input', () => {
-    expect(filterByTimeRange([], '7d')).toStrictEqual([])
+  it('uses a 1-day window when there are no points', () => {
+    const { startMs, endMs } = computeWindow({ initialBalanceSat: 0, points: [] })
+    expect(endMs).toBe(NOW.getTime())
+    expect(startMs).toBe(NOW.getTime() - DAY_MS)
   })
 
-  it('keeps points within the 7d window', () => {
-    const within = { balanceSat: 1, timestampMs: new Date('2026-05-10T00:00:00Z').getTime() }
-    const outside = { balanceSat: 2, timestampMs: new Date('2026-05-01T00:00:00Z').getTime() }
-    expect(filterByTimeRange([within, outside], '7d')).toStrictEqual([within])
+  it('clamps to a 1-day minimum for recent points', () => {
+    const recent = new Date('2026-05-12T20:00:00Z').getTime()
+    const { startMs } = computeWindow({
+      initialBalanceSat: 0,
+      points: [{ balanceSat: 1, timestampMs: recent }]
+    })
+    expect(startMs).toBe(NOW.getTime() - DAY_MS)
   })
 
-  it('keeps points within the 30d window', () => {
-    const within = { balanceSat: 1, timestampMs: new Date('2026-04-20T00:00:00Z').getTime() }
-    const outside = { balanceSat: 2, timestampMs: new Date('2026-03-01T00:00:00Z').getTime() }
-    expect(filterByTimeRange([within, outside], '30d')).toStrictEqual([within])
+  it('grows the window to the oldest point', () => {
+    const oldest = new Date('2026-05-03T00:00:00Z').getTime()
+    const { startMs } = computeWindow({
+      initialBalanceSat: 0,
+      points: [{ balanceSat: 1, timestampMs: oldest }]
+    })
+    expect(startMs).toBe(oldest)
   })
 
-  it('defaults to a 90d window', () => {
-    const within = { balanceSat: 1, timestampMs: new Date('2026-03-15T00:00:00Z').getTime() }
-    const outside = { balanceSat: 2, timestampMs: new Date('2025-12-01T00:00:00Z').getTime() }
-    expect(filterByTimeRange([within, outside], 'unknown')).toStrictEqual([within])
+  it('clamps to a 90-day maximum for very old points', () => {
+    const ancient = new Date('2025-01-01T00:00:00Z').getTime()
+    const { startMs } = computeWindow({
+      initialBalanceSat: 0,
+      points: [{ balanceSat: 1, timestampMs: ancient }]
+    })
+    expect(startMs).toBe(NOW.getTime() - 90 * DAY_MS)
   })
 })
 
@@ -225,9 +237,9 @@ describe(buildChartSeries, () => {
         { balanceSat: 20_000, timestampMs: sameDay + 60_000 }
       ]
     }
-    const series = buildChartSeries(history, '90d', 20_000)
+    const series = buildChartSeries(history, 20_000)
     expect(series.domainEndMs).toBe(NOW.getTime())
-    expect(series.domainStartMs).toBe(NOW.getTime() - 90 * 24 * 60 * 60 * 1000)
+    expect(series.domainStartMs).toBe(NOW.getTime() - 24 * 60 * 60 * 1000)
     expect(series.data.at(0)).toStrictEqual({
       balanceSat: 0,
       timestampMs: series.domainStartMs
@@ -249,14 +261,14 @@ describe(buildChartSeries, () => {
         { balanceSat: 7500, timestampMs: within }
       ]
     }
-    const series = buildChartSeries(history, '7d', 7500)
+    const series = buildChartSeries(history, 7500)
     expect(series.data.at(0)?.balanceSat).toBe(5000)
     expect(series.data.at(0)?.timestampMs).toBe(series.domainStartMs)
     expect(series.data.at(-1)?.balanceSat).toBe(7500)
   })
 
   it('returns flat series at endpoint when there are no points', () => {
-    const series = buildChartSeries({ initialBalanceSat: 1234, points: [] }, '30d', 1234)
+    const series = buildChartSeries({ initialBalanceSat: 1234, points: [] }, 1234)
     expect(series.data).toStrictEqual([
       { balanceSat: 1234, timestampMs: series.domainStartMs },
       { balanceSat: 1234, timestampMs: series.domainEndMs }

@@ -39,7 +39,7 @@ services:
     # unprivileged barkd user before exec'ing barkd. Without the chown, barkd
     # (uid 1000) cannot write auth_token, so the api proxy injects no bearer
     # token and every barkd call fails with "missing auth_token".
-    user: "0:0"
+    user: '0:0'
     entrypoint:
       - /bin/sh
       - -c
