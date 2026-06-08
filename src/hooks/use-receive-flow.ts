@@ -134,6 +134,7 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
   }
 
   const hasFreshInvoice =
+    validAmount !== undefined &&
     debouncedAmount !== undefined &&
     !isGeneratingInvoice &&
     !isInvoicePlaceholder &&
