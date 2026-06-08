@@ -100,7 +100,7 @@ export function LabelEditor({ inputId, label, onSave }: LabelEditorProps) {
                 handleCancel()
               }
             }}
-            placeholder={t('movements.detail.labelPlaceholder')}
+            placeholder={t('movements.detail.label_placeholder')}
             value={draft}
           />
           <Button onClick={handleSave} size="sm" type="button">
@@ -122,7 +122,7 @@ export function LabelEditor({ inputId, label, onSave }: LabelEditorProps) {
             label.length > 0 ? 'flex-1 text-foreground' : 'flex-1 text-muted-foreground italic'
           }
         >
-          {label.length > 0 ? label : t('movements.detail.labelPlaceholder')}
+          {label.length > 0 ? label : t('movements.detail.label_placeholder')}
         </span>
         <Button
           aria-label={t('movements.detail.edit')}

@@ -27,7 +27,7 @@ export default function IndexPage() {
     <div className="flex flex-col items-center gap-4">
       <Spinner className="size-8" />
       <p className="text-muted-foreground text-sm">
-        {t(isCreating ? 'welcome.settingUp' : 'welcome.loading')}
+        {t(isCreating ? 'welcome.setting_up' : 'welcome.loading')}
       </p>
     </div>
   )

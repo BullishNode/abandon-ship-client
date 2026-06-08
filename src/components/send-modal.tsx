@@ -146,7 +146,7 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                         void flow.goToSend(text)
                       }
                     }}
-                    placeholder={t('send.destination.placeholder')}
+                    placeholder={t('send.destination_placeholder')}
                     type="text"
                     value={flow.destination}
                   />
@@ -255,7 +255,7 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                       <Input
                         id="send-label"
                         onChange={(e) => flow.setLabel(e.target.value)}
-                        placeholder={t('send.label.placeholder')}
+                        placeholder={t('send.label_placeholder')}
                         type="text"
                         value={flow.label}
                       />
@@ -266,7 +266,7 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                         <Input
                           id="send-message"
                           onChange={(e) => flow.setMessage(e.target.value)}
-                          placeholder={t('send.message.placeholder')}
+                          placeholder={t('send.message_placeholder')}
                           type="text"
                           value={flow.message}
                         />

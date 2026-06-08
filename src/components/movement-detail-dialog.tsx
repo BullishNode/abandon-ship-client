@@ -82,7 +82,7 @@ function MovementDetailContent({
   const source = getMovementSource(movement)
   const fee = getMovementFeeSat(movement)
   const counterpartyLabel =
-    direction === 'outgoing' ? t('movements.detail.sentTo') : t('movements.detail.receivedOn')
+    direction === 'outgoing' ? t('movements.detail.sent_to') : t('movements.detail.received_on')
   const completedAt =
     movement.time.completedAt &&
     movement.time.completedAt.getTime() !== movement.time.createdAt.getTime()
@@ -109,23 +109,23 @@ function MovementDetailContent({
         {counterparty ? (
           <CopyableValueRow label={counterpartyLabel} value={counterparty.destination.value} />
         ) : (
-          <DetailRow label={counterpartyLabel} value={t('movements.detail.noCounterparty')} />
+          <DetailRow label={counterpartyLabel} value={t('movements.detail.no_counterparty')} />
         )}
         <DetailRow
           label={t('movements.detail.fee')}
           value={
             fee === null
-              ? t('movements.detail.feeUnavailable')
+              ? t('movements.detail.fee_unavailable')
               : `${formatSats(fee)} · ${formatFiat(fee)}`
           }
         />
         <DetailRow
-          label={t('movements.detail.dateCreated')}
+          label={t('movements.detail.date_created')}
           value={formatDateAbsolute(movement.time.createdAt)}
         />
         {completedAt ? (
           <DetailRow
-            label={t('movements.detail.dateCompleted')}
+            label={t('movements.detail.date_completed')}
             value={formatDateAbsolute(completedAt)}
           />
         ) : null}

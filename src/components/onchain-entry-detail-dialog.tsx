@@ -81,7 +81,7 @@ function OnchainEntryDetailContent({
       : String(entry.confirmationHeight)
   const feeValue =
     entry.feeSat === null
-      ? t('movements.detail.feeUnavailable')
+      ? t('movements.detail.fee_unavailable')
       : `${formatSats(entry.feeSat)} · ${formatFiat(entry.feeSat)}`
   return (
     <>
@@ -105,7 +105,7 @@ function OnchainEntryDetailContent({
         <DetailRow label={t('movements.onchain.detail.height')} value={heightValue} />
         <DetailRow label={t('movements.detail.fee')} value={feeValue} />
         <DetailRow
-          label={t('movements.detail.dateCreated')}
+          label={t('movements.detail.date_created')}
           value={formatDateAbsolute(new Date(entry.approximateTimestampMs))}
         />
         <LabelEditor

@@ -63,7 +63,7 @@
   },
   "welcome": {
     "title": "Welcome to $t(app.name)",
-    "settingUp": "Setting up your wallet",
+    "setting_up": "Setting up your wallet",
     "loading": "Loading your wallet"
   },
   "onboarding": {
@@ -131,7 +131,7 @@
       "button": "Confirm send"
     },
     "destination": "Destination",
-    "destination.placeholder": "Ark, Lightning, or on-chain",
+    "destination_placeholder": "Ark, Lightning, or on-chain",
     "amount": "Amount",
     "errors": {
       "invalid_qr": "Invalid QR code",
@@ -147,9 +147,9 @@
     },
     "details": "Additional details",
     "label": "Label",
-    "label.placeholder": "Enter a label",
+    "label_placeholder": "Enter a label",
     "message": "Message",
-    "message.placeholder": "Enter a message",
+    "message_placeholder": "Enter a message",
     "branta": {
       "title": "Branta verification"
     },
@@ -193,10 +193,7 @@
       }
     },
     "columns": {
-      "from": "From",
       "date": "Date",
-      "amount_sats": "Amount",
-      "amount_fiat": "Amount",
       "label": "Label",
       "status": "Status",
       "amount": "Amount",
@@ -216,21 +213,21 @@
     },
     "detail": {
       "title": "Transaction details",
-      "sentTo": "Sent to",
-      "receivedOn": "Received to",
+      "sent_to": "Sent to",
+      "received_on": "Received to",
       "fee": "Fee",
-      "feeUnavailable": "Not available",
-      "dateCreated": "Created",
-      "dateCompleted": "Completed",
+      "fee_unavailable": "Not available",
+      "date_created": "Created",
+      "date_completed": "Completed",
       "label": "Label",
-      "labelPlaceholder": "No label",
+      "label_placeholder": "No label",
       "tags": "Tags",
       "copy": "Copy",
       "copied": "Copied",
       "save": "Save",
       "cancel": "Cancel",
       "edit": "Edit",
-      "noCounterparty": "No counterparty"
+      "no_counterparty": "No counterparty"
     }
   },
   "settings": {
@@ -322,8 +319,6 @@
         "estimate": {
           "title": "Estimated total cost",
           "value": "~{{sats}} sats at {{feeRate}} sat/vB",
-          "balance_one": "On-chain balance: {{sats}} sats",
-          "balance_other": "On-chain balance: {{sats}} sats",
           "balance": "On-chain balance: {{sats}} sats",
           "vtxos_one": "{{count}} VTXO to exit",
           "vtxos_other": "{{count}} VTXOs to exit",

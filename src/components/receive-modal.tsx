@@ -103,7 +103,7 @@ export function ReceiveModal({ open, onOpenChange }: ReceiveModalProps) {
                 <Input
                   id="receive-label"
                   onChange={(e) => flow.setLabel(e.target.value)}
-                  placeholder={t('send.label.placeholder')}
+                  placeholder={t('send.label_placeholder')}
                   type="text"
                   value={flow.label}
                 />
