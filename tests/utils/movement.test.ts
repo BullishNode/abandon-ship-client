@@ -141,7 +141,7 @@ describe(getMovementSource, () => {
     })
     expect(getMovementSource(movement)).toBe('ark')
   })
-  
+
   it('classifies bark.exit as exit even with bitcoin destination', () => {
     const movement = createMovement({
       sentTo: [{ amountSat: 5000, destination: { type: 'bitcoin', value: 'tb1p9lwzpy' } }],

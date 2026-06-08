@@ -1,5 +1,5 @@
 import { ArrowSquareOutIcon, WarningIcon } from '@phosphor-icons/react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
@@ -21,7 +21,6 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { externalLinks } from '@/config/links'
 import { WALLET_NAME_MAX_LENGTH } from '@/constants/wallet'
-import { useClaimEmergencyExit } from '@/hooks/barkd/use-claim-emergency-exit'
 import { useExitStatus } from '@/hooks/barkd/use-exit-status'
 import { useOnchainAddress } from '@/hooks/barkd/use-onchain-address'
 import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
@@ -34,7 +33,7 @@ import { useSettingsStore } from '@/stores/settings'
 import { useWalletStore } from '@/stores/wallet'
 import type { BitcoinUnit } from '@/types/bitcoin'
 import type { FiatCurrency, PriceProviderId } from '@/types/price-providers'
-import { estimateEmergencyExitFeeSat, summarizeExits } from '@/utils/exit-progress'
+import { areAllExitsRipe, estimateEmergencyExitFeeSat, summarizeExits } from '@/utils/exit-progress'
 
 const WALLET_DATA_PATH = '/data/.bark/'
 const SEED_HIDDEN_PLACEHOLDER = Array.from({ length: 12 }, () =>
@@ -58,8 +57,6 @@ const FIAT_CURRENCIES: { value: FiatCurrency; label: string }[] = [
 ]
 
 type ExitDialogMode = 'start' | 'edit'
-
-const AUTO_CLAIM_THROTTLE_MS = 30_000
 
 export default function SettingsPage() {
   const { t } = useTranslation()
@@ -102,10 +99,6 @@ export default function SettingsPage() {
   const [exitDialogMode, setExitDialogMode] = useState<ExitDialogMode>('start')
   const [draftExitAddress, setDraftExitAddress] = useState('')
   const [claimAddressDismissed, setClaimAddressDismissed] = useState(false)
-  const lastAutoClaimRef = useRef<{ claimableCount: number; attemptedAt: number }>({
-    attemptedAt: 0,
-    claimableCount: 0
-  })
 
   const { data: mnemonic, isFetching: isFetchingMnemonic } = useWalletMnemonic(isSeedRevealed)
 
@@ -137,8 +130,6 @@ export default function SettingsPage() {
       setExitDialogOpen(false)
     }
   })
-  const { mutate: claimEmergencyExit, isPending: isClaimingExit } = useClaimEmergencyExit()
-
   const onchainSpendable = onchainBalance?.trustedSpendableSat ?? 0
   const hasNoVtxos = (vtxos?.length ?? 0) === 0
 
@@ -206,35 +197,7 @@ export default function SettingsPage() {
   }
 
   const hasClaimAddress = pendingExitClaimAddress !== null && pendingExitClaimAddress.length > 0
-  const stillRipeningCount =
-    summary.counts.start + summary.counts.processing + summary.counts['awaiting-delta']
-  const allRipe = stillRipeningCount === 0
-  const needsClaimAddress = allRipe && summary.claimable > 0 && !hasClaimAddress
-
-  useEffect(() => {
-    if (!allRipe || summary.claimable === 0 || !hasClaimAddress || isClaimingExit) {
-      return
-    }
-    const now = Date.now()
-    const last = lastAutoClaimRef.current
-    if (
-      last.claimableCount === summary.claimable &&
-      now - last.attemptedAt < AUTO_CLAIM_THROTTLE_MS
-    ) {
-      return
-    }
-    lastAutoClaimRef.current = { attemptedAt: now, claimableCount: summary.claimable }
-    if (pendingExitClaimAddress !== null) {
-      claimEmergencyExit({ destination: pendingExitClaimAddress })
-    }
-  }, [
-    allRipe,
-    summary.claimable,
-    hasClaimAddress,
-    pendingExitClaimAddress,
-    isClaimingExit,
-    claimEmergencyExit
-  ])
+  const needsClaimAddress = areAllExitsRipe(summary) && summary.claimable > 0 && !hasClaimAddress
 
   useEffect(() => {
     if (!needsClaimAddress || claimAddressDismissed || isExitDialogOpen) {

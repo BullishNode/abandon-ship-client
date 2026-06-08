@@ -55,3 +55,20 @@ export function summarizeExits(exits: ExitTransactionStatus[]): ExitProgressSumm
     total
   }
 }
+
+export function areAllExitsRipe(summary: ExitProgressSummary): boolean {
+  const stillRipeningCount =
+    summary.counts.start + summary.counts.processing + summary.counts['awaiting-delta']
+  return stillRipeningCount === 0
+}
+
+export function resolveAutoClaimDestination(
+  summary: ExitProgressSummary,
+  pendingExitClaimAddress: string | null
+): string | null {
+  const hasClaimAddress = pendingExitClaimAddress !== null && pendingExitClaimAddress.length > 0
+  if (!(areAllExitsRipe(summary) && summary.claimable > 0 && hasClaimAddress)) {
+    return null
+  }
+  return pendingExitClaimAddress
+}

@@ -8,6 +8,7 @@ import { SendModal } from '@/components/send-modal'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+import { useAutoClaimEmergencyExit } from '@/hooks/barkd/use-auto-claim-emergency-exit'
 import { useMovementSync } from '@/hooks/barkd/use-movement-sync'
 import { useModalsStore } from '@/stores/modals'
 
@@ -39,6 +40,7 @@ export default function DashboardLayout() {
     ])
   )
   useMovementSync()
+  useAutoClaimEmergencyExit()
 
   const routeTitleKey = ROUTE_TITLE_KEYS[pathname]
   const routeTitle = routeTitleKey ? t(routeTitleKey) : ''
