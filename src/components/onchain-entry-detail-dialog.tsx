@@ -92,7 +92,7 @@ function OnchainEntryDetailContent({
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col items-start gap-2">
             <MovementStatusBadge status={entry.status} />
-            <MovementSourceBadge source="onchain" />
+            <MovementSourceBadge source={entry.isCpfp ? 'exit' : 'onchain'} />
           </div>
           <MovementAmountCell
             discreetMode={discreetMode}

@@ -66,8 +66,10 @@ export function getMovementColumns({
     {
       cell: ({ row }) => {
         const entry = row.original
-        const source = entry.kind === 'movement' ? getMovementSource(entry.movement) : 'onchain'
-        return <MovementSourceBadge source={source} />
+        if (entry.kind === 'movement') {
+          return <MovementSourceBadge source={getMovementSource(entry.movement)} />
+        }
+        return <MovementSourceBadge source={entry.isCpfp ? 'exit' : 'onchain'} />
       },
       header: t('movements.columns.source'),
       id: 'source'
