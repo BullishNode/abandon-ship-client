@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useBrantaVerification } from '@/hooks/branta/use-branta-verification'
+import { normalizeDestination } from '@/utils/bitcoin'
 import type { SendRoute } from '@/utils/payment'
 import {
   getSendRoute,
@@ -44,7 +45,8 @@ export function useSendDestination({ open, initialStep = 'scan' }: UseSendDestin
     setPrevOpen(open)
   }
 
-  function applyDestination(dest: Destination) {
+  function applyDestination(rawDest: Destination) {
+    const dest = normalizeDestination(rawDest)
     setDestination(dest.destination)
     setSelectedMethodType(dest.type)
     setSendRoute(getSendRoute(dest.type))

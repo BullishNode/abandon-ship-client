@@ -1,5 +1,11 @@
+import type { Destination } from 'bitcoin-decoder'
 import { describe, expect, it } from 'vitest'
-import { btcToSats, satsToBTC } from '../../src/utils/bitcoin'
+import {
+  btcToSats,
+  normalizeBitcoinAddress,
+  normalizeDestination,
+  satsToBTC
+} from '../../src/utils/bitcoin'
 
 describe('bitcoin utils', () => {
   describe(btcToSats, () => {
@@ -43,6 +49,126 @@ describe('bitcoin utils', () => {
 
     it('handles large amounts', () => {
       expect(satsToBTC(2_100_000_000_000_000)).toBe(21_000_000)
+    })
+  })
+
+  describe(normalizeBitcoinAddress, () => {
+    it('lowercases an uppercase mainnet bech32 address', () => {
+      const upper = 'BC1QAR0SRRR7XFKVY5L643LYDNW9RE59GTZZWF5MDQ'
+      expect(normalizeBitcoinAddress(upper)).toBe(upper.toLowerCase())
+    })
+
+    it('lowercases an uppercase taproot (bech32m) address', () => {
+      const upper = 'BC1P0XLXVLHEMJA6C4DQV22UAPCTQUPFHLXM9H8Z3K2E72Q4K9HCZ7VQZK5JJ0'
+      expect(normalizeBitcoinAddress(upper)).toBe(upper.toLowerCase())
+    })
+
+    it('lowercases uppercase signet/testnet bech32 addresses', () => {
+      expect(normalizeBitcoinAddress('TB1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KXPJZSX')).toBe(
+        'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx'
+      )
+    })
+
+    it('lowercases uppercase regtest bech32 addresses', () => {
+      expect(normalizeBitcoinAddress('BCRT1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7K35MRZD')).toBe(
+        'bcrt1qw508d6qejxtdg4y5r3zarvary0c5xw7k35mrzd'
+      )
+    })
+
+    it('leaves an already lowercase bech32 address unchanged', () => {
+      const lower = 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq'
+      expect(normalizeBitcoinAddress(lower)).toBe(lower)
+    })
+
+    it('preserves case of base58 legacy P2PKH addresses', () => {
+      const legacy = '1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2'
+      expect(normalizeBitcoinAddress(legacy)).toBe(legacy)
+    })
+
+    it('preserves case of base58 legacy P2SH addresses', () => {
+      const legacy = '3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy'
+      expect(normalizeBitcoinAddress(legacy)).toBe(legacy)
+    })
+  })
+
+  describe(normalizeDestination, () => {
+    it('lowercases an uppercase bitcoin segwit address', () => {
+      const dest: Destination = {
+        addressType: 'p2wpkh',
+        destination: 'BC1QAR0SRRR7XFKVY5L643LYDNW9RE59GTZZWF5MDQ',
+        protocol: 'on-chain',
+        type: 'bitcoin-address'
+      }
+      expect(normalizeDestination(dest).destination).toBe(
+        'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq'
+      )
+    })
+
+    it('preserves case of a base58 legacy bitcoin address', () => {
+      const dest: Destination = {
+        addressType: 'p2pkh',
+        destination: '1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2',
+        protocol: 'on-chain',
+        type: 'bitcoin-address'
+      }
+      expect(normalizeDestination(dest).destination).toBe('1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2')
+    })
+
+    it('lowercases an uppercase ark address', () => {
+      const dest: Destination = {
+        destination: 'ARK1ABCDEF',
+        protocol: 'ark',
+        type: 'ark-address'
+      }
+      expect(normalizeDestination(dest).destination).toBe('ark1abcdef')
+    })
+
+    it('lowercases an uppercase bolt11 invoice', () => {
+      const dest: Destination = {
+        destination: 'LNBC1ABCDEF',
+        protocol: 'lightning',
+        type: 'bolt11'
+      }
+      expect(normalizeDestination(dest).destination).toBe('lnbc1abcdef')
+    })
+
+    it('lowercases an uppercase bolt12 offer', () => {
+      const dest: Destination = {
+        destination: 'LNO1ABCDEF',
+        protocol: 'lightning',
+        type: 'bolt12'
+      }
+      expect(normalizeDestination(dest).destination).toBe('lno1abcdef')
+    })
+
+    it('lowercases a lightning address', () => {
+      const dest: Destination = {
+        destination: 'Satoshi@Example.com',
+        protocol: 'lightning',
+        type: 'lnaddress'
+      }
+      expect(normalizeDestination(dest).destination).toBe('satoshi@example.com')
+    })
+
+    it('preserves case of an lnurl', () => {
+      const dest: Destination = {
+        destination: 'LNURL1ABCDEF',
+        protocol: 'lightning',
+        type: 'lnurl'
+      }
+      expect(normalizeDestination(dest).destination).toBe('LNURL1ABCDEF')
+    })
+
+    it('keeps other destination fields intact', () => {
+      const dest: Destination = {
+        addressType: 'p2wpkh',
+        destination: 'BC1QAR0SRRR7XFKVY5L643LYDNW9RE59GTZZWF5MDQ',
+        protocol: 'on-chain',
+        type: 'bitcoin-address'
+      }
+      const result = normalizeDestination(dest)
+      expect(result.type).toBe('bitcoin-address')
+      expect(result.protocol).toBe('on-chain')
     })
   })
 })
