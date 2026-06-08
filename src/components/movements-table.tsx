@@ -113,11 +113,12 @@ export function MovementsTable() {
     t
   })
 
-  let feedContent: React.ReactNode
   if (isFeedLoading) {
-    feedContent = <MovementsTableSkeleton />
-  } else if (feed.length === 0) {
-    feedContent = (
+    return <MovementsTableSkeleton />
+  }
+
+  const feedContent =
+    feed.length === 0 ? (
       <Empty className="border-0 py-12">
         <EmptyHeader>
           <EmptyMedia variant="icon">
@@ -138,9 +139,7 @@ export function MovementsTable() {
           </div>
         </EmptyContent>
       </Empty>
-    )
-  } else {
-    feedContent = (
+    ) : (
       <DataTable
         columns={columns}
         data={feed}
@@ -148,7 +147,6 @@ export function MovementsTable() {
         pageSize={MOVEMENTS_PAGE_SIZE}
       />
     )
-  }
 
   return (
     <>
