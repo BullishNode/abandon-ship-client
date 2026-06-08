@@ -1,20 +1,18 @@
-import { usePendingRounds } from '@/hooks/barkd/use-pending-rounds'
-import { useRefreshCounterparty } from '@/hooks/barkd/use-refresh-counterparty'
+import type { Movement } from '@secondts/barkd'
 import { useReceivedPayment } from '@/hooks/barkd/use-received-payment'
+import { useRefreshVtxos } from '@/hooks/barkd/use-refresh-vtxos'
 import { useSettingsStore } from '@/stores/settings'
-import { isRoundInProgress } from '@/utils/refresh'
 
 export function useRefreshOnReceive(): void {
   const refreshOnReceive = useSettingsStore((state) => state.refreshOnReceive)
-  const { data: pendingRounds } = usePendingRounds()
-  const { mutate: refreshCounterparty } = useRefreshCounterparty()
+  const { mutate: refreshVtxos } = useRefreshVtxos()
 
   useReceivedPayment(
-    () => {
-      if (isRoundInProgress(pendingRounds)) {
+    (movement: Movement) => {
+      if (movement.outputVtxos.length === 0) {
         return
       }
-      refreshCounterparty()
+      refreshVtxos({ vtxos: movement.outputVtxos })
     },
     { enabled: refreshOnReceive }
   )
