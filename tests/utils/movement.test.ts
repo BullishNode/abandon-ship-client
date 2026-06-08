@@ -1,11 +1,26 @@
+import type { WalletTxInfo } from '@secondts/barkd'
 import { describe, expect, it } from 'vitest'
 import {
   getMovementCounterparty,
   getMovementDirection,
   getMovementFeeSat,
-  getMovementSource
+  getMovementSource,
+  sumExitCpfpFeeSat
 } from '../../src/utils/movement'
 import { createMovement } from '../fixtures/movements'
+
+function createWalletTx(overrides: Partial<WalletTxInfo> = {}): WalletTxInfo {
+  return {
+    balanceChangeSat: 0,
+    isCpfp: false,
+    onchainFeeSat: null,
+    tx: '00',
+    txid: 'tx',
+    ...overrides
+  }
+}
+
+const EXIT_SUBSYSTEM = { kind: 'exit', name: 'bark.exit' } as const
 
 describe(getMovementDirection, () => {
   it('returns incoming for positive balance', () => {
@@ -158,5 +173,56 @@ describe(getMovementFeeSat, () => {
 
   it('returns zero when fee is zero', () => {
     expect(getMovementFeeSat(createMovement({ offchainFeeSat: 0 }))).toBe(0)
+  })
+
+  it('ignores transactions for non-exit movements', () => {
+    const movement = createMovement({ offchainFeeSat: 250 })
+    const transactions = [createWalletTx({ isCpfp: true, onchainFeeSat: 573 })]
+    expect(getMovementFeeSat(movement, transactions)).toBe(250)
+  })
+
+  it('adds CPFP on-chain fees to an exit movement', () => {
+    const movement = createMovement({ offchainFeeSat: 0, subsystem: EXIT_SUBSYSTEM })
+    const transactions = [
+      createWalletTx({ isCpfp: true, onchainFeeSat: 573, txid: 'a' }),
+      createWalletTx({ isCpfp: true, onchainFeeSat: 642, txid: 'b' }),
+      createWalletTx({ isCpfp: false, onchainFeeSat: 9999, txid: 'c' })
+    ]
+    expect(getMovementFeeSat(movement, transactions)).toBe(1215)
+  })
+
+  it('returns zero on-chain fee for an exit with no CPFP transactions yet', () => {
+    const movement = createMovement({ offchainFeeSat: 0, subsystem: EXIT_SUBSYSTEM })
+    expect(getMovementFeeSat(movement, [])).toBe(0)
+  })
+})
+
+describe(sumExitCpfpFeeSat, () => {
+  it('sums onchainFeeSat across CPFP transactions only', () => {
+    const transactions = [
+      createWalletTx({ isCpfp: true, onchainFeeSat: 573 }),
+      createWalletTx({ isCpfp: true, onchainFeeSat: 642 }),
+      createWalletTx({ isCpfp: false, onchainFeeSat: 100 })
+    ]
+    expect(sumExitCpfpFeeSat(transactions)).toBe(1215)
+  })
+
+  it('skips CPFP transactions whose fee is not yet known', () => {
+    const transactions = [
+      createWalletTx({ isCpfp: true, onchainFeeSat: 573 }),
+      createWalletTx({ isCpfp: true, onchainFeeSat: null })
+    ]
+    expect(sumExitCpfpFeeSat(transactions)).toBe(573)
+  })
+
+  it('grows as more tree levels confirm', () => {
+    const firstLevel = [createWalletTx({ isCpfp: true, onchainFeeSat: 573 })]
+    const bothLevels = [...firstLevel, createWalletTx({ isCpfp: true, onchainFeeSat: 642 })]
+    expect(sumExitCpfpFeeSat(firstLevel)).toBe(573)
+    expect(sumExitCpfpFeeSat(bothLevels)).toBe(1215)
+  })
+
+  it('returns zero for an empty list', () => {
+    expect(sumExitCpfpFeeSat([])).toBe(0)
   })
 })

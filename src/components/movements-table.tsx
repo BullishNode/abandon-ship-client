@@ -194,6 +194,7 @@ export function MovementsTable() {
         movement={selectedMovement}
         onOpenChange={handleMovementOpenChange}
         open={movementOpen}
+        transactions={transactions}
       />
       <OnchainEntryDetailDialog
         discreetMode={discreetMode}

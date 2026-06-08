@@ -1,4 +1,4 @@
-import type { Movement } from '@secondts/barkd'
+import type { Movement, WalletTxInfo } from '@secondts/barkd'
 import { useTranslation } from 'react-i18next'
 import { MovementAmountCell } from '@/components/movement-amount-cell'
 import { CopyableValueRow, DetailRow, LabelEditor } from '@/components/movement-detail-shared'
@@ -19,6 +19,7 @@ import {
 
 interface MovementDetailDialogProps {
   movement: Movement | null
+  transactions: WalletTxInfo[]
   open: boolean
   onOpenChange: (open: boolean) => void
   formatSats: (sats: number) => string
@@ -29,6 +30,7 @@ interface MovementDetailDialogProps {
 
 export function MovementDetailDialog({
   movement,
+  transactions,
   open,
   onOpenChange,
   formatSats,
@@ -50,6 +52,7 @@ export function MovementDetailDialog({
             formatFiat={formatFiat}
             formatSats={formatSats}
             movement={movement}
+            transactions={transactions}
           />
         ) : null}
       </DialogContent>
@@ -59,6 +62,7 @@ export function MovementDetailDialog({
 
 interface MovementDetailContentProps {
   movement: Movement
+  transactions: WalletTxInfo[]
   formatSats: (sats: number) => string
   formatFiat: (sats: number) => string
   formatDateAbsolute: (date: Date) => string
@@ -67,6 +71,7 @@ interface MovementDetailContentProps {
 
 function MovementDetailContent({
   movement,
+  transactions,
   formatSats,
   formatFiat,
   formatDateAbsolute,
@@ -80,7 +85,7 @@ function MovementDetailContent({
   const direction = getMovementDirection(movement)
   const counterparty = getMovementCounterpartyDestination(movement)
   const source = getMovementSource(movement)
-  const fee = getMovementFeeSat(movement)
+  const fee = getMovementFeeSat(movement, transactions)
   const counterpartyLabel =
     direction === 'outgoing' ? t('movements.detail.sent_to') : t('movements.detail.received_on')
   const completedAt =

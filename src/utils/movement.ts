@@ -1,4 +1,4 @@
-import type { Movement, MovementDestination } from '@secondts/barkd'
+import type { Movement, MovementDestination, WalletTxInfo } from '@secondts/barkd'
 import { formatAddress } from '@/utils/format'
 
 export type MovementSource = 'onchain' | 'lightning' | 'ark' | 'exit' | 'unknown'
@@ -82,9 +82,26 @@ export function getMovementSource(movement: Movement): MovementSource {
   return sourceFromSubsystemName(movement.subsystem.name) ?? 'unknown'
 }
 
-// barkd Movement type currently exposes only offchainFeeSat. Onchain fees may
-// live in `metadata` per subsystem; extend once the metadata schema is documented.
-export function getMovementFeeSat(movement: Movement): number | null {
+/**
+ * An exit pays its real cost as on-chain CPFP fees that barkd attaches to each
+ * exit-tree level, not as `offchainFeeSat` (which is 0). Those CPFP children
+ * arrive as `isCpfp` wallet transactions; sum their fees to get the on-chain
+ * exit cost. The total grows as more tree levels confirm, so it is recomputed
+ * from the live transaction list rather than stored.
+ */
+export function sumExitCpfpFeeSat(transactions: WalletTxInfo[]): number {
+  return transactions
+    .filter((tx) => tx.isCpfp && typeof tx.onchainFeeSat === 'number')
+    .reduce((total, tx) => total + (tx.onchainFeeSat ?? 0), 0)
+}
+
+export function getMovementFeeSat(
+  movement: Movement,
+  transactions: WalletTxInfo[] = []
+): number | null {
+  if (isExitSubsystem(movement.subsystem.name)) {
+    return movement.offchainFeeSat + sumExitCpfpFeeSat(transactions)
+  }
   if (typeof movement.offchainFeeSat === 'number') {
     return movement.offchainFeeSat
   }
