@@ -31,8 +31,11 @@ services:
       - barkd
 
   barkd:
-    image: secondark/barkd:0.2.2
     restart: on-failure
     stop_grace_period: 1m
+    entrypoint:
+      - /bin/sh
+      - -c
+      - mkdir -p /data/.bark && exec /usr/local/bin/barkd --port 4000 --host 0.0.0.0 --datadir /data/.bark
     volumes:
       - ${APP_DATA_DIR}/wallet:/data
