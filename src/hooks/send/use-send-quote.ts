@@ -21,11 +21,8 @@ export function useSendQuote({ open, sendRoute, destination }: UseSendQuoteOptio
   const [amount, setAmount] = useState('')
   const [prevOpen, setPrevOpen] = useState(open)
 
-  if (open && !prevOpen) {
-    setAmount('')
-  }
-
   if (open !== prevOpen) {
+    setAmount('')
     setPrevOpen(open)
   }
 
