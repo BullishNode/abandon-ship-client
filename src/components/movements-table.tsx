@@ -5,6 +5,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { DataTable } from '@/components/data-table'
 import { MOVEMENTS_PAGE_SIZE } from '@/constants/movements'
 import { MovementDetailDialog } from '@/components/movement-detail-dialog'
+import { MovementsTableSkeleton } from '@/components/movements-table-skeleton'
 import { OnchainEntryDetailDialog } from '@/components/onchain-entry-detail-dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -28,10 +29,11 @@ import { getMovementColumns } from './movements-columns'
 
 export function MovementsTable() {
   const { t, i18n } = useTranslation()
-  const { data: movements = [] } = useWalletTransactions()
-  const { data: utxos = [] } = useOnchainUtxos()
-  const { data: transactions = [] } = useOnchainTransactions()
+  const { data: movements = [], isPending: movementsPending } = useWalletTransactions()
+  const { data: utxos = [], isPending: utxosPending } = useOnchainUtxos()
+  const { data: transactions = [], isPending: transactionsPending } = useOnchainTransactions()
   const { data: tip } = useBitcoinTip()
+  const isFeedLoading = movementsPending || utxosPending || transactionsPending
   const firstSeenAt = useOnchainFirstSeen()
   const [
     discreetMode,
@@ -111,6 +113,43 @@ export function MovementsTable() {
     t
   })
 
+  let feedContent: React.ReactNode
+  if (isFeedLoading) {
+    feedContent = <MovementsTableSkeleton />
+  } else if (feed.length === 0) {
+    feedContent = (
+      <Empty className="border-0 py-12">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <TrayIcon />
+          </EmptyMedia>
+          <EmptyTitle>{t('movements.empty')}</EmptyTitle>
+        </EmptyHeader>
+        <EmptyContent>
+          <div className="flex gap-2 mt-2">
+            <Button onClick={() => openSend('scan')} variant="outline">
+              <ScanIcon />
+              {t('actions.scan')}
+            </Button>
+            <Button onClick={openReceive}>
+              <QrCodeIcon />
+              {t('actions.receive')}
+            </Button>
+          </div>
+        </EmptyContent>
+      </Empty>
+    )
+  } else {
+    feedContent = (
+      <DataTable
+        columns={columns}
+        data={feed}
+        onRowClick={handleRowClick}
+        pageSize={MOVEMENTS_PAGE_SIZE}
+      />
+    )
+  }
+
   return (
     <>
       <Card>
@@ -146,35 +185,7 @@ export function MovementsTable() {
           </Popover>
         </CardHeader>
         <CardContent className="px-0 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6 [&_th:first-child]:pl-6 [&_th:last-child]:pr-6">
-          {feed.length === 0 ? (
-            <Empty className="border-0 py-12">
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <TrayIcon />
-                </EmptyMedia>
-                <EmptyTitle>{t('movements.empty')}</EmptyTitle>
-              </EmptyHeader>
-              <EmptyContent>
-                <div className="flex gap-2 mt-2">
-                  <Button onClick={() => openSend('scan')} variant="outline">
-                    <ScanIcon />
-                    {t('actions.scan')}
-                  </Button>
-                  <Button onClick={openReceive}>
-                    <QrCodeIcon />
-                    {t('actions.receive')}
-                  </Button>
-                </div>
-              </EmptyContent>
-            </Empty>
-          ) : (
-            <DataTable
-              columns={columns}
-              data={feed}
-              onRowClick={handleRowClick}
-              pageSize={MOVEMENTS_PAGE_SIZE}
-            />
-          )}
+          {feedContent}
         </CardContent>
       </Card>
       <MovementDetailDialog
