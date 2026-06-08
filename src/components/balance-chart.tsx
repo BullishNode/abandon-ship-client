@@ -53,7 +53,7 @@ export function BalanceChart() {
 
   return (
     <Card className="pt-0 gap-2">
-      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
+      <CardHeader className="flex items-center gap-2 space-y-0 py-5 sm:flex-row">
         <CardTitle>{t('dashboard.chart.title')}</CardTitle>
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">

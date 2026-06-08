@@ -68,7 +68,7 @@ export function DataTable<TData, TValue>({
   return (
     <div className="flex flex-col gap-4">
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-muted [&_tr]:border-0">
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow className="hover:bg-transparent" key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
