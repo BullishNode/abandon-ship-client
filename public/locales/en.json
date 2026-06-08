@@ -124,6 +124,7 @@
     "scan": {
       "description": "Scan any bitcoin, Lightning, or Ark QR code to pay."
     },
+    "scan_qr": "Scan QR",
     "confirm": {
       "description": "Review the payment details before sending.",
       "button": "Confirm send"

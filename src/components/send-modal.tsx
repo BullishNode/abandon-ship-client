@@ -1,4 +1,4 @@
-import { CaretDownIcon, ClipboardTextIcon } from '@phosphor-icons/react'
+import { CaretDownIcon, ClipboardTextIcon, ScanIcon } from '@phosphor-icons/react'
 import { AnimatePresence, m } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { BrantaVerificationStatus } from '@/components/branta-verification-status'
@@ -281,7 +281,8 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
               </ModalBody>
               <ModalFooter>
                 <Button onClick={flow.goToScan} variant="outline">
-                  {t('actions.back')}
+                  <ScanIcon />
+                  {t('send.scan_qr')}
                 </Button>
                 <Button
                   disabled={!flow.canSend}
