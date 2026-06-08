@@ -105,6 +105,8 @@
       "description": "Receives on-chain bitcoin. You can board it onto Ark later."
     },
     "success": {
+      "awaiting_confirmation": "Waiting for confirmation",
+      "onchain_incoming": "On-chain payment incoming",
       "title": "Payment received"
     }
   },

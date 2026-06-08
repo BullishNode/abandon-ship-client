@@ -3,6 +3,7 @@ import { encodeBIP321 } from 'bip-321'
 import { useEffect, useRef, useState } from 'react'
 import { useLightningInvoice } from '@/hooks/barkd/use-lightning-invoice'
 import { useOnchainAddress } from '@/hooks/barkd/use-onchain-address'
+import { useReceivedOnchainPayment } from '@/hooks/barkd/use-received-onchain-payment'
 import { useReceivedPayment } from '@/hooks/barkd/use-received-payment'
 import { useWalletAddress } from '@/hooks/barkd/use-wallet-address'
 import { useDebounce } from '@/hooks/use-debounce'
@@ -14,6 +15,12 @@ const INVOICE_DEBOUNCE_MS = 300
 const RECEIVED_AUTO_CLOSE_MS = 3000
 
 export type ReceiveTab = 'payto' | 'ark' | 'lightning' | 'onchain'
+
+export interface ReceivedPayment {
+  amountSat: number
+  rail: 'offchain' | 'onchain'
+  pending: boolean
+}
 
 interface UseReceiveFlowOptions {
   open: boolean
@@ -90,7 +97,7 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
   const [amount, setAmount] = useState('')
   const [label, setLabel] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [receivedAmountSat, setReceivedAmountSat] = useState<number | undefined>()
+  const [received, setReceived] = useState<ReceivedPayment | undefined>()
   const bindingIdRef = useRef<string | null>(null)
   const [prevOpen, setPrevOpen] = useState(open)
 
@@ -157,22 +164,37 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
     setAmount('')
     setLabel('')
     setSelectedTags([])
-    setReceivedAmountSat(undefined)
+    setReceived(undefined)
     bindingIdRef.current = null
     queryClient.removeQueries({ queryKey: lightningKeys.all })
     fetchArkAddress()
     fetchOnchainAddress()
   }
 
+  function handleReceived(payment: ReceivedPayment) {
+    if (!open || received !== undefined) {
+      return
+    }
+    setReceived(payment)
+    window.setTimeout(() => {
+      onOpenChange(false)
+    }, RECEIVED_AUTO_CLOSE_MS)
+  }
+
   useReceivedPayment(
     (movement) => {
-      if (!open || receivedAmountSat !== undefined) {
-        return
-      }
-      setReceivedAmountSat(movement.effectiveBalanceSat)
-      window.setTimeout(() => {
-        onOpenChange(false)
-      }, RECEIVED_AUTO_CLOSE_MS)
+      handleReceived({
+        amountSat: movement.effectiveBalanceSat,
+        pending: false,
+        rail: 'offchain'
+      })
+    },
+    { enabled: open }
+  )
+
+  useReceivedOnchainPayment(
+    (payment) => {
+      handleReceived({ amountSat: payment.amountSat, pending: payment.pending, rail: 'onchain' })
     },
     { enabled: open }
   )
@@ -281,7 +303,7 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
     needsAmount,
     onchainAddress,
     paytoUri,
-    receivedAmountSat,
+    received,
     selectedTags,
     setAmount: handleAmountChange,
     setLabel,

@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
 import { useFormatFiat } from '@/hooks/use-format-fiat'
 import { useReceiveFlow } from '@/hooks/use-receive-flow'
+import type { ReceivedPayment } from '@/hooks/use-receive-flow'
 import { cn } from '@/lib/utils'
 
 interface ReceiveModalProps {
@@ -26,10 +27,10 @@ export function ReceiveModal({ open, onOpenChange }: ReceiveModalProps) {
   const formatFiat = useFormatFiat()
   const flow = useReceiveFlow({ onOpenChange, open })
 
-  if (flow.receivedAmountSat !== undefined) {
+  if (flow.received !== undefined) {
     return (
       <Modal onClose={flow.handleClose} setShowModal={onOpenChange} showModal={open}>
-        <ReceivedSuccessView amountSat={flow.receivedAmountSat} />
+        <ReceivedSuccessView payment={flow.received} />
       </Modal>
     )
   }
@@ -260,12 +261,14 @@ function LightningTab({ invoice }: LightningTabProps) {
 }
 
 interface ReceivedSuccessViewProps {
-  amountSat: number
+  payment: ReceivedPayment
 }
 
-function ReceivedSuccessView({ amountSat }: ReceivedSuccessViewProps) {
+function ReceivedSuccessView({ payment }: ReceivedSuccessViewProps) {
   const { t } = useTranslation()
   const formatBitcoin = useFormatBitcoin()
+  const title =
+    payment.rail === 'onchain' ? t('receive.success.onchain_incoming') : t('receive.success.title')
 
   return (
     <div className="flex flex-col items-center gap-4 py-10">
@@ -282,8 +285,15 @@ function ReceivedSuccessView({ amountSat }: ReceivedSuccessViewProps) {
         initial={{ opacity: 0, y: 8 }}
         transition={{ delay: 0.1, duration: 0.2 }}
       >
-        <span className="font-medium text-lg">{t('receive.success.title')}</span>
-        <span className="text-muted-foreground tabular-nums">{formatBitcoin(amountSat)}</span>
+        <span className="font-medium text-lg">{title}</span>
+        <span className="text-muted-foreground tabular-nums">
+          {formatBitcoin(payment.amountSat)}
+        </span>
+        {payment.rail === 'onchain' && payment.pending && (
+          <span className="text-muted-foreground text-xs">
+            {t('receive.success.awaiting_confirmation')}
+          </span>
+        )}
       </m.div>
     </div>
   )
