@@ -1,12 +1,12 @@
 import type { ColumnDef } from '@tanstack/react-table'
-import type { Movement } from '@secondts/barkd'
 import type { TFunction } from 'i18next'
 import { MovementAmountCell } from '@/components/movement-amount-cell'
 import { MovementLabelCell } from '@/components/movement-label-cell'
 import { MovementSourceBadge } from '@/components/movement-source-badge'
 import { MovementStatusBadge } from '@/components/movement-status-badge'
 import { OnchainLabelCell } from '@/components/onchain-label-cell'
-import { getMovementSource, isExitSubsystem } from '@/utils/movement'
+import { getMovementSource } from '@/utils/movement'
+import { getMovementDefaultLabel } from '@/utils/movement-labels'
 import type { MovementsFeedRow } from '@/utils/movements-feed'
 
 interface MovementColumnsOptions {
@@ -15,16 +15,6 @@ interface MovementColumnsOptions {
   formatFiat: (sats: number) => string
   formatDate: (date: Date) => string
   discreetMode: boolean
-}
-
-function getSubsystemFallback(subsystem: Movement['subsystem'], t: TFunction): string | undefined {
-  if (subsystem.kind === 'refresh') {
-    return t('movements.kinds.refresh')
-  }
-  if (isExitSubsystem(subsystem.name)) {
-    return t('movements.kinds.exit')
-  }
-  return undefined
 }
 
 export function getMovementColumns({
@@ -50,7 +40,7 @@ export function getMovementColumns({
       cell: ({ row }) => {
         const entry = row.original
         if (entry.kind === 'movement') {
-          const fallback = getSubsystemFallback(entry.movement.subsystem, t)
+          const fallback = getMovementDefaultLabel(entry.movement.subsystem, t)
           return <MovementLabelCell fallback={fallback} movement={entry.movement} />
         }
         return (

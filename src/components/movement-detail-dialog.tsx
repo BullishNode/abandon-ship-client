@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label'
 import { useUpdateMovementMetadata } from '@/hooks/barkd/use-update-movement-metadata'
 import { getMovementMetadata } from '@/utils/metadata'
+import { getMovementDefaultLabel } from '@/utils/movement-labels'
 import {
   getMovementCounterpartyDestination,
   getMovementDirection,
@@ -74,6 +75,7 @@ function MovementDetailContent({
   const { t } = useTranslation()
   const movementId = movement.id
   const metadata = getMovementMetadata(movement)
+  const defaultLabel = getMovementDefaultLabel(movement.subsystem, t)
   const updateMetadata = useUpdateMovementMetadata()
   const direction = getMovementDirection(movement)
   const counterparty = getMovementCounterpartyDestination(movement)
@@ -129,7 +131,7 @@ function MovementDetailContent({
         ) : null}
         <LabelEditor
           inputId="movement-label"
-          label={metadata?.label ?? ''}
+          label={metadata?.label ?? defaultLabel}
           onSave={(nextLabel) => {
             updateMetadata.mutate({
               id: movementId,

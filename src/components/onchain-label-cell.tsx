@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import type { MetadataStore } from '@/stores/metadata'
 import { useMetadataStore } from '@/stores/metadata'
 import { useWalletStore } from '@/stores/wallet'
+import { getOnchainDefaultLabel } from '@/utils/movement-labels'
 
 interface OnchainLabelCellProps {
   txid: string
@@ -43,7 +44,7 @@ export function OnchainLabelCell({ txid, bindingAddress, isCpfp }: OnchainLabelC
   const { label, tags } = useMetadataStore(
     useShallow((state) => selectLabelSource(state, fingerprint, txid, bindingAddress))
   )
-  const resolvedLabel = label.length === 0 && isCpfp ? t('movements.onchain.exit_fee_label') : label
+  const resolvedLabel = label.length === 0 ? getOnchainDefaultLabel(isCpfp, t) : label
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {resolvedLabel.length > 0 ? <span className="text-foreground">{resolvedLabel}</span> : null}

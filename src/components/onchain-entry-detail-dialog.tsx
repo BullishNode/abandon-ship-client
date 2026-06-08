@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label'
 import { useMetadataStore } from '@/stores/metadata'
 import { useWalletStore } from '@/stores/wallet'
+import { getOnchainDefaultLabel } from '@/utils/movement-labels'
 import type { OnchainTxEntry } from '@/utils/movements-feed'
 
 interface OnchainEntryDetailDialogProps {
@@ -109,7 +110,7 @@ function OnchainEntryDetailContent({
         />
         <LabelEditor
           inputId="onchain-label"
-          label={annotation?.label ?? ''}
+          label={annotation?.label ?? getOnchainDefaultLabel(entry.isCpfp, t)}
           onSave={(nextLabel) => {
             setOnchainAnnotation(entry.txid, {
               label: nextLabel,
