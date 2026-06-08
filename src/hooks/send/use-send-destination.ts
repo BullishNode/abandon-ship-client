@@ -98,7 +98,9 @@ export function useSendDestination({ open, initialStep = 'scan' }: UseSendDestin
       return
     }
     const decoded = await parsePaymentInput(trimmed)
-    if (decoded.valid) {
+    if (decoded.valid && decoded.kind === 'payment') {
+      applyDestination(pickCheapestDestination(decoded.destinations))
+      setParsed(decoded)
       setRawQrInput(trimmed)
     }
   }
