@@ -120,8 +120,12 @@ export function ReceiveModal({ open, onOpenChange }: ReceiveModalProps) {
         <Button onClick={flow.handleClose} variant="outline">
           {t('actions.cancel')}
         </Button>
-        <Button loading={flow.isLoading} onClick={flow.handleNewAddress}>
-          {t('receive.new')}
+        <Button
+          disabled={flow.activeTab === 'lightning' && flow.needsAmount}
+          loading={flow.isLoading}
+          onClick={flow.handleNewAddress}
+        >
+          {t(flow.activeTab === 'lightning' ? 'receive.new_invoice' : 'receive.new')}
         </Button>
       </ModalFooter>
     </Modal>
