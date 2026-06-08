@@ -68,15 +68,15 @@ export default function DashboardLayout() {
               </Button>
             </li>
             <li>
-              <Button aria-label={t('actions.receive')} onClick={openReceive}>
-                <QrCodeIcon />
-                <span className="hidden md:inline">{t('actions.receive')}</span>
-              </Button>
-            </li>
-            <li>
               <Button aria-label={t('actions.send')} onClick={() => openSend('send')}>
                 <PaperPlaneTiltIcon />
                 <span className="hidden md:inline">{t('actions.send')}</span>
+              </Button>
+            </li>
+            <li>
+              <Button aria-label={t('actions.receive')} onClick={openReceive}>
+                <QrCodeIcon />
+                <span className="hidden md:inline">{t('actions.receive')}</span>
               </Button>
             </li>
           </ul>
