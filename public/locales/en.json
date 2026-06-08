@@ -81,7 +81,7 @@
   },
   "receive": {
     "title": "Receive",
-    "new": "New address",
+    "new_address": "New address",
     "new_invoice": "New invoice",
     "tabs": {
       "payto": "Pay to",

@@ -125,7 +125,7 @@ export function ReceiveModal({ open, onOpenChange }: ReceiveModalProps) {
           loading={flow.isLoading}
           onClick={flow.handleNewAddress}
         >
-          {t(flow.activeTab === 'lightning' ? 'receive.new_invoice' : 'receive.new')}
+          {t(flow.activeTab === 'lightning' ? 'receive.new_invoice' : 'receive.new_address')}
         </Button>
       </ModalFooter>
     </Modal>
