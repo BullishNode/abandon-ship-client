@@ -1,6 +1,6 @@
 import type { Balance, OnchainBalance } from '@secondts/barkd'
 import { describe, expect, it } from 'vitest'
-import { getBalanceTotals } from '../../src/utils/balance'
+import { carryForwardPendingExit, getBalanceTotals } from '../../src/utils/balance'
 
 function makeBalance(overrides: Partial<Balance> = {}): Balance {
   return {
@@ -100,5 +100,36 @@ describe(getBalanceTotals, () => {
     expect(result.onchainSat).toBe(0)
     expect(result.onchainPendingSat).toBe(0)
     expect(result.totalSat).toBe(7)
+  })
+})
+
+describe(carryForwardPendingExit, () => {
+  it('keeps the last known pending-exit amount when the subsystem reports null', () => {
+    const previous = makeBalance({ pendingExitSat: 1000, spendableSat: 785 })
+    const next = makeBalance({ pendingExitSat: null, spendableSat: 785 })
+    expect(carryForwardPendingExit(previous, next)).toStrictEqual({
+      ...next,
+      pendingExitSat: 1000
+    })
+  })
+
+  it('carries forward when the subsystem reports undefined', () => {
+    const previous = makeBalance({ pendingExitSat: 1000, spendableSat: 785 })
+    const next = makeBalance({ pendingExitSat: undefined, spendableSat: 785 })
+    expect(carryForwardPendingExit(previous, next)).toStrictEqual({
+      ...next,
+      pendingExitSat: 1000
+    })
+  })
+
+  it('clears a carried value once a real number arrives', () => {
+    const previous = makeBalance({ pendingExitSat: 1000, spendableSat: 785 })
+    const next = makeBalance({ pendingExitSat: 0, spendableSat: 1785 })
+    expect(carryForwardPendingExit(previous, next)).toStrictEqual(next)
+  })
+
+  it('returns next unchanged when there is no previous balance', () => {
+    const next = makeBalance({ pendingExitSat: null, spendableSat: 785 })
+    expect(carryForwardPendingExit(undefined, next)).toBe(next)
   })
 })
