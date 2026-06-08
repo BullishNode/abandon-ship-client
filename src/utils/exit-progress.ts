@@ -2,10 +2,21 @@ import type { ExitState, ExitTransactionStatus, WalletVtxoInfo } from '@secondts
 
 export type ExitStateType = ExitState['type']
 
-const EXIT_VBYTES_PER_LEVEL = 300
+const EXIT_TX_VBYTES_PER_LEVEL = 200
+const CPFP_CHILD_VBYTES_PER_LEVEL = 175
 const CLAIM_BASE_VBYTES = 50
 const CLAIM_VBYTES_PER_VTXO = 70
+const FEE_RATE_SAFETY_MULTIPLIER = 1.25
 
+const VBYTES_PER_EXIT_LEVEL = EXIT_TX_VBYTES_PER_LEVEL + CPFP_CHILD_VBYTES_PER_LEVEL
+
+/**
+ * A unilateral exit unrolls the VTXO tree as a chain of `exitDepth` zero-fee
+ * txs, each broadcast in sequence and bumped by its own CPFP child. The fee
+ * must therefore cover both the exit tx and its CPFP child at every level, not
+ * the whole tree as one blob. A safety multiplier absorbs fee-rate drift while
+ * the exit ripens, since underfunding stalls the exit part-way through.
+ */
 export function estimateEmergencyExitFeeSat(
   vtxos: WalletVtxoInfo[],
   feeRateSatPerVb: number
@@ -15,10 +26,11 @@ export function estimateEmergencyExitFeeSat(
   }
   let exitVbytes = 0
   for (const vtxo of vtxos) {
-    exitVbytes += (vtxo.exitDepth ?? 1) * EXIT_VBYTES_PER_LEVEL
+    exitVbytes += (vtxo.exitDepth ?? 1) * VBYTES_PER_EXIT_LEVEL
   }
   const claimVbytes = CLAIM_BASE_VBYTES + CLAIM_VBYTES_PER_VTXO * vtxos.length
-  return Math.ceil((exitVbytes + claimVbytes) * feeRateSatPerVb)
+  const feeSat = (exitVbytes + claimVbytes) * feeRateSatPerVb * FEE_RATE_SAFETY_MULTIPLIER
+  return Math.ceil(feeSat)
 }
 
 export interface ExitProgressSummary {

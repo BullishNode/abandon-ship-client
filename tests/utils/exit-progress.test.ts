@@ -64,6 +64,17 @@ function makeExit(stateType: ExitState['type']): ExitTransactionStatus {
   }
 }
 
+const VBYTES_PER_EXIT_LEVEL = 200 + 175
+const CLAIM_BASE_VBYTES = 50
+const CLAIM_VBYTES_PER_VTXO = 70
+const FEE_RATE_SAFETY_MULTIPLIER = 1.25
+
+function expectedFee(depth: number, vtxoCount: number, feeRate: number): number {
+  const exitVbytes = depth * VBYTES_PER_EXIT_LEVEL * vtxoCount
+  const claimVbytes = CLAIM_BASE_VBYTES + CLAIM_VBYTES_PER_VTXO * vtxoCount
+  return Math.ceil((exitVbytes + claimVbytes) * feeRate * FEE_RATE_SAFETY_MULTIPLIER)
+}
+
 describe(estimateEmergencyExitFeeSat, () => {
   it('returns 0 when no vtxos', () => {
     expect(estimateEmergencyExitFeeSat([], 5)).toBe(0)
@@ -74,20 +85,29 @@ describe(estimateEmergencyExitFeeSat, () => {
     expect(estimateEmergencyExitFeeSat([makeVtxo()], -1)).toBe(0)
   })
 
-  it('uses exit depth multiplier for the exit cost', () => {
+  it('charges both exit tx and CPFP child per level', () => {
     const result = estimateEmergencyExitFeeSat([makeVtxo({ exitDepth: 2 })], 1)
-    expect(result).toBe(Math.ceil(2 * 300 + (50 + 70 * 1)))
+    expect(result).toBe(expectedFee(2, 1, 1))
   })
 
   it('defaults exitDepth to 1 when null', () => {
     const result = estimateEmergencyExitFeeSat([makeVtxo({ exitDepth: null })], 1)
-    expect(result).toBe(Math.ceil(1 * 300 + (50 + 70 * 1)))
+    expect(result).toBe(expectedFee(1, 1, 1))
   })
 
-  it('scales linearly with fee rate', () => {
-    const single = estimateEmergencyExitFeeSat([makeVtxo()], 1)
-    const triple = estimateEmergencyExitFeeSat([makeVtxo()], 3)
-    expect(triple).toBe(Math.ceil(single * 3))
+  it('scales the per-level cost with exit depth', () => {
+    const shallow = estimateEmergencyExitFeeSat([makeVtxo({ exitDepth: 1 })], 1)
+    const deep = estimateEmergencyExitFeeSat([makeVtxo({ exitDepth: 8 })], 1)
+    expect(deep).toBeGreaterThan(shallow * 6)
+  })
+
+  it('includes a safety buffer above the raw fee-rate cost', () => {
+    const rawCost = (1 * VBYTES_PER_EXIT_LEVEL + CLAIM_BASE_VBYTES + CLAIM_VBYTES_PER_VTXO) * 5
+    expect(estimateEmergencyExitFeeSat([makeVtxo({ exitDepth: 1 })], 5)).toBeGreaterThan(rawCost)
+  })
+
+  it('scales with fee rate', () => {
+    expect(estimateEmergencyExitFeeSat([makeVtxo()], 3)).toBe(expectedFee(1, 1, 3))
   })
 })
 
