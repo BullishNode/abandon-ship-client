@@ -1,7 +1,8 @@
-import { ArrowSquareOutIcon, WarningIcon } from '@phosphor-icons/react'
+import { ArrowsClockwiseIcon, ArrowSquareOutIcon, WarningIcon } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { useShallow } from 'zustand/react/shallow'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { EmergencyExitStartDialog } from '@/components/emergency-exit-start-dialog'
@@ -21,10 +22,13 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { externalLinks } from '@/config/links'
 import { WALLET_NAME_MAX_LENGTH } from '@/constants/wallet'
+import { useArkInfo } from '@/hooks/barkd/use-ark-info'
 import { useExitStatus } from '@/hooks/barkd/use-exit-status'
 import { useOnchainAddress } from '@/hooks/barkd/use-onchain-address'
 import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
 import { useOnchainFeeRates } from '@/hooks/barkd/use-onchain-fee-rates'
+import { usePendingRounds } from '@/hooks/barkd/use-pending-rounds'
+import { useRefreshAll } from '@/hooks/barkd/use-refresh-all'
 import { useResetWallet } from '@/hooks/barkd/use-reset-wallet'
 import { useStartEmergencyExit } from '@/hooks/barkd/use-start-emergency-exit'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
@@ -34,6 +38,13 @@ import { useWalletStore } from '@/stores/wallet'
 import type { BitcoinUnit } from '@/types/bitcoin'
 import type { FiatCurrency, PriceProviderId } from '@/types/price-providers'
 import { areAllExitsRipe, estimateEmergencyExitFeeSat, summarizeExits } from '@/utils/exit-progress'
+import type { RefreshThresholdOption } from '@/utils/refresh'
+import {
+  getRefreshThresholdOptions,
+  getThresholdLabelParts,
+  isRoundInProgress,
+  resolveThresholdBlocks
+} from '@/utils/refresh'
 
 const WALLET_DATA_PATH = '/data/.bark/'
 const SEED_HIDDEN_PLACEHOLDER = Array.from({ length: 12 }, () =>
@@ -69,7 +80,11 @@ export default function SettingsPage() {
     fiatCurrency,
     setFiatCurrency,
     discreetMode,
-    setDiscreetMode
+    setDiscreetMode,
+    autoRefreshThresholdBlocks,
+    setAutoRefreshThresholdBlocks,
+    refreshOnReceive,
+    setRefreshOnReceive
   ] = useSettingsStore(
     useShallow((state) => [
       state.bitcoinUnit,
@@ -79,7 +94,11 @@ export default function SettingsPage() {
       state.fiatCurrency,
       state.setFiatCurrency,
       state.discreetMode,
-      state.setDiscreetMode
+      state.setDiscreetMode,
+      state.autoRefreshThresholdBlocks,
+      state.setAutoRefreshThresholdBlocks,
+      state.refreshOnReceive,
+      state.setRefreshOnReceive
     ])
   )
   const [wallet, updateWalletName, pendingExitClaimAddress, setPendingExitClaimAddress] =
@@ -110,6 +129,37 @@ export default function SettingsPage() {
   const { data: onchainBalance } = useOnchainBalance()
   const { data: vtxos } = useVtxos()
   const { data: feeRates } = useOnchainFeeRates()
+  const { data: pendingRounds } = usePendingRounds()
+  const { data: arkInfo } = useArkInfo()
+  const thresholdOptions = getRefreshThresholdOptions(
+    arkInfo?.vtxoExpiryDelta,
+    arkInfo?.fees.refresh
+  )
+  const selectedThresholdBlocks = resolveThresholdBlocks(
+    autoRefreshThresholdBlocks,
+    thresholdOptions
+  )
+  function formatThresholdOption(option: RefreshThresholdOption): string {
+    const parts = getThresholdLabelParts(option)
+    const time =
+      parts.unit === 'days'
+        ? t('settings.auto_refresh.threshold.days', { count: parts.count })
+        : t('settings.auto_refresh.threshold.hours', { count: parts.count })
+    const fee =
+      parts.feePercent === 0
+        ? t('settings.auto_refresh.threshold.free')
+        : t('settings.auto_refresh.threshold.fee', { percent: parts.feePercent })
+    return `${time} · ${fee}`
+  }
+  const { mutate: refreshAll, isPending: isRefreshing } = useRefreshAll({
+    onError: () => {
+      toast.error(t('settings.auto_refresh.manual.error'))
+    },
+    onSuccess: () => {
+      toast.success(t('settings.auto_refresh.manual.started'))
+    }
+  })
+  const isRoundActive = isRoundInProgress(pendingRounds)
   const summary = summarizeExits(exitStatuses ?? [])
   const feeRateSatPerVb = feeRates?.regularSatPerVb ?? 0
   const estimatedFeeSat = estimateEmergencyExitFeeSat(vtxos ?? [], feeRateSatPerVb)
@@ -290,6 +340,58 @@ export default function SettingsPage() {
           <FieldDescription>{t('settings.discreet_mode.description')}</FieldDescription>
         </FieldContent>
         <Switch checked={discreetMode} id="discreet-mode" onCheckedChange={setDiscreetMode} />
+      </Field>
+      <Field>
+        <FieldLabel htmlFor="auto-refresh-threshold">
+          {t('settings.auto_refresh.threshold.label')}
+        </FieldLabel>
+        <Select
+          onValueChange={(value) => setAutoRefreshThresholdBlocks(Number(value))}
+          value={String(selectedThresholdBlocks)}
+        >
+          <SelectTrigger id="auto-refresh-threshold">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {thresholdOptions.map((option) => (
+              <SelectItem key={option.blocks} value={String(option.blocks)}>
+                {formatThresholdOption(option)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <FieldDescription>{t('settings.auto_refresh.threshold.description')}</FieldDescription>
+      </Field>
+      <Field orientation="horizontal">
+        <FieldContent>
+          <FieldLabel htmlFor="refresh-on-receive">
+            {t('settings.auto_refresh.on_receive.label')}
+          </FieldLabel>
+          <FieldDescription>{t('settings.auto_refresh.on_receive.description')}</FieldDescription>
+        </FieldContent>
+        <Switch
+          checked={refreshOnReceive}
+          id="refresh-on-receive"
+          onCheckedChange={setRefreshOnReceive}
+        />
+      </Field>
+      <Field orientation="responsive">
+        <FieldContent>
+          <FieldLabel>{t('settings.auto_refresh.manual.label')}</FieldLabel>
+          <FieldDescription>{t('settings.auto_refresh.manual.description')}</FieldDescription>
+        </FieldContent>
+        <Button
+          disabled={hasNoVtxos || isRoundActive || isRefreshing}
+          onClick={() => refreshAll()}
+          variant="outline"
+        >
+          <ArrowsClockwiseIcon
+            className={isRoundActive || isRefreshing ? 'animate-spin' : undefined}
+          />
+          {isRoundActive
+            ? t('settings.auto_refresh.manual.in_progress')
+            : t('settings.auto_refresh.manual.button')}
+        </Button>
       </Field>
       <Field>
         <FieldLabel htmlFor="seed-phrase">{t('settings.seed_phrase.label')}</FieldLabel>

@@ -31,6 +31,15 @@ export async function resetWalletQueriesAfterDelete(queryClient: QueryClient) {
   await invalidateWalletExistence(queryClient)
 }
 
+export async function invalidateRefreshState(queryClient: QueryClient) {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: walletKeys.balance() }),
+    queryClient.invalidateQueries({ queryKey: walletKeys.vtxos() }),
+    queryClient.invalidateQueries({ queryKey: walletKeys.pendingRounds() }),
+    queryClient.invalidateQueries({ queryKey: walletKeys.transactions() })
+  ])
+}
+
 export async function invalidateExitState(queryClient: QueryClient) {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: exitKeys.status() }),

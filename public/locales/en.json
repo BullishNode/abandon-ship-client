@@ -248,6 +248,30 @@
       "label": "Discreet mode",
       "description": "Hide balance and transaction amounts"
     },
+    "auto_refresh": {
+      "threshold": {
+        "label": "Auto-refresh threshold",
+        "description": "Automatically refreshes any VTXO whose lifetime drops below this threshold.",
+        "hours_one": "{{count}} hour before expiry",
+        "hours_other": "{{count}} hours before expiry",
+        "days_one": "{{count}} day before expiry",
+        "days_other": "{{count}} days before expiry",
+        "free": "free",
+        "fee": "{{percent}}% fee"
+      },
+      "on_receive": {
+        "label": "Refresh on receive",
+        "description": "Enable to refresh received VTXOs in the next available round, rather than waiting until they approach expiry. Max security, max fees."
+      },
+      "manual": {
+        "label": "Refresh all",
+        "description": "Refresh all of your VTXOs in the next round.",
+        "button": "Refresh all",
+        "in_progress": "Refreshing",
+        "started": "Refresh started. Your VTXOs will renew in the next round.",
+        "error": "Could not start refresh. Please try again."
+      }
+    },
     "seed_phrase": {
       "label": "Seed phrase",
       "description": "Write this down to back up your wallet's keys",

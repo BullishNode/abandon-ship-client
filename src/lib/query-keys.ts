@@ -6,6 +6,7 @@ export const walletKeys = {
   exists: () => [...walletKeys.all, 'exists'] as const,
   mnemonic: () => [...walletKeys.all, 'mnemonic'] as const,
   nextRound: () => [...walletKeys.all, 'next-round'] as const,
+  pendingRounds: () => [...walletKeys.all, 'pending-rounds'] as const,
   transactions: () => [...walletKeys.all, 'transactions'] as const,
   vtxos: () => [...walletKeys.all, 'vtxos'] as const
 }

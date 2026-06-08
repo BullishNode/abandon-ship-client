@@ -9,7 +9,9 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { useAutoClaimEmergencyExit } from '@/hooks/barkd/use-auto-claim-emergency-exit'
+import { useAutoRefresh } from '@/hooks/barkd/use-auto-refresh'
 import { useMovementSync } from '@/hooks/barkd/use-movement-sync'
+import { useRefreshOnReceive } from '@/hooks/barkd/use-refresh-on-receive'
 import { useModalsStore } from '@/stores/modals'
 
 const ROUTE_TITLE_KEYS: Record<string, string> = {
@@ -41,6 +43,8 @@ export default function DashboardLayout() {
   )
   useMovementSync()
   useAutoClaimEmergencyExit()
+  useAutoRefresh()
+  useRefreshOnReceive()
 
   const routeTitleKey = ROUTE_TITLE_KEYS[pathname]
   const routeTitle = routeTitleKey ? t(routeTitleKey) : ''
