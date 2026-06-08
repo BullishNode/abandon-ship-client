@@ -6,7 +6,7 @@ import { MovementLabelCell } from '@/components/movement-label-cell'
 import { MovementSourceBadge } from '@/components/movement-source-badge'
 import { MovementStatusBadge } from '@/components/movement-status-badge'
 import { OnchainLabelCell } from '@/components/onchain-label-cell'
-import { getMovementSource } from '@/utils/movement'
+import { getMovementSource, isExitSubsystem } from '@/utils/movement'
 import type { MovementsFeedRow } from '@/utils/movements-feed'
 
 interface MovementColumnsOptions {
@@ -21,7 +21,7 @@ function getSubsystemFallback(subsystem: Movement['subsystem'], t: TFunction): s
   if (subsystem.kind === 'refresh') {
     return t('movements.kinds.refresh')
   }
-  if (subsystem.name === 'bark.exit') {
+  if (isExitSubsystem(subsystem.name)) {
     return t('movements.kinds.exit')
   }
   return undefined

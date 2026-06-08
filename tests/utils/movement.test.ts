@@ -133,12 +133,21 @@ describe(getMovementSource, () => {
     })
     expect(getMovementSource(movement)).toBe('lightning')
   })
+
   it('classifies bark.offboard as ark even with bitcoin destination', () => {
     const movement = createMovement({
       sentTo: [{ amountSat: 5000, destination: { type: 'bitcoin', value: 'tb1p9lwzpy' } }],
       subsystem: { kind: 'send_onchain', name: 'bark.offboard' }
     })
     expect(getMovementSource(movement)).toBe('ark')
+  })
+  
+  it('classifies bark.exit as exit even with bitcoin destination', () => {
+    const movement = createMovement({
+      sentTo: [{ amountSat: 5000, destination: { type: 'bitcoin', value: 'tb1p9lwzpy' } }],
+      subsystem: { kind: 'exit', name: 'bark.exit' }
+    })
+    expect(getMovementSource(movement)).toBe('exit')
   })
 })
 

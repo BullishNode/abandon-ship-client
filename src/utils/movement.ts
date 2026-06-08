@@ -1,7 +1,7 @@
 import type { Movement, MovementDestination } from '@secondts/barkd'
 import { formatAddress } from '@/utils/format'
 
-export type MovementSource = 'onchain' | 'lightning' | 'ark' | 'unknown'
+export type MovementSource = 'onchain' | 'lightning' | 'ark' | 'exit' | 'unknown'
 
 export function getMovementDirection(movement: Movement): 'incoming' | 'outgoing' {
   return movement.effectiveBalanceSat >= 0 ? 'incoming' : 'outgoing'
@@ -61,7 +61,14 @@ function isArkBridgeSubsystem(name: string): boolean {
   return name.toLowerCase().includes('offboard')
 }
 
+export function isExitSubsystem(name: string): boolean {
+  return name === 'bark.exit'
+}
+
 export function getMovementSource(movement: Movement): MovementSource {
+  if (isExitSubsystem(movement.subsystem.name)) {
+    return 'exit'
+  }
   if (isArkBridgeSubsystem(movement.subsystem.name)) {
     return 'ark'
   }

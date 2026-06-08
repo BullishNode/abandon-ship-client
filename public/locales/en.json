@@ -211,7 +211,8 @@
     "source": {
       "onchain": "On-chain",
       "lightning": "Lightning",
-      "ark": "Ark"
+      "ark": "Ark",
+      "exit": "On-chain: Exit"
     },
     "detail": {
       "title": "Transaction details",
