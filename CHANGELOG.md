@@ -5,6 +5,41 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-06-09
+
+### Added
+
+- Payment-type tabs and a filter dropdown in the movements history table.
+- Refresh controls, including auto-refresh on receive.
+- "On-chain: Exit" payment-type chip and label for CPFP exit movements.
+- Incoming on-chain payments now animate in as they arrive in the receive flow.
+- Balance-history chart auto-grows its window from 1d to 90d, replacing the timeframe selector.
+
+### Changed
+
+- Updated `@secondts/barkd` to 0.2.3 and bumped the Docker images to bark 0.2.3.
+- Increased the invoice debounce to 500 ms.
+- Default bitcoin price source is now Kraken.
+- QR codes use an SVG bark logo instead of a PNG.
+- Auto exit/refresh labels are promoted to real editable labels.
+- Dashboard design tweaks.
+- Sidebar aligned with the shadcn layout.
+- Send modal scanner button labeled "Scan QR" instead of "Back".
+- Renamed `i18n` strings.
+
+### Fixed
+
+- Exit-tree confirmation now shows real progress instead of staying at 0%.
+- On-chain CPFP fees are attributed to the exit movement, and the emergency-exit estimate bills the per-level CPFP fee.
+- Exited BTC can be auto-claimed from any page, not just Settings.
+- Balance total no longer flickers during an active exit.
+- Movements list shows a skeleton until all histories load to avoid staggered paint, plus a full-card skeleton.
+- Send: payment rail is detected on blur so an autofilled on-chain address isn't treated as Lightning; scanned bech32 destinations are lowercased to canonical case; no "Not enough funds" flash after an on-chain send.
+- Receive: reduced QR density so BIP321 codes scan reliably; fixed infinite re-render when reopening the modal after an invoice; fixed the invoice string for the Lightning tab.
+- i18n: repaired unreachable dotted keys and normalized key casing.
+- Dialog uses a real border instead of a ring to avoid a Safari double-border artifact.
+- Various spacing and margin fixes.
+
 ## [0.1.8] - 2026-06-05
 
 ### Added
