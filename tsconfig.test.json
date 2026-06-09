@@ -6,7 +6,7 @@
     "module": "ESNext",
     "jsx": "react-jsx",
     "resolveJsonModule": true,
-    "types": ["vitest/globals", "@testing-library/jest-dom", "node"],
+    "types": ["vitest/globals", "@testing-library/jest-dom", "node", "vite/client"],
     "skipLibCheck": true,
     "paths": {
       "@/*": ["./src/*"]
