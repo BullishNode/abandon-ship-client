@@ -11,7 +11,7 @@ import { lightningKeys } from '@/lib/query-keys'
 import { useMetadataStore } from '@/stores/metadata'
 import { formatSatsDisplay, parseSatsInput } from '@/utils/format'
 
-const INVOICE_DEBOUNCE_MS = 300
+const INVOICE_DEBOUNCE_MS = 500
 const RECEIVED_AUTO_CLOSE_MS = 3000
 
 export type ReceiveTab = 'payto' | 'ark' | 'lightning' | 'onchain'
