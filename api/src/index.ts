@@ -9,6 +9,7 @@ const BARKD_URL = process.env.BARKD_URL ?? 'http://barkd:4000'
 const ARK_SERVER = process.env.ARK_SERVER ?? ''
 const CHAIN_SOURCE = process.env.CHAIN_SOURCE ?? ''
 const BARK_NETWORK = process.env.BARK_NETWORK ?? 'signet'
+const WALLET_DATA_PATH = process.env.WALLET_DATA_PATH ?? '/data/.bark/'
 const ALLOWED_ORIGINS = new Set(
   (process.env.ALLOWED_ORIGINS ?? '')
     .split(',')
@@ -73,7 +74,8 @@ app.get('/api/config', (c) =>
   c.json({
     arkServer: ARK_SERVER,
     chainSource: CHAIN_SOURCE,
-    network: BARK_NETWORK
+    network: BARK_NETWORK,
+    walletDataPath: WALLET_DATA_PATH
   })
 )
 

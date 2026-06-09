@@ -23,6 +23,7 @@ services:
     environment:
       PORT: 4001
       WALLET_DIR: /wallet-data/.bark
+      WALLET_DATA_PATH: /data/wallet/.bark/
       BARKD_URL: http://barkd:4000
       ARK_SERVER: https://ark.second.tech
       CHAIN_SOURCE: https://mempool.second.tech/api

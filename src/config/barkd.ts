@@ -5,6 +5,7 @@ interface RuntimeConfig {
   arkServer: string
   chainSource: string
   network: BarkNetwork
+  walletDataPath: string
   client: Configuration
 }
 
@@ -16,7 +17,8 @@ const configResponseSchema = z.object({
     BarkNetwork.Signet,
     BarkNetwork.Mutinynet,
     BarkNetwork.Regtest
-  ])
+  ]),
+  walletDataPath: z.string().default('/data/.bark/')
 })
 
 let runtime: RuntimeConfig | undefined
@@ -40,6 +42,9 @@ export const config = {
   },
   get network(): BarkNetwork {
     return requireConfig().network
+  },
+  get walletDataPath(): string {
+    return requireConfig().walletDataPath
   }
 }
 
@@ -54,7 +59,8 @@ export async function initConfig(): Promise<void> {
     arkServer: parsed.arkServer,
     chainSource: parsed.chainSource,
     client: new Configuration({ basePath: '/api/barkd' }),
-    network: parsed.network
+    network: parsed.network,
+    walletDataPath: parsed.walletDataPath
   }
 }
 

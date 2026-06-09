@@ -11,7 +11,8 @@ __setRuntimeConfigForTests({
   arkServer: 'http://localhost:3535',
   chainSource: 'http://localhost:18443',
   client: new Configuration({ basePath: '/api/barkd' }),
-  network: BarkNetwork.Signet
+  network: BarkNetwork.Signet,
+  walletDataPath: '/data/.bark/'
 })
 
 Object.defineProperty(window, 'matchMedia', {

@@ -20,6 +20,7 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { config } from '@/config/barkd'
 import { externalLinks } from '@/config/links'
 import { WALLET_NAME_MAX_LENGTH } from '@/constants/wallet'
 import { useArkInfo } from '@/hooks/barkd/use-ark-info'
@@ -46,7 +47,6 @@ import {
   resolveThresholdBlocks
 } from '@/utils/refresh'
 
-const WALLET_DATA_PATH = '/data/.bark/'
 const SEED_HIDDEN_PLACEHOLDER = Array.from({ length: 12 }, () =>
   '•'.repeat(4 + Math.floor(Math.random() * 5))
 ).join(' ')
@@ -412,7 +412,7 @@ export default function SettingsPage() {
             <Trans
               components={{ code: <code className="font-mono text-xs" /> }}
               i18nKey="settings.backup_warning.description"
-              values={{ path: WALLET_DATA_PATH }}
+              values={{ path: config.walletDataPath }}
             />
           </AlertDescription>
         </Alert>
