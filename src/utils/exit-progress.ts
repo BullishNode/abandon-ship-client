@@ -49,7 +49,7 @@ function exitTotalLevels(exit: ExitTransactionStatus): number {
   if (packageCount > 0) {
     return packageCount
   }
-  const {state} = exit
+  const { state } = exit
   if (state.type === 'start') {
     return 0
   }
