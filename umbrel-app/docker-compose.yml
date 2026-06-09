@@ -7,7 +7,7 @@ services:
       APP_PORT: 8080
 
   web:
-    image: secondark/bark-web:0.1.8
+    image: secondark/bark-web:0.2.0
     restart: on-failure
     stop_grace_period: 1m
     depends_on:
@@ -15,7 +15,7 @@ services:
       - barkd
 
   api:
-    image: secondark/bark-web-api:0.1.8
+    image: secondark/bark-web-api:0.2.0
     restart: on-failure
     stop_grace_period: 1m
     volumes:
