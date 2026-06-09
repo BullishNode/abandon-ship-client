@@ -34,15 +34,9 @@ services:
     image: secondark/bark:0.2.2
     restart: on-failure
     stop_grace_period: 1m
-    # Run the entrypoint as root so it can take ownership of the bind-mounted
-    # datadir (Umbrel creates ${APP_DATA_DIR} root-owned), then drop to the
-    # unprivileged barkd user before exec'ing barkd. Without the chown, barkd
-    # (uid 1000) cannot write auth_token, so the api proxy injects no bearer
-    # token and every barkd call fails with "missing auth_token".
-    user: '0:0'
     entrypoint:
       - /bin/sh
       - -c
-      - mkdir -p /data/.bark && chown -R barkd:barkd /data && exec runuser -u barkd -- /usr/local/bin/barkd --port 4000 --host 0.0.0.0 --datadir /data/.bark
+      - mkdir -p /data/.bark && exec /usr/local/bin/barkd --port 4000 --host 0.0.0.0 --datadir /data/.bark
     volumes:
       - ${APP_DATA_DIR}/wallet:/data
