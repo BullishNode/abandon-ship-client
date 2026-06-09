@@ -1,8 +1,37 @@
-import type { ExitState, ExitTransactionStatus, WalletVtxoInfo } from '@secondts/barkd'
+import type {
+  ExitState,
+  ExitTransactionPackage,
+  ExitTransactionStatus,
+  ExitTx,
+  WalletVtxoInfo
+} from '@secondts/barkd'
 import { describe, expect, it } from 'vitest'
 import { estimateEmergencyExitFeeSat, summarizeExits } from '../../src/utils/exit-progress'
 
 const BLOCK = { hash: '00', height: 0 }
+
+function makeExitTx(confirmed: boolean): ExitTx {
+  if (confirmed) {
+    return {
+      status: {
+        block: BLOCK,
+        childTxid: 'child',
+        origin: { confirmedIn: BLOCK, type: 'wallet' },
+        type: 'confirmed'
+      },
+      txid: 'tx'
+    }
+  }
+  return { status: { type: 'verify-inputs' }, txid: 'tx' }
+}
+
+function makeProcessingTxs(total: number, confirmed: number): ExitTx[] {
+  return Array.from({ length: total }, (_, index) => makeExitTx(index < confirmed))
+}
+
+function makePackages(count: number): ExitTransactionPackage[] {
+  return Array.from({ length: count }, () => ({ exit: { tx: '00', txid: 'tx' } }))
+}
 
 function makeVtxo(overrides: Partial<WalletVtxoInfo> = {}): WalletVtxoInfo {
   return {
@@ -20,13 +49,26 @@ function makeVtxo(overrides: Partial<WalletVtxoInfo> = {}): WalletVtxoInfo {
   }
 }
 
-function makeExitState(type: ExitState['type']): ExitState {
+interface MakeExitOptions {
+  packageCount?: number
+  processingTotal?: number
+  processingConfirmed?: number
+}
+
+function makeExitState(type: ExitState['type'], options: MakeExitOptions = {}): ExitState {
   switch (type) {
     case 'start': {
       return { tipHeight: 0, type: 'start' }
     }
     case 'processing': {
-      return { tipHeight: 0, transactions: [], type: 'processing' }
+      return {
+        tipHeight: 0,
+        transactions: makeProcessingTxs(
+          options.processingTotal ?? 0,
+          options.processingConfirmed ?? 0
+        ),
+        type: 'processing'
+      }
     }
     case 'awaiting-delta': {
       return {
@@ -56,10 +98,13 @@ function makeExitState(type: ExitState['type']): ExitState {
   }
 }
 
-function makeExit(stateType: ExitState['type']): ExitTransactionStatus {
+function makeExit(
+  stateType: ExitState['type'],
+  options: MakeExitOptions = {}
+): ExitTransactionStatus {
   return {
-    state: makeExitState(stateType),
-    transactions: [],
+    state: makeExitState(stateType, options),
+    transactions: makePackages(options.packageCount ?? 0),
     vtxoId: `vtxo-${stateType}`
   }
 }
@@ -140,6 +185,58 @@ describe(summarizeExits, () => {
     expect(result.inProgress).toBeFalsy()
     expect(result.isDone).toBeTruthy()
     expect(result.claimed).toBe(2)
+  })
+
+  it('counts confirmed exit-tree txs against total depth while processing', () => {
+    const exits = [
+      makeExit('processing', { packageCount: 8, processingConfirmed: 3, processingTotal: 8 })
+    ]
+    const result = summarizeExits(exits)
+    expect(result.confirmedLevels).toBe(3)
+    expect(result.totalLevels).toBe(8)
+  })
+
+  it('reports zero confirmed levels in the start state', () => {
+    const result = summarizeExits([makeExit('start', { packageCount: 8 })])
+    expect(result.confirmedLevels).toBe(0)
+    expect(result.totalLevels).toBe(8)
+  })
+
+  it('counts a fully unrolled vtxo as all levels confirmed past processing', () => {
+    for (const stateType of [
+      'awaiting-delta',
+      'claimable',
+      'claim-in-progress',
+      'claimed'
+    ] as const) {
+      const result = summarizeExits([makeExit(stateType, { packageCount: 5 })])
+      expect(result.confirmedLevels).toBe(5)
+      expect(result.totalLevels).toBe(5)
+    }
+  })
+
+  it('counts an unrolled vtxo as complete when depth is unknown', () => {
+    const result = summarizeExits([makeExit('claimable')])
+    expect(result.confirmedLevels).toBe(1)
+    expect(result.totalLevels).toBe(1)
+  })
+
+  it('aggregates levels across multiple exiting vtxos', () => {
+    const exits = [
+      makeExit('processing', { packageCount: 4, processingConfirmed: 1, processingTotal: 4 }),
+      makeExit('claimed', { packageCount: 6 })
+    ]
+    const result = summarizeExits(exits)
+    expect(result.confirmedLevels).toBe(7)
+    expect(result.totalLevels).toBe(10)
+  })
+
+  it('falls back to processing tx count for total depth when packages are absent', () => {
+    const result = summarizeExits([
+      makeExit('processing', { processingConfirmed: 3, processingTotal: 8 })
+    ])
+    expect(result.confirmedLevels).toBe(3)
+    expect(result.totalLevels).toBe(8)
   })
 
   it('tallies counts per known state type', () => {

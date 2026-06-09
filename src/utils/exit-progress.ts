@@ -37,9 +37,37 @@ export interface ExitProgressSummary {
   total: number
   claimed: number
   claimable: number
+  confirmedLevels: number
+  totalLevels: number
   inProgress: boolean
   isDone: boolean
   counts: Record<ExitStateType, number>
+}
+
+function exitTotalLevels(exit: ExitTransactionStatus): number {
+  const packageCount = exit.transactions?.length ?? 0
+  if (packageCount > 0) {
+    return packageCount
+  }
+  const {state} = exit
+  if (state.type === 'start') {
+    return 0
+  }
+  if (state.type === 'processing') {
+    return state.transactions.length
+  }
+  return 1
+}
+
+function exitConfirmedLevels(exit: ExitTransactionStatus): number {
+  const { state } = exit
+  if (state.type === 'start') {
+    return 0
+  }
+  if (state.type === 'processing') {
+    return state.transactions.filter((tx) => tx.status.type === 'confirmed').length
+  }
+  return exitTotalLevels(exit)
 }
 
 export function summarizeExits(exits: ExitTransactionStatus[]): ExitProgressSummary {
@@ -51,20 +79,26 @@ export function summarizeExits(exits: ExitTransactionStatus[]): ExitProgressSumm
     processing: 0,
     start: 0
   }
+  let confirmedLevels = 0
+  let totalLevels = 0
   for (const exit of exits) {
     const stateType = exit.state.type
     if (stateType in counts) {
       counts[stateType] += 1
     }
+    confirmedLevels += exitConfirmedLevels(exit)
+    totalLevels += exitTotalLevels(exit)
   }
   const total = exits.length
   return {
     claimable: counts.claimable,
     claimed: counts.claimed,
+    confirmedLevels,
     counts,
     inProgress: total > 0 && counts.claimed < total,
     isDone: total > 0 && counts.claimed === total,
-    total
+    total,
+    totalLevels
   }
 }
 

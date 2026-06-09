@@ -25,7 +25,10 @@ export function ExitProgressCard({
   onChangeAddress
 }: ExitProgressCardProps) {
   const { t } = useTranslation()
-  const percent = summary.total === 0 ? 0 : Math.round((summary.claimed / summary.total) * 100)
+  const percent =
+    summary.totalLevels === 0
+      ? 0
+      : Math.round((summary.confirmedLevels / summary.totalLevels) * 100)
 
   return (
     <div className="space-y-4 rounded-md border bg-muted/30 p-4">
