@@ -97,6 +97,14 @@ export function useSendDestination({ open, initialStep = 'scan' }: UseSendDestin
     if (trimmed === '' || trimmed === rawQrInput) {
       return
     }
+    if (parsed?.valid === true && parsed.kind === 'payment') {
+      const isKnownDestination = parsed.destinations.some(
+        (d) => normalizeDestination(d).destination === trimmed
+      )
+      if (isKnownDestination) {
+        return
+      }
+    }
     const decoded = await parsePaymentInput(trimmed)
     if (decoded.valid && decoded.kind === 'payment') {
       applyDestination(pickCheapestDestination(decoded.destinations))
