@@ -206,8 +206,8 @@ function NetworkPills({ hasArk, hasOnchain, hasLightning }: NetworkPillsProps) {
   return (
     <div className="flex flex-wrap items-center justify-center gap-2 mb-2">
       <NetworkPill label={t('receive.tabs.ark')} lit={hasArk} />
-      <NetworkPill label={t('receive.tabs.onchain')} lit={hasOnchain} />
       <NetworkPill label={t('receive.tabs.lightning')} lit={hasLightning} />
+      <NetworkPill label={t('receive.tabs.onchain')} lit={hasOnchain} />
     </div>
   )
 }
