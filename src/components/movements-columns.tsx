@@ -5,8 +5,8 @@ import { MovementLabelCell } from '@/components/movement-label-cell'
 import { MovementSourceBadge } from '@/components/movement-source-badge'
 import { MovementStatusBadge } from '@/components/movement-status-badge'
 import { OnchainLabelCell } from '@/components/onchain-label-cell'
-import { getMovementSource } from '@/utils/movement'
 import { getMovementDefaultLabel } from '@/utils/movement-labels'
+import { getFeedRowSource } from '@/utils/movements-feed'
 import type { MovementsFeedRow } from '@/utils/movements-feed'
 
 interface MovementColumnsOptions {
@@ -64,13 +64,7 @@ export function getMovementColumns({
       id: 'status'
     },
     {
-      cell: ({ row }) => {
-        const entry = row.original
-        if (entry.kind === 'movement') {
-          return <MovementSourceBadge source={getMovementSource(entry.movement)} />
-        }
-        return <MovementSourceBadge source={entry.isCpfp ? 'exit' : 'onchain'} />
-      },
+      cell: ({ row }) => <MovementSourceBadge source={getFeedRowSource(row.original)} />,
       header: t('movements.columns.source'),
       id: 'source'
     },

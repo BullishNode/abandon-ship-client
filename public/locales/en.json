@@ -180,6 +180,16 @@
       "hide_refreshes": "Hide refreshes",
       "hide_exit_fees": "Hide exit fee transactions"
     },
+    "tabs": {
+      "view": "View",
+      "all": "All",
+      "ark": "Ark",
+      "lightning": "Lightning",
+      "onchain": "On-chain"
+    },
+    "filters": {
+      "label": "Filters"
+    },
     "kinds": {
       "exit": "Exit",
       "refresh": "Refresh"

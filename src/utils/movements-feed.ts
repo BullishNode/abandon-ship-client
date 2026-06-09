@@ -1,5 +1,8 @@
 import type { BarkNetwork, Movement, MovementStatus, UtxoInfo, WalletTxInfo } from '@secondts/barkd'
 import { AVERAGE_BLOCK_INTERVAL_MS } from '@/constants/btc'
+import type { MovementsTab } from '@/types/movements'
+import { getMovementSource } from '@/utils/movement'
+import type { MovementSource } from '@/utils/movement'
 import { decodeInputs, decodeOutputs } from '@/utils/tx-address'
 
 export interface OnchainTxEntry {
@@ -157,6 +160,26 @@ interface BuildFeedOptions {
   firstSeenAt?: Record<string, string>
   hideRefresh?: boolean
   hideExitFee?: boolean
+}
+
+export function getFeedRowSource(row: MovementsFeedRow): MovementSource {
+  if (row.kind === 'movement') {
+    return getMovementSource(row.movement)
+  }
+  return row.isCpfp ? 'exit' : 'onchain'
+}
+
+export function filterFeedByTab(feed: MovementsFeedRow[], tab: MovementsTab): MovementsFeedRow[] {
+  if (tab === 'all') {
+    return feed
+  }
+  return feed.filter((row) => {
+    const source = getFeedRowSource(row)
+    if (tab === 'onchain') {
+      return source === 'onchain' || source === 'exit'
+    }
+    return source === tab
+  })
 }
 
 export function buildMovementsFeed(

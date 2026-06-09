@@ -1,4 +1,10 @@
-import { DotsThreeVerticalIcon, QrCodeIcon, ScanIcon, TrayIcon } from '@phosphor-icons/react'
+import {
+  CaretDownIcon,
+  FunnelSimpleIcon,
+  QrCodeIcon,
+  ScanIcon,
+  TrayIcon
+} from '@phosphor-icons/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useShallow } from 'zustand/react/shallow'
@@ -8,11 +14,23 @@ import { MovementDetailDialog } from '@/components/movement-detail-dialog'
 import { MovementsTableSkeleton } from '@/components/movements-table-skeleton'
 import { OnchainEntryDetailDialog } from '@/components/onchain-entry-detail-dialog'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Card, CardContent } from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import { Empty, EmptyContent, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Label } from '@/components/ui/label'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
 import { useOnchainTransactions } from '@/hooks/barkd/use-onchain-transactions'
 import { useOnchainUtxos } from '@/hooks/barkd/use-onchain-utxos'
@@ -22,10 +40,20 @@ import { usePrivateAmount } from '@/hooks/use-private-amount'
 import { useOnchainFirstSeen } from '@/stores/metadata'
 import { useModalsStore } from '@/stores/modals'
 import { useSettingsStore } from '@/stores/settings'
-import { buildMovementsFeed } from '@/utils/movements-feed'
+import type { MovementsTab } from '@/types/movements'
+import { buildMovementsFeed, filterFeedByTab } from '@/utils/movements-feed'
 import type { MovementsFeedRow, OnchainTxEntry } from '@/utils/movements-feed'
 import { formatAbsoluteDateTime, formatRelativeTime } from '@/utils/relative-time'
 import { getMovementColumns } from './movements-columns'
+
+const MOVEMENT_TABS: MovementsTab[] = ['all', 'ark', 'lightning', 'onchain']
+
+function toMovementsTab(value: string): MovementsTab {
+  if (value === 'ark' || value === 'lightning' || value === 'onchain') {
+    return value
+  }
+  return 'all'
+}
 
 export function MovementsTable() {
   const { t, i18n } = useTranslation()
@@ -58,6 +86,7 @@ export function MovementsTable() {
   const [movementOpen, setMovementOpen] = useState(false)
   const [selectedOnchain, setSelectedOnchain] = useState<OnchainTxEntry | null>(null)
   const [onchainOpen, setOnchainOpen] = useState(false)
+  const [tab, setTab] = useState<MovementsTab>('all')
 
   const feed = buildMovementsFeed(movements, {
     firstSeenAt,
@@ -68,6 +97,7 @@ export function MovementsTable() {
     transactions,
     utxos
   })
+  const visibleFeed = filterFeedByTab(feed, tab)
   const selectedMovement =
     selectedMovementId === null
       ? null
@@ -118,7 +148,7 @@ export function MovementsTable() {
   }
 
   const feedContent =
-    feed.length === 0 ? (
+    visibleFeed.length === 0 ? (
       <Empty className="border-0 py-12">
         <EmptyHeader>
           <EmptyMedia variant="icon">
@@ -142,7 +172,8 @@ export function MovementsTable() {
     ) : (
       <DataTable
         columns={columns}
-        data={feed}
+        data={visibleFeed}
+        key={tab}
         onRowClick={handleRowClick}
         pageSize={MOVEMENTS_PAGE_SIZE}
       />
@@ -150,42 +181,64 @@ export function MovementsTable() {
 
   return (
     <>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-2">
-          <CardTitle>{t('movements.title')}</CardTitle>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                aria-label={t('movements.options.label')}
-                size="icon-sm"
-                type="button"
-                variant="ghost"
-              >
-                <DotsThreeVerticalIcon weight="bold" />
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-row items-center justify-between gap-2">
+          <Tabs onValueChange={(value) => setTab(toMovementsTab(value))} value={tab}>
+            <Label className="sr-only" htmlFor="movements-tab-select">
+              {t('movements.tabs.view')}
+            </Label>
+            <Select onValueChange={(value) => setTab(toMovementsTab(value))} value={tab}>
+              <SelectTrigger className="flex w-40 sm:hidden" id="movements-tab-select" size="sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MOVEMENT_TABS.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {t(`movements.tabs.${value}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <TabsList className="hidden sm:inline-flex">
+              {MOVEMENT_TABS.map((value) => (
+                <TabsTrigger key={value} value={value}>
+                  {t(`movements.tabs.${value}`)}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" type="button" variant="outline">
+                <FunnelSimpleIcon />
+                <span className="hidden sm:inline">{t('movements.filters.label')}</span>
+                <CaretDownIcon />
               </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-auto p-2">
-              <Label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted">
-                <Checkbox
-                  checked={hideRefreshMovements}
-                  onCheckedChange={(checked) => setHideRefreshMovements(checked === true)}
-                />
-                <span className="whitespace-nowrap">{t('movements.options.hide_refreshes')}</span>
-              </Label>
-              <Label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted">
-                <Checkbox
-                  checked={hideExitFeeMovements}
-                  onCheckedChange={(checked) => setHideExitFeeMovements(checked === true)}
-                />
-                <span className="whitespace-nowrap">{t('movements.options.hide_exit_fees')}</span>
-              </Label>
-            </PopoverContent>
-          </Popover>
-        </CardHeader>
-        <CardContent className="px-0 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6 [&_th:first-child]:pl-6 [&_th:last-child]:pr-6">
-          {feedContent}
-        </CardContent>
-      </Card>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-auto">
+              <DropdownMenuCheckboxItem
+                checked={hideRefreshMovements}
+                onCheckedChange={(checked) => setHideRefreshMovements(checked)}
+                onSelect={(event) => event.preventDefault()}
+              >
+                {t('movements.options.hide_refreshes')}
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={hideExitFeeMovements}
+                onCheckedChange={(checked) => setHideExitFeeMovements(checked)}
+                onSelect={(event) => event.preventDefault()}
+              >
+                {t('movements.options.hide_exit_fees')}
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <Card className="py-0">
+          <CardContent className="px-0 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6 [&_th:first-child]:pl-6 [&_th:last-child]:pr-6">
+            {feedContent}
+          </CardContent>
+        </Card>
+      </div>
       <MovementDetailDialog
         discreetMode={discreetMode}
         formatDateAbsolute={formatDateAbsolute}
