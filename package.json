@@ -37,6 +37,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "check": "ultracite check --type-aware --type-check",
     "fix": "ultracite fix --type-aware --type-check",
+    "images:build": "bash scripts/podman-build.sh",
+    "images:push": "bash scripts/podman-build.sh --push",
     "umbrel:build": "bash scripts/umbrel-build.sh",
     "umbrel:digests": "bash scripts/umbrel-digests.sh",
     "umbrel:sync-compose": "bash scripts/umbrel-sync-compose.sh",

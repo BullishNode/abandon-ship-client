@@ -2,7 +2,7 @@
 # Mirrors the Umbrel multi-container layout collapsed into one image.
 
 # ---- SPA build ----
-FROM node:22-alpine AS spa-builder
+FROM docker.io/node:22-alpine AS spa-builder
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY api/package.json api/package-lock.json* ./api/
@@ -11,7 +11,7 @@ COPY . .
 RUN npm run build
 
 # ---- API build ----
-FROM node:22-alpine AS api-builder
+FROM docker.io/node:22-alpine AS api-builder
 WORKDIR /app/api
 COPY api/package.json api/package-lock.json* ./
 RUN npm ci
@@ -19,13 +19,13 @@ COPY api ./
 RUN npm run build
 
 # ---- API runtime deps (prod only) ----
-FROM node:22-alpine AS api-prod-deps
+FROM docker.io/node:22-alpine AS api-prod-deps
 WORKDIR /app/api
 COPY api/package.json api/package-lock.json* ./
 RUN npm ci --omit=dev
 
 # ---- barkd binary fetch ----
-FROM debian:bookworm-slim AS barkd-fetch
+FROM docker.io/debian:bookworm-slim AS barkd-fetch
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl \
     && rm -rf /var/lib/apt/lists/*
@@ -44,7 +44,7 @@ RUN case "${TARGETARCH}" in \
     chmod +x barkd
 
 # ---- Final runtime ----
-FROM debian:bookworm-slim
+FROM docker.io/debian:bookworm-slim
 
 ARG S6_OVERLAY_VERSION=3.2.0.2
 
