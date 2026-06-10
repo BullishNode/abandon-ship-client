@@ -24,15 +24,19 @@ docker buildx version >/dev/null || {
   exit 1
 }
 
+# qemu binfmt handlers so buildx can cross-build the aarch64 image on amd64.
+${SUDO} docker run --privileged --rm tonistiigi/binfmt --install arm64
+
 # Rust toolchain for start-sdk.
 if ! command -v rustup >/dev/null 2>&1; then
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
 fi
 . "${HOME}/.cargo/env"
 
-# start-sdk from the Start9 repo.
+# start-sdk from the Start9 repo, pinned to the 0.3.5.x release the manifest
+# format targets — master has moved on to the next SDK generation.
 if ! command -v start-sdk >/dev/null 2>&1; then
-  cargo install --locked --git https://github.com/Start9Labs/start-os.git --branch master start-sdk
+  cargo install --locked --git https://github.com/Start9Labs/start-os.git --tag v0.3.5.1 start-sdk
 fi
 
 echo "Build env ready. Run 'make' from start9-app/."

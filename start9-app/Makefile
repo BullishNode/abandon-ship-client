@@ -1,5 +1,5 @@
 PKG_ID = bark-web
-PKG_VERSION = 0.1.2
+PKG_VERSION = 0.2.1
 
 # Default platform — override on `make` line for cross-builds.
 PLATFORM ?= linux/amd64
@@ -33,11 +33,7 @@ docker-arm64:
 
 docker-images: docker-amd64 docker-arm64
 
-# Single-arch local build — Start9 dev workflow expects docker-images/<arch>.tar.
-image.tar:
-	$(MAKE) docker-amd64
-
-pack: image.tar manifest.yaml instructions.md icon.png LICENSE
+pack: docker-images manifest.yaml instructions.md icon.png LICENSE
 	start-sdk pack
 
 verify:
@@ -47,5 +43,5 @@ $(S9PK): pack
 	$(MAKE) verify
 
 clean:
-	rm -f $(S9PK) image.tar
+	rm -f $(S9PK)
 	rm -rf docker-images
