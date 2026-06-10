@@ -98,10 +98,12 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                 />
               </ModalBody>
               <ModalFooter className="items-center">
-                <Button onClick={() => void flow.handlePaste()} variant="outline">
-                  <ClipboardTextIcon />
-                  {t('actions.paste')}
-                </Button>
+                {flow.isPasteSupported && (
+                  <Button onClick={() => void flow.handlePaste()} variant="outline">
+                    <ClipboardTextIcon />
+                    {t('actions.paste')}
+                  </Button>
+                )}
               </ModalFooter>
             </m.div>
           )}

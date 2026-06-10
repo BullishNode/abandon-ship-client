@@ -4,8 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-
-const COPY_RESET_MS = 1500
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 
 interface DetailRowProps {
   label: string
@@ -28,31 +27,22 @@ interface CopyableValueRowProps {
 
 export function CopyableValueRow({ label, value }: CopyableValueRowProps) {
   const { t } = useTranslation()
-  const [copied, setCopied] = useState(false)
-  async function copyValue() {
-    try {
-      await navigator.clipboard.writeText(value)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), COPY_RESET_MS)
-    } catch {
-      setCopied(false)
-    }
-  }
+  const { copy, isCopied } = useCopyToClipboard()
   return (
     <div className="flex items-start justify-between gap-3">
       <span className="text-muted-foreground">{label}</span>
       <div className="flex max-w-[70%] items-start gap-2">
         <span className="break-all font-mono text-xs">{value}</span>
         <Button
-          aria-label={copied ? t('movements.detail.copied') : t('movements.detail.copy')}
+          aria-label={isCopied ? t('movements.detail.copied') : t('movements.detail.copy')}
           onClick={() => {
-            void copyValue()
+            void copy(value)
           }}
           size="icon-xs"
           type="button"
           variant="ghost"
         >
-          {copied ? <CheckIcon /> : <CopyIcon />}
+          {isCopied ? <CheckIcon /> : <CopyIcon />}
         </Button>
       </div>
     </div>

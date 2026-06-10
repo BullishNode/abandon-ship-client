@@ -2,6 +2,7 @@ import { useSendDestination } from '@/hooks/send/use-send-destination'
 import type { SendStep } from '@/hooks/send/use-send-destination'
 import { useSendExecute } from '@/hooks/send/use-send-execute'
 import { useSendQuote } from '@/hooks/send/use-send-quote'
+import { canReadClipboard } from '@/utils/clipboard'
 
 export type { SendStep }
 
@@ -43,6 +44,9 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
   }
 
   async function handlePaste() {
+    if (!canReadClipboard()) {
+      return
+    }
     try {
       const text = await navigator.clipboard.readText()
       if (text.trim() !== '') {
@@ -58,6 +62,7 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     ...quote,
     ...exec,
     goToSend,
-    handlePaste
+    handlePaste,
+    isPasteSupported: canReadClipboard()
   }
 }

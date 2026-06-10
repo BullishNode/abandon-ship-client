@@ -1,21 +1,18 @@
 import { useState } from 'react'
+import { copyText } from '@/utils/clipboard'
+
+const COPIED_RESET_DELAY_MS = 2000
 
 export function useCopyToClipboard() {
   const [isCopied, setIsCopied] = useState(false)
 
   async function copy(text: string) {
-    if (navigator?.clipboard === undefined) {
-      return
-    }
-
-    try {
-      await navigator.clipboard.writeText(text)
-      setIsCopied(true)
+    const succeeded = await copyText(text)
+    setIsCopied(succeeded)
+    if (succeeded) {
       setTimeout(() => {
         setIsCopied(false)
-      }, 2000)
-    } catch {
-      setIsCopied(false)
+      }, COPIED_RESET_DELAY_MS)
     }
   }
 
