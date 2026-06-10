@@ -34,9 +34,15 @@ fi
 . "${HOME}/.cargo/env"
 
 # start-sdk from the Start9 repo, pinned to the 0.3.5.x release the manifest
-# format targets — master has moved on to the next SDK generation.
+# format targets — master has moved on to the next SDK generation. There is no
+# standalone start-sdk crate; core/install-sdk.sh builds the startbox binary
+# and symlinks start-sdk/start-cli to it.
 if ! command -v start-sdk >/dev/null 2>&1; then
-  cargo install --locked --git https://github.com/Start9Labs/start-os.git --tag v0.3.5.1 start-sdk
+  SDK_TMP="$(mktemp -d)"
+  git clone --depth 1 --branch v0.3.5.1 --recurse-submodules \
+    https://github.com/Start9Labs/start-os.git "${SDK_TMP}/start-os"
+  (cd "${SDK_TMP}/start-os/core" && ./install-sdk.sh)
+  rm -rf "${SDK_TMP}"
 fi
 
 echo "Build env ready. Run 'make' from start9-app/."
