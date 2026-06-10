@@ -39,7 +39,7 @@ RUN case "${TARGETARCH}" in \
       arm64) ARCH="arm64";  SHA="${BARKD_SHA256_ARM64}" ;; \
       *)     echo "Unsupported architecture: ${TARGETARCH}" && exit 1 ;; \
     esac && \
-    curl -fsSL "https://gitlab.com/ark-bitcoin/bark/-/releases/bark-${BARK_VERSION}/downloads/barkd-${BARK_VERSION}-linux-${ARCH}" -o barkd && \
+    curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 "https://gitlab.com/ark-bitcoin/bark/-/releases/bark-${BARK_VERSION}/downloads/barkd-${BARK_VERSION}-linux-${ARCH}" -o barkd && \
     echo "${SHA}  barkd" | sha256sum -c - && \
     chmod +x barkd
 
