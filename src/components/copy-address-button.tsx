@@ -10,6 +10,7 @@ import {
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { useElementMetrics } from '@/hooks/use-element-metrics'
 import { useMeasureHeight } from '@/hooks/use-measure-height'
+import { cn } from '@/lib/utils'
 import { truncateMiddle } from '@/utils/truncate-middle'
 
 interface CopyAddressButtonProps {
@@ -42,6 +43,7 @@ function TruncatedAddress({ text }: TruncatedAddressProps) {
 export function CopyAddressButton({ text }: CopyAddressButtonProps) {
   const { copy, isCopied } = useCopyToClipboard()
   const [expanded, setExpanded] = useState(false)
+  const [isAnimating, setIsAnimating] = useState(false)
   const [height, contentRef] = useMeasureHeight()
 
   const Icon = isCopied ? CheckIcon : CopyIcon
@@ -50,7 +52,9 @@ export function CopyAddressButton({ text }: CopyAddressButtonProps) {
   return (
     <m.div
       animate={{ height: height ?? 'auto' }}
-      className="w-full min-w-0 overflow-hidden"
+      className={cn('w-full min-w-0', isAnimating && 'overflow-hidden')}
+      onAnimationComplete={() => setIsAnimating(false)}
+      onAnimationStart={() => setIsAnimating(true)}
       transition={{ duration: 0.25, ease: 'easeOut' }}
     >
       <InputGroup ref={contentRef}>
