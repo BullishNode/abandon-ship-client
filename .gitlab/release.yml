@@ -1,0 +1,10 @@
+.release-rules-gitlab:
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v/ && $CI_PROJECT_URL =~ /^https:\/\/gitlab\.com\/ark-bitcoin\/labs\/bark-web$/
+
+release:
+  stage: release
+  extends: .release-rules-gitlab
+  image: registry.2nd.dev/build-bark-web:1
+  script:
+    - bash scripts/podman-build.sh --push
