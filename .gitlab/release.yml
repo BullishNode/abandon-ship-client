@@ -8,5 +8,7 @@ release:
   image:
     name: registry.2nd.dev/build-bark-web:1
     pull_policy: if-not-present
+  tags:
+    - privileged
   script:
     - bash scripts/podman-build.sh --push
