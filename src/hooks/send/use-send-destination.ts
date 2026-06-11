@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useBrantaVerification } from '@/hooks/branta/use-branta-verification'
 import { normalizeDestination } from '@/utils/bitcoin'
+import { canUseCamera } from '@/utils/camera'
 import type { SendRoute } from '@/utils/payment'
 import {
   getSendRoute,
@@ -22,7 +23,8 @@ interface UseSendDestinationOptions {
 export function useSendDestination({ open, initialStep = 'scan' }: UseSendDestinationOptions) {
   const { t } = useTranslation()
 
-  const [step, setStep] = useState<SendStep>(initialStep)
+  const effectiveInitialStep: SendStep = canUseCamera() ? initialStep : 'send'
+  const [step, setStep] = useState<SendStep>(effectiveInitialStep)
   const [direction, setDirection] = useState(1)
   const [destination, setDestination] = useState('')
   const [rawQrInput, setRawQrInput] = useState('')
@@ -32,7 +34,7 @@ export function useSendDestination({ open, initialStep = 'scan' }: UseSendDestin
   const [prevOpen, setPrevOpen] = useState(open)
 
   if (open && !prevOpen) {
-    setStep(initialStep)
+    setStep(effectiveInitialStep)
     setDirection(1)
     setDestination('')
     setRawQrInput('')

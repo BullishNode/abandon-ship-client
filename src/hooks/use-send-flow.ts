@@ -2,6 +2,7 @@ import { useSendDestination } from '@/hooks/send/use-send-destination'
 import type { SendStep } from '@/hooks/send/use-send-destination'
 import { useSendExecute } from '@/hooks/send/use-send-execute'
 import { useSendQuote } from '@/hooks/send/use-send-quote'
+import { canUseCamera } from '@/utils/camera'
 import { canReadClipboard } from '@/utils/clipboard'
 
 export type { SendStep }
@@ -63,6 +64,7 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     ...exec,
     goToSend,
     handlePaste,
-    isPasteSupported: canReadClipboard()
+    isPasteSupported: canReadClipboard(),
+    isScanSupported: canUseCamera()
   }
 }

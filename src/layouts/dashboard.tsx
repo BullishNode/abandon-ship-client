@@ -13,6 +13,7 @@ import { useAutoRefresh } from '@/hooks/barkd/use-auto-refresh'
 import { useMovementSync } from '@/hooks/barkd/use-movement-sync'
 import { useRefreshOnReceive } from '@/hooks/barkd/use-refresh-on-receive'
 import { useModalsStore } from '@/stores/modals'
+import { canUseCamera } from '@/utils/camera'
 
 const ROUTE_TITLE_KEYS: Record<string, string> = {
   '/dashboard': 'nav.transactions',
@@ -48,6 +49,7 @@ export default function DashboardLayout() {
 
   const routeTitleKey = ROUTE_TITLE_KEYS[pathname]
   const routeTitle = routeTitleKey ? t(routeTitleKey) : ''
+  const scanSupported = canUseCamera()
 
   return (
     <SidebarProvider>
@@ -63,16 +65,18 @@ export default function DashboardLayout() {
             <h3 className="truncate">{routeTitle}</h3>
           </div>
           <ul className="flex shrink-0 gap-2 pr-4">
-            <li>
-              <Button
-                aria-label={t('actions.scan')}
-                onClick={() => openSend('scan')}
-                variant="outline"
-              >
-                <ScanIcon />
-                <span className="hidden md:inline">{t('actions.scan')}</span>
-              </Button>
-            </li>
+            {scanSupported && (
+              <li>
+                <Button
+                  aria-label={t('actions.scan')}
+                  onClick={() => openSend('scan')}
+                  variant="outline"
+                >
+                  <ScanIcon />
+                  <span className="hidden md:inline">{t('actions.scan')}</span>
+                </Button>
+              </li>
+            )}
             <li>
               <Button aria-label={t('actions.send')} onClick={() => openSend('send')}>
                 <PaperPlaneTiltIcon />

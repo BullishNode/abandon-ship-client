@@ -73,7 +73,7 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
     <Modal onClose={flow.handleClose} setShowModal={onOpenChange} showModal={open}>
       <div className="-mx-1 flex min-h-0 flex-1 flex-col gap-6 overflow-hidden px-1">
         <AnimatePresence custom={flow.direction} initial={false} mode="popLayout">
-          {flow.step === 'scan' && (
+          {flow.step === 'scan' && flow.isScanSupported && (
             <m.div
               animate="center"
               className="flex min-h-0 flex-1 flex-col gap-6"
@@ -282,10 +282,12 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                 </Collapsible>
               </ModalBody>
               <ModalFooter>
-                <Button onClick={flow.goToScan} variant="outline">
-                  <ScanIcon />
-                  {t('send.scan_qr')}
-                </Button>
+                {flow.isScanSupported && (
+                  <Button onClick={flow.goToScan} variant="outline">
+                    <ScanIcon />
+                    {t('send.scan_qr')}
+                  </Button>
+                )}
                 <Button
                   disabled={!flow.canSend}
                   loading={flow.isSending}

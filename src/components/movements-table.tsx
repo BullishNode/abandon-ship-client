@@ -38,6 +38,7 @@ import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
 import { config } from '@/config/barkd'
 import { usePrivateAmount } from '@/hooks/use-private-amount'
 import { useOnchainFirstSeen } from '@/stores/metadata'
+import { canUseCamera } from '@/utils/camera'
 import { useModalsStore } from '@/stores/modals'
 import { useSettingsStore } from '@/stores/settings'
 import type { MovementsTab } from '@/types/movements'
@@ -81,6 +82,7 @@ export function MovementsTable() {
   const [openSend, openReceive] = useModalsStore(
     useShallow((state) => [state.openSend, state.openReceive])
   )
+  const scanSupported = canUseCamera()
   const { sats: formatSats, fiat: formatFiat } = usePrivateAmount()
   const [selectedMovementId, setSelectedMovementId] = useState<number | null>(null)
   const [movementOpen, setMovementOpen] = useState(false)
@@ -158,10 +160,12 @@ export function MovementsTable() {
         </EmptyHeader>
         <EmptyContent>
           <div className="flex gap-2 mt-2">
-            <Button onClick={() => openSend('scan')} variant="outline">
-              <ScanIcon />
-              {t('actions.scan')}
-            </Button>
+            {scanSupported && (
+              <Button onClick={() => openSend('scan')} variant="outline">
+                <ScanIcon />
+                {t('actions.scan')}
+              </Button>
+            )}
             <Button onClick={openReceive}>
               <QrCodeIcon />
               {t('actions.receive')}
