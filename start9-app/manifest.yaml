@@ -80,5 +80,7 @@ backup:
     mounts:
       BACKUP: /mnt/backup
       main: /data
-migrations: ~
+migrations:
+  from: {}
+  to: {}
 actions: {}
