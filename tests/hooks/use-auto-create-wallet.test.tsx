@@ -17,7 +17,7 @@ function makeWrapper(queryClient: QueryClient) {
 }
 
 function makeResponseError(body: unknown, status = 500) {
-  const response = new Response(JSON.stringify(body), { status })
+  const response = Response.json(body, { status })
   return new ResponseError(response, 'Response returned an error code')
 }
 
@@ -50,7 +50,7 @@ describe(useAutoCreateWallet, () => {
       wrapper: makeWrapper(queryClient)
     })
     await waitFor(() => {
-      expect(result.current.data).toBe(true)
+      expect(result.current.data).toBeTruthy()
     })
     expect(createWalletSpy).toHaveBeenCalledOnce()
     expect(useWalletStore.getState().wallet?.fingerprint).toBe('f00dbabe')
@@ -65,7 +65,7 @@ describe(useAutoCreateWallet, () => {
       wrapper: makeWrapper(queryClient)
     })
     await waitFor(() => {
-      expect(result.current.data).toBe(true)
+      expect(result.current.data).toBeTruthy()
     })
     expect(result.current.error).toBeNull()
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: walletKeys.exists() })
@@ -79,7 +79,7 @@ describe(useAutoCreateWallet, () => {
       wrapper: makeWrapper(queryClient)
     })
     await waitFor(() => {
-      expect(result.current.data).toBe(true)
+      expect(result.current.data).toBeTruthy()
     })
     expect(result.current.error).toBeNull()
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: walletKeys.exists() })
@@ -102,9 +102,9 @@ describe(useAutoCreateWallet, () => {
       { wrapper: makeWrapper(queryClient) }
     )
     await waitFor(() => {
-      expect(result.current.check.data).toBe(true)
+      expect(result.current.check.data).toBeTruthy()
     })
-    expect(result.current.create.data).toBe(true)
+    expect(result.current.create.data).toBeTruthy()
     expect(result.current.create.error).toBeNull()
     expect(createWalletSpy).toHaveBeenCalledOnce()
     expect(useWalletStore.getState().wallet?.fingerprint).toBe('f00dbabe')
