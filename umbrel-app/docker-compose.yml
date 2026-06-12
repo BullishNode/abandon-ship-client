@@ -32,7 +32,7 @@ services:
       - barkd
 
   barkd:
-    image: secondark/bark:0.2.3
+    image: secondark/bark:0.2.5
     restart: on-failure
     stop_grace_period: 1m
     entrypoint:
