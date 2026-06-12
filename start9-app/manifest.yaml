@@ -1,8 +1,9 @@
 id: bark-web
 title: Bark
-version: 0.2.3
+version: 0.2.4
 release-notes: |
-  Initial Start9 release. Self-custodial Ark wallet for Bitcoin mainnet.
+  Updated bark and barkd to 0.2.5. The app now recovers automatically from
+  stale asset chunks after an update instead of failing to load.
 license: mit
 wrapper-repo: https://gitlab.com/ark-bitcoin/labs/bark-web
 upstream-repo: https://gitlab.com/ark-bitcoin/bark
