@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { BINDING_TTL_MS, MAX_BINDINGS } from '@/constants/metadata'
+import { generateUuid } from '@/lib/uuid'
 import { useWalletStore } from '@/stores/wallet'
 import type {
   Contact,
@@ -54,7 +55,7 @@ export const useMetadataStore = create<MetadataStore>()(
         }
         const newContact: Contact = {
           createdAt: new Date().toISOString(),
-          id: crypto.randomUUID(),
+          id: generateUuid(),
           name: trimmed
         }
         set((state) => ({ contacts: [...state.contacts, newContact] }))
@@ -160,7 +161,7 @@ export const useMetadataStore = create<MetadataStore>()(
       tags: [],
       upsertBinding: (input) => {
         const fp = getCurrentFingerprint()
-        const id = input.id ?? crypto.randomUUID()
+        const id = input.id ?? generateUuid()
         if (fp === undefined) {
           return id
         }
