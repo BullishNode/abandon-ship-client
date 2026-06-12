@@ -1,5 +1,5 @@
 PKG_ID = bark-web
-PKG_VERSION = 0.2.4
+PKG_VERSION = 0.2.5
 
 # Default platform — override on `make` line for cross-builds.
 PLATFORM ?= linux/amd64
