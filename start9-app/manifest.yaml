@@ -1,6 +1,6 @@
 id: bark-web
 title: Bark
-version: 0.2.2
+version: 0.2.3
 release-notes: |
   Initial Start9 release. Self-custodial Ark wallet for Bitcoin mainnet.
 license: mit
