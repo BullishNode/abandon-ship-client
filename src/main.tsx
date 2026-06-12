@@ -15,6 +15,21 @@ if (!root) {
   throw new Error('Root element not found')
 }
 
+// After an update replaces the hashed assets, chunks referenced by an
+// already-loaded page 404. One reload fetches the fresh index.html; the
+// session flag keeps a genuine failure from reloading in a loop.
+const CHUNK_RELOAD_FLAG = 'bark-web:chunk-reload'
+let reloadingForFreshAssets = false
+
+window.addEventListener('vite:preloadError', () => {
+  if (sessionStorage.getItem(CHUNK_RELOAD_FLAG) !== null) {
+    return
+  }
+  sessionStorage.setItem(CHUNK_RELOAD_FLAG, '1')
+  reloadingForFreshAssets = true
+  window.location.reload()
+})
+
 const CONFIG_RETRY_DELAYS_MS = [0, 250, 500, 1000, 2000, 4000]
 
 async function delay(ms: number): Promise<void> {
@@ -74,6 +89,9 @@ async function bootstrap(reactRoot: Root): Promise<void> {
     )
   } catch (error: unknown) {
     console.error('Failed to bootstrap app', error)
+    if (reloadingForFreshAssets) {
+      return
+    }
     const message = error instanceof Error ? error.message : 'Unknown error during startup.'
     reactRoot.render(<BootError message={message} onRetry={() => window.location.reload()} />)
   }
