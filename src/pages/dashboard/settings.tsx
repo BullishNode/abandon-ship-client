@@ -23,6 +23,7 @@ import { Switch } from '@/components/ui/switch'
 import { config } from '@/config/barkd'
 import { externalLinks } from '@/config/links'
 import { WALLET_NAME_MAX_LENGTH } from '@/constants/wallet'
+import { changeThemeWithTransition } from '@/lib/theme-transition'
 import { useArkInfo } from '@/hooks/barkd/use-ark-info'
 import { useExitStatus } from '@/hooks/barkd/use-exit-status'
 import { useOnchainAddress } from '@/hooks/barkd/use-onchain-address'
@@ -38,6 +39,7 @@ import { useSettingsStore } from '@/stores/settings'
 import { useWalletStore } from '@/stores/wallet'
 import type { BitcoinUnit } from '@/types/bitcoin'
 import type { FiatCurrency, PriceProviderId } from '@/types/price-providers'
+import type { Theme } from '@/types/theme'
 import { areAllExitsRipe, estimateEmergencyExitFeeSat, summarizeExits } from '@/utils/exit-progress'
 import type { RefreshThresholdOption } from '@/utils/refresh'
 import {
@@ -67,12 +69,15 @@ const FIAT_CURRENCIES: { value: FiatCurrency; label: string }[] = [
   { label: 'EUR', value: 'eur' }
 ]
 
+const THEME_OPTIONS: Theme[] = ['light', 'dark', 'system']
+
 type ExitDialogMode = 'start' | 'edit'
 
 export default function SettingsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [
+    theme,
     bitcoinUnit,
     setBitcoinUnit,
     priceProvider,
@@ -87,6 +92,7 @@ export default function SettingsPage() {
     setRefreshOnReceive
   ] = useSettingsStore(
     useShallow((state) => [
+      state.theme,
       state.bitcoinUnit,
       state.setBitcoinUnit,
       state.priceProvider,
@@ -287,6 +293,21 @@ export default function SettingsPage() {
           placeholder={t('wallet.name.placeholder')}
           value={walletName}
         />
+      </Field>
+      <Field>
+        <FieldLabel htmlFor="interface-theme">{t('settings.theme.label')}</FieldLabel>
+        <Select onValueChange={changeThemeWithTransition} value={theme}>
+          <SelectTrigger id="interface-theme">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {THEME_OPTIONS.map((option) => (
+              <SelectItem key={option} value={option}>
+                {t(`settings.theme.options.${option}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </Field>
       <Field>
         <FieldLabel htmlFor="bitcoin-unit">Bitcoin unit</FieldLabel>

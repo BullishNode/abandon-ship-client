@@ -168,3 +168,33 @@
     @apply font-sans;
   }
 }
+
+::view-transition-group(root) {
+  animation-duration: 1.4s;
+}
+
+::view-transition-old(root),
+.dark::view-transition-old(root) {
+  animation: none;
+  z-index: -1;
+}
+
+::view-transition-new(root),
+.dark::view-transition-new(root) {
+  animation-name: grow-logo;
+  animation-duration: 1.4s;
+  animation-timing-function: cubic-bezier(0.7, 0, 0.84, 0);
+  -webkit-mask: url(./assets/bark-wallet-logo.svg) center / 0 no-repeat;
+  mask: url(./assets/bark-wallet-logo.svg) center / 0 no-repeat;
+}
+
+@keyframes grow-logo {
+  from {
+    -webkit-mask-size: 0;
+    mask-size: 0;
+  }
+  to {
+    -webkit-mask-size: 350vmax;
+    mask-size: 350vmax;
+  }
+}

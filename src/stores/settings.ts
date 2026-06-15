@@ -2,8 +2,11 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import type { BitcoinUnit } from '@/types/bitcoin'
 import type { FiatCurrency, PriceProviderId } from '@/types/price-providers'
+import type { Theme } from '@/types/theme'
 
 interface SettingsStore {
+  theme: Theme
+  setTheme: (theme: Theme) => void
   priceProvider: PriceProviderId
   setPriceProvider: (provider: PriceProviderId) => void
   fiatCurrency: FiatCurrency
@@ -58,6 +61,10 @@ export const useSettingsStore = create<SettingsStore>()(
       setRefreshOnReceive: (refreshOnReceive) => {
         set({ refreshOnReceive })
       },
+      setTheme: (theme) => {
+        set({ theme })
+      },
+      theme: 'system',
       toggleDiscreetMode: () => {
         set((state) => ({ discreetMode: !state.discreetMode }))
       }

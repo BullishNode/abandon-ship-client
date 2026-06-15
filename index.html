@@ -6,6 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preload" as="font" type="font/ttf" href="/fonts/dm-sans.ttf" crossorigin />
     <title>Bark Wallet</title>
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem('bark-web-settings-store')
+          var theme = raw ? JSON.parse(raw).state.theme : 'system'
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          if (theme === 'dark' || (theme === 'system' && prefersDark)) {
+            document.documentElement.classList.add('dark')
+          }
+        } catch (e) {}
+      })()
+    </script>
     <style>
       @font-face {
         font-family: 'DM Sans Variable';
@@ -21,6 +33,11 @@
         color: oklch(0.145 0 0);
         font-family: 'DM Sans Variable', sans-serif;
       }
+      html.dark,
+      html.dark body {
+        background: oklch(0.145 0 0);
+        color: oklch(0.985 0 0);
+      }
       #boot-loader {
         display: flex;
         min-height: 100vh;
@@ -35,11 +52,17 @@
         color: oklch(0.145 0 0);
         animation: boot-spin 1s linear infinite;
       }
+      html.dark #boot-loader svg {
+        color: oklch(0.985 0 0);
+      }
       #boot-loader p {
         margin: 0;
         font-size: 0.875rem;
         line-height: 1.25rem;
         color: oklch(0.556 0 0);
+      }
+      html.dark #boot-loader p {
+        color: oklch(0.708 0 0);
       }
       @keyframes boot-spin {
         to {

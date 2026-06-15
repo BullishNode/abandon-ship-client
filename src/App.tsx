@@ -2,6 +2,7 @@ import { LazyMotion, MotionConfig, domMax } from 'motion/react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { RedirectRoute } from './components/redirect-route'
 import { Toaster } from './components/ui/sonner'
+import { useTheme } from './hooks/use-theme'
 import DashboardLayout from './layouts/dashboard'
 import OnboardingLayout from './layouts/onboarding'
 import WelcomeLayout from './layouts/welcome'
@@ -12,6 +13,7 @@ import SettingsPage from './pages/dashboard/settings'
 import ImportWalletPage from './pages/import'
 
 export function App() {
+  useTheme()
   return (
     <LazyMotion features={domMax} strict>
       <MotionConfig reducedMotion="user">

@@ -246,6 +246,14 @@
     "wallet_name": {
       "label": "Wallet name"
     },
+    "theme": {
+      "label": "Interface theme",
+      "options": {
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System"
+      }
+    },
     "price_provider": {
       "label": "Bitcoin price source"
     },
