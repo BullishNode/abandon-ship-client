@@ -1,9 +1,8 @@
 id: bark-web
 title: Bark
-version: 0.2.5
+version: 0.2.6
 release-notes: |
-  Fixed UUID generation in insecure HTTP contexts (e.g. plain HTTP over LAN)
-  where crypto.randomUUID is unavailable.
+  Added dark mode.
 license: mit
 wrapper-repo: https://gitlab.com/ark-bitcoin/labs/bark-web
 upstream-repo: https://gitlab.com/ark-bitcoin/bark

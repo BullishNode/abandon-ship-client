@@ -17,5 +17,7 @@ export function applyResolvedTheme(theme: Theme): void {
 export function watchSystemTheme(onChange: () => void): () => void {
   const media = window.matchMedia(DARK_MEDIA_QUERY)
   media.addEventListener('change', onChange)
-  return () => media.removeEventListener('change', onChange)
+  return () => {
+    media.removeEventListener('change', onChange)
+  }
 }

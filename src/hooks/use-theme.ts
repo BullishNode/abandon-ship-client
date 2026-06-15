@@ -7,9 +7,12 @@ export function useTheme() {
 
   useEffect(() => {
     applyResolvedTheme(theme)
-    if (theme !== 'system') {
-      return
-    }
-    return watchSystemTheme(() => applyResolvedTheme('system'))
+    const cleanup =
+      theme === 'system'
+        ? watchSystemTheme(() => {
+            applyResolvedTheme('system')
+          })
+        : undefined
+    return cleanup
   }, [theme])
 }
