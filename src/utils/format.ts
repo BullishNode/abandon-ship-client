@@ -4,6 +4,10 @@ import { satsToBTC } from './bitcoin'
 
 const TRAILING_ZEROS_REGEX = /\.?0+$/u
 const NON_DIGIT_REGEX = /\D/gu
+const NON_DECIMAL_REGEX = /[^\d.]/gu
+const LEADING_ZEROS_REGEX = /^0+(?=\d)/u
+const FIAT_DECIMAL_PLACES = 2
+const BTC_DECIMAL_PLACES = 8
 
 export const PRIVACY_MASK = '-----'
 
@@ -30,6 +34,50 @@ export function parseSatsInput(value: string): string {
     return ''
   }
   return String(Number.parseInt(digits, 10))
+}
+
+function normalizeIntegerDigits(value: string): string {
+  const trimmed = value.replace(LEADING_ZEROS_REGEX, '')
+  return trimmed === '' ? '0' : trimmed
+}
+
+function parseDecimalInput(value: string, maxDecimals: number): string {
+  const cleaned = value.replace(NON_DECIMAL_REGEX, '')
+  if (cleaned === '') {
+    return ''
+  }
+  const parts = cleaned.split('.')
+  if (parts.length === 1) {
+    return normalizeIntegerDigits(parts[0])
+  }
+  const intPart = normalizeIntegerDigits(parts[0])
+  const decPart = parts.slice(1).join('').slice(0, maxDecimals)
+  return `${intPart}.${decPart}`
+}
+
+export function parseFiatInput(value: string): string {
+  return parseDecimalInput(value, FIAT_DECIMAL_PLACES)
+}
+
+export function parseBtcInput(value: string): string {
+  return parseDecimalInput(value, BTC_DECIMAL_PLACES)
+}
+
+export function satsToBtcInput(sats: number): string {
+  return satsToBTC(sats).toFixed(BTC_DECIMAL_PLACES).replace(TRAILING_ZEROS_REGEX, '')
+}
+
+export function formatDecimalDisplay(value: string): string {
+  if (value === '') {
+    return ''
+  }
+  const [intPart, decPart] = value.split('.')
+  const intNum = Number.parseInt(intPart, 10)
+  const formattedInt = Number.isNaN(intNum) ? '0' : numberFormatter.format(intNum)
+  if (decPart === undefined) {
+    return formattedInt
+  }
+  return `${formattedInt}.${decPart}`
 }
 
 export function formatSatsDisplay(value: string): string {

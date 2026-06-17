@@ -1,6 +1,7 @@
 import { CaretDownIcon, ClipboardTextIcon, ScanIcon } from '@phosphor-icons/react'
 import { AnimatePresence, m } from 'motion/react'
 import { useTranslation } from 'react-i18next'
+import { AmountUnitToggle } from '@/components/amount-unit-toggle'
 import { BrantaVerificationStatus } from '@/components/branta-verification-status'
 import { DestinationPicker } from '@/components/destination-picker'
 import {
@@ -174,10 +175,8 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="send-amount">{t('send.amount')}</Label>
-                    {flow.validAmountSat !== undefined && (
-                      <span className="text-muted-foreground text-xs">
-                        {formatFiat(flow.validAmountSat)}
-                      </span>
+                    {flow.secondaryDisplay !== '' && (
+                      <span className="text-muted-foreground text-xs">{flow.secondaryDisplay}</span>
                     )}
                   </div>
                   <Input
@@ -186,7 +185,15 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                       flow.insufficientFunds && 'border-destructive focus-visible:ring-destructive'
                     )}
                     disabled={flow.isAmountLocked}
-                    endTextAddOn={t('bitcoin.sats_unit_other')}
+                    endAddOn={
+                      <AmountUnitToggle
+                        canToggle={flow.canUseFiat}
+                        disabled={flow.isAmountLocked}
+                        entryMode={flow.entryMode}
+                        onToggle={flow.toggleAmountMode}
+                        unitLabel={flow.unitLabel}
+                      />
+                    }
                     id="send-amount"
                     onChange={(e) => flow.setAmount(e.target.value)}
                     placeholder="0"

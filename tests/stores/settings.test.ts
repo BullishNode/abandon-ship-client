@@ -3,6 +3,7 @@ import { useSettingsStore } from '../../src/stores/settings'
 
 function resetStore() {
   useSettingsStore.setState({
+    amountEntryMode: 'bitcoin',
     bitcoinUnit: 'sats',
     discreetMode: false,
     fiatCurrency: 'usd',
@@ -29,6 +30,11 @@ describe('settings store setters', () => {
   it('updates bitcoinUnit', () => {
     useSettingsStore.getState().setBitcoinUnit('btc')
     expect(useSettingsStore.getState().bitcoinUnit).toBe('btc')
+  })
+
+  it('updates amountEntryMode', () => {
+    useSettingsStore.getState().setAmountEntryMode('fiat')
+    expect(useSettingsStore.getState().amountEntryMode).toBe('fiat')
   })
 
   it('updates hideRefreshMovements', () => {

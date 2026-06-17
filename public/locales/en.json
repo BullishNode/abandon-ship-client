@@ -111,7 +111,9 @@
     }
   },
   "amount": {
-    "label": "Amount"
+    "label": "Amount",
+    "switch_to_bitcoin": "Switch to bitcoin amount",
+    "switch_to_fiat": "Switch to fiat amount"
   },
   "label": {
     "label": "Label"

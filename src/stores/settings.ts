@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import type { BitcoinUnit } from '@/types/bitcoin'
+import type { AmountEntryMode, BitcoinUnit } from '@/types/bitcoin'
 import type { FiatCurrency, PriceProviderId } from '@/types/price-providers'
 import type { Theme } from '@/types/theme'
 
@@ -13,6 +13,8 @@ interface SettingsStore {
   setFiatCurrency: (currency: FiatCurrency) => void
   bitcoinUnit: BitcoinUnit
   setBitcoinUnit: (unit: BitcoinUnit) => void
+  amountEntryMode: AmountEntryMode
+  setAmountEntryMode: (mode: AmountEntryMode) => void
   discreetMode: boolean
   setDiscreetMode: (value: boolean) => void
   toggleDiscreetMode: () => void
@@ -29,6 +31,7 @@ interface SettingsStore {
 export const useSettingsStore = create<SettingsStore>()(
   persist(
     (set) => ({
+      amountEntryMode: 'bitcoin',
       autoRefreshThresholdBlocks: 0,
       bitcoinUnit: 'sats',
       discreetMode: false,
@@ -37,6 +40,9 @@ export const useSettingsStore = create<SettingsStore>()(
       hideRefreshMovements: true,
       priceProvider: 'kraken',
       refreshOnReceive: false,
+      setAmountEntryMode: (amountEntryMode) => {
+        set({ amountEntryMode })
+      },
       setAutoRefreshThresholdBlocks: (autoRefreshThresholdBlocks) => {
         set({ autoRefreshThresholdBlocks })
       },

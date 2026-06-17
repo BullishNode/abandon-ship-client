@@ -3,8 +3,12 @@ import {
   formatAddress,
   formatBitcoin,
   formatCurrency,
+  formatDecimalDisplay,
   formatSatsDisplay,
-  parseSatsInput
+  parseBtcInput,
+  parseFiatInput,
+  parseSatsInput,
+  satsToBtcInput
 } from '../../src/utils/format'
 
 describe('format utils', () => {
@@ -27,6 +31,93 @@ describe('format utils', () => {
 
     it('returns "0" when input collapses to a single zero', () => {
       expect(parseSatsInput('abc0')).toBe('0')
+    })
+  })
+
+  describe(parseFiatInput, () => {
+    it('keeps a plain integer', () => {
+      expect(parseFiatInput('1234')).toBe('1234')
+    })
+
+    it('strips non-numeric characters but keeps the decimal point', () => {
+      expect(parseFiatInput('$1,2a3.4')).toBe('123.4')
+    })
+
+    it('clamps to two decimal places', () => {
+      expect(parseFiatInput('12.3456')).toBe('12.34')
+    })
+
+    it('collapses extra decimal points', () => {
+      expect(parseFiatInput('12.3.4')).toBe('12.34')
+    })
+
+    it('drops leading zeros on the integer part', () => {
+      expect(parseFiatInput('007')).toBe('7')
+    })
+
+    it('preserves a single zero before the decimal point', () => {
+      expect(parseFiatInput('0.5')).toBe('0.5')
+    })
+
+    it('defaults the integer part to zero when only a point is typed', () => {
+      expect(parseFiatInput('.')).toBe('0.')
+    })
+
+    it('returns an empty string when there are no usable characters', () => {
+      expect(parseFiatInput('abc')).toBe('')
+    })
+  })
+
+  describe(parseBtcInput, () => {
+    it('keeps up to eight decimal places', () => {
+      expect(parseBtcInput('0.123456789')).toBe('0.12345678')
+    })
+
+    it('parses a typical btc amount', () => {
+      expect(parseBtcInput('0.004')).toBe('0.004')
+    })
+
+    it('strips non-numeric characters', () => {
+      expect(parseBtcInput('₿0.5x')).toBe('0.5')
+    })
+
+    it('returns an empty string when there are no usable characters', () => {
+      expect(parseBtcInput('abc')).toBe('')
+    })
+  })
+
+  describe(satsToBtcInput, () => {
+    it('converts sats to a btc string without trailing zeros', () => {
+      expect(satsToBtcInput(400_000)).toBe('0.004')
+    })
+
+    it('converts one whole btc', () => {
+      expect(satsToBtcInput(100_000_000)).toBe('1')
+    })
+
+    it('converts a single sat', () => {
+      expect(satsToBtcInput(1)).toBe('0.00000001')
+    })
+  })
+
+  describe(formatDecimalDisplay, () => {
+    it('returns an empty string for empty input', () => {
+      expect(formatDecimalDisplay('')).toBe('')
+    })
+
+    it('groups the integer part', () => {
+      const result = formatDecimalDisplay('1234567')
+      expect(result).toContain('1')
+      expect(result).toContain('234')
+      expect(result).toContain('567')
+    })
+
+    it('preserves a trailing decimal point being typed', () => {
+      expect(formatDecimalDisplay('12.')).toBe('12.')
+    })
+
+    it('preserves typed decimal digits', () => {
+      expect(formatDecimalDisplay('12.50')).toBe('12.50')
     })
   })
 

@@ -6,10 +6,10 @@ import { useOnchainAddress } from '@/hooks/barkd/use-onchain-address'
 import { useReceivedOnchainPayment } from '@/hooks/barkd/use-received-onchain-payment'
 import { useReceivedPayment } from '@/hooks/barkd/use-received-payment'
 import { useWalletAddress } from '@/hooks/barkd/use-wallet-address'
+import { useAmountInput } from '@/hooks/use-amount-input'
 import { useDebounce } from '@/hooks/use-debounce'
 import { lightningKeys } from '@/lib/query-keys'
 import { useMetadataStore } from '@/stores/metadata'
-import { formatSatsDisplay, parseSatsInput } from '@/utils/format'
 
 const INVOICE_DEBOUNCE_MS = 500
 const RECEIVED_AUTO_CLOSE_MS = 3000
@@ -94,22 +94,17 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
   const queryClient = useQueryClient()
 
   const [activeTab, setActiveTab] = useState<ReceiveTab>('payto')
-  const [amount, setAmount] = useState('')
+  const amountInput = useAmountInput()
   const [label, setLabel] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [received, setReceived] = useState<ReceivedPayment | undefined>()
   const bindingIdRef = useRef<string | null>(null)
   const [prevOpen, setPrevOpen] = useState(open)
 
-  const amountSat = Number.parseInt(amount, 10)
-  const validAmount = Number.isNaN(amountSat) || amountSat <= 0 ? undefined : amountSat
-  const amountDisplay = formatSatsDisplay(amount)
+  const validAmount = amountInput.validAmountSat
+  const { amountDisplay } = amountInput
   const debouncedAmount = useDebounce(validAmount, INVOICE_DEBOUNCE_MS)
   const debouncedAmountBtc = debouncedAmount === undefined ? undefined : debouncedAmount / 1e8
-
-  function handleAmountChange(value: string) {
-    setAmount(parseSatsInput(value))
-  }
 
   const {
     mutate: fetchArkAddress,
@@ -161,7 +156,7 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
 
   if (open && !prevOpen) {
     setActiveTab('payto')
-    setAmount('')
+    amountInput.reset()
     setLabel('')
     setSelectedTags([])
     setReceived(undefined)
@@ -286,9 +281,11 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
 
   return {
     activeTab,
-    amount,
+    amount: amountInput.amount,
     amountDisplay,
     arkAddress,
+    canUseFiat: amountInput.canUseFiat,
+    entryMode: amountInput.entryMode,
     handleClose,
     handleNewAddress,
     handleTabChange,
@@ -304,11 +301,14 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
     onchainAddress,
     paytoUri,
     received,
+    secondaryDisplay: amountInput.secondaryDisplay,
     selectedTags,
-    setAmount: handleAmountChange,
+    setAmount: amountInput.setAmount,
     setLabel,
     setSelectedTags,
     showAmountField,
+    toggleAmountMode: amountInput.toggleMode,
+    unitLabel: amountInput.unitLabel,
     validAmount
   }
 }

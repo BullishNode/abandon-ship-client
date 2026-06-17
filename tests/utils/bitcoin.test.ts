@@ -28,6 +28,12 @@ describe('bitcoin utils', () => {
     it('handles small amounts correctly', () => {
       expect(btcToSats(0.001)).toBe(100_000)
     })
+
+    it('avoids floating-point truncation', () => {
+      expect(btcToSats(0.29)).toBe(29_000_000)
+      expect(btcToSats(0.57)).toBe(57_000_000)
+      expect(btcToSats(0.07)).toBe(7_000_000)
+    })
   })
 
   describe(satsToBTC, () => {

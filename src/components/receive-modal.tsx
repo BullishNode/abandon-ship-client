@@ -1,6 +1,7 @@
 import { CaretDownIcon, CheckCircleIcon } from '@phosphor-icons/react'
 import { m } from 'motion/react'
 import { useTranslation } from 'react-i18next'
+import { AmountUnitToggle } from '@/components/amount-unit-toggle'
 import { CopyAddressButton } from '@/components/copy-address-button'
 import { Modal, ModalBody, ModalFooter, ModalHeader, ModalTitle } from '@/components/modal'
 import { QRCode } from '@/components/qr-code'
@@ -12,7 +13,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
-import { useFormatFiat } from '@/hooks/use-format-fiat'
 import { useReceiveFlow } from '@/hooks/use-receive-flow'
 import type { ReceivedPayment } from '@/hooks/use-receive-flow'
 import { cn } from '@/lib/utils'
@@ -24,7 +24,6 @@ interface ReceiveModalProps {
 
 export function ReceiveModal({ open, onOpenChange }: ReceiveModalProps) {
   const { t } = useTranslation()
-  const formatFiat = useFormatFiat()
   const flow = useReceiveFlow({ onOpenChange, open })
 
   if (flow.received !== undefined) {
@@ -72,14 +71,19 @@ export function ReceiveModal({ open, onOpenChange }: ReceiveModalProps) {
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="receive-amount">{t('amount.label')}</Label>
-                {flow.validAmount !== undefined && (
-                  <span className="text-muted-foreground text-xs">
-                    {formatFiat(flow.validAmount)}
-                  </span>
+                {flow.secondaryDisplay !== '' && (
+                  <span className="text-muted-foreground text-xs">{flow.secondaryDisplay}</span>
                 )}
               </div>
               <Input
-                endTextAddOn={t('bitcoin.sats_unit_other')}
+                endAddOn={
+                  <AmountUnitToggle
+                    canToggle={flow.canUseFiat}
+                    entryMode={flow.entryMode}
+                    onToggle={flow.toggleAmountMode}
+                    unitLabel={flow.unitLabel}
+                  />
+                }
                 id="receive-amount"
                 onChange={(e) => flow.setAmount(e.target.value)}
                 placeholder="0"

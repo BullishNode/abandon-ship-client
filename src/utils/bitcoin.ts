@@ -30,7 +30,7 @@ export function normalizeDestination(destination: Destination): Destination {
 }
 
 export function btcToSats(btc: number) {
-  return Math.floor(btc * SATS_PER_BTC)
+  return Math.round(btc * SATS_PER_BTC)
 }
 
 export function satsToBTC(sats: number) {

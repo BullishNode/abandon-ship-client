@@ -36,7 +36,7 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
       const amountSats = decoded.metadata?.amount
       const description = decoded.metadata?.description
       if (amountSats !== undefined && amountSats !== 0) {
-        quote.setAmount(String(amountSats))
+        quote.setAmountSat(amountSats)
       }
       if (description !== undefined && description !== '') {
         exec.setLabel(description)

@@ -4,8 +4,8 @@ import { useLightningSendFee } from '@/hooks/barkd/use-lightning-send-fee'
 import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
 import { useSendOnchainFee } from '@/hooks/barkd/use-send-onchain-fee'
 import { useWalletBalance } from '@/hooks/barkd/use-wallet-balance'
+import { useAmountInput } from '@/hooks/use-amount-input'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
-import { formatSatsDisplay, parseSatsInput } from '@/utils/format'
 import type { SendRoute } from '@/utils/payment'
 
 interface UseSendQuoteOptions {
@@ -18,21 +18,15 @@ export function useSendQuote({ open, sendRoute, destination }: UseSendQuoteOptio
   const { t } = useTranslation()
   const formatBitcoin = useFormatBitcoin()
 
-  const [amount, setAmount] = useState('')
+  const amountInput = useAmountInput()
   const [prevOpen, setPrevOpen] = useState(open)
 
   if (open !== prevOpen) {
-    setAmount('')
+    amountInput.reset()
     setPrevOpen(open)
   }
 
-  const amountSat = Number.parseInt(amount, 10)
-  const validAmountSat = Number.isNaN(amountSat) || amountSat <= 0 ? undefined : amountSat
-  const amountDisplay = formatSatsDisplay(amount)
-
-  function handleAmountChange(value: string) {
-    setAmount(parseSatsInput(value))
-  }
+  const { validAmountSat } = amountInput
 
   const isLightningRoute = sendRoute === 'lightning'
   const isOnchainRoute = sendRoute === 'onchain-from-ark' || sendRoute === 'onchain-from-wallet'
@@ -92,10 +86,12 @@ export function useSendQuote({ open, sendRoute, destination }: UseSendQuoteOptio
     requiredSat > onchainTrustedSpendableSat
 
   return {
-    amount,
-    amountDisplay,
+    amount: amountInput.amount,
+    amountDisplay: amountInput.amountDisplay,
     arkBalanceSat,
     availableBalance,
+    canUseFiat: amountInput.canUseFiat,
+    entryMode: amountInput.entryMode,
     feeDisplay,
     feeSat,
     hasEnoughFunds,
@@ -104,7 +100,11 @@ export function useSendQuote({ open, sendRoute, destination }: UseSendQuoteOptio
     onchainBalanceSat,
     onchainPendingTotalSat,
     onchainTrustedSpendableSat,
-    setAmount: handleAmountChange,
+    secondaryDisplay: amountInput.secondaryDisplay,
+    setAmount: amountInput.setAmount,
+    setAmountSat: amountInput.setAmountSat,
+    toggleAmountMode: amountInput.toggleMode,
+    unitLabel: amountInput.unitLabel,
     usesPendingOnchain,
     validAmountSat
   }
