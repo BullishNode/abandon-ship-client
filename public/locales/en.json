@@ -238,6 +238,7 @@
       "tags": "Tags",
       "copy": "Copy",
       "copied": "Copied",
+      "copy_raw_json": "Copy raw JSON",
       "save": "Save",
       "cancel": "Cancel",
       "edit": "Edit",
@@ -315,6 +316,12 @@
       "label": "Report an issue",
       "description": "Report a bug or request a feature",
       "button": "Open GitLab"
+    },
+    "diagnostics": {
+      "label": "Diagnostic logs",
+      "description": "Download the barkd debug log to share with support when troubleshooting.",
+      "button": "Download logs",
+      "error": "Could not download logs. Please try again."
     },
     "danger": {
       "title": "Danger zone",

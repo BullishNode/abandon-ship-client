@@ -1,4 +1,6 @@
-import { readFile } from 'node:fs/promises'
+import { createReadStream } from 'node:fs'
+import { readFile, stat } from 'node:fs/promises'
+import { Readable } from 'node:stream'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
@@ -18,6 +20,8 @@ const ALLOWED_ORIGINS = new Set(
 )
 
 const TOKEN_PATH = `${WALLET_DIR}/auth_token`
+const LOG_PATH = `${WALLET_DIR}/debug.log`
+const LOG_DOWNLOAD_NAME = 'barkd-debug.log'
 
 let cachedToken: string | null = null
 
@@ -78,6 +82,32 @@ app.get('/api/config', (c) =>
     walletDataPath: WALLET_DATA_PATH
   })
 )
+
+async function getLogSize(): Promise<number | null> {
+  try {
+    const stats = await stat(LOG_PATH)
+    return stats.size
+  } catch {
+    return null
+  }
+}
+
+app.get('/api/logs', async (c) => {
+  const size = await getLogSize()
+  if (size === null) {
+    return c.json({ error: 'log_unavailable' }, 404)
+  }
+  const stream = Readable.toWeb(
+    createReadStream(LOG_PATH, size > 0 ? { end: size - 1 } : undefined)
+  )
+  return new Response(stream, {
+    headers: {
+      'Content-Disposition': `attachment; filename="${LOG_DOWNLOAD_NAME}"`,
+      'Content-Length': String(size),
+      'Content-Type': 'text/plain; charset=utf-8'
+    }
+  })
+})
 
 app.all('/api/barkd/*', async (c) => {
   const subPath = c.req.path.replace(BARKD_PATH_PREFIX, '')

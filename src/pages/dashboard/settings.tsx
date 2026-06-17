@@ -1,4 +1,9 @@
-import { ArrowsClockwiseIcon, ArrowSquareOutIcon, WarningIcon } from '@phosphor-icons/react'
+import {
+  ArrowsClockwiseIcon,
+  ArrowSquareOutIcon,
+  DownloadSimpleIcon,
+  WarningIcon
+} from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -41,6 +46,7 @@ import type { BitcoinUnit } from '@/types/bitcoin'
 import type { FiatCurrency, PriceProviderId } from '@/types/price-providers'
 import type { Theme } from '@/types/theme'
 import { areAllExitsRipe, estimateEmergencyExitFeeSat, summarizeExits } from '@/utils/exit-progress'
+import { downloadDebugLog } from '@/utils/logs'
 import type { RefreshThresholdOption } from '@/utils/refresh'
 import {
   getRefreshThresholdOptions,
@@ -124,6 +130,18 @@ export default function SettingsPage() {
   const [exitDialogMode, setExitDialogMode] = useState<ExitDialogMode>('start')
   const [draftExitAddress, setDraftExitAddress] = useState('')
   const [claimAddressDismissed, setClaimAddressDismissed] = useState(false)
+  const [isDownloadingLogs, setDownloadingLogs] = useState(false)
+
+  async function handleDownloadLogs() {
+    setDownloadingLogs(true)
+    try {
+      await downloadDebugLog()
+    } catch {
+      toast.error(t('settings.diagnostics.error'))
+    } finally {
+      setDownloadingLogs(false)
+    }
+  }
 
   const { data: mnemonic, isFetching: isFetchingMnemonic } = useWalletMnemonic(isSeedRevealed)
 
@@ -472,6 +490,22 @@ export default function SettingsPage() {
             {t('settings.report_issues.button')}
             <ArrowSquareOutIcon />
           </a>
+        </Button>
+      </Field>
+      <Field orientation="responsive">
+        <FieldContent>
+          <FieldLabel>{t('settings.diagnostics.label')}</FieldLabel>
+          <FieldDescription>{t('settings.diagnostics.description')}</FieldDescription>
+        </FieldContent>
+        <Button
+          loading={isDownloadingLogs}
+          onClick={() => {
+            void handleDownloadLogs()
+          }}
+          variant="outline"
+        >
+          <DownloadSimpleIcon />
+          {t('settings.diagnostics.button')}
         </Button>
       </Field>
       <section className="space-y-4 rounded-lg border border-destructive/30 p-4">

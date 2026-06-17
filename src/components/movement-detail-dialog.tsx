@@ -1,3 +1,4 @@
+import { CheckIcon, CopyIcon } from '@phosphor-icons/react'
 import type { Movement, WalletTxInfo } from '@secondts/barkd'
 import { useTranslation } from 'react-i18next'
 import { MovementAmountCell } from '@/components/movement-amount-cell'
@@ -5,15 +6,18 @@ import { CopyableValueRow, DetailRow, LabelEditor } from '@/components/movement-
 import { MovementSourceBadge } from '@/components/movement-source-badge'
 import { MovementStatusBadge } from '@/components/movement-status-badge'
 import { TagInput } from '@/components/tag-input'
+import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { useUpdateMovementMetadata } from '@/hooks/barkd/use-update-movement-metadata'
+import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { getMovementMetadata } from '@/utils/metadata'
 import { getMovementDefaultLabel } from '@/utils/movement-labels'
 import {
   getMovementCounterpartyDestination,
   getMovementDirection,
   getMovementFeeSat,
+  getMovementRawJson,
   getMovementSource
 } from '@/utils/movement'
 
@@ -78,6 +82,7 @@ function MovementDetailContent({
   discreetMode
 }: MovementDetailContentProps) {
   const { t } = useTranslation()
+  const { copy, isCopied } = useCopyToClipboard()
   const movementId = movement.id
   const metadata = getMovementMetadata(movement)
   const defaultLabel = getMovementDefaultLabel(movement.subsystem, t)
@@ -156,6 +161,17 @@ function MovementDetailContent({
             value={metadata?.tags ?? []}
           />
         </div>
+        <Button
+          className="w-full"
+          onClick={() => {
+            void copy(getMovementRawJson(movement))
+          }}
+          type="button"
+          variant="outline"
+        >
+          {isCopied ? <CheckIcon /> : <CopyIcon />}
+          {isCopied ? t('movements.detail.copied') : t('movements.detail.copy_raw_json')}
+        </Button>
       </div>
     </>
   )

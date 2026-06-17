@@ -95,6 +95,10 @@ export function sumExitCpfpFeeSat(transactions: WalletTxInfo[]): number {
     .reduce((total, tx) => total + (tx.onchainFeeSat ?? 0), 0)
 }
 
+export function getMovementRawJson(movement: Movement): string {
+  return JSON.stringify(movement, null, 2)
+}
+
 export function getMovementFeeSat(
   movement: Movement,
   transactions: WalletTxInfo[] = []
