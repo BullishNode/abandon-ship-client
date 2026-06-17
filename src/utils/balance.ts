@@ -1,4 +1,4 @@
-import type { Balance, OnchainBalance } from '@secondts/barkd'
+import type { Balance, OnchainBalance, UtxoInfo, WalletTxInfo } from '@secondts/barkd'
 
 function isBalance(value: unknown): value is Balance {
   return typeof value === 'object' && value !== null && 'spendableSat' in value
@@ -26,6 +26,7 @@ export interface BalanceTotals {
   offchainSat: number
   onchainSat: number
   onchainPendingSat: number
+  exitChangePendingSat: number
   pendingBoardSat: number
   pendingInRoundSat: number
   pendingLightningSendSat: number
@@ -34,12 +35,27 @@ export interface BalanceTotals {
   totalSat: number
 }
 
+export function sumUnconfirmedCpfpUtxoSat(transactions: WalletTxInfo[], utxos: UtxoInfo[]): number {
+  const cpfpTxids = new Set(transactions.filter((tx) => tx.isCpfp).map((tx) => tx.txid))
+  const isUnconfirmedCpfp = (utxo: UtxoInfo) =>
+    (utxo.confirmationHeight === null || utxo.confirmationHeight === undefined) &&
+    cpfpTxids.has(utxo.outpoint.split(':')[0])
+  return utxos.filter(isUnconfirmedCpfp).reduce((total, utxo) => total + utxo.amountSat, 0)
+}
+
 export function getBalanceTotals(
   balance?: Balance,
-  onchainBalance?: OnchainBalance
+  onchainBalance?: OnchainBalance,
+  transactions: WalletTxInfo[] = [],
+  utxos: UtxoInfo[] = []
 ): BalanceTotals {
   const onchainSat = onchainBalance?.trustedSpendableSat ?? 0
-  const onchainPendingSat = onchainBalance?.untrustedPendingSat ?? 0
+  const untrustedPendingSat = onchainBalance?.untrustedPendingSat ?? 0
+  const exitChangePendingSat = Math.min(
+    sumUnconfirmedCpfpUtxoSat(transactions, utxos),
+    untrustedPendingSat
+  )
+  const onchainPendingSat = untrustedPendingSat - exitChangePendingSat
   const offchainSat = balance?.spendableSat ?? 0
   const pendingBoardSat = balance?.pendingBoardSat ?? 0
   const pendingInRoundSat = balance?.pendingInRoundSat ?? 0
@@ -50,6 +66,7 @@ export function getBalanceTotals(
     offchainSat +
     onchainSat +
     onchainPendingSat +
+    exitChangePendingSat +
     pendingBoardSat +
     pendingInRoundSat +
     pendingLightningSendSat +
@@ -57,6 +74,7 @@ export function getBalanceTotals(
     pendingExitSat
   return {
     claimableLightningReceiveSat,
+    exitChangePendingSat,
     offchainSat,
     onchainPendingSat,
     onchainSat,

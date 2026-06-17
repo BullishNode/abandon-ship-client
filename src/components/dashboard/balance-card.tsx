@@ -47,6 +47,11 @@ export function BalanceCard({
       label: t('dashboard.balance.onchain_pending')
     },
     {
+      amount: totals.exitChangePendingSat,
+      key: 'onchain_pending_change',
+      label: t('dashboard.balance.onchain_pending_change')
+    },
+    {
       amount: totals.pendingBoardSat,
       key: 'pending_board',
       label: t('dashboard.balance.pending_board')
@@ -71,6 +76,7 @@ export function BalanceCard({
   const onlyOffchain =
     totals.onchainSat === 0 &&
     totals.onchainPendingSat === 0 &&
+    totals.exitChangePendingSat === 0 &&
     totals.pendingBoardSat === 0 &&
     totals.pendingInRoundSat === 0 &&
     totals.pendingLightningSendSat === 0 &&

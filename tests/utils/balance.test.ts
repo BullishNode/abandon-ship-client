@@ -1,6 +1,10 @@
-import type { Balance, OnchainBalance } from '@secondts/barkd'
+import type { Balance, OnchainBalance, UtxoInfo, WalletTxInfo } from '@secondts/barkd'
 import { describe, expect, it } from 'vitest'
-import { carryForwardPendingExit, getBalanceTotals } from '../../src/utils/balance'
+import {
+  carryForwardPendingExit,
+  getBalanceTotals,
+  sumUnconfirmedCpfpUtxoSat
+} from '../../src/utils/balance'
 
 function makeBalance(overrides: Partial<Balance> = {}): Balance {
   return {
@@ -26,10 +30,32 @@ function makeOnchainBalance(overrides: Partial<OnchainBalance> = {}): OnchainBal
   }
 }
 
+function makeTx(overrides: Partial<WalletTxInfo> = {}): WalletTxInfo {
+  return {
+    balanceChangeSat: 0,
+    confirmation: null,
+    isCpfp: false,
+    onchainFeeSat: null,
+    tx: '',
+    txid: 'tx',
+    ...overrides
+  }
+}
+
+function makeUtxo(overrides: Partial<UtxoInfo> = {}): UtxoInfo {
+  return {
+    amountSat: 0,
+    confirmationHeight: null,
+    outpoint: 'tx:0',
+    ...overrides
+  }
+}
+
 describe(getBalanceTotals, () => {
   it('returns zeros when both balances are undefined', () => {
     expect(getBalanceTotals()).toStrictEqual({
       claimableLightningReceiveSat: 0,
+      exitChangePendingSat: 0,
       offchainSat: 0,
       onchainPendingSat: 0,
       onchainSat: 0,
@@ -45,6 +71,7 @@ describe(getBalanceTotals, () => {
     const onchain = makeOnchainBalance({ trustedSpendableSat: 1000, untrustedPendingSat: 200 })
     expect(getBalanceTotals(undefined, onchain)).toStrictEqual({
       claimableLightningReceiveSat: 0,
+      exitChangePendingSat: 0,
       offchainSat: 0,
       onchainPendingSat: 200,
       onchainSat: 1000,
@@ -68,6 +95,7 @@ describe(getBalanceTotals, () => {
     const onchain = makeOnchainBalance({ trustedSpendableSat: 1000, untrustedPendingSat: 100 })
     expect(getBalanceTotals(balance, onchain)).toStrictEqual({
       claimableLightningReceiveSat: 50,
+      exitChangePendingSat: 0,
       offchainSat: 5000,
       onchainPendingSat: 100,
       onchainSat: 1000,
@@ -99,7 +127,70 @@ describe(getBalanceTotals, () => {
     const result = getBalanceTotals(balance, onchain)
     expect(result.onchainSat).toBe(0)
     expect(result.onchainPendingSat).toBe(0)
+    expect(result.exitChangePendingSat).toBe(0)
     expect(result.totalSat).toBe(7)
+  })
+
+  it('attributes the whole untrusted-pending bucket to exit change when all is cpfp', () => {
+    const onchain = makeOnchainBalance({ untrustedPendingSat: 500 })
+    const transactions = [makeTx({ isCpfp: true, txid: 'exit' })]
+    const utxos = [makeUtxo({ amountSat: 500, confirmationHeight: null, outpoint: 'exit:0' })]
+    const result = getBalanceTotals(undefined, onchain, transactions, utxos)
+    expect(result.exitChangePendingSat).toBe(500)
+    expect(result.onchainPendingSat).toBe(0)
+    expect(result.totalSat).toBe(500)
+  })
+
+  it('splits the untrusted-pending bucket between exit change and external receive', () => {
+    const onchain = makeOnchainBalance({ untrustedPendingSat: 800 })
+    const transactions = [makeTx({ isCpfp: true, txid: 'exit' }), makeTx({ txid: 'recv' })]
+    const utxos = [
+      makeUtxo({ amountSat: 300, confirmationHeight: null, outpoint: 'exit:0' }),
+      makeUtxo({ amountSat: 500, confirmationHeight: null, outpoint: 'recv:0' })
+    ]
+    const result = getBalanceTotals(undefined, onchain, transactions, utxos)
+    expect(result.exitChangePendingSat).toBe(300)
+    expect(result.onchainPendingSat).toBe(500)
+    expect(result.totalSat).toBe(800)
+  })
+
+  it('keeps the full amount as plain pending when transaction data is missing', () => {
+    const onchain = makeOnchainBalance({ untrustedPendingSat: 400 })
+    const result = getBalanceTotals(undefined, onchain)
+    expect(result.exitChangePendingSat).toBe(0)
+    expect(result.onchainPendingSat).toBe(400)
+  })
+
+  it('clamps exit change to the untrusted-pending bucket', () => {
+    const onchain = makeOnchainBalance({ untrustedPendingSat: 200 })
+    const transactions = [makeTx({ isCpfp: true, txid: 'exit' })]
+    const utxos = [makeUtxo({ amountSat: 1000, confirmationHeight: null, outpoint: 'exit:0' })]
+    const result = getBalanceTotals(undefined, onchain, transactions, utxos)
+    expect(result.exitChangePendingSat).toBe(200)
+    expect(result.onchainPendingSat).toBe(0)
+  })
+})
+
+describe(sumUnconfirmedCpfpUtxoSat, () => {
+  it('sums only unconfirmed utxos sourced from cpfp transactions', () => {
+    const transactions = [makeTx({ isCpfp: true, txid: 'exit' }), makeTx({ txid: 'recv' })]
+    const utxos = [
+      makeUtxo({ amountSat: 300, confirmationHeight: null, outpoint: 'exit:0' }),
+      makeUtxo({ amountSat: 999, confirmationHeight: null, outpoint: 'recv:0' })
+    ]
+    expect(sumUnconfirmedCpfpUtxoSat(transactions, utxos)).toBe(300)
+  })
+
+  it('ignores confirmed cpfp utxos', () => {
+    const transactions = [makeTx({ isCpfp: true, txid: 'exit' })]
+    const utxos = [makeUtxo({ amountSat: 300, confirmationHeight: 800_000, outpoint: 'exit:0' })]
+    expect(sumUnconfirmedCpfpUtxoSat(transactions, utxos)).toBe(0)
+  })
+
+  it('returns zero when there are no cpfp transactions', () => {
+    const transactions = [makeTx({ txid: 'recv' })]
+    const utxos = [makeUtxo({ amountSat: 300, confirmationHeight: null, outpoint: 'recv:0' })]
+    expect(sumUnconfirmedCpfpUtxoSat(transactions, utxos)).toBe(0)
   })
 })
 

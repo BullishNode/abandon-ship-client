@@ -5,6 +5,8 @@ import { RoundPriceCard } from '@/components/dashboard/round-price-card'
 import { MovementsTable } from '@/components/movements-table'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
+import { useOnchainTransactions } from '@/hooks/barkd/use-onchain-transactions'
+import { useOnchainUtxos } from '@/hooks/barkd/use-onchain-utxos'
 import { useWalletBalance } from '@/hooks/barkd/use-wallet-balance'
 import { useSettingsStore } from '@/stores/settings'
 import { getBalanceTotals } from '@/utils/balance'
@@ -17,10 +19,12 @@ const BalanceChart = lazy(async () => {
 export default function TransactionsPage() {
   const { data: balance } = useWalletBalance()
   const { data: onchainBalance } = useOnchainBalance()
+  const { data: onchainTransactions } = useOnchainTransactions()
+  const { data: onchainUtxos } = useOnchainUtxos()
   const [discreetMode, toggleDiscreetMode] = useSettingsStore(
     useShallow((state) => [state.discreetMode, state.toggleDiscreetMode])
   )
-  const totals = getBalanceTotals(balance, onchainBalance)
+  const totals = getBalanceTotals(balance, onchainBalance, onchainTransactions, onchainUtxos)
 
   return (
     <div className="flex flex-col gap-6">
