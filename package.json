@@ -47,11 +47,13 @@
     "start9:build": "bash scripts/start9-build.sh"
   },
   "dependencies": {
-    "@branta-ops/branta": "^3.1.2",
+    "@branta-ops/branta": "^3.1.4",
     "@chenglou/pretext": "^0.0.6",
     "@fontsource-variable/dm-sans": "^5.2.8",
     "@fontsource-variable/source-code-pro": "^5.2.7",
     "@hookform/resolvers": "^5.2.2",
+    "@noble/ciphers": "^2.2.0",
+    "@noble/hashes": "^2.2.0",
     "@phosphor-icons/react": "^2.1.10",
     "@scure/bip39": "^2.0.1",
     "@secondts/barkd": "^0.2.5",
