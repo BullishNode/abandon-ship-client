@@ -12,9 +12,15 @@ interface UseSendQuoteOptions {
   open: boolean
   sendRoute: SendRoute
   destination: string
+  hasValidDestination: boolean
 }
 
-export function useSendQuote({ open, sendRoute, destination }: UseSendQuoteOptions) {
+export function useSendQuote({
+  open,
+  sendRoute,
+  destination,
+  hasValidDestination
+}: UseSendQuoteOptions) {
   const { t } = useTranslation()
   const formatBitcoin = useFormatBitcoin()
 
@@ -32,7 +38,7 @@ export function useSendQuote({ open, sendRoute, destination }: UseSendQuoteOptio
   const isOnchainRoute = sendRoute === 'onchain-from-ark' || sendRoute === 'onchain-from-wallet'
 
   const { data: lightningSendFee, isFetching: isFetchingLnFee } = useLightningSendFee(
-    isLightningRoute ? validAmountSat : undefined
+    isLightningRoute && hasValidDestination ? validAmountSat : undefined
   )
   const { data: onchainSendFee, isFetching: isFetchingOnchainFee } = useSendOnchainFee(
     isOnchainRoute ? validAmountSat : undefined,

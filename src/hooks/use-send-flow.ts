@@ -1,3 +1,4 @@
+import type { DecodedPayment } from 'bitcoin-decoder'
 import { useSendDestination } from '@/hooks/send/use-send-destination'
 import type { SendStep } from '@/hooks/send/use-send-destination'
 import { useSendExecute } from '@/hooks/send/use-send-execute'
@@ -17,6 +18,7 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
   const dest = useSendDestination({ initialStep, open })
   const quote = useSendQuote({
     destination: dest.destination,
+    hasValidDestination: dest.selectedMethodType !== undefined,
     open,
     sendRoute: dest.sendRoute
   })
@@ -31,17 +33,23 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     validAmountSat: quote.validAmountSat
   })
 
+  function applyParsedMetadata(decoded: DecodedPayment) {
+    const amountSats = decoded.metadata?.amount
+    const description = decoded.metadata?.description
+    if (amountSats !== undefined && amountSats !== 0) {
+      quote.setAmountSat(amountSats)
+    }
+    if (description !== undefined && description !== '') {
+      exec.setLabel(description)
+    }
+  }
+
   async function goToSend(input: string) {
-    await dest.goToSend(input, (decoded) => {
-      const amountSats = decoded.metadata?.amount
-      const description = decoded.metadata?.description
-      if (amountSats !== undefined && amountSats !== 0) {
-        quote.setAmountSat(amountSats)
-      }
-      if (description !== undefined && description !== '') {
-        exec.setLabel(description)
-      }
-    })
+    await dest.goToSend(input, applyParsedMetadata)
+  }
+
+  async function verifyDestination(value: string) {
+    await dest.verifyDestination(value, applyParsedMetadata)
   }
 
   async function handlePaste() {
@@ -65,6 +73,7 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     goToSend,
     handlePaste,
     isPasteSupported: canReadClipboard(),
-    isScanSupported: canUseCamera()
+    isScanSupported: canUseCamera(),
+    verifyDestination
   }
 }

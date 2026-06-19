@@ -129,8 +129,8 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="destination">{t('send.destination')}</Label>
-                    {flow.destination.trim() !== '' && !showPicker && (
-                      <span className="text-muted-foreground text-xs">
+                    {flow.selectedMethodType !== undefined && !showPicker && (
+                      <span className="text-muted-foreground text-xs leading-none">
                         {getRouteLabel(flow.sendRoute, t)}
                       </span>
                     )}
@@ -139,13 +139,14 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                     id="destination"
                     onBlur={(e) => void flow.verifyDestination(e.currentTarget.value)}
                     onChange={(e) => {
-                      flow.setDestination(e.target.value)
+                      flow.changeDestination(e.target.value)
                       flow.clearBrantaVerification()
                     }}
                     onPaste={(e) => {
                       const text = e.clipboardData.getData('text').trim()
                       if (text !== '') {
                         e.preventDefault()
+                        flow.changeDestination(text)
                         void flow.goToSend(text)
                       }
                     }}
@@ -162,7 +163,6 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                     />
                   )}
                   <BrantaVerificationStatus
-                    isFetching={flow.isFetchingBranta}
                     key={
                       flow.brantaPayment?.platformLogoLightUrl ??
                       flow.brantaPayment?.platformLogoUrl ??

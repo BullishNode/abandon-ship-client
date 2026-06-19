@@ -47,6 +47,13 @@ export function useSendDestination({ open, initialStep = 'scan' }: UseSendDestin
     setPrevOpen(open)
   }
 
+  function changeDestination(value: string) {
+    setDestination(value)
+    setSelectedMethodType(undefined)
+    setParsed(undefined)
+    setSendRoute('lightning')
+  }
+
   function applyDestination(rawDest: Destination) {
     const dest = normalizeDestination(rawDest)
     setDestination(dest.destination)
@@ -94,7 +101,10 @@ export function useSendDestination({ open, initialStep = 'scan' }: UseSendDestin
     }
   }
 
-  async function verifyDestination(value: string) {
+  async function verifyDestination(
+    value: string,
+    applyParsedMetadata?: (decoded: DecodedPayment) => void
+  ) {
     const trimmed = value.trim()
     if (trimmed === '' || trimmed === rawQrInput) {
       return
@@ -110,6 +120,7 @@ export function useSendDestination({ open, initialStep = 'scan' }: UseSendDestin
     const decoded = await parsePaymentInput(trimmed)
     if (decoded.valid && decoded.kind === 'payment') {
       applyDestination(pickCheapestDestination(decoded.destinations))
+      applyParsedMetadata?.(decoded)
       setParsed(decoded)
       setRawQrInput(trimmed)
     }
@@ -135,6 +146,7 @@ export function useSendDestination({ open, initialStep = 'scan' }: UseSendDestin
     applyDestination,
     brantaPayment: brantaResult?.payments[0],
     brantaVerifyUrl: brantaResult?.verifyUrl,
+    changeDestination,
     chooserDestinations,
     clearBrantaVerification,
     destination,

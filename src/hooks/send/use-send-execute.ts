@@ -120,7 +120,7 @@ export function useSendExecute({
   }
 
   const canSend =
-    destination.trim().length > 0 &&
+    selectedMethodType !== undefined &&
     validAmountSat !== undefined &&
     hasEnoughFunds &&
     !isFetchingFee
