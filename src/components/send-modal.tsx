@@ -176,7 +176,9 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                   <div className="flex items-center justify-between">
                     <Label htmlFor="send-amount">{t('send.amount')}</Label>
                     {flow.secondaryDisplay !== '' && (
-                      <span className="text-muted-foreground text-xs">{flow.secondaryDisplay}</span>
+                      <span className="text-muted-foreground text-xs leading-none">
+                        {flow.secondaryDisplay}
+                      </span>
                     )}
                   </div>
                   <Input
@@ -212,7 +214,7 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                       {t('send.warnings.uses_pending_onchain')}
                     </p>
                   )}
-                  <span className="text-muted-foreground text-xs">
+                  <span className="text-muted-foreground text-xs leading-none">
                     {t('send.fee.estimate')}: {flow.feeDisplay}
                     {flow.feeSat !== undefined && flow.feeSat > 0 && (
                       <> • {formatFiat(flow.feeSat)}</>
