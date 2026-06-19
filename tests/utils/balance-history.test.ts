@@ -7,7 +7,7 @@ import {
   extractTimestampMs
 } from '../../src/utils/balance-history'
 import type { OnchainTxEntry } from '../../src/utils/movements-feed'
-import { createMovement } from '../fixtures/movements'
+import { createMovement, destination } from '../fixtures/movements'
 
 function makeOnchainEntry(overrides: Partial<OnchainTxEntry> = {}): OnchainTxEntry {
   return {
@@ -106,6 +106,106 @@ describe(computeBalanceHistory, () => {
     expect(result.points[0].balanceSat).toBe(200)
     expect(result.points[1].balanceSat).toBe(700)
     expect(result.initialBalanceSat).toBe(0)
+  })
+
+  it('collapses an exit and its on-chain landing into a single fee-only step', () => {
+    const received = createMovement({
+      effectiveBalanceSat: 10_000,
+      id: 1,
+      time: {
+        createdAt: new Date('2026-06-16T00:00:00Z'),
+        updatedAt: new Date('2026-06-16T00:00:00Z')
+      }
+    })
+    const exit = createMovement({
+      effectiveBalanceSat: -10_000,
+      id: 2,
+      sentTo: [destination('bitcoin', 'bc1pexit', 10_000)],
+      subsystem: { kind: 'start', name: 'bark.exit' },
+      time: {
+        createdAt: new Date('2026-06-17T00:00:00Z'),
+        updatedAt: new Date('2026-06-17T00:00:00Z')
+      }
+    })
+    const landing = makeOnchainEntry({
+      amountSat: 9800,
+      approximateTimestampMs: new Date('2026-06-18T00:00:00Z').getTime(),
+      bindingAddress: 'bc1pexit',
+      direction: 'incoming',
+      txid: 'landing'
+    })
+    const result = computeBalanceHistory([received, exit], [landing], 9800)
+    expect(result.points.map((point) => point.balanceSat)).toStrictEqual([10_000, 9800])
+    expect(Math.max(...result.points.map((point) => point.balanceSat))).toBe(10_000)
+  })
+
+  it('leaves an unmatched exit as a normal debit so a pending exit still dips', () => {
+    const received = createMovement({
+      effectiveBalanceSat: 10_000,
+      id: 1,
+      time: {
+        createdAt: new Date('2026-06-16T00:00:00Z'),
+        updatedAt: new Date('2026-06-16T00:00:00Z')
+      }
+    })
+    const exit = createMovement({
+      effectiveBalanceSat: -10_000,
+      id: 2,
+      sentTo: [destination('bitcoin', 'bc1pexit', 10_000)],
+      subsystem: { kind: 'start', name: 'bark.exit' },
+      time: {
+        createdAt: new Date('2026-06-17T00:00:00Z'),
+        updatedAt: new Date('2026-06-17T00:00:00Z')
+      }
+    })
+    const result = computeBalanceHistory([received, exit], [], 0)
+    expect(result.points.map((point) => point.balanceSat)).toStrictEqual([10_000, 0])
+  })
+
+  it('does not collapse a failed exit, leaving its landing as an independent credit', () => {
+    const exit = createMovement({
+      effectiveBalanceSat: -10_000,
+      id: 1,
+      sentTo: [destination('bitcoin', 'bc1pexit', 10_000)],
+      status: 'failed',
+      subsystem: { kind: 'start', name: 'bark.exit' },
+      time: {
+        createdAt: new Date('2026-06-17T00:00:00Z'),
+        updatedAt: new Date('2026-06-17T00:00:00Z')
+      }
+    })
+    const landing = makeOnchainEntry({
+      amountSat: 9800,
+      approximateTimestampMs: new Date('2026-06-18T00:00:00Z').getTime(),
+      bindingAddress: 'bc1pexit',
+      direction: 'incoming',
+      txid: 'landing'
+    })
+    const result = computeBalanceHistory([exit], [landing], 9800)
+    expect(result.points.map((point) => point.balanceSat)).toStrictEqual([9800])
+  })
+
+  it('does not pair an exit without a destination address', () => {
+    const exit = createMovement({
+      effectiveBalanceSat: -10_000,
+      id: 1,
+      sentTo: [],
+      subsystem: { kind: 'start', name: 'bark.exit' },
+      time: {
+        createdAt: new Date('2026-06-17T00:00:00Z'),
+        updatedAt: new Date('2026-06-17T00:00:00Z')
+      }
+    })
+    const orphanCredit = makeOnchainEntry({
+      amountSat: 9800,
+      approximateTimestampMs: new Date('2026-06-18T00:00:00Z').getTime(),
+      bindingAddress: undefined,
+      direction: 'incoming',
+      txid: 'credit'
+    })
+    const result = computeBalanceHistory([exit], [orphanCredit], -200)
+    expect(result.points).toHaveLength(2)
+    expect(result.points.at(-1)?.balanceSat).toBe(-200)
   })
 
   it('includes pending onchain entries so they are not absorbed into the initial balance', () => {

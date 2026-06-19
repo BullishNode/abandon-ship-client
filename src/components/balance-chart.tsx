@@ -15,6 +15,7 @@ import { useOnchainUtxos } from '@/hooks/barkd/use-onchain-utxos'
 import { useWalletBalance } from '@/hooks/barkd/use-wallet-balance'
 import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
+import { useOnchainFirstSeen } from '@/stores/metadata'
 import { getBalanceTotals } from '@/utils/balance'
 import {
   buildChartSeries,
@@ -31,6 +32,7 @@ export function BalanceChart() {
   const { data: transactions = [] } = useOnchainTransactions()
   const { data: onchainBalance } = useOnchainBalance()
   const { data: tip } = useBitcoinTip()
+  const firstSeenAt = useOnchainFirstSeen()
   const formatBitcoin = useFormatBitcoin()
 
   const chartConfig = {
@@ -42,6 +44,7 @@ export function BalanceChart() {
 
   const { totalSat: endpointTotalSat } = getBalanceTotals(balance, onchainBalance)
   const onchainEntries = buildOnchainTxEntries(transactions, utxos, {
+    firstSeenAt,
     network: config.network,
     tipHeight: tip?.tipHeight
   })
