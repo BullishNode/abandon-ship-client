@@ -63,12 +63,18 @@ export function useSendExecute({
   }
 
   const { mutate: send, isPending: isSendingArk } = useSend({
+    onError: (error) => {
+      toast.error(t('send.errors.send_failed'), { description: error.message })
+    },
     onSuccess: () => {
       handleSendSuccess()
     }
   })
 
   const { mutate: sendOnchain, isPending: isSendingOnchain } = useSendOnchain({
+    onError: (error) => {
+      toast.error(t('send.errors.send_failed'), { description: error.message })
+    },
     onSuccess: () => {
       handleSendSuccess()
     }
