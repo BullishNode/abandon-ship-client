@@ -37,10 +37,13 @@ export interface BalanceTotals {
 
 export function sumUnconfirmedCpfpUtxoSat(transactions: WalletTxInfo[], utxos: UtxoInfo[]): number {
   const cpfpTxids = new Set(transactions.filter((tx) => tx.isCpfp).map((tx) => tx.txid))
-  const isUnconfirmedCpfp = (utxo: UtxoInfo) =>
-    (utxo.confirmationHeight === null || utxo.confirmationHeight === undefined) &&
-    cpfpTxids.has(utxo.outpoint.split(':')[0])
-  return utxos.filter(isUnconfirmedCpfp).reduce((total, utxo) => total + utxo.amountSat, 0)
+  return utxos
+    .filter(
+      (utxo) =>
+        (utxo.confirmationHeight === null || utxo.confirmationHeight === undefined) &&
+        cpfpTxids.has(utxo.outpoint.split(':')[0])
+    )
+    .reduce((total, utxo) => total + utxo.amountSat, 0)
 }
 
 export function getBalanceTotals(

@@ -1,7 +1,4 @@
-// Rasterizes public/favicon.svg (dark tile + white logo) into PNG fallbacks.
-// Run: node scripts/gen-favicon.mjs
-import { fileURLToPath } from 'node:url'
-import { dirname, resolve } from 'node:path'
+import { resolve } from 'node:path'
 import sharp from 'sharp'
 
 const root = resolve(import.meta.dirname, '..')
