@@ -1,4 +1,10 @@
-import type { ColumnDef, PaginationState } from '@tanstack/react-table'
+import type {
+  ColumnDef,
+  OnChangeFn,
+  PaginationState,
+  Row,
+  RowSelectionState
+} from '@tanstack/react-table'
 import {
   flexRender,
   getCoreRowModel,
@@ -31,15 +37,24 @@ interface DataTableProps<TData, TValue> {
   data: TData[]
   onRowClick?: (row: TData) => void
   pageSize?: number
+  enableRowSelection?: boolean | ((row: Row<TData>) => boolean)
+  rowSelection?: RowSelectionState
+  onRowSelectionChange?: OnChangeFn<RowSelectionState>
+  getRowId?: (row: TData) => string
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   onRowClick,
-  pageSize
+  pageSize,
+  enableRowSelection,
+  rowSelection,
+  onRowSelectionChange,
+  getRowId
 }: DataTableProps<TData, TValue>) {
   const paginated = pageSize !== undefined
+  const selectable = rowSelection !== undefined
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: pageSize ?? data.length
@@ -49,10 +64,19 @@ export function DataTable<TData, TValue>({
     columns,
     data,
     getCoreRowModel: getCoreRowModel(),
+    getRowId,
+    ...(enableRowSelection !== undefined && { enableRowSelection }),
+    ...(selectable && {
+      onRowSelectionChange,
+      state: { rowSelection }
+    }),
     ...(paginated && {
       getPaginationRowModel: getPaginationRowModel(),
       onPaginationChange: setPagination,
-      state: { pagination }
+      state: {
+        pagination,
+        ...(selectable && { rowSelection })
+      }
     })
   })
 
@@ -66,7 +90,7 @@ export function DataTable<TData, TValue>({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col">
       <Table>
         <TableHeader className="bg-muted [&_tr]:border-0">
           {table.getHeaderGroups().map((headerGroup) => (
@@ -106,7 +130,7 @@ export function DataTable<TData, TValue>({
         </TableBody>
       </Table>
       {showPagination && (
-        <Pagination>
+        <Pagination className="border-t px-6 py-4">
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious

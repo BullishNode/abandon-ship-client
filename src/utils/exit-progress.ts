@@ -24,10 +24,10 @@ export function estimateEmergencyExitFeeSat(
   if (vtxos.length === 0 || feeRateSatPerVb <= 0) {
     return 0
   }
-  let exitVbytes = 0
-  for (const vtxo of vtxos) {
-    exitVbytes += (vtxo.exitDepth ?? 1) * VBYTES_PER_EXIT_LEVEL
-  }
+  const exitVbytes = vtxos.reduce(
+    (total, vtxo) => total + (vtxo.exitDepth ?? 1) * VBYTES_PER_EXIT_LEVEL,
+    0
+  )
   const claimVbytes = CLAIM_BASE_VBYTES + CLAIM_VBYTES_PER_VTXO * vtxos.length
   const feeSat = (exitVbytes + claimVbytes) * feeRateSatPerVb * FEE_RATE_SAFETY_MULTIPLIER
   return Math.ceil(feeSat)

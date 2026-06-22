@@ -1,20 +1,36 @@
-import { CheckIcon, CopyIcon, PencilSimpleIcon } from '@phosphor-icons/react'
+import { CheckIcon, CopyIcon, InfoIcon, PencilSimpleIcon } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 
 interface DetailRowProps {
   label: string
   value: string
+  tooltip?: string
 }
 
-export function DetailRow({ label, value }: DetailRowProps) {
+export function DetailRow({ label, value, tooltip }: DetailRowProps) {
   return (
     <div className="flex items-start justify-between gap-3">
-      <span className="text-muted-foreground">{label}</span>
+      <span className="flex items-center gap-1 text-muted-foreground">
+        {label}
+        {tooltip === undefined ? null : (
+          <Tooltip>
+            <TooltipTrigger
+              aria-label={tooltip}
+              className="text-muted-foreground/70 hover:text-muted-foreground"
+              type="button"
+            >
+              <InfoIcon />
+            </TooltipTrigger>
+            <TooltipContent>{tooltip}</TooltipContent>
+          </Tooltip>
+        )}
+      </span>
       <span className="break-all text-right font-medium">{value}</span>
     </div>
   )
@@ -23,16 +39,17 @@ export function DetailRow({ label, value }: DetailRowProps) {
 interface CopyableValueRowProps {
   label: string
   value: string
+  displayValue?: string
 }
 
-export function CopyableValueRow({ label, value }: CopyableValueRowProps) {
+export function CopyableValueRow({ label, value, displayValue }: CopyableValueRowProps) {
   const { t } = useTranslation()
   const { copy, isCopied } = useCopyToClipboard()
   return (
-    <div className="flex items-start justify-between gap-3">
+    <div className="flex items-center justify-between gap-3">
       <span className="text-muted-foreground">{label}</span>
-      <div className="flex max-w-[70%] items-start gap-2">
-        <span className="break-all font-mono text-xs">{value}</span>
+      <div className="flex max-w-[70%] items-center gap-2">
+        <span className="break-all font-mono text-xs">{displayValue ?? value}</span>
         <Button
           aria-label={isCopied ? t('movements.detail.copied') : t('movements.detail.copy')}
           onClick={() => {

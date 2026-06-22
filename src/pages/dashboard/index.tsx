@@ -1,15 +1,7 @@
 import { lazy, Suspense } from 'react'
-import { useShallow } from 'zustand/react/shallow'
-import { BalanceCard } from '@/components/dashboard/balance-card'
-import { RoundPriceCard } from '@/components/dashboard/round-price-card'
+import { OverviewCards } from '@/components/dashboard/overview-cards'
 import { MovementsTable } from '@/components/movements-table'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
-import { useOnchainTransactions } from '@/hooks/barkd/use-onchain-transactions'
-import { useOnchainUtxos } from '@/hooks/barkd/use-onchain-utxos'
-import { useWalletBalance } from '@/hooks/barkd/use-wallet-balance'
-import { useSettingsStore } from '@/stores/settings'
-import { getBalanceTotals } from '@/utils/balance'
 
 const BalanceChart = lazy(async () => {
   const mod = await import('@/components/balance-chart')
@@ -17,25 +9,9 @@ const BalanceChart = lazy(async () => {
 })
 
 export default function TransactionsPage() {
-  const { data: balance } = useWalletBalance()
-  const { data: onchainBalance } = useOnchainBalance()
-  const { data: onchainTransactions } = useOnchainTransactions()
-  const { data: onchainUtxos } = useOnchainUtxos()
-  const [discreetMode, toggleDiscreetMode] = useSettingsStore(
-    useShallow((state) => [state.discreetMode, state.toggleDiscreetMode])
-  )
-  const totals = getBalanceTotals(balance, onchainBalance, onchainTransactions, onchainUtxos)
-
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <BalanceCard
-          discreetMode={discreetMode}
-          onToggleDiscreetMode={toggleDiscreetMode}
-          totals={totals}
-        />
-        <RoundPriceCard />
-      </div>
+      <OverviewCards />
       <MovementsTable />
       <Suspense fallback={<Skeleton className="h-80 w-full" />}>
         <BalanceChart />

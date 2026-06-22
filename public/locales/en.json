@@ -245,6 +245,67 @@
       "no_counterparty": "No counterparty"
     }
   },
+  "vtxos": {
+    "empty": "No VTXOs yet",
+    "select_row": "Select VTXO",
+    "select_all": "Select all spendable VTXOs",
+    "columns": {
+      "id": "ID",
+      "expiry": "Expiry",
+      "status": "Status",
+      "amount": "Amount"
+    },
+    "status": {
+      "spendable": "Spendable",
+      "spent": "Spent",
+      "locked": "Locked"
+    },
+    "expiry": {
+      "expired": "Expired"
+    },
+    "selection": {
+      "count_one": "{{count}} selected",
+      "count_other": "{{count}} selected",
+      "refresh": "Refresh",
+      "offboard": "Offboard",
+      "deselect": "Deselect"
+    },
+    "refresh": {
+      "success": "Refresh started",
+      "error": "Refresh failed"
+    },
+    "detail": {
+      "title": "VTXO details",
+      "id": "ID",
+      "chain_anchor": "Chain anchor",
+      "expiry": "Expiry",
+      "policy_type": "Policy",
+      "policy_tooltip": "How this VTXO can be spent. \"Pubkey\" is the standard type.",
+      "exit_delta": "Exit delta",
+      "exit_delta_tooltip": "Blocks to wait after the final exit transaction confirms before you can claim.",
+      "exit_depth": "Exit depth",
+      "exit_depth_tooltip": "How many on-chain transactions required to fully exit this VTXO.",
+      "blocks_value_one": "{{count}} block",
+      "blocks_value_other": "{{count}} blocks",
+      "locked_action": "Locked by action",
+      "locked_movement": "Locked by movement",
+      "copy_raw_json": "Copy raw JSON",
+      "copied": "Copied"
+    },
+    "offboard": {
+      "title_one": "Offboard VTXO",
+      "title_other": "Offboard VTXOs",
+      "description_one": "Move {{count}} VTXO totaling {{amount}} on-chain.",
+      "description_other": "Move {{count}} VTXOs totaling {{amount}} on-chain.",
+      "address_label": "Destination address",
+      "use_wallet_address": "Use my Bark on-chain wallet",
+      "fee_note": "On-chain transaction fee is deducted from the offboarded amount.",
+      "cancel": "Cancel",
+      "confirm": "Offboard",
+      "success": "Offboard started",
+      "error": "Offboard failed"
+    }
+  },
   "settings": {
     "wallet_name": {
       "label": "Wallet name"
