@@ -10,6 +10,7 @@ import RootPage from './pages'
 import CreateWalletPage from './pages/create'
 import TransactionsPage from './pages/dashboard/index'
 import SettingsPage from './pages/dashboard/settings'
+import VtxosPage from './pages/dashboard/vtxos'
 import ImportWalletPage from './pages/import'
 
 export function App() {
@@ -31,6 +32,7 @@ export function App() {
               </Route>
               <Route element={<DashboardLayout />} path="/dashboard">
                 <Route element={<TransactionsPage />} index />
+                <Route element={<VtxosPage />} path="/dashboard/vtxos" />
                 <Route element={<SettingsPage />} path="/dashboard/settings" />
               </Route>
               <Route element={<Navigate replace to="/dashboard" />} path="*" />

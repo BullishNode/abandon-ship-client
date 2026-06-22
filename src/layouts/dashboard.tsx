@@ -17,7 +17,8 @@ import { canUseCamera } from '@/utils/camera'
 
 const ROUTE_TITLE_KEYS: Record<string, string> = {
   '/dashboard': 'nav.transactions',
-  '/dashboard/settings': 'nav.settings'
+  '/dashboard/settings': 'nav.settings',
+  '/dashboard/vtxos': 'nav.vtxos'
 }
 
 export default function DashboardLayout() {

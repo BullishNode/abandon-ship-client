@@ -1,4 +1,5 @@
 import { GearIcon, SquaresFourIcon } from '@phosphor-icons/react'
+import { VtxoIcon } from '@/components/icons/vtxo'
 import { useTranslation } from 'react-i18next'
 import {
   Sidebar,
@@ -25,6 +26,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: SquaresFourIcon,
       name: t('nav.transactions'),
       url: '/dashboard'
+    },
+    {
+      icon: VtxoIcon,
+      name: t('nav.vtxos'),
+      url: '/dashboard/vtxos'
     },
     {
       icon: GearIcon,

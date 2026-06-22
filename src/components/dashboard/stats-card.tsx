@@ -2,6 +2,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { CircularProgress } from '@/components/ui/circular-progress'
 import { Separator } from '@/components/ui/separator'
 import { useArkInfo } from '@/hooks/barkd/use-ark-info'
+import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
 import { useNextRound } from '@/hooks/barkd/use-next-round'
 import { useBitcoinPrice } from '@/hooks/price/use-bitcoin-price'
 import { useRoundCountdown } from '@/hooks/use-round-countdown'
@@ -14,16 +15,23 @@ const PLACEHOLDER = '—'
 const RING_SIZE = 30
 const RING_STROKE = 4
 
-interface RoundPriceCardProps {
+type BottomMetric = 'blockHeight' | 'price'
+
+interface StatsCardProps {
   className?: string
+  bottomMetric?: BottomMetric
 }
 
-export function RoundPriceCard({ className }: RoundPriceCardProps) {
+export function StatsCard({ className, bottomMetric = 'price' }: StatsCardProps) {
+  const showBlockHeight = bottomMetric === 'blockHeight'
   const { data: nextRound, isLoading: isLoadingRound } = useNextRound()
   const { data: arkInfo } = useArkInfo()
   const totalMs = parseDurationToMs(arkInfo?.roundInterval)
   const countdown = useRoundCountdown(nextRound?.startTime, totalMs)
-  const { data: btcPrice, isLoading: isLoadingPrice } = useBitcoinPrice()
+  const { data: btcPrice, isLoading: isLoadingPrice } = useBitcoinPrice({
+    enabled: !showBlockHeight
+  })
+  const { data: tip } = useBitcoinTip({ enabled: showBlockHeight })
   const fiatCurrency = useSettingsStore((state) => state.fiatCurrency)
 
   const countdownLabel = isLoadingRound || !countdown ? PLACEHOLDER : countdown.label
@@ -31,6 +39,11 @@ export function RoundPriceCard({ className }: RoundPriceCardProps) {
     isLoadingPrice || btcPrice?.currentPrice === undefined
       ? PLACEHOLDER
       : formatCurrency(btcPrice.currentPrice, fiatCurrency)
+  const blockHeightLabel =
+    tip?.tipHeight === undefined ? PLACEHOLDER : tip.tipHeight.toLocaleString()
+
+  const bottomLabel = showBlockHeight ? 'Block height' : 'Bitcoin price'
+  const bottomValue = showBlockHeight ? blockHeightLabel : priceLabel
 
   return (
     <Card className={cn('h-full lg:grid lg:grid-rows-[1fr_auto_1fr]', className)} size="sm">
@@ -48,8 +61,8 @@ export function RoundPriceCard({ className }: RoundPriceCardProps) {
       </CardContent>
       <Separator className="mx-4 data-[orientation=horizontal]:w-auto" />
       <CardContent className="flex flex-col gap-2">
-        <span className="text-muted-foreground text-sm font-medium">Bitcoin price</span>
-        <span className="font-bold text-2xl">{priceLabel}</span>
+        <span className="text-muted-foreground text-sm font-medium">{bottomLabel}</span>
+        <span className="font-bold text-2xl">{bottomValue}</span>
       </CardContent>
     </Card>
   )

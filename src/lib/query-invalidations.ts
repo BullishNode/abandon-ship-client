@@ -40,6 +40,16 @@ export async function invalidateRefreshState(queryClient: QueryClient) {
   ])
 }
 
+export async function invalidateOffboardState(queryClient: QueryClient) {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: walletKeys.balance() }),
+    queryClient.invalidateQueries({ queryKey: walletKeys.vtxos() }),
+    queryClient.invalidateQueries({ queryKey: walletKeys.transactions() }),
+    queryClient.invalidateQueries({ queryKey: onchainKeys.balance() }),
+    queryClient.invalidateQueries({ queryKey: onchainKeys.transactions() })
+  ])
+}
+
 export async function invalidateExitState(queryClient: QueryClient) {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: exitKeys.status() }),
