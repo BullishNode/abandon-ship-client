@@ -50,9 +50,6 @@ function exitTotalLevels(exit: ExitTransactionStatus): number {
     return packageCount
   }
   const { state } = exit
-  if (state.type === 'start') {
-    return 0
-  }
   if (state.type === 'processing') {
     return state.transactions.length
   }
