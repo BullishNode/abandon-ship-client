@@ -1,6 +1,12 @@
 import { BarkNetwork, Configuration } from '@secondts/barkd'
 import { z } from 'zod'
 
+declare global {
+  interface Window {
+    __BARKD__?: { token?: string }
+  }
+}
+
 interface RuntimeConfig {
   arkServer: string
   chainSource: string
@@ -22,6 +28,16 @@ const configResponseSchema = z.object({
 })
 
 let runtime: RuntimeConfig | undefined
+
+// When barkd serves this SPA itself (embedded build), it injects its bearer
+// token via `window.__BARKD__.token` (see the `<!--barkd-token-->` marker in
+// index.html). In the proxied dev/docker flows nothing is injected and the
+// proxy adds the bearer server-side, so this returns undefined and the client
+// sends no Authorization header of its own.
+function injectedToken(): string | undefined {
+  const token = window.__BARKD__?.token
+  return token !== undefined && token.length > 0 ? token : undefined
+}
 
 function requireConfig(): RuntimeConfig {
   if (runtime === undefined) {
@@ -55,10 +71,14 @@ export async function initConfig(): Promise<void> {
   }
   const json: unknown = await response.json()
   const parsed = configResponseSchema.parse(json)
+  const token = injectedToken()
   runtime = {
     arkServer: parsed.arkServer,
     chainSource: parsed.chainSource,
-    client: new Configuration({ basePath: '/api/barkd' }),
+    client: new Configuration({
+      basePath: '/api/barkd',
+      ...(token === undefined ? {} : { accessToken: token })
+    }),
     network: parsed.network,
     walletDataPath: parsed.walletDataPath
   }
