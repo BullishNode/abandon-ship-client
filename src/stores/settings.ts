@@ -22,6 +22,8 @@ interface SettingsStore {
   setHideRefreshMovements: (value: boolean) => void
   hideExitFeeMovements: boolean
   setHideExitFeeMovements: (value: boolean) => void
+  showExitedVtxos: boolean
+  setShowExitedVtxos: (value: boolean) => void
   autoRefreshThresholdBlocks: number
   setAutoRefreshThresholdBlocks: (value: number) => void
   refreshOnReceive: boolean
@@ -67,9 +69,13 @@ export const useSettingsStore = create<SettingsStore>()(
       setRefreshOnReceive: (refreshOnReceive) => {
         set({ refreshOnReceive })
       },
+      setShowExitedVtxos: (showExitedVtxos) => {
+        set({ showExitedVtxos })
+      },
       setTheme: (theme) => {
         set({ theme })
       },
+      showExitedVtxos: false,
       theme: 'system',
       toggleDiscreetMode: () => {
         set((state) => ({ discreetMode: !state.discreetMode }))

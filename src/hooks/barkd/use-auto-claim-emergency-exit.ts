@@ -1,34 +1,42 @@
 import { useEffect, useRef } from 'react'
-import { useClaimEmergencyExit } from '@/hooks/barkd/use-claim-emergency-exit'
+import { useClaimEmergencyExitVtxos } from '@/hooks/barkd/use-claim-emergency-exit-vtxos'
 import { useExitStatus } from '@/hooks/barkd/use-exit-status'
 import { useWalletStore } from '@/stores/wallet'
-import { resolveAutoClaimDestination, summarizeExits } from '@/utils/exit-progress'
+import { resolveClaimGroups } from '@/utils/exit-progress'
 
 const AUTO_CLAIM_THROTTLE_MS = 30_000
 
+function groupsSignature(groups: { destination: string; vtxos: string[] }[]): string {
+  return groups
+    .map((group) => `${group.destination}:${[...group.vtxos].toSorted().join(',')}`)
+    .toSorted()
+    .join('|')
+}
+
 export function useAutoClaimEmergencyExit(): void {
   const { data: exitStatuses } = useExitStatus()
-  const pendingExitClaimAddress = useWalletStore((state) => state.pendingExitClaimAddress)
-  const { mutate: claimEmergencyExit, isPending: isClaimingExit } = useClaimEmergencyExit()
-  const lastAutoClaimRef = useRef<{ claimableCount: number; attemptedAt: number }>({
+  const exitClaimAddresses = useWalletStore((state) => state.exitClaimAddresses)
+  const { mutate: claimVtxos, isPending: isClaiming } = useClaimEmergencyExitVtxos()
+  const lastAttemptRef = useRef<{ signature: string; attemptedAt: number }>({
     attemptedAt: 0,
-    claimableCount: 0
+    signature: ''
   })
 
-  const summary = summarizeExits(exitStatuses ?? [])
-  const destination = resolveAutoClaimDestination(summary, pendingExitClaimAddress)
-  const claimableCount = summary.claimable
+  const groups = resolveClaimGroups(exitStatuses ?? [], exitClaimAddresses)
+  const signature = groupsSignature(groups)
 
   useEffect(() => {
-    if (destination === null || isClaimingExit) {
+    if (groups.length === 0 || isClaiming) {
       return
     }
     const now = Date.now()
-    const last = lastAutoClaimRef.current
-    if (last.claimableCount === claimableCount && now - last.attemptedAt < AUTO_CLAIM_THROTTLE_MS) {
+    const last = lastAttemptRef.current
+    if (last.signature === signature && now - last.attemptedAt < AUTO_CLAIM_THROTTLE_MS) {
       return
     }
-    lastAutoClaimRef.current = { attemptedAt: now, claimableCount }
-    claimEmergencyExit({ destination })
-  }, [destination, claimableCount, isClaimingExit, claimEmergencyExit])
+    lastAttemptRef.current = { attemptedAt: now, signature }
+    for (const group of groups) {
+      claimVtxos({ destination: group.destination, vtxos: group.vtxos })
+    }
+  }, [signature, groups, isClaiming, claimVtxos])
 }

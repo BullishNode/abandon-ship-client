@@ -30,6 +30,9 @@ interface EmergencyExitStartDialogProps {
   isFetchingWalletAddress: boolean
   onUseWalletAddress: () => void
   onSubmit: (address: string) => void
+  title?: string
+  description?: string
+  submitLabel?: string
 }
 
 export function EmergencyExitStartDialog({
@@ -43,7 +46,10 @@ export function EmergencyExitStartDialog({
   feeEstimate,
   isFetchingWalletAddress,
   onUseWalletAddress,
-  onSubmit
+  onSubmit,
+  title,
+  description,
+  submitLabel
 }: EmergencyExitStartDialogProps) {
   const { t } = useTranslation()
   const trimmedAddress = address.trim()
@@ -86,13 +92,17 @@ export function EmergencyExitStartDialog({
       ? 'settings.danger.emergency_exit.confirm.button'
       : 'settings.danger.emergency_exit.edit.button'
 
+  const titleText = title ?? t(titleKey)
+  const descriptionText = description ?? t(descriptionKey)
+  const submitText = submitLabel ?? t(submitKey)
+
   return (
     <Dialog onOpenChange={handleClose} open={open}>
       <DialogContent showCloseButton={false}>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{t(titleKey)}</DialogTitle>
-            <DialogDescription>{t(descriptionKey)}</DialogDescription>
+            <DialogTitle>{titleText}</DialogTitle>
+            <DialogDescription>{descriptionText}</DialogDescription>
           </DialogHeader>
           <div className="mt-6 space-y-4">
             <Field>
@@ -179,7 +189,7 @@ export function EmergencyExitStartDialog({
               type="submit"
               variant={mode === 'start' ? 'destructive' : 'default'}
             >
-              {t(submitKey)}
+              {submitText}
             </Button>
           </DialogFooter>
         </form>

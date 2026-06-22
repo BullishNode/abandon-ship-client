@@ -258,16 +258,25 @@
     "status": {
       "spendable": "Spendable",
       "spent": "Spent",
-      "locked": "Locked"
+      "locked": "Locked",
+      "exiting": "Exiting",
+      "exited": "Exited"
     },
     "expiry": {
       "expired": "Expired"
+    },
+    "filters": {
+      "label": "Filter"
+    },
+    "options": {
+      "show_exited": "Show exited VTXOs"
     },
     "selection": {
       "count_one": "{{count}} selected",
       "count_other": "{{count}} selected",
       "refresh": "Refresh",
       "offboard": "Offboard",
+      "emergency_exit": "Emergency Exit",
       "deselect": "Deselect"
     },
     "refresh": {
@@ -304,6 +313,13 @@
       "confirm": "Offboard",
       "success": "Offboard started",
       "error": "Offboard failed"
+    },
+    "emergency_exit": {
+      "title_one": "Emergency exit {{count}} VTXO?",
+      "title_other": "Emergency exit {{count}} VTXOs?",
+      "description": "Emergency exits can take time. Your wallet will broadcast multiple on-chain transactions in consecutive order, and each transaction has its own timelock delay.",
+      "confirm": "Start emergency exit",
+      "success": "Emergency exit started"
     }
   },
   "settings": {

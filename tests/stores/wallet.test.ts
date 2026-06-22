@@ -3,7 +3,11 @@ import { WALLET_NAME_MAX_LENGTH } from '../../src/constants/wallet'
 import { useWalletStore } from '../../src/stores/wallet'
 
 function resetStore() {
-  useWalletStore.setState({ pendingExitClaimAddress: null, wallet: null })
+  useWalletStore.setState({
+    exitClaimAddresses: {},
+    isEmergencyExitAllInProgress: false,
+    wallet: null
+  })
 }
 
 describe('wallet store', () => {
@@ -22,7 +26,8 @@ describe('wallet store', () => {
 
       useWalletStore.getState().clearWallet()
       expect(useWalletStore.getState().wallet).toBeNull()
-      expect(useWalletStore.getState().pendingExitClaimAddress).toBeNull()
+      expect(useWalletStore.getState().exitClaimAddresses).toStrictEqual({})
+      expect(useWalletStore.getState().isEmergencyExitAllInProgress).toBeFalsy()
     })
   })
 
@@ -58,22 +63,45 @@ describe('wallet store', () => {
     })
   })
 
-  describe('setPendingExitClaimAddress', () => {
-    it('trims and stores a non-empty address', () => {
-      useWalletStore.getState().setPendingExitClaimAddress('  bc1qabc  ')
-      expect(useWalletStore.getState().pendingExitClaimAddress).toBe('bc1qabc')
+  describe('setExitClaimAddresses', () => {
+    it('trims and stores an address for each vtxo id', () => {
+      useWalletStore.getState().setExitClaimAddresses(['a', 'b'], '  bc1qabc  ')
+      expect(useWalletStore.getState().exitClaimAddresses).toStrictEqual({
+        a: 'bc1qabc',
+        b: 'bc1qabc'
+      })
     })
 
-    it('clears when given null', () => {
-      useWalletStore.setState({ pendingExitClaimAddress: 'bc1q' })
-      useWalletStore.getState().setPendingExitClaimAddress(null)
-      expect(useWalletStore.getState().pendingExitClaimAddress).toBeNull()
+    it('merges without dropping addresses for other vtxos', () => {
+      useWalletStore.getState().setExitClaimAddresses(['a'], 'addr-1')
+      useWalletStore.getState().setExitClaimAddresses(['b'], 'addr-2')
+      expect(useWalletStore.getState().exitClaimAddresses).toStrictEqual({
+        a: 'addr-1',
+        b: 'addr-2'
+      })
     })
 
-    it('clears when given a whitespace-only string', () => {
-      useWalletStore.setState({ pendingExitClaimAddress: 'bc1q' })
-      useWalletStore.getState().setPendingExitClaimAddress('   ')
-      expect(useWalletStore.getState().pendingExitClaimAddress).toBeNull()
+    it('removes addresses for the given ids when passed a whitespace-only string', () => {
+      useWalletStore.getState().setExitClaimAddresses(['a', 'b'], 'addr-1')
+      useWalletStore.getState().setExitClaimAddresses(['a'], '   ')
+      expect(useWalletStore.getState().exitClaimAddresses).toStrictEqual({ b: 'addr-1' })
+    })
+  })
+
+  describe('clearExitClaimAddresses', () => {
+    it('removes only the given vtxo ids', () => {
+      useWalletStore.getState().setExitClaimAddresses(['a', 'b', 'c'], 'addr-1')
+      useWalletStore.getState().clearExitClaimAddresses(['a', 'c'])
+      expect(useWalletStore.getState().exitClaimAddresses).toStrictEqual({ b: 'addr-1' })
+    })
+  })
+
+  describe('setIsEmergencyExitAllInProgress', () => {
+    it('toggles the flag', () => {
+      useWalletStore.getState().setIsEmergencyExitAllInProgress(true)
+      expect(useWalletStore.getState().isEmergencyExitAllInProgress).toBeTruthy()
+      useWalletStore.getState().setIsEmergencyExitAllInProgress(false)
+      expect(useWalletStore.getState().isEmergencyExitAllInProgress).toBeFalsy()
     })
   })
 })

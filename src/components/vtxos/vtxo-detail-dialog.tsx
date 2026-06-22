@@ -2,10 +2,12 @@ import { CheckIcon, CopyIcon } from '@phosphor-icons/react'
 import type { WalletVtxoInfo } from '@secondts/barkd'
 import { useTranslation } from 'react-i18next'
 import { CopyableValueRow, DetailRow } from '@/components/movement-detail-shared'
+import { VtxoExitBadge } from '@/components/vtxos/vtxo-exit-badge'
 import { VtxoStatusBadge } from '@/components/vtxos/vtxo-status-badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
+import type { VtxoExitDisplay } from '@/utils/vtxo'
 import { getExpiryTimeLabel, getVtxoRawJson, truncateVtxoId } from '@/utils/vtxo'
 
 interface VtxoDetailDialogProps {
@@ -15,6 +17,7 @@ interface VtxoDetailDialogProps {
   formatSats: (sats: number) => string
   formatFiat: (sats: number) => string
   tipHeight?: number
+  exitDisplay?: VtxoExitDisplay
 }
 
 export function VtxoDetailDialog({
@@ -23,7 +26,8 @@ export function VtxoDetailDialog({
   onOpenChange,
   formatSats,
   formatFiat,
-  tipHeight
+  tipHeight,
+  exitDisplay
 }: VtxoDetailDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -34,6 +38,7 @@ export function VtxoDetailDialog({
       >
         {vtxo ? (
           <VtxoDetailContent
+            exitDisplay={exitDisplay}
             formatFiat={formatFiat}
             formatSats={formatSats}
             tipHeight={tipHeight}
@@ -50,9 +55,16 @@ interface VtxoDetailContentProps {
   formatSats: (sats: number) => string
   formatFiat: (sats: number) => string
   tipHeight?: number
+  exitDisplay?: VtxoExitDisplay
 }
 
-function VtxoDetailContent({ vtxo, formatSats, formatFiat, tipHeight }: VtxoDetailContentProps) {
+function VtxoDetailContent({
+  vtxo,
+  formatSats,
+  formatFiat,
+  tipHeight,
+  exitDisplay
+}: VtxoDetailContentProps) {
   const { t } = useTranslation()
   const { copy, isCopied } = useCopyToClipboard()
   const expiryTime = getExpiryTimeLabel(vtxo.expiryHeight, t, tipHeight)
@@ -79,7 +91,11 @@ function VtxoDetailContent({ vtxo, formatSats, formatFiat, tipHeight }: VtxoDeta
                 {formatFiat(vtxo.amountSat)}
               </span>
             </div>
-            <VtxoStatusBadge status={vtxo.state.type} />
+            {exitDisplay === undefined ? (
+              <VtxoStatusBadge status={vtxo.state.type} />
+            ) : (
+              <VtxoExitBadge display={exitDisplay} />
+            )}
           </div>
           <DetailRow
             label={t('vtxos.detail.policy_type')}

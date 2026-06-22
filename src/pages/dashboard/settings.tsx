@@ -45,7 +45,12 @@ import { useWalletStore } from '@/stores/wallet'
 import type { BitcoinUnit } from '@/types/bitcoin'
 import type { FiatCurrency, PriceProviderId } from '@/types/price-providers'
 import type { Theme } from '@/types/theme'
-import { areAllExitsRipe, estimateEmergencyExitFeeSat, summarizeExits } from '@/utils/exit-progress'
+import {
+  estimateEmergencyExitFeeSat,
+  hasUnaddressedClaimable,
+  resolvePrimaryClaimAddress,
+  summarizeExits
+} from '@/utils/exit-progress'
 import { downloadDebugLog } from '@/utils/logs'
 import type { RefreshThresholdOption } from '@/utils/refresh'
 import {
@@ -113,15 +118,23 @@ export default function SettingsPage() {
       state.setRefreshOnReceive
     ])
   )
-  const [wallet, updateWalletName, pendingExitClaimAddress, setPendingExitClaimAddress] =
-    useWalletStore(
-      useShallow((state) => [
-        state.wallet,
-        state.updateWalletName,
-        state.pendingExitClaimAddress,
-        state.setPendingExitClaimAddress
-      ])
-    )
+  const [
+    wallet,
+    updateWalletName,
+    exitClaimAddresses,
+    setExitClaimAddresses,
+    isEmergencyExitAllInProgress,
+    setIsEmergencyExitAllInProgress
+  ] = useWalletStore(
+    useShallow((state) => [
+      state.wallet,
+      state.updateWalletName,
+      state.exitClaimAddresses,
+      state.setExitClaimAddresses,
+      state.isEmergencyExitAllInProgress,
+      state.setIsEmergencyExitAllInProgress
+    ])
+  )
 
   const [walletName, setWalletName] = useState(wallet?.name ?? '')
   const [isDeleteOpen, setDeleteOpen] = useState(false)
@@ -207,9 +220,15 @@ export default function SettingsPage() {
   const onchainSpendable = onchainBalance?.trustedSpendableSat ?? 0
   const hasNoVtxos = (vtxos?.length ?? 0) === 0
 
-  const shouldShowProgress = summary.total > 0 && !summary.isDone
+  const allVtxoIds = (vtxos ?? []).map((vtxo) => vtxo.id)
+  const exitingVtxoIds = (exitStatuses ?? []).map((exit) => exit.vtxoId)
+  const primaryClaimAddress = resolvePrimaryClaimAddress(exitStatuses ?? [], exitClaimAddresses)
+  const needsClaimAddress = hasUnaddressedClaimable(exitStatuses ?? [], exitClaimAddresses)
 
-  const disableStartButton = summary.inProgress || isStartingExit || hasNoVtxos
+  const shouldShowProgress =
+    (isEmergencyExitAllInProgress && summary.total > 0 && !summary.isDone) || needsClaimAddress
+
+  const disableStartButton = isEmergencyExitAllInProgress || isStartingExit || hasNoVtxos
 
   const feeEstimate =
     vtxos && vtxos.length > 0 && feeRateSatPerVb > 0
@@ -234,10 +253,9 @@ export default function SettingsPage() {
   function openExitDialog(mode: ExitDialogMode) {
     setExitDialogMode(mode)
     if (mode === 'start' && summary.isDone) {
-      setPendingExitClaimAddress(null)
       setDraftExitAddress('')
     } else {
-      setDraftExitAddress(pendingExitClaimAddress ?? '')
+      setDraftExitAddress(primaryClaimAddress ?? '')
     }
     setExitDialogOpen(true)
   }
@@ -251,27 +269,23 @@ export default function SettingsPage() {
   }
 
   function handleSubmitExitAddress(address: string) {
-    setPendingExitClaimAddress(address)
     setClaimAddressDismissed(false)
     if (exitDialogMode === 'start') {
+      setExitClaimAddresses(allVtxoIds, address)
+      setIsEmergencyExitAllInProgress(true)
       startEmergencyExit()
       return
     }
+    setExitClaimAddresses(exitingVtxoIds, address)
     setExitDialogOpen(false)
   }
 
   function handleExitDialogOpenChange(nextOpen: boolean) {
-    if (!nextOpen && exitDialogMode === 'edit' && summary.claimable > 0) {
-      const hasAddress = pendingExitClaimAddress !== null && pendingExitClaimAddress.length > 0
-      if (!hasAddress) {
-        setClaimAddressDismissed(true)
-      }
+    if (!nextOpen && exitDialogMode === 'edit' && needsClaimAddress) {
+      setClaimAddressDismissed(true)
     }
     setExitDialogOpen(nextOpen)
   }
-
-  const hasClaimAddress = pendingExitClaimAddress !== null && pendingExitClaimAddress.length > 0
-  const needsClaimAddress = areAllExitsRipe(summary) && summary.claimable > 0 && !hasClaimAddress
 
   useEffect(() => {
     if (!needsClaimAddress || claimAddressDismissed || isExitDialogOpen) {
@@ -282,7 +296,13 @@ export default function SettingsPage() {
     setExitDialogOpen(true)
   }, [needsClaimAddress, claimAddressDismissed, isExitDialogOpen])
 
-  const startButtonLabel = summary.inProgress
+  useEffect(() => {
+    if (isEmergencyExitAllInProgress && summary.isDone) {
+      setIsEmergencyExitAllInProgress(false)
+    }
+  }, [isEmergencyExitAllInProgress, summary.isDone, setIsEmergencyExitAllInProgress])
+
+  const startButtonLabel = isEmergencyExitAllInProgress
     ? t('settings.danger.emergency_exit.in_progress_button')
     : t('settings.danger.emergency_exit.button')
 
@@ -525,7 +545,7 @@ export default function SettingsPage() {
         </Field>
         {shouldShowProgress ? (
           <ExitProgressCard
-            destinationAddress={pendingExitClaimAddress}
+            destinationAddress={primaryClaimAddress}
             needsClaimAddress={needsClaimAddress}
             onChangeAddress={() => openExitDialog('edit')}
             summary={summary}

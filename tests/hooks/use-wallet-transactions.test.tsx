@@ -19,7 +19,8 @@ function makeWrapper(queryClient: QueryClient) {
 
 function resetStores() {
   useWalletStore.setState({
-    pendingExitClaimAddress: null,
+    exitClaimAddresses: {},
+    isEmergencyExitAllInProgress: false,
     wallet: { createdAt: '2026-01-01T00:00:00.000Z', fingerprint: TEST_FP, name: 'Test' }
   })
   useMetadataStore.setState({

@@ -10,25 +10,43 @@ interface WalletInfo {
 
 interface WalletStore {
   wallet: WalletInfo | null
-  pendingExitClaimAddress: string | null
+  exitClaimAddresses: Record<string, string>
+  isEmergencyExitAllInProgress: boolean
   setWallet: (wallet: WalletInfo) => void
   updateWalletName: (name: string) => void
-  setPendingExitClaimAddress: (address: string | null) => void
+  setExitClaimAddresses: (vtxoIds: string[], address: string) => void
+  clearExitClaimAddresses: (vtxoIds: string[]) => void
+  setIsEmergencyExitAllInProgress: (value: boolean) => void
   clearWallet: () => void
 }
 
 export const useWalletStore = create<WalletStore>()(
   persist(
     (set) => ({
-      clearWallet: () => {
-        set({ pendingExitClaimAddress: null, wallet: null })
+      clearExitClaimAddresses: (vtxoIds) => {
+        const removed = new Set(vtxoIds)
+        set((state) => ({
+          exitClaimAddresses: Object.fromEntries(
+            Object.entries(state.exitClaimAddresses).filter(([id]) => !removed.has(id))
+          )
+        }))
       },
-      pendingExitClaimAddress: null,
-      setPendingExitClaimAddress: (address) => {
-        const trimmed = address === null ? null : address.trim()
-        set({
-          pendingExitClaimAddress: trimmed !== null && trimmed.length > 0 ? trimmed : null
+      clearWallet: () => {
+        set({ exitClaimAddresses: {}, isEmergencyExitAllInProgress: false, wallet: null })
+      },
+      exitClaimAddresses: {},
+      isEmergencyExitAllInProgress: false,
+      setExitClaimAddresses: (vtxoIds, address) => {
+        const trimmed = address.trim()
+        const target = new Set(vtxoIds)
+        set((state) => {
+          const kept = Object.entries(state.exitClaimAddresses).filter(([id]) => !target.has(id))
+          const added = trimmed.length > 0 ? vtxoIds.map((id) => [id, trimmed] as const) : []
+          return { exitClaimAddresses: Object.fromEntries([...kept, ...added]) }
         })
+      },
+      setIsEmergencyExitAllInProgress: (value) => {
+        set({ isEmergencyExitAllInProgress: value })
       },
       setWallet: (wallet) => {
         set({ wallet })

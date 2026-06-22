@@ -1,9 +1,33 @@
-import type { WalletVtxoInfo } from '@secondts/barkd'
+import type { ExitTransactionStatus, WalletVtxoInfo } from '@secondts/barkd'
 import type { TFunction } from 'i18next'
 import { AVERAGE_BLOCK_INTERVAL_MS } from '@/constants/btc'
 import { formatRelativeTime } from '@/utils/relative-time'
 
 export type VtxoStatus = WalletVtxoInfo['state']['type']
+
+export type VtxoExitDisplay = 'exiting' | 'exited'
+
+export function mapVtxoExitDisplays(exits: ExitTransactionStatus[]): Map<string, VtxoExitDisplay> {
+  const displays = new Map<string, VtxoExitDisplay>()
+  for (const exit of exits) {
+    displays.set(exit.vtxoId, exit.state.type === 'claimed' ? 'exited' : 'exiting')
+  }
+  return displays
+}
+
+export function sortVtxosForDisplay(
+  vtxos: WalletVtxoInfo[],
+  exitDisplayById: Map<string, VtxoExitDisplay>
+): WalletVtxoInfo[] {
+  return [...vtxos].toSorted((a, b) => {
+    const aExited = exitDisplayById.get(a.id) === 'exited'
+    const bExited = exitDisplayById.get(b.id) === 'exited'
+    if (aExited !== bExited) {
+      return Number(aExited) - Number(bExited)
+    }
+    return a.expiryHeight - b.expiryHeight
+  })
+}
 
 export function isSpendable(vtxo: WalletVtxoInfo): boolean {
   return vtxo.state.type === 'spendable'

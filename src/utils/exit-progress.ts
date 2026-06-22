@@ -99,19 +99,53 @@ export function summarizeExits(exits: ExitTransactionStatus[]): ExitProgressSumm
   }
 }
 
-export function areAllExitsRipe(summary: ExitProgressSummary): boolean {
-  const stillRipeningCount =
-    summary.counts.start + summary.counts.processing + summary.counts['awaiting-delta']
-  return stillRipeningCount === 0
+export interface ExitClaimGroup {
+  destination: string
+  vtxos: string[]
 }
 
-export function resolveAutoClaimDestination(
-  summary: ExitProgressSummary,
-  pendingExitClaimAddress: string | null
-): string | null {
-  const hasClaimAddress = pendingExitClaimAddress !== null && pendingExitClaimAddress.length > 0
-  if (!(areAllExitsRipe(summary) && summary.claimable > 0 && hasClaimAddress)) {
-    return null
+function hasAddress(addresses: Record<string, string>, vtxoId: string): boolean {
+  const address = addresses[vtxoId]
+  return address !== undefined && address.length > 0
+}
+
+export function resolveClaimGroups(
+  exits: ExitTransactionStatus[],
+  addresses: Record<string, string>
+): ExitClaimGroup[] {
+  const byDestination = new Map<string, string[]>()
+  for (const exit of exits) {
+    if (exit.state.type !== 'claimable' || !hasAddress(addresses, exit.vtxoId)) {
+      continue
+    }
+    const destination = addresses[exit.vtxoId]
+    const group = byDestination.get(destination)
+    if (group) {
+      group.push(exit.vtxoId)
+    } else {
+      byDestination.set(destination, [exit.vtxoId])
+    }
   }
-  return pendingExitClaimAddress
+  return Array.from(byDestination, ([destination, vtxos]) => ({ destination, vtxos }))
+}
+
+export function hasUnaddressedClaimable(
+  exits: ExitTransactionStatus[],
+  addresses: Record<string, string>
+): boolean {
+  return exits.some(
+    (exit) => exit.state.type === 'claimable' && !hasAddress(addresses, exit.vtxoId)
+  )
+}
+
+export function resolvePrimaryClaimAddress(
+  exits: ExitTransactionStatus[],
+  addresses: Record<string, string>
+): string | null {
+  for (const exit of exits) {
+    if (hasAddress(addresses, exit.vtxoId)) {
+      return addresses[exit.vtxoId]
+    }
+  }
+  return null
 }

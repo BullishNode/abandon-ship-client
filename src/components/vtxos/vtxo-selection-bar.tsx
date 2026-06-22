@@ -1,4 +1,4 @@
-import { ArrowsClockwiseIcon, XIcon } from '@phosphor-icons/react'
+import { ArrowCircleUpIcon, ArrowsClockwiseIcon, XIcon } from '@phosphor-icons/react'
 import { AnimatePresence, m } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { SignOutIcon } from '@/components/icons/sign-out'
@@ -9,6 +9,7 @@ interface VtxoSelectionBarProps {
   count: number
   onRefresh: () => void
   onOffboard: () => void
+  onEmergencyExit: () => void
   onDeselect: () => void
   isBusy?: boolean
 }
@@ -17,6 +18,7 @@ export function VtxoSelectionBar({
   count,
   onRefresh,
   onOffboard,
+  onEmergencyExit,
   onDeselect,
   isBusy
 }: VtxoSelectionBarProps) {
@@ -32,17 +34,18 @@ export function VtxoSelectionBar({
       {count > 0 && (
         <m.div
           animate={{ opacity: 1, y: 0 }}
-          className="-translate-x-1/2 fixed bottom-6 left-1/2 z-50"
+          className="-translate-x-1/2 fixed bottom-6 left-1/2 z-50 w-[calc(100vw-2rem)] max-w-fit"
           exit={{ opacity: 0, y: 20 }}
           initial={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.15 }}
         >
-          <div className="flex items-center gap-2 rounded-xl border border-border bg-background py-1.5 pr-1.5 pl-4 shadow-lg">
+          <div className="flex flex-nowrap items-center justify-center gap-2 rounded-xl border border-border bg-background py-1.5 pr-1.5 pl-4 shadow-lg">
             <span className="whitespace-nowrap font-medium text-sm">
               {t('vtxos.selection.count', { count })}
             </span>
             {divider}
             <Button
+              aria-label={t('vtxos.selection.refresh')}
               className="group"
               disabled={isBusy}
               onClick={onRefresh}
@@ -51,10 +54,11 @@ export function VtxoSelectionBar({
               variant="ghost"
             >
               <ArrowsClockwiseIcon className="transition-transform duration-200 ease-out group-hover:rotate-30" />
-              {t('vtxos.selection.refresh')}
+              <span className="hidden sm:inline">{t('vtxos.selection.refresh')}</span>
             </Button>
             {divider}
             <Button
+              aria-label={t('vtxos.selection.offboard')}
               className="group"
               disabled={isBusy}
               onClick={onOffboard}
@@ -63,7 +67,23 @@ export function VtxoSelectionBar({
               variant="ghost"
             >
               <SignOutIcon arrowClassName="transition-transform duration-200 ease-out group-hover:translate-x-6" />
-              {t('vtxos.selection.offboard')}
+              <span className="hidden sm:inline">{t('vtxos.selection.offboard')}</span>
+            </Button>
+            {divider}
+            <Button
+              aria-label={t('vtxos.selection.emergency_exit')}
+              className="group text-destructive hover:text-destructive"
+              disabled={isBusy}
+              onClick={onEmergencyExit}
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
+              <ArrowCircleUpIcon
+                className="transition-transform duration-200 ease-out group-hover:-translate-y-0.5"
+                weight="fill"
+              />
+              <span className="hidden sm:inline">{t('vtxos.selection.emergency_exit')}</span>
             </Button>
             {divider}
             <Button
