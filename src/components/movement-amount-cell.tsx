@@ -1,10 +1,15 @@
 import { cn } from '@/lib/utils'
 
+type MovementAmountCellSize = 'default' | 'lg'
+type MovementAmountCellAlign = 'start' | 'end'
+
 interface MovementAmountCellProps {
   sats: number
   formatSats: (sats: number) => string
   formatFiat: (sats: number) => string
   discreetMode: boolean
+  size?: MovementAmountCellSize
+  align?: MovementAmountCellAlign
 }
 
 function getAmountColorClass(sats: number, discreetMode: boolean): string {
@@ -18,16 +23,24 @@ export function MovementAmountCell({
   sats,
   formatSats,
   formatFiat,
-  discreetMode
+  discreetMode,
+  size = 'default',
+  align = 'end'
 }: MovementAmountCellProps) {
   const sign = sats >= 0 ? '+' : ''
   const colorClass = getAmountColorClass(sats, discreetMode)
   return (
-    <div className="flex flex-col items-end leading-tight">
-      <span className={cn('font-medium tabular-nums', colorClass)}>
+    <div
+      className={cn('flex flex-col leading-tight', align === 'end' ? 'items-end' : 'items-start')}
+    >
+      <span className={cn('font-medium tabular-nums', size === 'lg' && 'text-2xl', colorClass)}>
         {discreetMode ? formatSats(sats) : `${sign}${formatSats(sats)}`}
       </span>
-      <span className="text-muted-foreground text-xs tabular-nums">{formatFiat(sats)}</span>
+      <span
+        className={cn('text-muted-foreground tabular-nums', size === 'lg' ? 'text-sm' : 'text-xs')}
+      >
+        {formatFiat(sats)}
+      </span>
     </div>
   )
 }

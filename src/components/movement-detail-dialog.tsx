@@ -104,41 +104,45 @@ function MovementDetailContent({
         <DialogTitle>{t('movements.detail.title')}</DialogTitle>
       </DialogHeader>
       <div className="flex flex-col gap-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex flex-col items-start gap-2">
-            <MovementStatusBadge status={movement.status} />
-            <MovementSourceBadge source={source} />
+        <div className="flex flex-col divide-y divide-border *:py-3 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0">
+          <div className="flex items-start justify-between gap-3">
+            <MovementAmountCell
+              align="start"
+              discreetMode={discreetMode}
+              formatFiat={formatFiat}
+              formatSats={formatSats}
+              sats={movement.effectiveBalanceSat}
+              size="lg"
+            />
+            <div className="flex flex-col items-end gap-2">
+              <MovementStatusBadge status={movement.status} />
+              <MovementSourceBadge source={source} />
+            </div>
           </div>
-          <MovementAmountCell
-            discreetMode={discreetMode}
-            formatFiat={formatFiat}
-            formatSats={formatSats}
-            sats={movement.effectiveBalanceSat}
-          />
-        </div>
-        {counterparty ? (
-          <CopyableValueRow label={counterpartyLabel} value={counterparty.destination.value} />
-        ) : (
-          <DetailRow label={counterpartyLabel} value={t('movements.detail.no_counterparty')} />
-        )}
-        <DetailRow
-          label={t('movements.detail.fee')}
-          value={
-            fee === null
-              ? t('movements.detail.fee_unavailable')
-              : `${formatSats(fee)} · ${formatFiat(fee)}`
-          }
-        />
-        <DetailRow
-          label={t('movements.detail.date_created')}
-          value={formatDateAbsolute(movement.time.createdAt)}
-        />
-        {completedAt ? (
+          {counterparty ? (
+            <CopyableValueRow label={counterpartyLabel} value={counterparty.destination.value} />
+          ) : (
+            <DetailRow label={counterpartyLabel} value={t('movements.detail.no_counterparty')} />
+          )}
           <DetailRow
-            label={t('movements.detail.date_completed')}
-            value={formatDateAbsolute(completedAt)}
+            label={t('movements.detail.fee')}
+            value={
+              fee === null
+                ? t('movements.detail.fee_unavailable')
+                : `${formatSats(fee)} · ${formatFiat(fee)}`
+            }
           />
-        ) : null}
+          <DetailRow
+            label={t('movements.detail.date_created')}
+            value={formatDateAbsolute(movement.time.createdAt)}
+          />
+          {completedAt ? (
+            <DetailRow
+              label={t('movements.detail.date_completed')}
+              value={formatDateAbsolute(completedAt)}
+            />
+          ) : null}
+        </div>
         <LabelEditor
           inputId="movement-label"
           label={metadata?.label ?? defaultLabel}

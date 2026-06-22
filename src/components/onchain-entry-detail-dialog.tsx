@@ -89,25 +89,29 @@ function OnchainEntryDetailContent({
         <DialogTitle>{t('movements.onchain.detail.title')}</DialogTitle>
       </DialogHeader>
       <div className="flex flex-col gap-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex flex-col items-start gap-2">
-            <MovementStatusBadge status={entry.status} />
-            <MovementSourceBadge source={entry.isCpfp ? 'exit' : 'onchain'} />
+        <div className="flex flex-col divide-y divide-border *:py-3 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0">
+          <div className="flex items-start justify-between gap-3">
+            <MovementAmountCell
+              align="start"
+              discreetMode={discreetMode}
+              formatFiat={formatFiat}
+              formatSats={formatSats}
+              sats={entry.amountSat}
+              size="lg"
+            />
+            <div className="flex flex-col items-end gap-2">
+              <MovementStatusBadge status={entry.status} />
+              <MovementSourceBadge source={entry.isCpfp ? 'exit' : 'onchain'} />
+            </div>
           </div>
-          <MovementAmountCell
-            discreetMode={discreetMode}
-            formatFiat={formatFiat}
-            formatSats={formatSats}
-            sats={entry.amountSat}
+          <CopyableValueRow label={t('movements.onchain.detail.txid')} value={entry.txid} />
+          <DetailRow label={t('movements.onchain.detail.height')} value={heightValue} />
+          <DetailRow label={t('movements.detail.fee')} value={feeValue} />
+          <DetailRow
+            label={t('movements.detail.date_created')}
+            value={formatDateAbsolute(new Date(entry.approximateTimestampMs))}
           />
         </div>
-        <CopyableValueRow label={t('movements.onchain.detail.txid')} value={entry.txid} />
-        <DetailRow label={t('movements.onchain.detail.height')} value={heightValue} />
-        <DetailRow label={t('movements.detail.fee')} value={feeValue} />
-        <DetailRow
-          label={t('movements.detail.date_created')}
-          value={formatDateAbsolute(new Date(entry.approximateTimestampMs))}
-        />
         <LabelEditor
           inputId="onchain-label"
           label={annotation?.label ?? getOnchainDefaultLabel(entry.isCpfp, t)}
