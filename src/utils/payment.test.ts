@@ -6,7 +6,8 @@ import {
   getSelectableDestinations,
   getSendRoute,
   parsePaymentInput,
-  pickCheapestDestination
+  pickCheapestDestination,
+  sanitizePaymentInput
 } from './payment'
 
 vi.mock(import('bitcoin-decoder'), () => ({
@@ -65,6 +66,20 @@ describe(parsePaymentInput, () => {
 
     await parsePaymentInput('  lnbc1abc  ')
     expect(mockDecode).toHaveBeenCalledWith('lnbc1abc')
+  })
+
+  it('strips internal whitespace from a soft-wrapped paste before decoding', async () => {
+    mockDecode.mockResolvedValue({
+      destination: bolt11Dest,
+      destinations: [bolt11Dest],
+      input: 'lnbc1abc',
+      kind: 'payment',
+      network: 'mainnet',
+      valid: true
+    })
+
+    await parsePaymentInput('bitcoin:bc1qabc\n?ark=ark1ab c\t&lightning=lnbc1abc')
+    expect(mockDecode).toHaveBeenCalledWith('bitcoin:bc1qabc?ark=ark1abc&lightning=lnbc1abc')
   })
 
   it('returns decoded result as-is', async () => {
@@ -130,6 +145,20 @@ describe(pickCheapestDestination, () => {
     const snapshot = [...input]
     pickCheapestDestination(input)
     expect(input).toStrictEqual(snapshot)
+  })
+})
+
+describe(sanitizePaymentInput, () => {
+  it('removes internal spaces, tabs and newlines', () => {
+    expect(sanitizePaymentInput('bitcoin:bc1qabc\n\t ?amount=1')).toBe('bitcoin:bc1qabc?amount=1')
+  })
+
+  it('leaves a clean string untouched', () => {
+    expect(sanitizePaymentInput('lnbc1abc')).toBe('lnbc1abc')
+  })
+
+  it('trims leading and trailing whitespace', () => {
+    expect(sanitizePaymentInput('  ark1abc  ')).toBe('ark1abc')
   })
 })
 

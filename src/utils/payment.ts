@@ -4,8 +4,12 @@ import { normalizeDestination } from '@/utils/bitcoin'
 
 export type SendRoute = 'ark' | 'lightning' | 'onchain-from-ark' | 'onchain-from-wallet'
 
+export function sanitizePaymentInput(input: string): string {
+  return input.replaceAll(/\s+/gu, '')
+}
+
 export async function parsePaymentInput(input: string) {
-  const decoded = await decode(input.trim())
+  const decoded = await decode(sanitizePaymentInput(input))
   return decoded
 }
 
