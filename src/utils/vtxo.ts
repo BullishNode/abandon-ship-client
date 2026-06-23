@@ -12,6 +12,10 @@ export function isExitedPhase(phase: VtxoExitPhase): boolean {
   return phase === 'claimed'
 }
 
+export function isClaimAddressEditable(phase: VtxoExitPhase): boolean {
+  return phase === 'start' || phase === 'processing' || phase === 'awaiting-delta'
+}
+
 export function mapVtxoExitPhases(exits: ExitTransactionStatus[]): Map<string, VtxoExitPhase> {
   const phases = new Map<string, VtxoExitPhase>()
   for (const exit of exits) {

@@ -15,6 +15,7 @@ interface ExitProgressCardProps {
   summary: ExitProgressSummary
   destinationAddress: string | null
   needsClaimAddress: boolean
+  canChangeAddress: boolean
   onChangeAddress: () => void
 }
 
@@ -22,6 +23,7 @@ export function ExitProgressCard({
   summary,
   destinationAddress,
   needsClaimAddress,
+  canChangeAddress,
   onChangeAddress
 }: ExitProgressCardProps) {
   const { t } = useTranslation()
@@ -65,7 +67,13 @@ export function ExitProgressCard({
           <p className="break-all font-mono text-xs">
             {destinationAddress ?? t('settings.danger.emergency_exit.destination_missing')}
           </p>
-          <Button onClick={onChangeAddress} size="xs" type="button" variant="ghost">
+          <Button
+            disabled={!canChangeAddress}
+            onClick={onChangeAddress}
+            size="xs"
+            type="button"
+            variant="ghost"
+          >
             {t('settings.danger.emergency_exit.change_address')}
           </Button>
         </div>

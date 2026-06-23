@@ -129,6 +129,19 @@ export function resolveClaimGroups(
   return Array.from(byDestination, ([destination, vtxos]) => ({ destination, vtxos }))
 }
 
+const MUTABLE_CLAIM_ADDRESS_STATES = new Set<ExitStateType>([
+  'start',
+  'processing',
+  'awaiting-delta',
+  'claimable'
+])
+
+export function vtxoIdsWithMutableClaimAddress(exits: ExitTransactionStatus[]): string[] {
+  return exits
+    .filter((exit) => MUTABLE_CLAIM_ADDRESS_STATES.has(exit.state.type))
+    .map((exit) => exit.vtxoId)
+}
+
 export function hasUnaddressedClaimable(
   exits: ExitTransactionStatus[],
   addresses: Record<string, string>

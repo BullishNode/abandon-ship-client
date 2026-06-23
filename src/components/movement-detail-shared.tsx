@@ -1,4 +1,5 @@
 import { CheckIcon, CopyIcon, InfoIcon, PencilSimpleIcon } from '@phosphor-icons/react'
+import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
@@ -40,9 +41,10 @@ interface CopyableValueRowProps {
   label: string
   value: string
   displayValue?: string
+  action?: ReactNode
 }
 
-export function CopyableValueRow({ label, value, displayValue }: CopyableValueRowProps) {
+export function CopyableValueRow({ label, value, displayValue, action }: CopyableValueRowProps) {
   const { t } = useTranslation()
   const { copy, isCopied } = useCopyToClipboard()
   return (
@@ -50,6 +52,7 @@ export function CopyableValueRow({ label, value, displayValue }: CopyableValueRo
       <span className="text-muted-foreground">{label}</span>
       <div className="flex max-w-[70%] items-center gap-2">
         <span className="break-all font-mono text-xs">{displayValue ?? value}</span>
+        {action}
         <Button
           aria-label={isCopied ? t('movements.detail.copied') : t('movements.detail.copy')}
           onClick={() => {

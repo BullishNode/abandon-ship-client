@@ -49,7 +49,8 @@ import {
   estimateEmergencyExitFeeSat,
   hasUnaddressedClaimable,
   resolvePrimaryClaimAddress,
-  summarizeExits
+  summarizeExits,
+  vtxoIdsWithMutableClaimAddress
 } from '@/utils/exit-progress'
 import { downloadDebugLog } from '@/utils/logs'
 import type { RefreshThresholdOption } from '@/utils/refresh'
@@ -221,7 +222,7 @@ export default function SettingsPage() {
   const hasNoVtxos = (vtxos?.length ?? 0) === 0
 
   const allVtxoIds = (vtxos ?? []).map((vtxo) => vtxo.id)
-  const exitingVtxoIds = (exitStatuses ?? []).map((exit) => exit.vtxoId)
+  const exitingVtxoIds = vtxoIdsWithMutableClaimAddress(exitStatuses ?? [])
   const primaryClaimAddress = resolvePrimaryClaimAddress(exitStatuses ?? [], exitClaimAddresses)
   const needsClaimAddress = hasUnaddressedClaimable(exitStatuses ?? [], exitClaimAddresses)
 
@@ -545,6 +546,7 @@ export default function SettingsPage() {
         </Field>
         {shouldShowProgress ? (
           <ExitProgressCard
+            canChangeAddress={exitingVtxoIds.length > 0}
             destinationAddress={primaryClaimAddress}
             needsClaimAddress={needsClaimAddress}
             onChangeAddress={() => openExitDialog('edit')}

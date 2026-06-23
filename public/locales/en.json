@@ -305,6 +305,9 @@
       "blocks_value_other": "{{count}} blocks",
       "locked_action": "Locked by action",
       "locked_movement": "Locked by movement",
+      "claim_address": "Claim address",
+      "change_claim_address": "Change",
+      "no_claim_address": "No address set",
       "copy_raw_json": "Copy raw JSON",
       "copied": "Copied"
     },

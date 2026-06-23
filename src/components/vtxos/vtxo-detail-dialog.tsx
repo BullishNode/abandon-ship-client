@@ -1,14 +1,22 @@
 import { CheckIcon, CopyIcon } from '@phosphor-icons/react'
 import type { WalletVtxoInfo } from '@secondts/barkd'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CopyableValueRow, DetailRow } from '@/components/movement-detail-shared'
+import { ClaimAddressRow } from '@/components/vtxos/claim-address-row'
+import { EditExitClaimAddressDialog } from '@/components/vtxos/edit-exit-claim-address-dialog'
 import { VtxoExitBadge } from '@/components/vtxos/vtxo-exit-badge'
 import { VtxoStatusBadge } from '@/components/vtxos/vtxo-status-badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import type { VtxoExitPhase } from '@/utils/vtxo'
-import { getExpiryTimeLabel, getVtxoRawJson, truncateVtxoId } from '@/utils/vtxo'
+import {
+  getExpiryTimeLabel,
+  getVtxoRawJson,
+  isClaimAddressEditable,
+  truncateVtxoId
+} from '@/utils/vtxo'
 
 interface VtxoDetailDialogProps {
   vtxo: WalletVtxoInfo | null
@@ -18,6 +26,7 @@ interface VtxoDetailDialogProps {
   formatFiat: (sats: number) => string
   tipHeight?: number
   exitPhase?: VtxoExitPhase
+  claimAddress?: string
 }
 
 export function VtxoDetailDialog({
@@ -27,7 +36,8 @@ export function VtxoDetailDialog({
   formatSats,
   formatFiat,
   tipHeight,
-  exitPhase
+  exitPhase,
+  claimAddress
 }: VtxoDetailDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -38,6 +48,7 @@ export function VtxoDetailDialog({
       >
         {vtxo ? (
           <VtxoDetailContent
+            claimAddress={claimAddress}
             exitPhase={exitPhase}
             formatFiat={formatFiat}
             formatSats={formatSats}
@@ -56,6 +67,7 @@ interface VtxoDetailContentProps {
   formatFiat: (sats: number) => string
   tipHeight?: number
   exitPhase?: VtxoExitPhase
+  claimAddress?: string
 }
 
 function VtxoDetailContent({
@@ -63,10 +75,13 @@ function VtxoDetailContent({
   formatSats,
   formatFiat,
   tipHeight,
-  exitPhase
+  exitPhase,
+  claimAddress
 }: VtxoDetailContentProps) {
   const { t } = useTranslation()
   const { copy, isCopied } = useCopyToClipboard()
+  const [isEditAddressOpen, setIsEditAddressOpen] = useState(false)
+  const canEditClaimAddress = exitPhase !== undefined && isClaimAddressEditable(exitPhase)
   const expiryTime = getExpiryTimeLabel(vtxo.expiryHeight, t, tipHeight)
   const expiryValue =
     expiryTime === '' ? String(vtxo.expiryHeight) : `${vtxo.expiryHeight} · ${expiryTime}`
@@ -123,6 +138,14 @@ function VtxoDetailContent({
             label={t('vtxos.detail.chain_anchor')}
             value={vtxo.chainAnchor}
           />
+          {exitPhase === undefined ? null : (
+            <ClaimAddressRow
+              address={claimAddress}
+              emptyLabel={t('vtxos.detail.no_claim_address')}
+              label={t('vtxos.detail.claim_address')}
+              onEdit={canEditClaimAddress ? () => setIsEditAddressOpen(true) : undefined}
+            />
+          )}
           {lockedActionId === undefined ? null : (
             <DetailRow label={t('vtxos.detail.locked_action')} value={lockedActionId} />
           )}
@@ -142,6 +165,13 @@ function VtxoDetailContent({
           {isCopied ? t('vtxos.detail.copied') : t('vtxos.detail.copy_raw_json')}
         </Button>
       </div>
+      {canEditClaimAddress ? (
+        <EditExitClaimAddressDialog
+          onOpenChange={setIsEditAddressOpen}
+          open={isEditAddressOpen}
+          vtxoId={vtxo.id}
+        />
+      ) : null}
     </>
   )
 }

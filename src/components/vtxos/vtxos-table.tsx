@@ -27,6 +27,7 @@ import { useRefreshVtxos } from '@/hooks/barkd/use-refresh-vtxos'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
 import { usePrivateAmount } from '@/hooks/use-private-amount'
 import { useSettingsStore } from '@/stores/settings'
+import { useWalletStore } from '@/stores/wallet'
 import { isExitedPhase, isSpendable, mapVtxoExitPhases, sortVtxosForDisplay } from '@/utils/vtxo'
 
 export function VtxosTable() {
@@ -37,6 +38,7 @@ export function VtxosTable() {
   const { sats: formatSats, fiat: formatFiat } = usePrivateAmount()
   const showExitedVtxos = useSettingsStore((state) => state.showExitedVtxos)
   const setShowExitedVtxos = useSettingsStore((state) => state.setShowExitedVtxos)
+  const exitClaimAddresses = useWalletStore((state) => state.exitClaimAddresses)
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [offboardOpen, setOffboardOpen] = useState(false)
   const [exitOpen, setExitOpen] = useState(false)
@@ -190,6 +192,7 @@ export function VtxosTable() {
         vtxos={selectedVtxos}
       />
       <VtxoDetailDialog
+        claimAddress={detailVtxo ? exitClaimAddresses[detailVtxo.id] : undefined}
         exitPhase={detailVtxo ? exitPhaseById.get(detailVtxo.id) : undefined}
         formatFiat={formatFiat}
         formatSats={formatSats}
