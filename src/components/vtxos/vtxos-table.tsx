@@ -63,6 +63,7 @@ export function VtxosTable() {
 
   const selectedVtxos = visibleVtxos.filter((vtxo) => rowSelection[vtxo.id] && isSelectable(vtxo))
   const selectedIds = selectedVtxos.map((vtxo) => vtxo.id)
+  const prunedSelection: RowSelectionState = Object.fromEntries(selectedIds.map((id) => [id, true]))
 
   const selectedIdSet = new Set(selectedIds)
   const liveVtxos = vtxos.filter(
@@ -159,7 +160,7 @@ export function VtxosTable() {
               onRowClick={handleRowClick}
               onRowSelectionChange={setRowSelection}
               pageSize={VTXOS_PAGE_SIZE}
-              rowSelection={rowSelection}
+              rowSelection={prunedSelection}
             />
           )}
         </CardContent>
