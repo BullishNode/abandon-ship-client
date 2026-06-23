@@ -1,5 +1,7 @@
-import { BarkNetwork } from '@secondts/barkd'
-import { address, networks, Transaction } from 'bitcoinjs-lib'
+import type { BarkNetwork } from '@secondts/barkd'
+import type { networks } from 'bitcoinjs-lib'
+import { address, Transaction } from 'bitcoinjs-lib'
+import { networkFor } from '@/utils/bitcoin'
 
 export interface DecodedOutput {
   vout: number
@@ -10,16 +12,6 @@ export interface DecodedOutput {
 export interface DecodedInput {
   prevTxid: string
   prevVout: number
-}
-
-function networkFor(network: BarkNetwork): networks.Network {
-  if (network === BarkNetwork.Mainnet) {
-    return networks.bitcoin
-  }
-  if (network === BarkNetwork.Regtest) {
-    return networks.regtest
-  }
-  return networks.testnet
 }
 
 function safeAddressFromScript(script: Uint8Array, net: networks.Network): string | undefined {

@@ -1,4 +1,6 @@
 import { useTranslation } from 'react-i18next'
+import { config } from '@/config/barkd'
+import { isValidOnchainAddress } from '@/utils/bitcoin'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -54,13 +56,14 @@ export function EmergencyExitStartDialog({
   const { t } = useTranslation()
   const trimmedAddress = address.trim()
   const isAddressEmpty = trimmedAddress.length === 0
+  const isAddressInvalid = !isAddressEmpty && !isValidOnchainAddress(trimmedAddress, config.network)
 
   const showEstimate = mode === 'start' && feeEstimate !== undefined
   const hasInsufficientFunds =
     showEstimate &&
     feeEstimate !== undefined &&
     feeEstimate.onchainSat < feeEstimate.estimatedFeeSat
-  const disableSubmit = isAddressEmpty || hasInsufficientFunds
+  const disableSubmit = isAddressEmpty || isAddressInvalid || hasInsufficientFunds
 
   function handleClose(nextOpen: boolean) {
     if (isSubmitting) {
@@ -123,7 +126,9 @@ export function EmergencyExitStartDialog({
                 </Button>
               </div>
               <Input
+                aria-invalid={isAddressInvalid}
                 autoComplete="off"
+                className="aria-invalid:ring-0 focus-visible:aria-invalid:ring-[3px]"
                 disabled={isSubmitting}
                 id="exit-destination-address"
                 onChange={(event) => onAddressChange(event.target.value)}
@@ -131,9 +136,15 @@ export function EmergencyExitStartDialog({
                 spellCheck={false}
                 value={address}
               />
-              <FieldDescription>
-                {t('settings.danger.emergency_exit.address_help')}
-              </FieldDescription>
+              {isAddressInvalid ? (
+                <p className="text-destructive text-sm">
+                  {t('settings.danger.emergency_exit.address_invalid')}
+                </p>
+              ) : (
+                <FieldDescription>
+                  {t('settings.danger.emergency_exit.address_help')}
+                </FieldDescription>
+              )}
             </Field>
             {showEstimate && feeEstimate !== undefined ? (
               <div className="space-y-2 rounded-md border bg-muted/30 p-3 text-sm">

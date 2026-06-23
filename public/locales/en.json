@@ -431,6 +431,7 @@
         "address_label": "Destination address",
         "address_placeholder": "Bitcoin on-chain address",
         "address_help": "Double-check the address before proceeding. An emergency exit cannot be canceled once started.",
+        "address_invalid": "Invalid bitcoin address",
         "use_wallet_address": "Use my Bark on-chain wallet",
         "estimate": {
           "title": "Estimated total cost",

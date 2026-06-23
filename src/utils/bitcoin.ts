@@ -1,6 +1,57 @@
+import { BarkNetwork } from '@secondts/barkd'
 import type { Destination } from 'bitcoin-decoder'
+import { address as addressLib, networks } from 'bitcoinjs-lib'
 
 const SATS_PER_BTC = 100_000_000
+
+export function networkFor(network: BarkNetwork): networks.Network {
+  if (network === BarkNetwork.Mainnet) {
+    return networks.bitcoin
+  }
+  if (network === BarkNetwork.Regtest) {
+    return networks.regtest
+  }
+  return networks.testnet
+}
+
+const WITNESS_V0_LENGTHS = new Set([20, 32])
+const TAPROOT_PROGRAM_LENGTH = 32
+
+function isValidBech32Address(trimmed: string, net: networks.Network): boolean {
+  const { prefix, version, data } = addressLib.fromBech32(trimmed)
+  if (prefix !== net.bech32) {
+    return false
+  }
+  if (version === 0) {
+    return WITNESS_V0_LENGTHS.has(data.length)
+  }
+  if (version === 1) {
+    return data.length === TAPROOT_PROGRAM_LENGTH
+  }
+  return false
+}
+
+// `address.toOutputScript` builds a p2tr payment for witness v1, which requires
+// an initialized ECC library. We only need to validate the encoding/network, so
+// decode directly with fromBech32/fromBase58Check to avoid that dependency.
+export function isValidOnchainAddress(addr: string, network: BarkNetwork): boolean {
+  const trimmed = addr.trim()
+  if (trimmed.length === 0) {
+    return false
+  }
+  const net = networkFor(network)
+  try {
+    const { version } = addressLib.fromBase58Check(trimmed)
+    return version === net.pubKeyHash || version === net.scriptHash
+  } catch {
+    // not base58; fall through to bech32
+  }
+  try {
+    return isValidBech32Address(trimmed, net)
+  } catch {
+    return false
+  }
+}
 
 const SEGWIT_HRPS = ['bc', 'tb', 'bcrt'] as const
 
