@@ -27,9 +27,20 @@ export function mapVtxoExitPhases(exits: ExitTransactionStatus[]): Map<string, V
   return phases
 }
 
+export function mapVtxoExitClaimHeights(exits: ExitTransactionStatus[]): Map<string, number> {
+  const heights = new Map<string, number>()
+  for (const exit of exits) {
+    if (exit.state.type === 'claimed') {
+      heights.set(exit.vtxoId, exit.state.block.height)
+    }
+  }
+  return heights
+}
+
 export function sortVtxosForDisplay(
   vtxos: WalletVtxoInfo[],
-  exitPhaseById: Map<string, VtxoExitPhase>
+  exitPhaseById: Map<string, VtxoExitPhase>,
+  exitClaimHeightById: Map<string, number>
 ): WalletVtxoInfo[] {
   return [...vtxos].toSorted((a, b) => {
     const aPhase = exitPhaseById.get(a.id)
@@ -38,6 +49,11 @@ export function sortVtxosForDisplay(
     const bExited = bPhase !== undefined && isExitedPhase(bPhase)
     if (aExited !== bExited) {
       return Number(aExited) - Number(bExited)
+    }
+    if (aExited && bExited) {
+      const aHeight = exitClaimHeightById.get(a.id) ?? 0
+      const bHeight = exitClaimHeightById.get(b.id) ?? 0
+      return bHeight - aHeight
     }
     return a.expiryHeight - b.expiryHeight
   })

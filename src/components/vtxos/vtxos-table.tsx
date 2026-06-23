@@ -28,7 +28,13 @@ import { useVtxos } from '@/hooks/barkd/use-vtxos'
 import { usePrivateAmount } from '@/hooks/use-private-amount'
 import { useSettingsStore } from '@/stores/settings'
 import { useWalletStore } from '@/stores/wallet'
-import { isExitedPhase, isSpendable, mapVtxoExitPhases, sortVtxosForDisplay } from '@/utils/vtxo'
+import {
+  isExitedPhase,
+  isSpendable,
+  mapVtxoExitClaimHeights,
+  mapVtxoExitPhases,
+  sortVtxosForDisplay
+} from '@/utils/vtxo'
 
 export function VtxosTable() {
   const { t } = useTranslation()
@@ -46,6 +52,7 @@ export function VtxosTable() {
   const [detailOpen, setDetailOpen] = useState(false)
 
   const exitPhaseById = mapVtxoExitPhases(exitStatuses)
+  const exitClaimHeightById = mapVtxoExitClaimHeights(exitStatuses)
 
   const filteredVtxos = vtxos.filter((vtxo) => {
     if (vtxo.state.type !== 'spent') {
@@ -60,7 +67,7 @@ export function VtxosTable() {
     }
     return showExitedVtxos
   })
-  const visibleVtxos = sortVtxosForDisplay(filteredVtxos, exitPhaseById)
+  const visibleVtxos = sortVtxosForDisplay(filteredVtxos, exitPhaseById, exitClaimHeightById)
 
   function isSelectable(vtxo: WalletVtxoInfo): boolean {
     return isSpendable(vtxo) && !exitPhaseById.has(vtxo.id)
