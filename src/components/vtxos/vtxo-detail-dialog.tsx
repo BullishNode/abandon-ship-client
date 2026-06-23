@@ -7,7 +7,7 @@ import { VtxoStatusBadge } from '@/components/vtxos/vtxo-status-badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
-import type { VtxoExitDisplay } from '@/utils/vtxo'
+import type { VtxoExitPhase } from '@/utils/vtxo'
 import { getExpiryTimeLabel, getVtxoRawJson, truncateVtxoId } from '@/utils/vtxo'
 
 interface VtxoDetailDialogProps {
@@ -17,7 +17,7 @@ interface VtxoDetailDialogProps {
   formatSats: (sats: number) => string
   formatFiat: (sats: number) => string
   tipHeight?: number
-  exitDisplay?: VtxoExitDisplay
+  exitPhase?: VtxoExitPhase
 }
 
 export function VtxoDetailDialog({
@@ -27,7 +27,7 @@ export function VtxoDetailDialog({
   formatSats,
   formatFiat,
   tipHeight,
-  exitDisplay
+  exitPhase
 }: VtxoDetailDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -38,7 +38,7 @@ export function VtxoDetailDialog({
       >
         {vtxo ? (
           <VtxoDetailContent
-            exitDisplay={exitDisplay}
+            exitPhase={exitPhase}
             formatFiat={formatFiat}
             formatSats={formatSats}
             tipHeight={tipHeight}
@@ -55,7 +55,7 @@ interface VtxoDetailContentProps {
   formatSats: (sats: number) => string
   formatFiat: (sats: number) => string
   tipHeight?: number
-  exitDisplay?: VtxoExitDisplay
+  exitPhase?: VtxoExitPhase
 }
 
 function VtxoDetailContent({
@@ -63,7 +63,7 @@ function VtxoDetailContent({
   formatSats,
   formatFiat,
   tipHeight,
-  exitDisplay
+  exitPhase
 }: VtxoDetailContentProps) {
   const { t } = useTranslation()
   const { copy, isCopied } = useCopyToClipboard()
@@ -91,10 +91,10 @@ function VtxoDetailContent({
                 {formatFiat(vtxo.amountSat)}
               </span>
             </div>
-            {exitDisplay === undefined ? (
+            {exitPhase === undefined ? (
               <VtxoStatusBadge status={vtxo.state.type} />
             ) : (
-              <VtxoExitBadge display={exitDisplay} />
+              <VtxoExitBadge phase={exitPhase} />
             )}
           </div>
           <DetailRow

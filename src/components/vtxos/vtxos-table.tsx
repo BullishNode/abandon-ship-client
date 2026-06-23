@@ -27,7 +27,7 @@ import { useRefreshVtxos } from '@/hooks/barkd/use-refresh-vtxos'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
 import { usePrivateAmount } from '@/hooks/use-private-amount'
 import { useSettingsStore } from '@/stores/settings'
-import { isSpendable, mapVtxoExitDisplays, sortVtxosForDisplay } from '@/utils/vtxo'
+import { isExitedPhase, isSpendable, mapVtxoExitPhases, sortVtxosForDisplay } from '@/utils/vtxo'
 
 export function VtxosTable() {
   const { t } = useTranslation()
@@ -43,22 +43,25 @@ export function VtxosTable() {
   const [detailVtxo, setDetailVtxo] = useState<WalletVtxoInfo | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
 
-  const exitDisplayById = mapVtxoExitDisplays(exitStatuses)
+  const exitPhaseById = mapVtxoExitPhases(exitStatuses)
 
   const filteredVtxos = vtxos.filter((vtxo) => {
     if (vtxo.state.type !== 'spent') {
       return true
     }
-    const exitDisplay = exitDisplayById.get(vtxo.id)
-    if (exitDisplay === 'exiting') {
+    const exitPhase = exitPhaseById.get(vtxo.id)
+    if (exitPhase === undefined) {
+      return false
+    }
+    if (!isExitedPhase(exitPhase)) {
       return true
     }
-    return exitDisplay === 'exited' && showExitedVtxos
+    return showExitedVtxos
   })
-  const visibleVtxos = sortVtxosForDisplay(filteredVtxos, exitDisplayById)
+  const visibleVtxos = sortVtxosForDisplay(filteredVtxos, exitPhaseById)
 
   function isSelectable(vtxo: WalletVtxoInfo): boolean {
-    return isSpendable(vtxo) && !exitDisplayById.has(vtxo.id)
+    return isSpendable(vtxo) && !exitPhaseById.has(vtxo.id)
   }
 
   const selectedVtxos = visibleVtxos.filter((vtxo) => rowSelection[vtxo.id] && isSelectable(vtxo))
@@ -67,7 +70,7 @@ export function VtxosTable() {
 
   const selectedIdSet = new Set(selectedIds)
   const liveVtxos = vtxos.filter(
-    (vtxo) => vtxo.state.type !== 'spent' && !exitDisplayById.has(vtxo.id)
+    (vtxo) => vtxo.state.type !== 'spent' && !exitPhaseById.has(vtxo.id)
   )
   const isExitingAll = liveVtxos.length > 0 && liveVtxos.every((vtxo) => selectedIdSet.has(vtxo.id))
 
@@ -107,7 +110,7 @@ export function VtxosTable() {
   }
 
   const columns = getVtxoColumns({
-    exitDisplayById,
+    exitPhaseById,
     formatFiat,
     formatSats,
     t,
@@ -187,7 +190,7 @@ export function VtxosTable() {
         vtxos={selectedVtxos}
       />
       <VtxoDetailDialog
-        exitDisplay={detailVtxo ? exitDisplayById.get(detailVtxo.id) : undefined}
+        exitPhase={detailVtxo ? exitPhaseById.get(detailVtxo.id) : undefined}
         formatFiat={formatFiat}
         formatSats={formatSats}
         onOpenChange={handleDetailOpenChange}

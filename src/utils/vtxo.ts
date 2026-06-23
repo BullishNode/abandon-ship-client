@@ -1,27 +1,34 @@
 import type { ExitTransactionStatus, WalletVtxoInfo } from '@secondts/barkd'
 import type { TFunction } from 'i18next'
 import { AVERAGE_BLOCK_INTERVAL_MS } from '@/constants/btc'
+import type { ExitStateType } from '@/utils/exit-progress'
 import { formatRelativeTime } from '@/utils/relative-time'
 
 export type VtxoStatus = WalletVtxoInfo['state']['type']
 
-export type VtxoExitDisplay = 'exiting' | 'exited'
+export type VtxoExitPhase = ExitStateType
 
-export function mapVtxoExitDisplays(exits: ExitTransactionStatus[]): Map<string, VtxoExitDisplay> {
-  const displays = new Map<string, VtxoExitDisplay>()
+export function isExitedPhase(phase: VtxoExitPhase): boolean {
+  return phase === 'claimed'
+}
+
+export function mapVtxoExitPhases(exits: ExitTransactionStatus[]): Map<string, VtxoExitPhase> {
+  const phases = new Map<string, VtxoExitPhase>()
   for (const exit of exits) {
-    displays.set(exit.vtxoId, exit.state.type === 'claimed' ? 'exited' : 'exiting')
+    phases.set(exit.vtxoId, exit.state.type)
   }
-  return displays
+  return phases
 }
 
 export function sortVtxosForDisplay(
   vtxos: WalletVtxoInfo[],
-  exitDisplayById: Map<string, VtxoExitDisplay>
+  exitPhaseById: Map<string, VtxoExitPhase>
 ): WalletVtxoInfo[] {
   return [...vtxos].toSorted((a, b) => {
-    const aExited = exitDisplayById.get(a.id) === 'exited'
-    const bExited = exitDisplayById.get(b.id) === 'exited'
+    const aPhase = exitPhaseById.get(a.id)
+    const bPhase = exitPhaseById.get(b.id)
+    const aExited = aPhase !== undefined && isExitedPhase(aPhase)
+    const bExited = bPhase !== undefined && isExitedPhase(bPhase)
     if (aExited !== bExited) {
       return Number(aExited) - Number(bExited)
     }

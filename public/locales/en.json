@@ -259,8 +259,15 @@
       "spendable": "Spendable",
       "spent": "Spent",
       "locked": "Locked",
-      "exiting": "Exiting",
-      "exited": "Exited"
+      "exiting": "Exiting: {{phase}}",
+      "exited": "Exited",
+      "phases": {
+        "start": "Starting",
+        "processing": "Broadcasting",
+        "awaiting_delta": "Waiting timelock",
+        "claimable": "Ready to claim",
+        "claim_in_progress": "Claiming"
+      }
     },
     "expiry": {
       "expired": "Expired"

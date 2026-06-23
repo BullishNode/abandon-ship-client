@@ -1,25 +1,36 @@
 import { ArrowCircleUpIcon, CheckCircleIcon } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { Badge } from '@/components/ui/badge'
-import type { VtxoExitDisplay } from '@/utils/vtxo'
+import { isExitedPhase } from '@/utils/vtxo'
+import type { VtxoExitPhase } from '@/utils/vtxo'
 
-const EXIT_CONFIG: Record<VtxoExitDisplay, { icon: typeof CheckCircleIcon; iconClass: string }> = {
-  exited: { icon: CheckCircleIcon, iconClass: 'text-muted-foreground' },
-  exiting: { icon: ArrowCircleUpIcon, iconClass: 'text-blue-500' }
+const PHASE_LABEL_KEY: Record<VtxoExitPhase, string> = {
+  'awaiting-delta': 'awaiting_delta',
+  'claim-in-progress': 'claim_in_progress',
+  claimable: 'claimable',
+  claimed: 'claimed',
+  processing: 'processing',
+  start: 'start'
 }
 
 interface VtxoExitBadgeProps {
-  display: VtxoExitDisplay
+  phase: VtxoExitPhase
 }
 
-export function VtxoExitBadge({ display }: VtxoExitBadgeProps) {
+export function VtxoExitBadge({ phase }: VtxoExitBadgeProps) {
   const { t } = useTranslation()
-  const config = EXIT_CONFIG[display]
-  const Icon = config.icon
+  if (isExitedPhase(phase)) {
+    return (
+      <Badge variant="outline">
+        <CheckCircleIcon className="text-muted-foreground" weight="fill" />
+        {t('vtxos.status.exited')}
+      </Badge>
+    )
+  }
   return (
     <Badge variant="outline">
-      <Icon className={config.iconClass} weight="fill" />
-      {t(`vtxos.status.${display}`)}
+      <ArrowCircleUpIcon className="text-blue-500" weight="fill" />
+      {t('vtxos.status.exiting', { phase: t(`vtxos.status.phases.${PHASE_LABEL_KEY[phase]}`) })}
     </Badge>
   )
 }
