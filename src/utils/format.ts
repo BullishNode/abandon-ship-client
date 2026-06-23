@@ -12,6 +12,10 @@ const BTC_DECIMAL_PLACES = 8
 export const PRIVACY_MASK = '-----'
 
 const numberFormatter = new Intl.NumberFormat(undefined)
+const compactNumberFormatter = new Intl.NumberFormat(undefined, {
+  maximumFractionDigits: 1,
+  notation: 'compact'
+})
 const currencyFormatters = new Map<string, Intl.NumberFormat>()
 
 function getCurrencyFormatter(currency: FiatCurrency): Intl.NumberFormat {
@@ -111,6 +115,13 @@ export function formatBitcoin(sats: number, unit: BitcoinUnit) {
   }
 
   return formattedInteger
+}
+
+export function formatBitcoinCompact(sats: number, unit: BitcoinUnit) {
+  if (unit === 'sats') {
+    return compactNumberFormatter.format(sats)
+  }
+  return formatBitcoin(sats, unit)
 }
 
 export function formatAddress(address: string, startChars = 7, endChars = 7): string {

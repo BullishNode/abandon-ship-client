@@ -14,7 +14,7 @@ import { useOnchainTransactions } from '@/hooks/barkd/use-onchain-transactions'
 import { useOnchainUtxos } from '@/hooks/barkd/use-onchain-utxos'
 import { useWalletBalance } from '@/hooks/barkd/use-wallet-balance'
 import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
-import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
+import { useFormatBitcoin, useFormatBitcoinCompact } from '@/hooks/use-format-bitcoin'
 import { useOnchainFirstSeen } from '@/stores/metadata'
 import { getBalanceTotals } from '@/utils/balance'
 import {
@@ -34,6 +34,7 @@ export function BalanceChart() {
   const { data: tip } = useBitcoinTip()
   const firstSeenAt = useOnchainFirstSeen()
   const formatBitcoin = useFormatBitcoin()
+  const formatBitcoinCompact = useFormatBitcoinCompact()
 
   const chartConfig = {
     balanceSat: {
@@ -103,7 +104,8 @@ export function BalanceChart() {
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                tickFormatter={(value: number) => formatBitcoin(value)}
+                width={80}
+                tickFormatter={(value: number) => formatBitcoinCompact(value)}
               />
               <ChartTooltip
                 cursor={false}
@@ -121,10 +123,7 @@ export function BalanceChart() {
                         month: 'short'
                       })
                     }}
-                    formatter={(value) => [
-                      formatBitcoin(Number(value)),
-                      t('dashboard.chart.balance')
-                    ]}
+                    formatter={(value) => formatBitcoin(Number(value))}
                     indicator="dot"
                   />
                 }
