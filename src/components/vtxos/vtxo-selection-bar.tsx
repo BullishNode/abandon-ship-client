@@ -1,4 +1,4 @@
-import { ArrowCircleUpIcon, ArrowsClockwiseIcon, XIcon } from '@phosphor-icons/react'
+import { ArrowLineDownIcon, ArrowsClockwiseIcon, XIcon } from '@phosphor-icons/react'
 import { AnimatePresence, m } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { SignOutIcon } from '@/components/icons/sign-out'
@@ -66,7 +66,7 @@ export function VtxoSelectionBar({
               type="button"
               variant="ghost"
             >
-              <SignOutIcon arrowClassName="transition-transform duration-200 ease-out group-hover:translate-x-6" />
+              <ArrowLineDownIcon className="transition-transform duration-200 ease-out group-hover:translate-y-0.5" />
               <span className="hidden sm:inline">{t('vtxos.selection.offboard')}</span>
             </Button>
             {divider}
@@ -79,10 +79,7 @@ export function VtxoSelectionBar({
               type="button"
               variant="ghost"
             >
-              <ArrowCircleUpIcon
-                className="transition-transform duration-200 ease-out group-hover:-translate-y-0.5"
-                weight="fill"
-              />
+              <SignOutIcon arrowClassName="transition-transform duration-200 ease-out group-hover:translate-x-1" />
               <span className="hidden sm:inline">{t('vtxos.selection.emergency_exit')}</span>
             </Button>
             {divider}
