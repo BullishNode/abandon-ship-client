@@ -4,6 +4,10 @@ import type { UseQueryOptions } from '@tanstack/react-query'
 import { onchainApi } from '@/lib/barkd-client'
 import { onchainKeys } from '@/lib/query-keys'
 import { useMetadataStore } from '@/stores/metadata'
+import { hasPendingOffboards, usePendingOffboardsStore } from '@/stores/pending-offboards'
+
+const FAST_REFETCH_MS = 3000
+const DEFAULT_REFETCH_MS = 30_000
 
 export function useOnchainTransactions(
   options?: Omit<UseQueryOptions<WalletTxInfo[]>, 'queryKey' | 'queryFn'>
@@ -11,11 +15,13 @@ export function useOnchainTransactions(
   return useQuery({
     queryFn: async () => {
       const transactions = await onchainApi.onchainTransactions()
-      useMetadataStore.getState().recordOnchainFirstSeen(transactions.map((tx) => tx.txid))
+      const txids = transactions.map((tx) => tx.txid)
+      useMetadataStore.getState().recordOnchainFirstSeen(txids)
+      usePendingOffboardsStore.getState().reconcile(txids, Date.now())
       return transactions
     },
     queryKey: onchainKeys.transactions(),
-    refetchInterval: 30_000,
+    refetchInterval: () => (hasPendingOffboards() ? FAST_REFETCH_MS : DEFAULT_REFETCH_MS),
     ...options
   })
 }

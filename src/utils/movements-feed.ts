@@ -1,6 +1,6 @@
 import type { BarkNetwork, Movement, MovementStatus, UtxoInfo, WalletTxInfo } from '@secondts/barkd'
 import { AVERAGE_BLOCK_INTERVAL_MS } from '@/constants/btc'
-import type { MovementsTab } from '@/types/movements'
+import type { MovementsTab, PendingOffboard } from '@/types/movements'
 import { getMovementSource } from '@/utils/movement'
 import type { MovementSource } from '@/utils/movement'
 import { decodeInputs, decodeOutputs } from '@/utils/tx-address'
@@ -17,6 +17,7 @@ export interface OnchainTxEntry {
   firstSeenMs: number | null
   feeSat: number | null
   isCpfp: boolean
+  isOptimistic?: boolean
 }
 
 export interface MovementEntry {
@@ -160,6 +161,34 @@ interface BuildFeedOptions {
   firstSeenAt?: Record<string, string>
   hideRefresh?: boolean
   hideExitFee?: boolean
+  pendingOffboards?: PendingOffboard[]
+}
+
+function buildOptimisticOffboardEntries(
+  pending: PendingOffboard[],
+  knownTxids: Set<string>
+): OnchainTxEntry[] {
+  const entries: OnchainTxEntry[] = []
+  for (const item of pending) {
+    if (knownTxids.has(item.txid)) {
+      continue
+    }
+    entries.push({
+      amountSat: 0,
+      approximateTimestampMs: item.createdAtMs,
+      bindingAddress: undefined,
+      confirmationHeight: null,
+      direction: 'outgoing',
+      feeSat: null,
+      firstSeenMs: item.createdAtMs,
+      isCpfp: false,
+      isOptimistic: true,
+      kind: 'onchain',
+      status: 'pending',
+      txid: item.txid
+    })
+  }
+  return entries
 }
 
 export function getFeedRowSource(row: MovementsFeedRow): MovementSource {
@@ -204,7 +233,12 @@ export function buildMovementsFeed(
   }
   const visibleOnchainEntries =
     options.hideExitFee === true ? onchainEntries.filter((entry) => !entry.isCpfp) : onchainEntries
-  const combined = [...movementEntries, ...visibleOnchainEntries]
+  const knownTxids = new Set((options.transactions ?? []).map((tx) => tx.txid))
+  const optimisticEntries = buildOptimisticOffboardEntries(
+    options.pendingOffboards ?? [],
+    knownTxids
+  )
+  const combined = [...movementEntries, ...visibleOnchainEntries, ...optimisticEntries]
   combined.sort(compareRows)
   return combined
 }

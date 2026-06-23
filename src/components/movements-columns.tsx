@@ -73,11 +73,13 @@ export function getMovementColumns({
         const entry = row.original
         const sats =
           entry.kind === 'movement' ? entry.movement.effectiveBalanceSat : entry.amountSat
+        const pending = entry.kind === 'onchain' && entry.isOptimistic === true
         return (
           <MovementAmountCell
             discreetMode={discreetMode}
             formatFiat={formatFiat}
             formatSats={formatSats}
+            pending={pending}
             sats={sats}
           />
         )

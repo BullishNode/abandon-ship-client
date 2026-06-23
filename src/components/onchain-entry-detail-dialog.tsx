@@ -79,10 +79,17 @@ function OnchainEntryDetailContent({
     entry.confirmationHeight === null
       ? t('movements.onchain.detail.pending')
       : String(entry.confirmationHeight)
-  const feeValue =
-    entry.feeSat === null
-      ? t('movements.detail.fee_unavailable')
-      : `${formatSats(entry.feeSat)} · ${formatFiat(entry.feeSat)}`
+  const isOptimistic = entry.isOptimistic === true
+  function resolveFeeValue(): string {
+    if (isOptimistic) {
+      return t('movements.onchain.detail.pending')
+    }
+    if (entry.feeSat === null) {
+      return t('movements.detail.fee_unavailable')
+    }
+    return `${formatSats(entry.feeSat)} · ${formatFiat(entry.feeSat)}`
+  }
+  const feeValue = resolveFeeValue()
   return (
     <>
       <DialogHeader>
@@ -96,6 +103,7 @@ function OnchainEntryDetailContent({
               discreetMode={discreetMode}
               formatFiat={formatFiat}
               formatSats={formatSats}
+              pending={isOptimistic}
               sats={entry.amountSat}
               size="lg"
             />

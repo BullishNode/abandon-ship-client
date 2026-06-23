@@ -38,6 +38,7 @@ import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
 import { config } from '@/config/barkd'
 import { usePrivateAmount } from '@/hooks/use-private-amount'
 import { useOnchainFirstSeen } from '@/stores/metadata'
+import { usePendingOffboards } from '@/stores/pending-offboards'
 import { canUseCamera } from '@/utils/camera'
 import { useModalsStore } from '@/stores/modals'
 import { useSettingsStore } from '@/stores/settings'
@@ -64,6 +65,7 @@ export function MovementsTable() {
   const { data: tip } = useBitcoinTip()
   const isFeedLoading = movementsPending || utxosPending || transactionsPending
   const firstSeenAt = useOnchainFirstSeen()
+  const pendingOffboards = usePendingOffboards()
   const [
     discreetMode,
     hideRefreshMovements,
@@ -95,6 +97,7 @@ export function MovementsTable() {
     hideExitFee: hideExitFeeMovements,
     hideRefresh: hideRefreshMovements,
     network: config.network,
+    pendingOffboards,
     tipHeight: tip?.tipHeight,
     transactions,
     utxos
