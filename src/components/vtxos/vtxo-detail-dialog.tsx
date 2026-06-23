@@ -81,7 +81,9 @@ function VtxoDetailContent({
   const { t } = useTranslation()
   const { copy, isCopied } = useCopyToClipboard()
   const [isEditAddressOpen, setIsEditAddressOpen] = useState(false)
-  const canEditClaimAddress = exitPhase !== undefined && isClaimAddressEditable(exitPhase)
+  const hasClaimAddress = claimAddress !== undefined && claimAddress.length > 0
+  const canEditClaimAddress =
+    exitPhase !== undefined && isClaimAddressEditable(exitPhase, hasClaimAddress)
   const expiryTime = getExpiryTimeLabel(vtxo.expiryHeight, t, tipHeight)
   const expiryValue =
     expiryTime === '' ? String(vtxo.expiryHeight) : `${vtxo.expiryHeight} · ${expiryTime}`
