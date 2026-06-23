@@ -1,7 +1,13 @@
 import type { Destination } from 'bitcoin-decoder'
 import { decode } from 'bitcoin-decoder'
 import { describe, expect, it, vi } from 'vitest'
-import { getSendRoute, parsePaymentInput, pickCheapestDestination } from './payment'
+import { normalizeDestination } from './bitcoin'
+import {
+  getSelectableDestinations,
+  getSendRoute,
+  parsePaymentInput,
+  pickCheapestDestination
+} from './payment'
 
 vi.mock(import('bitcoin-decoder'), () => ({
   decode: vi.fn<typeof decode>()
@@ -123,6 +129,42 @@ describe(pickCheapestDestination, () => {
     const input = [btcDest, arkDest, bolt11Dest]
     const snapshot = [...input]
     pickCheapestDestination(input)
+    expect(input).toStrictEqual(snapshot)
+  })
+})
+
+describe(getSelectableDestinations, () => {
+  const upperArk = makeDestination('ark-address', 'ARK1ABC')
+  const upperBolt11 = makeDestination('bolt11', 'LNBC10U1ABC')
+  const upperBtc = makeDestination('bitcoin-address', 'BC1QABC')
+
+  it('lowercases ark and lightning destinations so they match the stored selection', () => {
+    const [first] = getSelectableDestinations([upperArk])
+    expect(first.destination).toBe('ark1abc')
+  })
+
+  it('lowercases bech32 bitcoin addresses', () => {
+    const [first] = getSelectableDestinations([upperBtc])
+    expect(first.destination).toBe('bc1qabc')
+  })
+
+  it('keeps priority order (ark before lightning before on-chain)', () => {
+    const result = getSelectableDestinations([upperBtc, upperBolt11, upperArk])
+    expect(result.map((d) => d.type)).toStrictEqual(['ark-address', 'bolt11', 'bitcoin-address'])
+  })
+
+  it('produces destinations whose identity equals the normalized picked destination', () => {
+    const destinations = [upperBtc, upperArk, upperBolt11]
+    const selectable = getSelectableDestinations(destinations)
+    const picked = pickCheapestDestination(destinations)
+    const selectedValue = normalizeDestination(picked).destination
+    expect(selectable.some((d) => d.destination === selectedValue)).toBeTruthy()
+  })
+
+  it('does not mutate the input array', () => {
+    const input = [upperBtc, upperArk]
+    const snapshot = [...input]
+    getSelectableDestinations(input)
     expect(input).toStrictEqual(snapshot)
   })
 })

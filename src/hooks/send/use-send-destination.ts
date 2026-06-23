@@ -7,10 +7,10 @@ import { normalizeDestination } from '@/utils/bitcoin'
 import { canUseCamera } from '@/utils/camera'
 import type { SendRoute } from '@/utils/payment'
 import {
+  getSelectableDestinations,
   getSendRoute,
   parsePaymentInput,
-  pickCheapestDestination,
-  sortDestinationsByPriority
+  pickCheapestDestination
 } from '@/utils/payment'
 
 export type SendStep = 'scan' | 'send'
@@ -131,7 +131,7 @@ export function useSendDestination({ open, initialStep = 'scan' }: UseSendDestin
   )
 
   const isPayment = parsed?.valid === true && parsed.kind === 'payment'
-  const chooserDestinations = isPayment ? sortDestinationsByPriority(parsed.destinations) : []
+  const chooserDestinations = isPayment ? getSelectableDestinations(parsed.destinations) : []
   const currentDestinationType =
     selectedMethodType ?? (isPayment ? parsed.destination.type : undefined)
   const isAmountLocked =

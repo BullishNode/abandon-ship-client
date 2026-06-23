@@ -1,5 +1,6 @@
 import type { Destination } from 'bitcoin-decoder'
 import { decode } from 'bitcoin-decoder'
+import { normalizeDestination } from '@/utils/bitcoin'
 
 export type SendRoute = 'ark' | 'lightning' | 'onchain-from-ark' | 'onchain-from-wallet'
 
@@ -40,4 +41,8 @@ export function sortDestinationsByPriority(destinations: Destination[]): Destina
 
 export function pickCheapestDestination(destinations: Destination[]): Destination {
   return sortDestinationsByPriority(destinations)[0]
+}
+
+export function getSelectableDestinations(destinations: Destination[]): Destination[] {
+  return sortDestinationsByPriority(destinations).map(normalizeDestination)
 }
