@@ -3,6 +3,7 @@ import type { TFunction } from 'i18next'
 import { AVERAGE_BLOCK_INTERVAL_MS } from '@/constants/btc'
 import type { ExitStateType } from '@/utils/exit-progress'
 import { formatRelativeTime } from '@/utils/relative-time'
+import { truncateMiddleChars } from '@/utils/truncate-middle'
 
 export type VtxoStatus = WalletVtxoInfo['state']['type']
 
@@ -76,7 +77,7 @@ export function truncateVtxoId(id: string): string {
   if (vout === undefined) {
     return id
   }
-  return `${txid.slice(0, 8)}…${txid.slice(-8)}:${vout}`
+  return `${truncateMiddleChars(txid)}:${vout}`
 }
 
 export function getExpiryTimeLabel(expiryHeight: number, t: TFunction, tipHeight?: number): string {

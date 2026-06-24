@@ -1,6 +1,14 @@
 import { measureNaturalWidth, prepareWithSegments } from '@chenglou/pretext'
 
 const ELLIPSIS = '…'
+const DEFAULT_EDGE_CHARS = 8
+
+export function truncateMiddleChars(text: string, edgeChars = DEFAULT_EDGE_CHARS): string {
+  if (text.length <= edgeChars * 2 + 1) {
+    return text
+  }
+  return `${text.slice(0, edgeChars)}${ELLIPSIS}${text.slice(-edgeChars)}`
+}
 
 function widthOf(text: string, font: string): number {
   return measureNaturalWidth(prepareWithSegments(text, font))

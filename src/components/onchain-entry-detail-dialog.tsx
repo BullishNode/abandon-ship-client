@@ -11,6 +11,7 @@ import { useMetadataStore } from '@/stores/metadata'
 import { useWalletStore } from '@/stores/wallet'
 import { getOnchainDefaultLabel } from '@/utils/movement-labels'
 import type { OnchainTxEntry } from '@/utils/movements-feed'
+import { truncateMiddleChars } from '@/utils/truncate-middle'
 
 interface OnchainEntryDetailDialogProps {
   entry: OnchainTxEntry | null
@@ -112,7 +113,11 @@ function OnchainEntryDetailContent({
               <MovementSourceBadge source={entry.isCpfp ? 'exit' : 'onchain'} />
             </div>
           </div>
-          <CopyableValueRow label={t('movements.onchain.detail.txid')} value={entry.txid} />
+          <CopyableValueRow
+            displayValue={truncateMiddleChars(entry.txid)}
+            label={t('movements.onchain.detail.txid')}
+            value={entry.txid}
+          />
           <DetailRow label={t('movements.onchain.detail.height')} value={heightValue} />
           <DetailRow label={t('movements.detail.fee')} value={feeValue} />
           <DetailRow
