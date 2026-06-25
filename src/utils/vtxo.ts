@@ -1,4 +1,4 @@
-import type { ExitTransactionStatus, WalletVtxoInfo } from '@secondts/barkd'
+import type { ExitTransactionStatus, Movement, WalletVtxoInfo } from '@secondts/barkd'
 import type { TFunction } from 'i18next'
 import { AVERAGE_BLOCK_INTERVAL_MS } from '@/constants/btc'
 import type { ExitStateType } from '@/utils/exit-progress'
@@ -94,4 +94,57 @@ export function getExpiryTimeLabel(expiryHeight: number, t: TFunction, tipHeight
 
 export function getVtxoRawJson(vtxo: WalletVtxoInfo): string {
   return JSON.stringify(vtxo, null, 2)
+}
+
+function getVtxoLockReasonKey(subsystem: Movement['subsystem']): string | null {
+  const { name, kind } = subsystem
+  if (name === 'bark.exit') {
+    return 'exiting'
+  }
+  if (name === 'bark.lightning_send') {
+    return 'sending_lightning'
+  }
+  if (name === 'bark.lightning_receive') {
+    return 'receiving_lightning'
+  }
+  if (name === 'bark.offboard') {
+    return 'sending_onchain'
+  }
+  if (name === 'bark.arkoor') {
+    return kind === 'send' ? 'sending_ark' : null
+  }
+  if (name === 'bark.round') {
+    if (kind === 'refresh') {
+      return 'refreshing'
+    }
+    if (kind === 'offboard' || kind === 'send_onchain') {
+      return 'sending_onchain'
+    }
+    return null
+  }
+  return null
+}
+
+export function mapVtxoLockLabels(
+  vtxos: WalletVtxoInfo[],
+  movements: Movement[],
+  t: TFunction
+): Map<string, string> {
+  const movementById = new Map(movements.map((movement) => [movement.id, movement]))
+  const labels = new Map<string, string>()
+  for (const vtxo of vtxos) {
+    if (vtxo.state.type !== 'locked' || vtxo.state.movementId === undefined) {
+      continue
+    }
+    const movement = movementById.get(vtxo.state.movementId)
+    if (movement === undefined) {
+      continue
+    }
+    const reasonKey = getVtxoLockReasonKey(movement.subsystem)
+    if (reasonKey === null) {
+      continue
+    }
+    labels.set(vtxo.id, t(`vtxos.status.lock.${reasonKey}`))
+  }
+  return labels
 }

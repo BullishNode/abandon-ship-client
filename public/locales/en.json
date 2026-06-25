@@ -259,6 +259,14 @@
       "spendable": "Spendable",
       "spent": "Spent",
       "locked": "Locked",
+      "lock": {
+        "sending_ark": "Sending: Ark",
+        "sending_onchain": "Sending: On-chain",
+        "sending_lightning": "Sending: Lightning",
+        "receiving_lightning": "Receiving: Lightning",
+        "refreshing": "Refreshing",
+        "exiting": "Exiting"
+      },
       "exiting": "Exiting: {{phase}}",
       "exited": "Exited",
       "phases": {
@@ -304,7 +312,6 @@
       "blocks_value_one": "{{count}} block",
       "blocks_value_other": "{{count}} blocks",
       "locked_action": "Locked by action",
-      "locked_movement": "Locked by movement",
       "claim_address": "Claim address",
       "change_claim_address": "Change",
       "no_claim_address": "No address set",

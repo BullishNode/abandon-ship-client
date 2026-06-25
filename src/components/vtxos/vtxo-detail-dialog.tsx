@@ -27,6 +27,7 @@ interface VtxoDetailDialogProps {
   tipHeight?: number
   exitPhase?: VtxoExitPhase
   claimAddress?: string
+  lockLabel?: string
 }
 
 export function VtxoDetailDialog({
@@ -37,7 +38,8 @@ export function VtxoDetailDialog({
   formatFiat,
   tipHeight,
   exitPhase,
-  claimAddress
+  claimAddress,
+  lockLabel
 }: VtxoDetailDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -52,6 +54,7 @@ export function VtxoDetailDialog({
             exitPhase={exitPhase}
             formatFiat={formatFiat}
             formatSats={formatSats}
+            lockLabel={lockLabel}
             tipHeight={tipHeight}
             vtxo={vtxo}
           />
@@ -68,6 +71,7 @@ interface VtxoDetailContentProps {
   tipHeight?: number
   exitPhase?: VtxoExitPhase
   claimAddress?: string
+  lockLabel?: string
 }
 
 function VtxoDetailContent({
@@ -76,7 +80,8 @@ function VtxoDetailContent({
   formatFiat,
   tipHeight,
   exitPhase,
-  claimAddress
+  claimAddress,
+  lockLabel
 }: VtxoDetailContentProps) {
   const { t } = useTranslation()
   const { copy, isCopied } = useCopyToClipboard()
@@ -88,7 +93,6 @@ function VtxoDetailContent({
   const expiryValue =
     expiryTime === '' ? String(vtxo.expiryHeight) : `${vtxo.expiryHeight} · ${expiryTime}`
   const lockedActionId = vtxo.state.type === 'locked' ? vtxo.state.actionId : undefined
-  const lockedMovementId = vtxo.state.type === 'locked' ? vtxo.state.movementId : undefined
   const exitDepthValue =
     vtxo.exitDepth === undefined || vtxo.exitDepth === null ? '—' : String(vtxo.exitDepth)
 
@@ -109,7 +113,7 @@ function VtxoDetailContent({
               </span>
             </div>
             {exitPhase === undefined ? (
-              <VtxoStatusBadge status={vtxo.state.type} />
+              <VtxoStatusBadge label={lockLabel} status={vtxo.state.type} />
             ) : (
               <VtxoExitBadge phase={exitPhase} />
             )}
@@ -150,9 +154,6 @@ function VtxoDetailContent({
           )}
           {lockedActionId === undefined ? null : (
             <DetailRow label={t('vtxos.detail.locked_action')} value={lockedActionId} />
-          )}
-          {lockedMovementId === undefined ? null : (
-            <DetailRow label={t('vtxos.detail.locked_movement')} value={String(lockedMovementId)} />
           )}
         </div>
         <Button

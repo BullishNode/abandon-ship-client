@@ -25,6 +25,7 @@ import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
 import { useExitStatus } from '@/hooks/barkd/use-exit-status'
 import { useRefreshVtxos } from '@/hooks/barkd/use-refresh-vtxos'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
+import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
 import { usePrivateAmount } from '@/hooks/use-private-amount'
 import { useSettingsStore } from '@/stores/settings'
 import { useWalletStore } from '@/stores/wallet'
@@ -33,6 +34,7 @@ import {
   isSpendable,
   mapVtxoExitClaimHeights,
   mapVtxoExitPhases,
+  mapVtxoLockLabels,
   sortVtxosForDisplay
 } from '@/utils/vtxo'
 
@@ -40,6 +42,7 @@ export function VtxosTable() {
   const { t } = useTranslation()
   const { data: vtxos = [], isPending } = useVtxos({ all: true })
   const { data: exitStatuses = [] } = useExitStatus()
+  const { data: movements = [] } = useWalletTransactions()
   const { data: tip } = useBitcoinTip()
   const { sats: formatSats, fiat: formatFiat } = usePrivateAmount()
   const showExitedVtxos = useSettingsStore((state) => state.showExitedVtxos)
@@ -53,6 +56,7 @@ export function VtxosTable() {
 
   const exitPhaseById = mapVtxoExitPhases(exitStatuses)
   const exitClaimHeightById = mapVtxoExitClaimHeights(exitStatuses)
+  const lockLabelById = mapVtxoLockLabels(vtxos, movements, t)
 
   const filteredVtxos = vtxos.filter((vtxo) => {
     if (vtxo.state.type !== 'spent') {
@@ -122,6 +126,7 @@ export function VtxosTable() {
     exitPhaseById,
     formatFiat,
     formatSats,
+    lockLabelById,
     t,
     tipHeight: tip?.tipHeight
   })
@@ -203,6 +208,7 @@ export function VtxosTable() {
         exitPhase={detailVtxo ? exitPhaseById.get(detailVtxo.id) : undefined}
         formatFiat={formatFiat}
         formatSats={formatSats}
+        lockLabel={detailVtxo ? lockLabelById.get(detailVtxo.id) : undefined}
         onOpenChange={handleDetailOpenChange}
         open={detailOpen}
         tipHeight={tip?.tipHeight}

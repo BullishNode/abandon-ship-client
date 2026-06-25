@@ -13,6 +13,7 @@ interface VtxoColumnsOptions {
   formatFiat: (sats: number) => string
   tipHeight?: number
   exitPhaseById: Map<string, VtxoExitPhase>
+  lockLabelById: Map<string, string>
 }
 
 function getHeaderCheckedState(
@@ -30,7 +31,8 @@ export function getVtxoColumns({
   formatSats,
   formatFiat,
   tipHeight,
-  exitPhaseById
+  exitPhaseById,
+  lockLabelById
 }: VtxoColumnsOptions): ColumnDef<WalletVtxoInfo>[] {
   return [
     {
@@ -81,7 +83,12 @@ export function getVtxoColumns({
         if (exitPhase !== undefined) {
           return <VtxoExitBadge phase={exitPhase} />
         }
-        return <VtxoStatusBadge status={row.original.state.type} />
+        return (
+          <VtxoStatusBadge
+            label={lockLabelById.get(row.original.id)}
+            status={row.original.state.type}
+          />
+        )
       },
       header: t('vtxos.columns.status'),
       id: 'status'

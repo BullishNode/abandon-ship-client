@@ -11,16 +11,17 @@ const STATUS_CONFIG: Record<VtxoStatus, { icon: typeof CheckCircleIcon; iconClas
 
 interface VtxoStatusBadgeProps {
   status: VtxoStatus
+  label?: string
 }
 
-export function VtxoStatusBadge({ status }: VtxoStatusBadgeProps) {
+export function VtxoStatusBadge({ status, label }: VtxoStatusBadgeProps) {
   const { t } = useTranslation()
   const config = STATUS_CONFIG[status]
   const Icon = config.icon
   return (
     <Badge variant="outline">
       <Icon className={config.iconClass} weight="fill" />
-      {t(`vtxos.status.${status}`)}
+      {label ?? t(`vtxos.status.${status}`)}
     </Badge>
   )
 }
