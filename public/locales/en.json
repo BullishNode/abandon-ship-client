@@ -264,7 +264,7 @@
       "phases": {
         "start": "Starting",
         "processing": "Broadcasting",
-        "awaiting_delta": "Waiting timelock",
+        "awaiting_delta": "Timelocked",
         "claimable": "Ready to claim",
         "claim_in_progress": "Claiming"
       }
@@ -453,7 +453,7 @@
         "states": {
           "start": "Starting",
           "processing": "Broadcasting",
-          "awaiting_delta": "Waiting timelock",
+          "awaiting_delta": "Timelocked",
           "claimable": "Ready to claim",
           "claim_in_progress": "Claiming",
           "claimed": "Claimed"
