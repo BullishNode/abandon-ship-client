@@ -4,7 +4,7 @@ import type { TFunction } from 'i18next'
 import { Checkbox } from '@/components/ui/checkbox'
 import { VtxoExitBadge } from '@/components/vtxos/vtxo-exit-badge'
 import { VtxoStatusBadge } from '@/components/vtxos/vtxo-status-badge'
-import type { VtxoExitPhase } from '@/utils/vtxo'
+import type { VtxoExitPhase, VtxoExitState } from '@/utils/vtxo'
 import { getExpiryTimeLabel, truncateVtxoId } from '@/utils/vtxo'
 
 interface VtxoColumnsOptions {
@@ -13,6 +13,7 @@ interface VtxoColumnsOptions {
   formatFiat: (sats: number) => string
   tipHeight?: number
   exitPhaseById: Map<string, VtxoExitPhase>
+  exitStateById: Map<string, VtxoExitState>
   lockLabelById: Map<string, string>
 }
 
@@ -32,6 +33,7 @@ export function getVtxoColumns({
   formatFiat,
   tipHeight,
   exitPhaseById,
+  exitStateById,
   lockLabelById
 }: VtxoColumnsOptions): ColumnDef<WalletVtxoInfo>[] {
   return [
@@ -79,9 +81,9 @@ export function getVtxoColumns({
     },
     {
       cell: ({ row }) => {
-        const exitPhase = exitPhaseById.get(row.original.id)
-        if (exitPhase !== undefined) {
-          return <VtxoExitBadge phase={exitPhase} />
+        const exitState = exitStateById.get(row.original.id)
+        if (exitState !== undefined) {
+          return <VtxoExitBadge phase={exitPhaseById.get(row.original.id)} state={exitState} />
         }
         return (
           <VtxoStatusBadge

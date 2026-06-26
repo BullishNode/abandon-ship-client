@@ -30,10 +30,11 @@ import { usePrivateAmount } from '@/hooks/use-private-amount'
 import { useSettingsStore } from '@/stores/settings'
 import { useWalletStore } from '@/stores/wallet'
 import {
-  isExitedPhase,
   isSpendable,
+  mapExitedVtxoIds,
   mapVtxoExitClaimHeights,
   mapVtxoExitPhases,
+  mapVtxoExitStates,
   mapVtxoLockLabels,
   sortVtxosForDisplay
 } from '@/utils/vtxo'
@@ -56,25 +57,24 @@ export function VtxosTable() {
 
   const exitPhaseById = mapVtxoExitPhases(exitStatuses)
   const exitClaimHeightById = mapVtxoExitClaimHeights(exitStatuses)
+  const exitedVtxoIds = mapExitedVtxoIds(movements)
+  const exitStateById = mapVtxoExitStates(vtxos, exitPhaseById, exitedVtxoIds)
   const lockLabelById = mapVtxoLockLabels(vtxos, movements, t)
 
   const filteredVtxos = vtxos.filter((vtxo) => {
-    if (vtxo.state.type !== 'spent') {
+    const exitState = exitStateById.get(vtxo.id)
+    if (exitState === 'exited') {
+      return showExitedVtxos
+    }
+    if (exitState === 'exiting') {
       return true
     }
-    const exitPhase = exitPhaseById.get(vtxo.id)
-    if (exitPhase === undefined) {
-      return false
-    }
-    if (!isExitedPhase(exitPhase)) {
-      return true
-    }
-    return showExitedVtxos
+    return vtxo.state.type !== 'spent'
   })
-  const visibleVtxos = sortVtxosForDisplay(filteredVtxos, exitPhaseById, exitClaimHeightById)
+  const visibleVtxos = sortVtxosForDisplay(filteredVtxos, exitStateById, exitClaimHeightById)
 
   function isSelectable(vtxo: WalletVtxoInfo): boolean {
-    return isSpendable(vtxo) && !exitPhaseById.has(vtxo.id)
+    return isSpendable(vtxo) && !exitStateById.has(vtxo.id)
   }
 
   const selectedVtxos = visibleVtxos.filter((vtxo) => rowSelection[vtxo.id] && isSelectable(vtxo))
@@ -83,7 +83,7 @@ export function VtxosTable() {
 
   const selectedIdSet = new Set(selectedIds)
   const liveVtxos = vtxos.filter(
-    (vtxo) => vtxo.state.type !== 'spent' && !exitPhaseById.has(vtxo.id)
+    (vtxo) => vtxo.state.type !== 'spent' && !exitStateById.has(vtxo.id)
   )
   const isExitingAll = liveVtxos.length > 0 && liveVtxos.every((vtxo) => selectedIdSet.has(vtxo.id))
 
@@ -124,6 +124,7 @@ export function VtxosTable() {
 
   const columns = getVtxoColumns({
     exitPhaseById,
+    exitStateById,
     formatFiat,
     formatSats,
     lockLabelById,
@@ -206,6 +207,7 @@ export function VtxosTable() {
       <VtxoDetailDialog
         claimAddress={detailVtxo ? exitClaimAddresses[detailVtxo.id] : undefined}
         exitPhase={detailVtxo ? exitPhaseById.get(detailVtxo.id) : undefined}
+        exitState={detailVtxo ? exitStateById.get(detailVtxo.id) : undefined}
         formatFiat={formatFiat}
         formatSats={formatSats}
         lockLabel={detailVtxo ? lockLabelById.get(detailVtxo.id) : undefined}

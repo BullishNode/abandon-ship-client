@@ -10,7 +10,7 @@ import { VtxoStatusBadge } from '@/components/vtxos/vtxo-status-badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
-import type { VtxoExitPhase } from '@/utils/vtxo'
+import type { VtxoExitPhase, VtxoExitState } from '@/utils/vtxo'
 import {
   getExpiryTimeLabel,
   getVtxoRawJson,
@@ -26,6 +26,7 @@ interface VtxoDetailDialogProps {
   formatFiat: (sats: number) => string
   tipHeight?: number
   exitPhase?: VtxoExitPhase
+  exitState?: VtxoExitState
   claimAddress?: string
   lockLabel?: string
 }
@@ -38,6 +39,7 @@ export function VtxoDetailDialog({
   formatFiat,
   tipHeight,
   exitPhase,
+  exitState,
   claimAddress,
   lockLabel
 }: VtxoDetailDialogProps) {
@@ -52,6 +54,7 @@ export function VtxoDetailDialog({
           <VtxoDetailContent
             claimAddress={claimAddress}
             exitPhase={exitPhase}
+            exitState={exitState}
             formatFiat={formatFiat}
             formatSats={formatSats}
             lockLabel={lockLabel}
@@ -70,6 +73,7 @@ interface VtxoDetailContentProps {
   formatFiat: (sats: number) => string
   tipHeight?: number
   exitPhase?: VtxoExitPhase
+  exitState?: VtxoExitState
   claimAddress?: string
   lockLabel?: string
 }
@@ -80,6 +84,7 @@ function VtxoDetailContent({
   formatFiat,
   tipHeight,
   exitPhase,
+  exitState,
   claimAddress,
   lockLabel
 }: VtxoDetailContentProps) {
@@ -112,10 +117,10 @@ function VtxoDetailContent({
                 {formatFiat(vtxo.amountSat)}
               </span>
             </div>
-            {exitPhase === undefined ? (
+            {exitState === undefined ? (
               <VtxoStatusBadge label={lockLabel} status={vtxo.state.type} />
             ) : (
-              <VtxoExitBadge phase={exitPhase} />
+              <VtxoExitBadge phase={exitPhase} state={exitState} />
             )}
           </div>
           <DetailRow

@@ -9,8 +9,44 @@ export type VtxoStatus = WalletVtxoInfo['state']['type']
 
 export type VtxoExitPhase = ExitStateType
 
+export type VtxoExitState = 'exiting' | 'exited'
+
+const EXIT_SUBSYSTEM_NAME = 'bark.exit'
+
 export function isExitedPhase(phase: VtxoExitPhase): boolean {
   return phase === 'claimed'
+}
+
+export function mapExitedVtxoIds(movements: Movement[]): Set<string> {
+  const ids = new Set<string>()
+  for (const movement of movements) {
+    if (movement.subsystem.name !== EXIT_SUBSYSTEM_NAME) {
+      continue
+    }
+    for (const id of movement.inputVtxos) {
+      ids.add(id)
+    }
+  }
+  return ids
+}
+
+export function mapVtxoExitStates(
+  vtxos: WalletVtxoInfo[],
+  exitPhaseById: Map<string, VtxoExitPhase>,
+  exitedVtxoIds: Set<string>
+): Map<string, VtxoExitState> {
+  const states = new Map<string, VtxoExitState>()
+  for (const vtxo of vtxos) {
+    const phase = exitPhaseById.get(vtxo.id)
+    if (phase !== undefined) {
+      states.set(vtxo.id, isExitedPhase(phase) ? 'exited' : 'exiting')
+      continue
+    }
+    if (exitedVtxoIds.has(vtxo.id) && vtxo.state.type === 'spent') {
+      states.set(vtxo.id, 'exited')
+    }
+  }
+  return states
 }
 
 export function isClaimAddressEditable(phase: VtxoExitPhase, hasClaimAddress: boolean): boolean {
@@ -40,14 +76,12 @@ export function mapVtxoExitClaimHeights(exits: ExitTransactionStatus[]): Map<str
 
 export function sortVtxosForDisplay(
   vtxos: WalletVtxoInfo[],
-  exitPhaseById: Map<string, VtxoExitPhase>,
+  exitStateById: Map<string, VtxoExitState>,
   exitClaimHeightById: Map<string, number>
 ): WalletVtxoInfo[] {
   return [...vtxos].toSorted((a, b) => {
-    const aPhase = exitPhaseById.get(a.id)
-    const bPhase = exitPhaseById.get(b.id)
-    const aExited = aPhase !== undefined && isExitedPhase(aPhase)
-    const bExited = bPhase !== undefined && isExitedPhase(bPhase)
+    const aExited = exitStateById.get(a.id) === 'exited'
+    const bExited = exitStateById.get(b.id) === 'exited'
     if (aExited !== bExited) {
       return Number(aExited) - Number(bExited)
     }
