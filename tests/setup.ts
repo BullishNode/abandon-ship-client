@@ -5,7 +5,7 @@ import * as i18next from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import { afterEach, vi } from 'vitest'
 import { __setRuntimeConfigForTests } from '../src/config/barkd'
-import enTranslation from '../public/locales/en.json'
+import enTranslation from '../src/i18n/locales/en.json'
 
 __setRuntimeConfigForTests({
   arkServer: 'http://localhost:3535',

@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 const TEST_DIR = import.meta.dirname
 const REPO_ROOT = dirname(TEST_DIR)
 const SRC_DIR = join(REPO_ROOT, 'src')
-const EN_PATH = join(REPO_ROOT, 'public', 'locales', 'en.json')
+const EN_PATH = join(SRC_DIR, 'i18n', 'locales', 'en.json')
 
 const TRANSLATION_CALL_REGEX = /(?:\bt|\bi18n\.t)\(\s*['"]([\w.-]+)['"]/gu
 const ALLOWED_EXTS = new Set(['.ts', '.tsx'])
