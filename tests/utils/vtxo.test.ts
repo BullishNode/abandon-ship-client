@@ -1,9 +1,8 @@
-import type { ExitTransactionStatus, Movement, WalletVtxoInfo } from '@secondts/barkd'
+import type { ExitTransactionStatus, WalletVtxoInfo } from '@secondts/barkd'
 import i18next from 'i18next'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   getExpiryTimeLabel,
-  mapExitedVtxoIds,
   mapVtxoExitClaimHeights,
   mapVtxoExitPhases,
   mapVtxoExitStates,
@@ -27,26 +26,6 @@ function makeVtxo(
     serverPubkey: 'server',
     state: state ?? { type: 'spendable' },
     userPubkey: 'user'
-  }
-}
-
-function makeExitMovement(inputVtxos: string[], name = 'bark.exit'): Movement {
-  return {
-    effectiveBalanceSat: 0,
-    exitedVtxos: [],
-    id: 1,
-    inputVtxos,
-    intendedBalanceSat: 0,
-    offchainFeeSat: 0,
-    outputVtxos: [],
-    receivedOn: [],
-    sentTo: [],
-    status: 'successful',
-    subsystem: { kind: 'start', name },
-    time: {
-      createdAt: new Date('2026-01-01T00:00:00Z'),
-      updatedAt: new Date('2026-01-01T00:00:00Z')
-    }
   }
 }
 
@@ -105,7 +84,7 @@ describe(getExpiryTimeLabel, () => {
 })
 
 function statesFromExits(vtxos: WalletVtxoInfo[], exits: ExitTransactionStatus[]) {
-  return mapVtxoExitStates(vtxos, mapVtxoExitPhases(exits), new Set())
+  return mapVtxoExitStates(vtxos, mapVtxoExitPhases(exits))
 }
 
 describe(sortVtxosForDisplay, () => {
@@ -138,43 +117,42 @@ describe(sortVtxosForDisplay, () => {
   })
 })
 
-describe(mapExitedVtxoIds, () => {
-  it('collects input vtxos only from bark.exit movements', () => {
-    const movements = [makeExitMovement(['a:0', 'b:0']), makeExitMovement(['c:0'], 'bark.round')]
-    const ids = mapExitedVtxoIds(movements)
-    expect([...ids].toSorted()).toStrictEqual(['a:0', 'b:0'])
-  })
-
-  it('returns an empty set when there are no exit movements', () => {
-    expect(mapExitedVtxoIds([]).size).toBe(0)
-  })
-})
+function makeCanceledExit(vtxoId: string): ExitTransactionStatus {
+  return { state: { tipHeight: 0, type: 'vtxo-already-spent' }, vtxoId }
+}
 
 describe(mapVtxoExitStates, () => {
   it('derives state from the live exit phase when present', () => {
     const vtxos = [makeVtxo('done', 500), makeVtxo('going', 600)]
     const phases = mapVtxoExitPhases([makeClaimedExit('done', 100), makeSpendableExit('going')])
-    const states = mapVtxoExitStates(vtxos, phases, new Set())
+    const states = mapVtxoExitStates(vtxos, phases)
     expect(states.get('done')).toBe('exited')
     expect(states.get('going')).toBe('exiting')
   })
 
-  it('marks a spent vtxo exited from durable movements when the live phase is gone', () => {
-    const vtxos = [makeVtxo('pruned', 500, { type: 'spent' })]
-    const states = mapVtxoExitStates(vtxos, new Map(), new Set(['pruned']))
-    expect(states.get('pruned')).toBe('exited')
+  it('marks a natively exited vtxo as exited when the live phase is gone', () => {
+    const vtxos = [makeVtxo('drained', 500, { type: 'exited' })]
+    const states = mapVtxoExitStates(vtxos, new Map())
+    expect(states.get('drained')).toBe('exited')
   })
 
-  it('ignores the durable signal for a non-spent vtxo with no live phase', () => {
+  it('ignores a vtxo that is neither natively exited nor in a live phase', () => {
     const vtxos = [makeVtxo('spendable', 500)]
-    const states = mapVtxoExitStates(vtxos, new Map(), new Set(['spendable']))
+    const states = mapVtxoExitStates(vtxos, new Map())
     expect(states.has('spendable')).toBeFalsy()
   })
 
-  it('prefers the live phase over the durable signal', () => {
-    const vtxos = [makeVtxo('both', 500, { type: 'spent' })]
+  it('does not treat a canceled (vtxo-already-spent) exit as exiting', () => {
+    const vtxos = [makeVtxo('canceled', 500, { type: 'spent' })]
+    const phases = mapVtxoExitPhases([makeCanceledExit('canceled')])
+    const states = mapVtxoExitStates(vtxos, phases)
+    expect(states.has('canceled')).toBeFalsy()
+  })
+
+  it('prefers the live phase over the native exited state', () => {
+    const vtxos = [makeVtxo('both', 500, { type: 'exited' })]
     const phases = mapVtxoExitPhases([makeSpendableExit('both')])
-    const states = mapVtxoExitStates(vtxos, phases, new Set(['both']))
+    const states = mapVtxoExitStates(vtxos, phases)
     expect(states.get('both')).toBe('exiting')
   })
 })

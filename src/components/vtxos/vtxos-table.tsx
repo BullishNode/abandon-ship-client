@@ -31,7 +31,6 @@ import { useSettingsStore } from '@/stores/settings'
 import { useWalletStore } from '@/stores/wallet'
 import {
   isSpendable,
-  mapExitedVtxoIds,
   mapVtxoExitClaimHeights,
   mapVtxoExitPhases,
   mapVtxoExitStates,
@@ -57,8 +56,7 @@ export function VtxosTable() {
 
   const exitPhaseById = mapVtxoExitPhases(exitStatuses)
   const exitClaimHeightById = mapVtxoExitClaimHeights(exitStatuses)
-  const exitedVtxoIds = mapExitedVtxoIds(movements)
-  const exitStateById = mapVtxoExitStates(vtxos, exitPhaseById, exitedVtxoIds)
+  const exitStateById = mapVtxoExitStates(vtxos, exitPhaseById)
   const lockLabelById = mapVtxoLockLabels(vtxos, movements, t)
 
   const filteredVtxos = vtxos.filter((vtxo) => {

@@ -11,8 +11,6 @@ export type VtxoExitPhase = ExitStateType
 
 export type VtxoExitState = 'exiting' | 'exited'
 
-const EXIT_SUBSYSTEM_NAME = 'bark.exit'
-
 export function isExitedPhase(phase: VtxoExitPhase): boolean {
   return phase === 'claimed'
 }
@@ -21,23 +19,9 @@ export function isCanceledPhase(phase: VtxoExitPhase): boolean {
   return phase === 'vtxo-already-spent'
 }
 
-export function mapExitedVtxoIds(movements: Movement[]): Set<string> {
-  const ids = new Set<string>()
-  for (const movement of movements) {
-    if (movement.subsystem.name !== EXIT_SUBSYSTEM_NAME) {
-      continue
-    }
-    for (const id of movement.inputVtxos) {
-      ids.add(id)
-    }
-  }
-  return ids
-}
-
 export function mapVtxoExitStates(
   vtxos: WalletVtxoInfo[],
-  exitPhaseById: Map<string, VtxoExitPhase>,
-  exitedVtxoIds: Set<string>
+  exitPhaseById: Map<string, VtxoExitPhase>
 ): Map<string, VtxoExitState> {
   const states = new Map<string, VtxoExitState>()
   for (const vtxo of vtxos) {
@@ -46,7 +30,7 @@ export function mapVtxoExitStates(
       states.set(vtxo.id, isExitedPhase(phase) ? 'exited' : 'exiting')
       continue
     }
-    if (exitedVtxoIds.has(vtxo.id) && vtxo.state.type === 'spent') {
+    if (vtxo.state.type === 'exited') {
       states.set(vtxo.id, 'exited')
     }
   }
