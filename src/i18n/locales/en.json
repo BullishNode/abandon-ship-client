@@ -192,13 +192,8 @@
     "filters": {
       "label": "Filters"
     },
-    "kinds": {
-      "exit": "Exit",
-      "refresh": "Refresh"
-    },
     "onchain": {
       "label": "On-chain receive · {{txid}}",
-      "exit_fee_label": "Exit fee",
       "detail": {
         "title": "On-chain receive",
         "txid": "Transaction",
@@ -223,7 +218,9 @@
       "onchain": "On-chain",
       "lightning": "Lightning",
       "ark": "Ark",
-      "exit": "On-chain: Exit"
+      "exit": "On-chain: Exit",
+      "exit_fee": "On-chain: Exit fee",
+      "refresh": "Ark: Refresh"
     },
     "detail": {
       "title": "Transaction details",

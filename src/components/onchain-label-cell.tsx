@@ -1,15 +1,12 @@
-import { useTranslation } from 'react-i18next'
 import { useShallow } from 'zustand/react/shallow'
 import { Badge } from '@/components/ui/badge'
 import type { MetadataStore } from '@/stores/metadata'
 import { useMetadataStore } from '@/stores/metadata'
 import { useWalletStore } from '@/stores/wallet'
-import { getOnchainDefaultLabel } from '@/utils/movement-labels'
 
 interface OnchainLabelCellProps {
   txid: string
   bindingAddress: string | undefined
-  isCpfp: boolean
 }
 
 const EMPTY_TAGS: string[] = []
@@ -38,16 +35,14 @@ function selectLabelSource(
   return { label: binding.label?.trim() ?? '', tags: binding.tags }
 }
 
-export function OnchainLabelCell({ txid, bindingAddress, isCpfp }: OnchainLabelCellProps) {
-  const { t } = useTranslation()
+export function OnchainLabelCell({ txid, bindingAddress }: OnchainLabelCellProps) {
   const fingerprint = useWalletStore((state) => state.wallet?.fingerprint)
   const { label, tags } = useMetadataStore(
     useShallow((state) => selectLabelSource(state, fingerprint, txid, bindingAddress))
   )
-  const resolvedLabel = label.length === 0 ? getOnchainDefaultLabel(isCpfp, t) : label
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      {resolvedLabel.length > 0 ? <span className="text-foreground">{resolvedLabel}</span> : null}
+      {label.length > 0 ? <span className="text-foreground">{label}</span> : null}
       {tags.map((tag) => (
         <Badge key={tag} variant="muted">
           {tag}

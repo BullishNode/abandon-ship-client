@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label'
 import { useMetadataStore } from '@/stores/metadata'
 import { useWalletStore } from '@/stores/wallet'
-import { getOnchainDefaultLabel } from '@/utils/movement-labels'
 import type { OnchainTxEntry } from '@/utils/movements-feed'
 import { truncateMiddleChars } from '@/utils/truncate-middle'
 
@@ -110,7 +109,7 @@ function OnchainEntryDetailContent({
             />
             <div className="flex flex-col items-end gap-2">
               <MovementStatusBadge status={entry.status} />
-              <MovementSourceBadge source={entry.isCpfp ? 'exit' : 'onchain'} />
+              <MovementSourceBadge source={entry.isCpfp ? 'exit_fee' : 'onchain'} />
             </div>
           </div>
           <CopyableValueRow
@@ -127,7 +126,7 @@ function OnchainEntryDetailContent({
         </div>
         <LabelEditor
           inputId="onchain-label"
-          label={annotation?.label ?? getOnchainDefaultLabel(entry.isCpfp, t)}
+          label={annotation?.label ?? ''}
           onSave={(nextLabel) => {
             setOnchainAnnotation(entry.txid, {
               label: nextLabel,

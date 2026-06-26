@@ -12,7 +12,6 @@ import { Label } from '@/components/ui/label'
 import { useUpdateMovementMetadata } from '@/hooks/barkd/use-update-movement-metadata'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { getMovementMetadata } from '@/utils/metadata'
-import { getMovementDefaultLabel } from '@/utils/movement-labels'
 import {
   getMovementCounterpartyDestination,
   getMovementDirection,
@@ -85,7 +84,6 @@ function MovementDetailContent({
   const { copy, isCopied } = useCopyToClipboard()
   const movementId = movement.id
   const metadata = getMovementMetadata(movement)
-  const defaultLabel = getMovementDefaultLabel(movement.subsystem, t)
   const updateMetadata = useUpdateMovementMetadata()
   const direction = getMovementDirection(movement)
   const counterparty = getMovementCounterpartyDestination(movement)
@@ -145,7 +143,7 @@ function MovementDetailContent({
         </div>
         <LabelEditor
           inputId="movement-label"
-          label={metadata?.label ?? defaultLabel}
+          label={metadata?.label ?? ''}
           onSave={(nextLabel) => {
             updateMetadata.mutate({
               id: movementId,

@@ -9,8 +9,10 @@ import type { MovementSource } from '@/utils/movement'
 const SOURCE_ICON: Record<Exclude<MovementSource, 'unknown'>, ComponentType> = {
   ark: CircleArkIcon,
   exit: CircleOnchainIcon,
+  exit_fee: CircleOnchainIcon,
   lightning: CircleLightningIcon,
-  onchain: CircleOnchainIcon
+  onchain: CircleOnchainIcon,
+  refresh: CircleArkIcon
 }
 
 interface MovementSourceBadgeProps {

@@ -1,7 +1,14 @@
 import type { Movement, MovementDestination, WalletTxInfo } from '@secondts/barkd'
 import { formatAddress } from '@/utils/format'
 
-export type MovementSource = 'onchain' | 'lightning' | 'ark' | 'exit' | 'unknown'
+export type MovementSource =
+  | 'onchain'
+  | 'lightning'
+  | 'ark'
+  | 'exit'
+  | 'exit_fee'
+  | 'refresh'
+  | 'unknown'
 
 export function getMovementDirection(movement: Movement): 'incoming' | 'outgoing' {
   return movement.effectiveBalanceSat >= 0 ? 'incoming' : 'outgoing'
@@ -82,6 +89,9 @@ export function isArkToOnchainTransfer(subsystem: Movement['subsystem']): boolea
 export function getMovementSource(movement: Movement): MovementSource {
   if (isExitSubsystem(movement.subsystem.name)) {
     return 'exit'
+  }
+  if (movement.subsystem.kind === 'refresh') {
+    return 'refresh'
   }
   const destinations = [...movement.sentTo, ...movement.receivedOn]
   for (const destination of destinations) {

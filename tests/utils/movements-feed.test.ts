@@ -2,7 +2,12 @@ import { BarkNetwork } from '@secondts/barkd'
 import type { UtxoInfo, WalletTxInfo } from '@secondts/barkd'
 import { Transaction } from 'bitcoinjs-lib'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { buildMovementsFeed, buildOnchainTxEntries } from '../../src/utils/movements-feed'
+import {
+  buildMovementsFeed,
+  buildOnchainTxEntries,
+  filterFeedByTab,
+  getFeedRowSource
+} from '../../src/utils/movements-feed'
 import { createMovement } from '../fixtures/movements'
 
 function hexToBytes(hex: string): Uint8Array {
@@ -349,5 +354,49 @@ describe(buildOnchainTxEntries, () => {
     })
     expect(entry.firstSeenMs).toBeNull()
     expect(entry.approximateTimestampMs).toBe(NOW.getTime())
+  })
+})
+
+describe(getFeedRowSource, () => {
+  it('classifies a refresh movement row as refresh', () => {
+    const movement = createMovement({ id: 1, subsystem: { kind: 'refresh', name: 'bark.round' } })
+    expect(getFeedRowSource({ kind: 'movement', movement })).toBe('refresh')
+  })
+
+  it('classifies a cpfp onchain row as exit_fee', () => {
+    const rawTx = buildRawTx([], [{ programHex: REGTEST_PROGRAM_A, valueSat: 1000 }])
+    const txid = deriveTxid(rawTx)
+    const [entry] = buildOnchainTxEntries([makeTx(rawTx, txid, { isCpfp: true })], [], {
+      network: BarkNetwork.Regtest
+    })
+    expect(getFeedRowSource(entry)).toBe('exit_fee')
+  })
+
+  it('classifies a plain onchain row as onchain', () => {
+    const rawTx = buildRawTx([], [{ programHex: REGTEST_PROGRAM_A, valueSat: 1000 }])
+    const txid = deriveTxid(rawTx)
+    const [entry] = buildOnchainTxEntries([makeTx(rawTx, txid)], [], {
+      network: BarkNetwork.Regtest
+    })
+    expect(getFeedRowSource(entry)).toBe('onchain')
+  })
+})
+
+describe(filterFeedByTab, () => {
+  it('includes refresh rows under the ark tab', () => {
+    const ark = createMovement({ id: 1, subsystem: { kind: 'arkoor', name: 'bark.ark' } })
+    const refresh = createMovement({ id: 2, subsystem: { kind: 'refresh', name: 'bark.round' } })
+    const feed = buildMovementsFeed([ark, refresh])
+    expect(filterFeedByTab(feed, 'ark')).toHaveLength(2)
+  })
+
+  it('includes exit_fee rows under the onchain tab', () => {
+    const rawTx = buildRawTx([], [{ programHex: REGTEST_PROGRAM_A, valueSat: 1000 }])
+    const txid = deriveTxid(rawTx)
+    const feed = buildMovementsFeed([], {
+      network: BarkNetwork.Regtest,
+      transactions: [makeTx(rawTx, txid, { isCpfp: true })]
+    })
+    expect(filterFeedByTab(feed, 'onchain')).toHaveLength(1)
   })
 })

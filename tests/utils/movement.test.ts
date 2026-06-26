@@ -174,6 +174,13 @@ describe(getMovementSource, () => {
     })
     expect(getMovementSource(movement)).toBe('exit')
   })
+
+  it('classifies a refresh movement as refresh', () => {
+    const movement = createMovement({
+      subsystem: { kind: 'refresh', name: 'bark.round' }
+    })
+    expect(getMovementSource(movement)).toBe('refresh')
+  })
 })
 
 describe(isOffboardSubsystem, () => {

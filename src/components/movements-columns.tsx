@@ -5,7 +5,6 @@ import { MovementLabelCell } from '@/components/movement-label-cell'
 import { MovementSourceBadge } from '@/components/movement-source-badge'
 import { MovementStatusBadge } from '@/components/movement-status-badge'
 import { OnchainLabelCell } from '@/components/onchain-label-cell'
-import { getMovementDefaultLabel } from '@/utils/movement-labels'
 import { getFeedRowSource } from '@/utils/movements-feed'
 import type { MovementsFeedRow } from '@/utils/movements-feed'
 
@@ -40,16 +39,9 @@ export function getMovementColumns({
       cell: ({ row }) => {
         const entry = row.original
         if (entry.kind === 'movement') {
-          const fallback = getMovementDefaultLabel(entry.movement.subsystem, t)
-          return <MovementLabelCell fallback={fallback} movement={entry.movement} />
+          return <MovementLabelCell movement={entry.movement} />
         }
-        return (
-          <OnchainLabelCell
-            bindingAddress={entry.bindingAddress}
-            isCpfp={entry.isCpfp}
-            txid={entry.txid}
-          />
-        )
+        return <OnchainLabelCell bindingAddress={entry.bindingAddress} txid={entry.txid} />
       },
       header: t('movements.columns.label'),
       id: 'label'

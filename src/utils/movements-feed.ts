@@ -195,7 +195,7 @@ export function getFeedRowSource(row: MovementsFeedRow): MovementSource {
   if (row.kind === 'movement') {
     return getMovementSource(row.movement)
   }
-  return row.isCpfp ? 'exit' : 'onchain'
+  return row.isCpfp ? 'exit_fee' : 'onchain'
 }
 
 export function filterFeedByTab(feed: MovementsFeedRow[], tab: MovementsTab): MovementsFeedRow[] {
@@ -205,7 +205,10 @@ export function filterFeedByTab(feed: MovementsFeedRow[], tab: MovementsTab): Mo
   return feed.filter((row) => {
     const source = getFeedRowSource(row)
     if (tab === 'onchain') {
-      return source === 'onchain' || source === 'exit'
+      return source === 'onchain' || source === 'exit' || source === 'exit_fee'
+    }
+    if (tab === 'ark') {
+      return source === 'ark' || source === 'refresh'
     }
     return source === tab
   })
