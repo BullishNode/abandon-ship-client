@@ -69,15 +69,15 @@ export function getMovementSource(movement: Movement): MovementSource {
   if (isExitSubsystem(movement.subsystem.name)) {
     return 'exit'
   }
-  if (isArkBridgeSubsystem(movement.subsystem.name)) {
-    return 'ark'
-  }
   const destinations = [...movement.sentTo, ...movement.receivedOn]
   for (const destination of destinations) {
     const source = sourceFromPaymentType(destination.destination.type)
     if (source) {
       return source
     }
+  }
+  if (isArkBridgeSubsystem(movement.subsystem.name)) {
+    return 'ark'
   }
   return sourceFromSubsystemName(movement.subsystem.name) ?? 'unknown'
 }
