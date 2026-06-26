@@ -1,5 +1,6 @@
-import { ArrowCircleUpIcon, CheckCircleIcon } from '@phosphor-icons/react'
+import { ArrowCircleUpIcon } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
+import { CircleCheckIcon } from '@/components/icons/circle-check'
 import { Badge } from '@/components/ui/badge'
 import { isExitedPhase } from '@/utils/vtxo'
 import type { VtxoExitPhase } from '@/utils/vtxo'
@@ -22,7 +23,7 @@ export function VtxoExitBadge({ phase }: VtxoExitBadgeProps) {
   if (isExitedPhase(phase)) {
     return (
       <Badge variant="outline">
-        <CheckCircleIcon className="text-muted-foreground" weight="fill" />
+        <CircleCheckIcon className="text-muted-foreground" />
         {t('vtxos.status.exited')}
       </Badge>
     )
