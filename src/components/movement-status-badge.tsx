@@ -1,18 +1,20 @@
-import {
-  CheckCircleIcon,
-  CircleNotchIcon,
-  MinusCircleIcon,
-  XCircleIcon
-} from '@phosphor-icons/react'
 import type { MovementStatus } from '@secondts/barkd'
+import type { ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
+import { CircleCheckIcon } from '@/components/icons/circle-check'
+import { CircleMinusIcon } from '@/components/icons/circle-minus'
+import { CircleSpinnerIcon } from '@/components/icons/circle-spinner'
+import { CircleXIcon } from '@/components/icons/circle-x'
 import { Badge } from '@/components/ui/badge'
 
-const STATUS_CONFIG: Record<MovementStatus, { icon: typeof CheckCircleIcon; iconClass: string }> = {
-  canceled: { icon: MinusCircleIcon, iconClass: 'text-muted-foreground' },
-  failed: { icon: XCircleIcon, iconClass: 'text-red-500' },
-  pending: { icon: CircleNotchIcon, iconClass: 'animate-spin text-muted-foreground' },
-  successful: { icon: CheckCircleIcon, iconClass: 'text-green-500' }
+const STATUS_CONFIG: Record<
+  MovementStatus,
+  { icon: ComponentType<{ className?: string }>; iconClass: string }
+> = {
+  canceled: { icon: CircleMinusIcon, iconClass: 'text-muted-foreground' },
+  failed: { icon: CircleXIcon, iconClass: 'text-red-500' },
+  pending: { icon: CircleSpinnerIcon, iconClass: 'animate-spin text-muted-foreground' },
+  successful: { icon: CircleCheckIcon, iconClass: 'text-green-500' }
 }
 
 interface MovementStatusBadgeProps {
@@ -25,7 +27,7 @@ export function MovementStatusBadge({ status }: MovementStatusBadgeProps) {
   const Icon = config.icon
   return (
     <Badge variant="outline">
-      <Icon className={config.iconClass} weight="fill" />
+      <Icon className={config.iconClass} />
       {t(`movements.status.${status}`)}
     </Badge>
   )

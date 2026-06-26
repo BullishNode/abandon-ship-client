@@ -1,12 +1,18 @@
-import { CheckCircleIcon, LockIcon, MinusCircleIcon } from '@phosphor-icons/react'
+import { LockIcon } from '@phosphor-icons/react'
+import type { ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
+import { CircleCheckIcon } from '@/components/icons/circle-check'
+import { CircleMinusIcon } from '@/components/icons/circle-minus'
 import { Badge } from '@/components/ui/badge'
 import type { VtxoStatus } from '@/utils/vtxo'
 
-const STATUS_CONFIG: Record<VtxoStatus, { icon: typeof CheckCircleIcon; iconClass: string }> = {
+const STATUS_CONFIG: Record<
+  VtxoStatus,
+  { icon: ComponentType<{ className?: string }>; iconClass: string }
+> = {
   locked: { icon: LockIcon, iconClass: 'text-amber-500' },
-  spendable: { icon: CheckCircleIcon, iconClass: 'text-green-500' },
-  spent: { icon: MinusCircleIcon, iconClass: 'text-muted-foreground' }
+  spendable: { icon: CircleCheckIcon, iconClass: 'text-green-500' },
+  spent: { icon: CircleMinusIcon, iconClass: 'text-muted-foreground' }
 }
 
 interface VtxoStatusBadgeProps {
@@ -20,7 +26,7 @@ export function VtxoStatusBadge({ status, label }: VtxoStatusBadgeProps) {
   const Icon = config.icon
   return (
     <Badge variant="outline">
-      <Icon className={config.iconClass} weight="fill" />
+      <Icon className={config.iconClass} />
       {label ?? t(`vtxos.status.${status}`)}
     </Badge>
   )
