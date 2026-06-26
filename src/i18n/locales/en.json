@@ -271,7 +271,8 @@
         "processing": "Broadcasting",
         "awaiting_delta": "Timelocked",
         "claimable": "Ready to claim",
-        "claim_in_progress": "Claiming"
+        "claim_in_progress": "Claiming",
+        "vtxo_already_spent": "Canceled"
       }
     },
     "expiry": {

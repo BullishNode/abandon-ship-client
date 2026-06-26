@@ -74,7 +74,8 @@ export function summarizeExits(exits: ExitTransactionStatus[]): ExitProgressSumm
     claimable: 0,
     claimed: 0,
     processing: 0,
-    start: 0
+    start: 0,
+    'vtxo-already-spent': 0
   }
   let confirmedLevels = 0
   let totalLevels = 0
@@ -87,13 +88,14 @@ export function summarizeExits(exits: ExitTransactionStatus[]): ExitProgressSumm
     totalLevels += exitTotalLevels(exit)
   }
   const total = exits.length
+  const terminal = counts.claimed + counts['vtxo-already-spent']
   return {
     claimable: counts.claimable,
     claimed: counts.claimed,
     confirmedLevels,
     counts,
-    inProgress: total > 0 && counts.claimed < total,
-    isDone: total > 0 && counts.claimed === total,
+    inProgress: total > 0 && terminal < total,
+    isDone: total > 0 && terminal === total,
     total,
     totalLevels
   }

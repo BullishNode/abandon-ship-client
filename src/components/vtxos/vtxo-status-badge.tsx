@@ -10,6 +10,7 @@ const STATUS_CONFIG: Record<
   VtxoStatus,
   { icon: ComponentType<{ className?: string }>; iconClass: string }
 > = {
+  exited: { icon: CircleCheckIcon, iconClass: 'text-muted-foreground' },
   locked: { icon: CircleLockIcon, iconClass: 'text-amber-500' },
   spendable: { icon: CircleCheckIcon, iconClass: 'text-green-500' },
   spent: { icon: CircleMinusIcon, iconClass: 'text-muted-foreground' }

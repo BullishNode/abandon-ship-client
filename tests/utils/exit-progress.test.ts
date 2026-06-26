@@ -92,6 +92,9 @@ function makeExitState(type: ExitState['type'], options: MakeExitOptions = {}): 
     case 'claimed': {
       return { block: BLOCK, tipHeight: 0, txid: 'tx', type: 'claimed' }
     }
+    case 'vtxo-already-spent': {
+      return { tipHeight: 0, type: 'vtxo-already-spent' }
+    }
     default: {
       throw new Error(`Unhandled exit state type: ${String(type)}`)
     }
@@ -185,6 +188,13 @@ describe(summarizeExits, () => {
     expect(result.inProgress).toBeFalsy()
     expect(result.isDone).toBeTruthy()
     expect(result.claimed).toBe(2)
+  })
+
+  it('treats a vtxo-already-spent exit as terminal', () => {
+    const exits = [makeExit('claimed'), makeExit('vtxo-already-spent')]
+    const result = summarizeExits(exits)
+    expect(result.inProgress).toBeFalsy()
+    expect(result.isDone).toBeTruthy()
   })
 
   it('counts confirmed exit-tree txs against total depth while processing', () => {

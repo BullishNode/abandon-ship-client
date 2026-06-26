@@ -17,6 +17,10 @@ export function isExitedPhase(phase: VtxoExitPhase): boolean {
   return phase === 'claimed'
 }
 
+export function isCanceledPhase(phase: VtxoExitPhase): boolean {
+  return phase === 'vtxo-already-spent'
+}
+
 export function mapExitedVtxoIds(movements: Movement[]): Set<string> {
   const ids = new Set<string>()
   for (const movement of movements) {
@@ -38,7 +42,7 @@ export function mapVtxoExitStates(
   const states = new Map<string, VtxoExitState>()
   for (const vtxo of vtxos) {
     const phase = exitPhaseById.get(vtxo.id)
-    if (phase !== undefined) {
+    if (phase !== undefined && !isCanceledPhase(phase)) {
       states.set(vtxo.id, isExitedPhase(phase) ? 'exited' : 'exiting')
       continue
     }

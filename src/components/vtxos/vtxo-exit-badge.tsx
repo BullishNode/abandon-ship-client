@@ -10,7 +10,8 @@ const PHASE_LABEL_KEY: Record<VtxoExitPhase, string> = {
   claimable: 'claimable',
   claimed: 'claimed',
   processing: 'processing',
-  start: 'start'
+  start: 'start',
+  'vtxo-already-spent': 'vtxo_already_spent'
 }
 
 interface VtxoExitBadgeProps {
