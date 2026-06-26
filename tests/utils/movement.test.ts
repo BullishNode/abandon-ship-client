@@ -5,6 +5,8 @@ import {
   getMovementDirection,
   getMovementFeeSat,
   getMovementSource,
+  isArkToOnchainTransfer,
+  isOffboardSubsystem,
   sumExitCpfpFeeSat
 } from '../../src/utils/movement'
 import { createMovement } from '../fixtures/movements'
@@ -171,6 +173,38 @@ describe(getMovementSource, () => {
       subsystem: { kind: 'exit', name: 'bark.exit' }
     })
     expect(getMovementSource(movement)).toBe('exit')
+  })
+})
+
+describe(isOffboardSubsystem, () => {
+  it('matches bark.offboard regardless of kind', () => {
+    expect(isOffboardSubsystem({ kind: 'send_onchain', name: 'bark.offboard' })).toBeTruthy()
+    expect(isOffboardSubsystem({ kind: 'offboard', name: 'bark.offboard' })).toBeTruthy()
+  })
+
+  it('matches bark.round only for offboard/send_onchain kinds', () => {
+    expect(isOffboardSubsystem({ kind: 'offboard', name: 'bark.round' })).toBeTruthy()
+    expect(isOffboardSubsystem({ kind: 'send_onchain', name: 'bark.round' })).toBeTruthy()
+    expect(isOffboardSubsystem({ kind: 'refresh', name: 'bark.round' })).toBeFalsy()
+  })
+
+  it('does not match exits or unrelated subsystems', () => {
+    expect(isOffboardSubsystem({ kind: 'exit', name: 'bark.exit' })).toBeFalsy()
+    expect(isOffboardSubsystem({ kind: 'send', name: 'bark.arkoor' })).toBeFalsy()
+  })
+})
+
+describe(isArkToOnchainTransfer, () => {
+  it('matches both exits and offboards', () => {
+    expect(isArkToOnchainTransfer({ kind: 'exit', name: 'bark.exit' })).toBeTruthy()
+    expect(isArkToOnchainTransfer({ kind: 'send_onchain', name: 'bark.offboard' })).toBeTruthy()
+    expect(isArkToOnchainTransfer({ kind: 'send_onchain', name: 'bark.round' })).toBeTruthy()
+  })
+
+  it('does not match ark or lightning movements', () => {
+    expect(isArkToOnchainTransfer({ kind: 'send', name: 'bark.arkoor' })).toBeFalsy()
+    expect(isArkToOnchainTransfer({ kind: 'refresh', name: 'bark.round' })).toBeFalsy()
+    expect(isArkToOnchainTransfer({ kind: 'send', name: 'bark.lightning_send' })).toBeFalsy()
   })
 })
 

@@ -65,6 +65,20 @@ export function isExitSubsystem(name: string): boolean {
   return name === 'bark.exit'
 }
 
+export function isOffboardSubsystem(subsystem: Movement['subsystem']): boolean {
+  if (subsystem.name === 'bark.offboard') {
+    return true
+  }
+  return (
+    subsystem.name === 'bark.round' &&
+    (subsystem.kind === 'offboard' || subsystem.kind === 'send_onchain')
+  )
+}
+
+export function isArkToOnchainTransfer(subsystem: Movement['subsystem']): boolean {
+  return isExitSubsystem(subsystem.name) || isOffboardSubsystem(subsystem)
+}
+
 export function getMovementSource(movement: Movement): MovementSource {
   if (isExitSubsystem(movement.subsystem.name)) {
     return 'exit'

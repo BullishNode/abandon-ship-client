@@ -139,6 +139,59 @@ describe(computeBalanceHistory, () => {
     expect(Math.max(...result.points.map((point) => point.balanceSat))).toBe(10_000)
   })
 
+  it('collapses a cooperative offboard and its landing into a single fee-only step', () => {
+    const received = createMovement({
+      effectiveBalanceSat: 10_000,
+      id: 1,
+      time: {
+        createdAt: new Date('2026-06-16T00:00:00Z'),
+        updatedAt: new Date('2026-06-16T00:00:00Z')
+      }
+    })
+    const offboard = createMovement({
+      effectiveBalanceSat: -10_000,
+      id: 2,
+      sentTo: [destination('bitcoin', 'bc1poffboard', 10_000)],
+      subsystem: { kind: 'send_onchain', name: 'bark.offboard' },
+      time: {
+        createdAt: new Date('2026-06-17T00:00:00Z'),
+        updatedAt: new Date('2026-06-17T00:00:00Z')
+      }
+    })
+    const landing = makeOnchainEntry({
+      amountSat: 9800,
+      approximateTimestampMs: new Date('2026-06-18T00:00:00Z').getTime(),
+      bindingAddress: 'bc1poffboard',
+      direction: 'incoming',
+      txid: 'landing'
+    })
+    const result = computeBalanceHistory([received, offboard], [landing], 9800)
+    expect(result.points.map((point) => point.balanceSat)).toStrictEqual([10_000, 9800])
+    expect(Math.max(...result.points.map((point) => point.balanceSat))).toBe(10_000)
+  })
+
+  it('collapses a round-based offboard (bark.round/send_onchain) and its landing', () => {
+    const offboard = createMovement({
+      effectiveBalanceSat: -10_000,
+      id: 1,
+      sentTo: [destination('bitcoin', 'bc1pround', 10_000)],
+      subsystem: { kind: 'send_onchain', name: 'bark.round' },
+      time: {
+        createdAt: new Date('2026-06-17T00:00:00Z'),
+        updatedAt: new Date('2026-06-17T00:00:00Z')
+      }
+    })
+    const landing = makeOnchainEntry({
+      amountSat: 9800,
+      approximateTimestampMs: new Date('2026-06-18T00:00:00Z').getTime(),
+      bindingAddress: 'bc1pround',
+      direction: 'incoming',
+      txid: 'landing'
+    })
+    const result = computeBalanceHistory([offboard], [landing], -200)
+    expect(result.points.map((point) => point.balanceSat)).toStrictEqual([-200])
+  })
+
   it('leaves an unmatched exit as a normal debit so a pending exit still dips', () => {
     const received = createMovement({
       effectiveBalanceSat: 10_000,

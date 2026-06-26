@@ -1,5 +1,5 @@
 import type { Movement, MovementStatus } from '@secondts/barkd'
-import { isExitSubsystem } from '@/utils/movement'
+import { isArkToOnchainTransfer } from '@/utils/movement'
 import type { OnchainTxEntry } from '@/utils/movements-feed'
 
 export interface BalanceDataPoint {
@@ -51,26 +51,30 @@ function onchainTxEvents(entries: OnchainTxEntry[]): BalanceEvent[] {
   return out
 }
 
-interface CollapsedExits {
-  exitEvents: BalanceEvent[]
+interface CollapsedTransfers {
+  collapsedEvents: BalanceEvent[]
   consumedMovementIds: Set<number>
   consumedTxids: Set<string>
 }
 
 /**
- * An exit is an internal transfer between the two ledgers the chart sums
- * (`offchain + onchain`): the movement leg debits the ark balance and the
- * on-chain landing credits the wallet by the same principal. Counted as two
- * legs they teleport the balance, because the legs carry different timestamps.
- * Collapse each matched pair into a single net (fee-only) step at the movement
- * time so the principal never appears to leave and return.
+ * An ark→onchain transfer is an internal transfer between the two ledgers
+ * the chart sums (`offchain + onchain`): the movement leg debits the ark
+ * balance and the on-chain landing credits the wallet by the same
+ * principal. Counted as two legs they teleport the balance, because the
+ * legs carry different timestamps. Collapse each matched pair into a
+ * single net (fee-only) step at the movement time so the principal never
+ * appears to leave and return.
  */
-function collapseExits(movements: Movement[], onchainEntries: OnchainTxEntry[]): CollapsedExits {
-  const exitEvents: BalanceEvent[] = []
+function collapseArkToOnchainTransfers(
+  movements: Movement[],
+  onchainEntries: OnchainTxEntry[]
+): CollapsedTransfers {
+  const collapsedEvents: BalanceEvent[] = []
   const consumedMovementIds = new Set<number>()
   const consumedTxids = new Set<string>()
   for (const movement of movements) {
-    if (!isExitSubsystem(movement.subsystem.name)) {
+    if (!isArkToOnchainTransfer(movement.subsystem)) {
       continue
     }
     if (NON_BALANCE_MOVEMENT_STATUSES.has(movement.status)) {
@@ -91,12 +95,12 @@ function collapseExits(movements: Movement[], onchainEntries: OnchainTxEntry[]):
     }
     consumedTxids.add(landing.txid)
     consumedMovementIds.add(movement.id)
-    exitEvents.push({
+    collapsedEvents.push({
       deltaSat: movement.effectiveBalanceSat + landing.amountSat,
       timestampMs: movement.time.createdAt.getTime()
     })
   }
-  return { consumedMovementIds, consumedTxids, exitEvents }
+  return { collapsedEvents, consumedMovementIds, consumedTxids }
 }
 
 export function computeBalanceHistory(
@@ -104,14 +108,14 @@ export function computeBalanceHistory(
   onchainEntries: OnchainTxEntry[],
   endpointTotalSat: number
 ): BalanceHistory {
-  const { exitEvents, consumedMovementIds, consumedTxids } = collapseExits(
+  const { collapsedEvents, consumedMovementIds, consumedTxids } = collapseArkToOnchainTransfers(
     movements,
     onchainEntries
   )
   const events = [
     ...movementEvents(movements.filter((movement) => !consumedMovementIds.has(movement.id))),
     ...onchainTxEvents(onchainEntries.filter((entry) => !consumedTxids.has(entry.txid))),
-    ...exitEvents
+    ...collapsedEvents
   ]
   if (events.length === 0) {
     return { initialBalanceSat: endpointTotalSat, points: [] }
