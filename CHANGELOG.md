@@ -5,6 +5,38 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-06-29
+
+### Added
+
+- VTXO page.
+- Emergency exit for selected VTXOs.
+- Input amount field switches between bitcoin unit and fiat.
+- Copy a movement's raw JSON and export barkd logs.
+- Optimistic pending row for offboard transactions in the movements table.
+- Embedded build support.
+
+### Changed
+
+- Updated `@secondts/barkd` to 0.3.0 and bumped the Docker images to bark 0.3.0.
+- Refresh and exit-fee payment types are distinguished, dropping auto-labels.
+- Ark→on-chain sends are labelled "On-chain" instead of "Ark".
+- Locales are bundled into the build instead of fetched over HTTP at runtime.
+- Movement and on-chain detail dialogs aligned with the VTXO design.
+- Noble crypto provider injected for Branta over HTTP.
+- Split exit CPFP change from the pending on-chain balance.
+- Theme-legible favicon on a circular tile.
+
+### Fixed
+
+- Balance chart no longer spikes on offboards; improved y-axis formatting.
+- Whitespace is stripped from pasted payment input before decoding.
+- Selected destination pill is highlighted for uppercase BIP-321 URIs.
+- Starting exits are counted in emergency-exit progress.
+- Send modal no longer shifts layout on input or amount entry.
+- Error toast shown on send failures.
+- Larger, clearer status badge and network icons.
+
 ## [0.2.6] - 2026-06-15
 
 ### Added
