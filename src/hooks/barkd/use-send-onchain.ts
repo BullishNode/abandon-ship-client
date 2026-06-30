@@ -2,7 +2,7 @@ import type { OffboardResult, SendOnchainRequest } from '@secondts/barkd'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseMutationOptions } from '@tanstack/react-query'
 import { walletApi } from '@/lib/barkd-client'
-import { invalidateWalletState } from '@/lib/query-invalidations'
+import { invalidateOffboardState } from '@/lib/query-invalidations'
 
 export function useSendOnchain(
   options?: Omit<UseMutationOptions<OffboardResult, Error, SendOnchainRequest>, 'mutationFn'>
@@ -17,7 +17,7 @@ export function useSendOnchain(
     ...options,
     onSuccess: async (...args) => {
       await options?.onSuccess?.(...args)
-      await invalidateWalletState(queryClient)
+      await invalidateOffboardState(queryClient)
     }
   })
 }

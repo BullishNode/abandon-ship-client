@@ -2,7 +2,7 @@ import type { SendRequest, SendResponse } from '@secondts/barkd'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseMutationOptions } from '@tanstack/react-query'
 import { walletApi } from '@/lib/barkd-client'
-import { invalidateWalletState } from '@/lib/query-invalidations'
+import { invalidateMovementState } from '@/lib/query-invalidations'
 
 export function useSend(
   options?: Omit<UseMutationOptions<SendResponse, Error, SendRequest>, 'mutationFn'>
@@ -17,7 +17,7 @@ export function useSend(
     ...options,
     onSuccess: async (...args) => {
       await options?.onSuccess?.(...args)
-      await invalidateWalletState(queryClient)
+      await invalidateMovementState(queryClient)
     }
   })
 }

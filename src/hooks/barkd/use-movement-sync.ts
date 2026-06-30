@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { invalidateWalletState } from '@/lib/query-invalidations'
+import { invalidateMovementState } from '@/lib/query-invalidations'
 import { useNotifications } from './use-notifications'
 
 export function useMovementSync(): void {
@@ -11,7 +11,7 @@ export function useMovementSync(): void {
       notification.type === 'movement-updated' ||
       notification.type === 'channel-lagging'
     ) {
-      void invalidateWalletState(queryClient)
+      void invalidateMovementState(queryClient)
     }
   })
 }
