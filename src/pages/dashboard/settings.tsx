@@ -71,9 +71,9 @@ const BITCOIN_UNITS: { value: BitcoinUnit; label: string }[] = [
 ]
 
 const PRICE_PROVIDERS: { value: PriceProviderId; label: string }[] = [
-  { label: 'Binance', value: 'binance' },
+  { label: 'Kraken', value: 'kraken' },
   { label: 'CoinGecko', value: 'coingecko' },
-  { label: 'Kraken', value: 'kraken' }
+  { label: 'Binance', value: 'binance' }
 ]
 
 const FIAT_CURRENCIES: { value: FiatCurrency; label: string }[] = [
