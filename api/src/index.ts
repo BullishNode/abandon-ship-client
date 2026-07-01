@@ -3,10 +3,15 @@ import { readFile, stat } from 'node:fs/promises'
 import { Readable } from 'node:stream'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
+import type { Context, Next } from 'hono'
+import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
 import { cors } from 'hono/cors'
+import { Authenticator } from './auth.js'
 
 const WALLET_DIR = process.env.WALLET_DIR ?? '/wallet-data/.bark'
 const PORT = Number.parseInt(process.env.PORT ?? '4001', 10)
+const HOSTNAME =
+  process.env.HOST !== undefined && process.env.HOST !== '' ? process.env.HOST : '0.0.0.0'
 const BARKD_URL = process.env.BARKD_URL ?? 'http://barkd:4000'
 const ARK_SERVER = process.env.ARK_SERVER ?? ''
 const CHAIN_SOURCE = process.env.CHAIN_SOURCE ?? ''
@@ -22,6 +27,20 @@ const ALLOWED_ORIGINS = new Set(
 const TOKEN_PATH = `${WALLET_DIR}/auth_token`
 const LOG_PATH = `${WALLET_DIR}/debug.log`
 const LOG_DOWNLOAD_NAME = 'barkd-debug.log'
+
+const UI_AUTH = (process.env.UI_AUTH ?? 'false').toLowerCase() === 'true'
+const UI_PASSWORD_FILE = process.env.UI_PASSWORD_FILE ?? `${WALLET_DIR}/ui_password`
+const SESSION_SECRET_PATH = process.env.UI_SESSION_SECRET_FILE ?? `${WALLET_DIR}/ui_session_secret`
+const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60
+const CSRF_HEADER = 'x-requested-with'
+const CSRF_TOKEN = 'bark'
+const STATE_CHANGING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
+
+const auth = new Authenticator({
+  passwordFile: UI_PASSWORD_FILE,
+  secretPath: SESSION_SECRET_PATH,
+  ttlSeconds: SESSION_TTL_SECONDS
+})
 
 let cachedToken: string | null = null
 
@@ -61,8 +80,9 @@ const app = new Hono()
 app.use(
   '*',
   cors({
-    allowHeaders: ['Authorization', 'Content-Type'],
+    allowHeaders: ['Authorization', 'Content-Type', 'X-Requested-With'],
     allowMethods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true,
     origin: (origin) => {
       if (origin === undefined) {
         return origin
@@ -82,6 +102,94 @@ app.get('/api/config', (c) =>
     walletDataPath: WALLET_DATA_PATH
   })
 )
+
+function isSecureRequest(c: { req: { header: (name: string) => string | undefined } }): boolean {
+  return c.req.header('x-forwarded-proto') === 'https'
+}
+
+function clientKey(c: Context): string {
+  const forwardedFor = c.req.header('x-forwarded-for')
+  if (forwardedFor !== undefined && forwardedFor !== '') {
+    const lastHop = forwardedFor.split(',').at(-1)?.trim()
+    if (lastHop !== undefined && lastHop !== '') {
+      return lastHop
+    }
+  }
+  return 'global'
+}
+
+interface LoginBody {
+  password?: unknown
+}
+
+app.get('/api/auth/status', async (c) => {
+  if (!UI_AUTH) {
+    return c.json({ authRequired: false, authed: true })
+  }
+  const authed = await auth.verifyCookie(getCookie(c, auth.cookieName))
+  return c.json({ authRequired: true, authed })
+})
+
+app.post('/api/login', async (c) => {
+  if (!UI_AUTH) {
+    return c.json({ ok: true })
+  }
+  const key = clientKey(c)
+  if (auth.isLockedOut(key)) {
+    return c.json({ error: 'rate_limited' }, 429)
+  }
+  if (!(await auth.isConfigured())) {
+    return c.json({ error: 'auth_unconfigured' }, 503)
+  }
+  const body = await c.req.json<LoginBody>().catch(() => null)
+  const password = typeof body?.password === 'string' ? body.password : ''
+  if (!(await auth.verifyPassword(password))) {
+    auth.registerFailure(key)
+    return c.json({ error: 'invalid_credentials' }, 401)
+  }
+  auth.registerSuccess(key)
+  setCookie(c, auth.cookieName, await auth.issueCookie(), {
+    httpOnly: true,
+    maxAge: auth.ttl,
+    path: '/',
+    sameSite: 'Strict',
+    secure: isSecureRequest(c)
+  })
+  return c.json({ ok: true })
+})
+
+app.post('/api/logout', (c) => {
+  deleteCookie(c, auth.cookieName, { path: '/' })
+  return c.json({ ok: true })
+})
+
+async function requireSession(c: Context, next: Next) {
+  if (!UI_AUTH) {
+    await next()
+    return
+  }
+  let denial: Response | null = null
+  if (!(await auth.isConfigured())) {
+    denial = c.json({ error: 'auth_unconfigured' }, 503)
+  } else if (!(await auth.verifyCookie(getCookie(c, auth.cookieName)))) {
+    denial = c.json({ error: 'unauthorized' }, 401)
+  } else if (STATE_CHANGING_METHODS.has(c.req.method) && c.req.header(CSRF_HEADER) !== CSRF_TOKEN) {
+    denial = c.json({ error: 'csrf' }, 403)
+  }
+  if (denial) {
+    c.res = denial
+    return
+  }
+  await next()
+}
+
+app.use('/api/barkd/*', async (c: Context, next: Next) => {
+  await requireSession(c, next)
+})
+
+app.use('/api/logs', async (c: Context, next: Next) => {
+  await requireSession(c, next)
+})
 
 async function getLogSize(): Promise<number | null> {
   try {
@@ -155,6 +263,6 @@ app.all('/api/barkd/*', async (c) => {
   })
 })
 
-serve({ fetch: app.fetch, hostname: '0.0.0.0', port: PORT }, (info) => {
+serve({ fetch: app.fetch, hostname: HOSTNAME, port: PORT }, (info) => {
   console.log(`bark-web-api listening on :${info.port}`)
 })

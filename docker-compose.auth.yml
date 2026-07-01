@@ -1,0 +1,10 @@
+# Opt-in dev login gate, layered by `npm run dev:*:auth`. Not auto-merged, so the
+# plain `dev:*` scripts stay open. ./.auth-dev (password + secret) is git-ignored.
+services:
+  api:
+    environment:
+      - UI_AUTH=true
+      - UI_PASSWORD_FILE=/auth-dev/ui_password
+      - UI_SESSION_SECRET_FILE=/auth-dev/ui_session_secret
+    volumes:
+      - ./.auth-dev:/auth-dev
