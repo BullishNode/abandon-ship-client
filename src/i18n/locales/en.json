@@ -66,6 +66,17 @@
     "setting_up": "Setting up your wallet",
     "loading": "Loading your wallet"
   },
+  "login": {
+    "title": "Unlock $t(app.name)",
+    "description": "Enter your password to continue",
+    "password": "Password",
+    "submit": "Unlock",
+    "error": {
+      "invalid": "Incorrect password",
+      "rate_limited": "Too many attempts. Wait a moment and try again.",
+      "error": "Something went wrong. Please try again."
+    }
+  },
   "onboarding": {
     "create": "Create new wallet",
     "import": "Import existing wallet"

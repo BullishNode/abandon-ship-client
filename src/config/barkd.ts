@@ -1,5 +1,19 @@
 import { BarkNetwork, Configuration } from '@secondts/barkd'
 import { z } from 'zod'
+import { useAuthStore } from '@/stores/auth'
+
+const UNAUTHORIZED = 401
+
+const authMiddleware = {
+  // oxlint-disable-next-line require-await
+  post: async ({ response }: { response: Response }): Promise<Response> => {
+    const { authRequired, setStatus } = useAuthStore.getState()
+    if (response.status === UNAUTHORIZED && authRequired) {
+      setStatus({ authRequired: true, authed: false })
+    }
+    return response
+  }
+}
 
 declare global {
   interface Window {
@@ -77,6 +91,9 @@ export async function initConfig(): Promise<void> {
     chainSource: parsed.chainSource,
     client: new Configuration({
       basePath: '/api/barkd',
+      credentials: 'same-origin',
+      headers: { 'X-Requested-With': 'bark' },
+      middleware: [authMiddleware],
       ...(token === undefined ? {} : { accessToken: token })
     }),
     network: parsed.network,

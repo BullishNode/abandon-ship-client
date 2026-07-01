@@ -38,3 +38,6 @@ coverage
 start9-app/docker-images/
 start9-app/image.tar
 start9-app/*.s9pk
+
+# Dev login-gate secrets
+.auth-dev/

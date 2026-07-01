@@ -4,11 +4,14 @@ import type { Root } from 'react-dom/client'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import './i18n'
+import { AuthGate } from './components/auth-gate'
 import { ErrorBoundary } from './components/error-boundary'
 import { FullScreenLayout } from './components/full-screen-layout'
 import { LoadingScreen } from './components/loading-screen'
 import { initConfig } from './config/barkd'
+import { fetchAuthStatus } from './lib/auth-api'
 import { queryClient } from './lib/query-client'
+import { useAuthStore } from './stores/auth'
 
 const root = document.querySelector('#root')
 if (!root) {
@@ -77,12 +80,18 @@ async function bootstrap(reactRoot: Root): Promise<void> {
   reactRoot.render(<LoadingScreen />)
   try {
     await initConfigWithRetry()
+
+    useAuthStore.getState().setStatus(await fetchAuthStatus())
+
     const { default: App } = await import('./App.tsx')
+
     reactRoot.render(
       <StrictMode>
         <ErrorBoundary>
           <QueryClientProvider client={queryClient}>
-            <App />
+            <AuthGate>
+              <App />
+            </AuthGate>
           </QueryClientProvider>
         </ErrorBoundary>
       </StrictMode>
