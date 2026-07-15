@@ -23,7 +23,10 @@ interface VtxoStatusBadgeProps {
 
 export function VtxoStatusBadge({ status, label }: VtxoStatusBadgeProps) {
   const { t } = useTranslation()
-  const config = STATUS_CONFIG[status]
+  const config: (typeof STATUS_CONFIG)[VtxoStatus] | undefined = STATUS_CONFIG[status]
+  if (config === undefined) {
+    return <Badge variant="outline">{label ?? status ?? '—'}</Badge>
+  }
   const Icon = config.icon
   return (
     <Badge variant="outline">
