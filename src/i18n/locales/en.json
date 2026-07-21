@@ -283,7 +283,8 @@
         "awaiting_delta": "Timelocked",
         "claimable": "Ready to claim",
         "claim_in_progress": "Claiming",
-        "vtxo_already_spent": "Canceled"
+        "vtxo_already_spent": "Canceled",
+        "canceled": "Canceled"
       }
     },
     "expiry": {

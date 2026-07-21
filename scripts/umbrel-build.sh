@@ -13,7 +13,7 @@ if [ -f docker/checksums.env ]; then
   # shellcheck disable=SC1091
   set -a; source docker/checksums.env; set +a
 fi
-BARK_VERSION="${BARK_VERSION:-0.3.0}"
+BARK_VERSION="${BARK_VERSION:-0.4.0}"
 BARKD_SHA256_AMD64="${BARKD_SHA256_AMD64:-}"
 BARKD_SHA256_ARM64="${BARKD_SHA256_ARM64:-}"
 

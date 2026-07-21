@@ -70,6 +70,7 @@ function exitConfirmedLevels(exit: ExitTransactionStatus): number {
 export function summarizeExits(exits: ExitTransactionStatus[]): ExitProgressSummary {
   const counts: Record<ExitStateType, number> = {
     'awaiting-delta': 0,
+    canceled: 0,
     'claim-in-progress': 0,
     claimable: 0,
     claimed: 0,
@@ -88,7 +89,7 @@ export function summarizeExits(exits: ExitTransactionStatus[]): ExitProgressSumm
     totalLevels += exitTotalLevels(exit)
   }
   const total = exits.length
-  const terminal = counts.claimed + counts['vtxo-already-spent']
+  const terminal = counts.claimed + counts['vtxo-already-spent'] + counts.canceled
   return {
     claimable: counts.claimable,
     claimed: counts.claimed,

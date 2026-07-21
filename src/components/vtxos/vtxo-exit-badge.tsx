@@ -6,6 +6,7 @@ import type { VtxoExitPhase, VtxoExitState } from '@/utils/vtxo'
 
 const PHASE_LABEL_KEY: Record<VtxoExitPhase, string> = {
   'awaiting-delta': 'awaiting_delta',
+  canceled: 'canceled',
   'claim-in-progress': 'claim_in_progress',
   claimable: 'claimable',
   claimed: 'claimed',

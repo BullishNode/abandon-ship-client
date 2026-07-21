@@ -16,7 +16,7 @@ export function isExitedPhase(phase: VtxoExitPhase): boolean {
 }
 
 export function isCanceledPhase(phase: VtxoExitPhase): boolean {
-  return phase === 'vtxo-already-spent'
+  return phase === 'vtxo-already-spent' || phase === 'canceled'
 }
 
 export function mapVtxoExitStates(

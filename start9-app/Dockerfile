@@ -29,10 +29,10 @@ FROM docker.io/debian:bookworm-slim AS barkd-fetch
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl \
     && rm -rf /var/lib/apt/lists/*
-ARG BARK_VERSION=0.3.0
+ARG BARK_VERSION=0.4.0
 ARG TARGETARCH
-ARG BARKD_SHA256_AMD64=8562fa27386bae666ed62fa95c92d40f7bdb20d22525f75799adfc16adaaedb3
-ARG BARKD_SHA256_ARM64=74a376146ed40a3d71e9813398689b74c50789f5727dc069ea572aa5dd99ae23
+ARG BARKD_SHA256_AMD64=8a9d3e64fd1e55c22bf1cb678691233a87a01230b5bcb6812b8b2cee4d341465
+ARG BARKD_SHA256_ARM64=b2e265d755ab8b727281b6dbed67bc74aabdfefe6127f4a01c2e93c251457664
 WORKDIR /out
 RUN case "${TARGETARCH}" in \
       amd64) ARCH="x86_64"; SHA="${BARKD_SHA256_AMD64}" ;; \

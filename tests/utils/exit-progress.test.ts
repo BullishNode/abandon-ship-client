@@ -95,6 +95,9 @@ function makeExitState(type: ExitState['type'], options: MakeExitOptions = {}): 
     case 'vtxo-already-spent': {
       return { tipHeight: 0, type: 'vtxo-already-spent' }
     }
+    case 'canceled': {
+      return { tipHeight: 0, type: 'canceled' }
+    }
     default: {
       throw new Error(`Unhandled exit state type: ${String(type)}`)
     }
