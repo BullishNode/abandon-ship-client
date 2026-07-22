@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-07-22
+
+### Added
+
+- Board on-chain funds into Ark, either everything at once or a chosen amount.
+- Board funding transactions are badged "On-chain: Board" in the movements list.
+
+### Changed
+
+- Updated `@secondts/barkd` to 0.4.0 and bumped the Docker images to bark 0.4.0.
+- Kraken is ordered first in the Bitcoin price source list.
+
+### Fixed
+
+- On-chain movement details dialog is titled "Transaction details" instead of "On-chain receive", which was wrong for sends and boards.
+- VTXO status badge guards against unknown vtxo state types.
+- Invalid price data is rejected before it reaches fiat amount entry.
+- Branta verification links and logos are restricted to https URLs.
+
 ## [0.3.1] - 2026-07-01
 
 ### Added

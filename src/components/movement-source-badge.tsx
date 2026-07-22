@@ -8,6 +8,7 @@ import type { MovementSource } from '@/utils/movement'
 
 const SOURCE_ICON: Record<Exclude<MovementSource, 'unknown'>, ComponentType> = {
   ark: CircleArkIcon,
+  board: CircleOnchainIcon,
   exit: CircleOnchainIcon,
   exit_fee: CircleOnchainIcon,
   lightning: CircleLightningIcon,

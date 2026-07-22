@@ -5,6 +5,7 @@ export type MovementSource =
   | 'onchain'
   | 'lightning'
   | 'ark'
+  | 'board'
   | 'exit'
   | 'exit_fee'
   | 'refresh'
@@ -86,9 +87,41 @@ export function isArkToOnchainTransfer(subsystem: Movement['subsystem']): boolea
   return isExitSubsystem(subsystem.name) || isOffboardSubsystem(subsystem)
 }
 
+export function isBoardSubsystem(subsystem: Movement['subsystem']): boolean {
+  return subsystem.name === 'bark.board'
+}
+
+function txidFromOutpoint(outpoint: string): string | null {
+  const [txid] = outpoint.split(':')
+  return txid !== undefined && txid.length > 0 ? txid : null
+}
+
+export function getBoardFundingTxids(movements: Movement[]): Set<string> {
+  const txids = new Set<string>()
+  const boardMovements = movements.filter((movement) => isBoardSubsystem(movement.subsystem))
+  for (const movement of boardMovements) {
+    const chainAnchor: unknown = movement.metadata?.chain_anchor
+    const anchorTxid = typeof chainAnchor === 'string' ? txidFromOutpoint(chainAnchor) : null
+    if (anchorTxid !== null) {
+      txids.add(anchorTxid)
+      continue
+    }
+    for (const vtxoId of movement.outputVtxos) {
+      const vtxoTxid = txidFromOutpoint(vtxoId)
+      if (vtxoTxid !== null) {
+        txids.add(vtxoTxid)
+      }
+    }
+  }
+  return txids
+}
+
 export function getMovementSource(movement: Movement): MovementSource {
   if (isExitSubsystem(movement.subsystem.name)) {
     return 'exit'
+  }
+  if (isBoardSubsystem(movement.subsystem)) {
+    return 'ark'
   }
   if (movement.subsystem.kind === 'refresh') {
     return 'refresh'
