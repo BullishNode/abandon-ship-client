@@ -3,8 +3,10 @@ import { useTranslation } from 'react-i18next'
 import { Outlet, useLocation } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { AppSidebar } from '@/components/app-sidebar'
+import { BoardModal } from '@/components/board-modal'
 import { ReceiveModal } from '@/components/receive-modal'
 import { SendModal } from '@/components/send-modal'
+import { WalletActionsPopover } from '@/components/wallet-actions-popover'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
@@ -28,19 +30,23 @@ export default function DashboardLayout() {
     sendOpen,
     sendInitialStep,
     receiveOpen,
+    boardOpen,
     openSend,
     setSendOpen,
     openReceive,
-    setReceiveOpen
+    setReceiveOpen,
+    setBoardOpen
   ] = useModalsStore(
     useShallow((state) => [
       state.sendOpen,
       state.sendInitialStep,
       state.receiveOpen,
+      state.boardOpen,
       state.openSend,
       state.setSendOpen,
       state.openReceive,
-      state.setReceiveOpen
+      state.setReceiveOpen,
+      state.setBoardOpen
     ])
   )
   useMovementSync()
@@ -90,6 +96,9 @@ export default function DashboardLayout() {
                 <span className="hidden md:inline">{t('actions.receive')}</span>
               </Button>
             </li>
+            <li>
+              <WalletActionsPopover />
+            </li>
           </ul>
         </header>
         <main className="flex-1 p-6">
@@ -97,6 +106,7 @@ export default function DashboardLayout() {
         </main>
         <ReceiveModal onOpenChange={setReceiveOpen} open={receiveOpen} />
         <SendModal initialStep={sendInitialStep} onOpenChange={setSendOpen} open={sendOpen} />
+        <BoardModal onOpenChange={setBoardOpen} open={boardOpen} />
       </SidebarInset>
     </SidebarProvider>
   )

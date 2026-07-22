@@ -21,6 +21,7 @@ export const onchainKeys = {
 
 export const feeKeys = {
   all: ['fees'] as const,
+  board: (amountSat: number | undefined) => [...feeKeys.all, 'board', amountSat] as const,
   lightningSend: (amountSat: number | undefined) =>
     [...feeKeys.all, 'lightning', 'send', amountSat] as const,
   onchainRates: () => [...feeKeys.all, 'onchain', 'rates'] as const,

@@ -1,3 +1,5 @@
 export const SATOSHIS_PER_BTC = 100_000_000
 
+export const PPM_DENOMINATOR = 1_000_000
+
 export const AVERAGE_BLOCK_INTERVAL_MS = 10 * 60 * 1000

@@ -12,7 +12,47 @@
     "paste": "Paste",
     "back": "Back",
     "confirm": "Confirm",
-    "delete": "Delete"
+    "delete": "Delete",
+    "more": "More actions"
+  },
+  "actions_menu": {
+    "board": {
+      "title": "Board",
+      "description": "Move on-chain bitcoin into your Ark wallet.",
+      "minimum": "Minimum amount: {{amount}}"
+    },
+    "refresh_all": {
+      "title": "Refresh all",
+      "description": "Refresh all of your VTXOs in the next round.",
+      "in_progress": "Refreshing",
+      "fee_estimate": "Estimated fee: {{fee}}",
+      "started": "Refresh started. Your VTXOs will renew in the next round.",
+      "error": "Could not start refresh. Please try again."
+    }
+  },
+  "board": {
+    "title": "Board",
+    "description": "Move on-chain bitcoin into your Ark wallet. Funds become spendable off-chain once the funding transaction confirms.",
+    "amount": "Amount",
+    "max": "Max",
+    "available": "Available on-chain: {{balance}}",
+    "minimum": "Minimum board amount: {{amount}}",
+    "fee_estimate": "Ark fee",
+    "onchain_fee_note": "An on-chain transaction fee also applies.",
+    "confirm": "Board",
+    "errors": {
+      "insufficient_funds": "Insufficient on-chain bitcoin. Available: {{balance}}",
+      "below_min": "Amount is below the minimum board amount of {{amount}}.",
+      "below_dust": "Amount is too small to board after fees."
+    },
+    "no_onchain": {
+      "description": "You have no on-chain bitcoin to board. Receive bitcoin to your on-chain wallet first.",
+      "receive": "Receive on-chain"
+    },
+    "toast": {
+      "started": "Board started. Funds will arrive once the transaction confirms.",
+      "error": "Could not start boarding. Please try again."
+    }
   },
   "bitcoin": {
     "sats_unit_one": "sat",
@@ -386,14 +426,6 @@
       "on_receive": {
         "label": "Refresh on receive",
         "description": "Enable to refresh received VTXOs in the next available round, rather than waiting until they approach expiry. Max security, max fees."
-      },
-      "manual": {
-        "label": "Refresh all",
-        "description": "Refresh all of your VTXOs in the next round.",
-        "button": "Refresh all",
-        "in_progress": "Refreshing",
-        "started": "Refresh started. Your VTXOs will renew in the next round.",
-        "error": "Could not start refresh. Please try again."
       }
     },
     "seed_phrase": {

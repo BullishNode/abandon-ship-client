@@ -1,9 +1,4 @@
-import {
-  ArrowsClockwiseIcon,
-  ArrowSquareOutIcon,
-  DownloadSimpleIcon,
-  WarningIcon
-} from '@phosphor-icons/react'
+import { ArrowSquareOutIcon, DownloadSimpleIcon, WarningIcon } from '@phosphor-icons/react'
 import { useEffect, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
@@ -34,8 +29,6 @@ import { useExitStatus } from '@/hooks/barkd/use-exit-status'
 import { useOnchainAddress } from '@/hooks/barkd/use-onchain-address'
 import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
 import { useOnchainFeeRates } from '@/hooks/barkd/use-onchain-fee-rates'
-import { usePendingRounds } from '@/hooks/barkd/use-pending-rounds'
-import { useRefreshAll } from '@/hooks/barkd/use-refresh-all'
 import { useResetWallet } from '@/hooks/barkd/use-reset-wallet'
 import { useStartEmergencyExit } from '@/hooks/barkd/use-start-emergency-exit'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
@@ -57,7 +50,6 @@ import type { RefreshThresholdOption } from '@/utils/refresh'
 import {
   getRefreshThresholdOptions,
   getThresholdLabelParts,
-  isRoundInProgress,
   resolveThresholdBlocks
 } from '@/utils/refresh'
 
@@ -167,7 +159,6 @@ export default function SettingsPage() {
   const { data: onchainBalance } = useOnchainBalance()
   const { data: vtxos } = useVtxos()
   const { data: feeRates } = useOnchainFeeRates()
-  const { data: pendingRounds } = usePendingRounds()
   const { data: arkInfo } = useArkInfo()
   const thresholdOptions = getRefreshThresholdOptions(
     arkInfo?.vtxoExpiryDelta,
@@ -189,15 +180,6 @@ export default function SettingsPage() {
         : t('settings.auto_refresh.threshold.fee', { percent: parts.feePercent })
     return `${time} · ${fee}`
   }
-  const { mutate: refreshAll, isPending: isRefreshing } = useRefreshAll({
-    onError: () => {
-      toast.error(t('settings.auto_refresh.manual.error'))
-    },
-    onSuccess: () => {
-      toast.success(t('settings.auto_refresh.manual.started'))
-    }
-  })
-  const isRoundActive = isRoundInProgress(pendingRounds)
   const summary = summarizeExits(exitStatuses ?? [])
   const feeRateSatPerVb = feeRates?.regularSatPerVb ?? 0
   const estimatedFeeSat = estimateEmergencyExitFeeSat(vtxos ?? [], feeRateSatPerVb)
@@ -434,24 +416,6 @@ export default function SettingsPage() {
           id="refresh-on-receive"
           onCheckedChange={setRefreshOnReceive}
         />
-      </Field>
-      <Field orientation="responsive">
-        <FieldContent>
-          <FieldLabel>{t('settings.auto_refresh.manual.label')}</FieldLabel>
-          <FieldDescription>{t('settings.auto_refresh.manual.description')}</FieldDescription>
-        </FieldContent>
-        <Button
-          disabled={hasNoVtxos || isRoundActive || isRefreshing}
-          onClick={() => refreshAll()}
-          variant="outline"
-        >
-          <ArrowsClockwiseIcon
-            className={isRoundActive || isRefreshing ? 'animate-spin' : undefined}
-          />
-          {isRoundActive
-            ? t('settings.auto_refresh.manual.in_progress')
-            : t('settings.auto_refresh.manual.button')}
-        </Button>
       </Field>
       <Field>
         <FieldLabel htmlFor="seed-phrase">{t('settings.seed_phrase.label')}</FieldLabel>

@@ -14,16 +14,29 @@ async function readJsonBody(response: Response): Promise<unknown> {
   }
 }
 
+export async function barkdErrorMessage(error: unknown): Promise<string | undefined> {
+  if (error instanceof ResponseError) {
+    const body = await readJsonBody(error.response)
+    if (typeof body === 'object' && body !== null && 'message' in body) {
+      const { message } = body
+      if (typeof message === 'string' && message.length > 0) {
+        return message
+      }
+    }
+    return undefined
+  }
+  if (error instanceof Error && error.message.length > 0) {
+    return error.message
+  }
+  return undefined
+}
+
 export async function isWalletAlreadyExistsError(error: unknown): Promise<boolean> {
   if (!(error instanceof ResponseError)) {
     return false
   }
-  const body = await readJsonBody(error.response)
-  if (typeof body !== 'object' || body === null || !('message' in body)) {
-    return false
-  }
-  const { message } = body
-  if (typeof message !== 'string') {
+  const message = await barkdErrorMessage(error)
+  if (message === undefined) {
     return false
   }
   return WALLET_EXISTS_MESSAGES.some((known) => message.includes(known))
