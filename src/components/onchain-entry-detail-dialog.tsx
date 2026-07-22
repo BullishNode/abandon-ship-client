@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label'
 import { useMetadataStore } from '@/stores/metadata'
 import { useWalletStore } from '@/stores/wallet'
+import { getFeedRowSource } from '@/utils/movements-feed'
 import type { OnchainTxEntry } from '@/utils/movements-feed'
 import { truncateMiddleChars } from '@/utils/truncate-middle'
 
@@ -93,7 +94,7 @@ function OnchainEntryDetailContent({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>{t('movements.onchain.detail.title')}</DialogTitle>
+        <DialogTitle>{t('movements.detail.title')}</DialogTitle>
       </DialogHeader>
       <div className="flex flex-col gap-5">
         <div className="flex flex-col divide-y divide-border *:py-3 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0">
@@ -109,7 +110,7 @@ function OnchainEntryDetailContent({
             />
             <div className="flex flex-col items-end gap-2">
               <MovementStatusBadge status={entry.status} />
-              <MovementSourceBadge source={entry.isCpfp ? 'exit_fee' : 'onchain'} />
+              <MovementSourceBadge source={getFeedRowSource(entry)} />
             </div>
           </div>
           <CopyableValueRow

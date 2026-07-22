@@ -244,9 +244,7 @@
       "label": "Filters"
     },
     "onchain": {
-      "label": "On-chain receive · {{txid}}",
       "detail": {
-        "title": "On-chain receive",
         "txid": "Transaction",
         "height": "Block height",
         "pending": "Pending"
@@ -269,6 +267,7 @@
       "onchain": "On-chain",
       "lightning": "Lightning",
       "ark": "Ark",
+      "board": "On-chain: Board",
       "exit": "On-chain: Exit",
       "exit_fee": "On-chain: Exit fee",
       "refresh": "Ark: Refresh"

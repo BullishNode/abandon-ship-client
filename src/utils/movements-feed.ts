@@ -1,7 +1,7 @@
 import type { BarkNetwork, Movement, MovementStatus, UtxoInfo, WalletTxInfo } from '@secondts/barkd'
 import { AVERAGE_BLOCK_INTERVAL_MS } from '@/constants/btc'
 import type { MovementsTab, PendingOffboard } from '@/types/movements'
-import { getMovementSource } from '@/utils/movement'
+import { getBoardFundingTxids, getMovementSource } from '@/utils/movement'
 import type { MovementSource } from '@/utils/movement'
 import { decodeInputs, decodeOutputs } from '@/utils/tx-address'
 
@@ -17,6 +17,7 @@ export interface OnchainTxEntry {
   firstSeenMs: number | null
   feeSat: number | null
   isCpfp: boolean
+  isBoard: boolean
   isOptimistic?: boolean
 }
 
@@ -91,6 +92,7 @@ interface BuildOnchainOptions {
   tipHeight?: number
   network: BarkNetwork
   firstSeenAt?: Record<string, string>
+  boardTxids?: Set<string>
 }
 
 export function buildOnchainTxEntries(
@@ -119,6 +121,7 @@ export function buildOnchainTxEntries(
       direction,
       feeSat: tx.onchainFeeSat ?? null,
       firstSeenMs: firstSeen,
+      isBoard: options.boardTxids?.has(tx.txid) ?? false,
       isCpfp: tx.isCpfp,
       kind: 'onchain',
       status,
@@ -181,6 +184,7 @@ function buildOptimisticOffboardEntries(
       direction: 'outgoing',
       feeSat: null,
       firstSeenMs: item.createdAtMs,
+      isBoard: false,
       isCpfp: false,
       isOptimistic: true,
       kind: 'onchain',
@@ -195,7 +199,10 @@ export function getFeedRowSource(row: MovementsFeedRow): MovementSource {
   if (row.kind === 'movement') {
     return getMovementSource(row.movement)
   }
-  return row.isCpfp ? 'exit_fee' : 'onchain'
+  if (row.isCpfp) {
+    return 'exit_fee'
+  }
+  return row.isBoard ? 'board' : 'onchain'
 }
 
 export function filterFeedByTab(feed: MovementsFeedRow[], tab: MovementsTab): MovementsFeedRow[] {
@@ -205,7 +212,9 @@ export function filterFeedByTab(feed: MovementsFeedRow[], tab: MovementsTab): Mo
   return feed.filter((row) => {
     const source = getFeedRowSource(row)
     if (tab === 'onchain') {
-      return source === 'onchain' || source === 'exit' || source === 'exit_fee'
+      return (
+        source === 'onchain' || source === 'board' || source === 'exit' || source === 'exit_fee'
+      )
     }
     if (tab === 'ark') {
       return source === 'ark' || source === 'refresh'
@@ -229,6 +238,7 @@ export function buildMovementsFeed(
   let onchainEntries: OnchainTxEntry[] = []
   if (options.network !== undefined && options.transactions !== undefined) {
     onchainEntries = buildOnchainTxEntries(options.transactions, options.utxos ?? [], {
+      boardTxids: getBoardFundingTxids(movements),
       firstSeenAt: options.firstSeenAt,
       network: options.network,
       tipHeight: options.tipHeight
