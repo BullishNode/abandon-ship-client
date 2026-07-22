@@ -33,7 +33,7 @@ function parseSatString(value: string): number | undefined {
 
 function parsePositiveFloat(value: string): number | undefined {
   const parsed = Number.parseFloat(value)
-  return Number.isNaN(parsed) || parsed <= 0 ? undefined : parsed
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined
 }
 
 function parseFiatToSat(value: string, price: number): number | undefined {
@@ -42,7 +42,7 @@ function parseFiatToSat(value: string, price: number): number | undefined {
     return undefined
   }
   const sat = fiatToSat(fiat, price)
-  return sat <= 0 ? undefined : sat
+  return Number.isFinite(sat) && sat > 0 ? sat : undefined
 }
 
 function parseBtcToSat(value: string): number | undefined {
