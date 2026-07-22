@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
+import { isHttpsUrl } from '@/utils/url'
 
 interface BrantaPayment {
   platform?: string
@@ -20,15 +21,15 @@ export function BrantaVerificationStatus({ payment, verifyUrl }: BrantaVerificat
   if (payment === undefined) {
     return null
   }
-  const logoUrl = payment.platformLogoLightUrl ?? payment.platformLogoUrl ?? ''
-  const hasLogo = logoUrl !== ''
+  const logoUrl = payment.platformLogoLightUrl ?? payment.platformLogoUrl
+  const hasLogo = isHttpsUrl(logoUrl)
   const showLogoSkeleton = hasLogo && !imageLoaded
   return (
     <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
       {t('send.branta.title')}:
       <a
         className="inline-flex items-center gap-1 align-middle"
-        href={verifyUrl}
+        href={isHttpsUrl(verifyUrl) ? verifyUrl : undefined}
         rel="noopener"
         target="_blank"
       >
