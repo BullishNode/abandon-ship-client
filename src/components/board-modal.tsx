@@ -115,7 +115,9 @@ export function BoardModal({ open, onOpenChange }: BoardModalProps) {
                   )}
                 </span>
               )}
-              <span className="text-muted-foreground text-xs">{t('board.onchain_fee_note')}</span>
+              <span className="text-muted-foreground text-xs leading-none">
+                {t('board.onchain_fee_note')}
+              </span>
             </div>
           ) : (
             <p className="text-muted-foreground text-sm">{t('board.no_onchain.description')}</p>
