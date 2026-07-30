@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input'
 import { useOffboardVtxos } from '@/hooks/barkd/use-offboard-vtxos'
 import { useOnchainAddress } from '@/hooks/barkd/use-onchain-address'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
+import { barkdErrorMessage } from '@/lib/barkd-errors'
 import { sumVtxoAmount } from '@/utils/vtxo'
 
 interface OffboardDialogProps {
@@ -39,8 +40,9 @@ export function OffboardDialog({ open, onOpenChange, vtxos, onOffboarded }: Offb
   }
 
   const { mutate: offboard, isPending } = useOffboardVtxos({
-    onError: (error) => {
-      toast.error(t('vtxos.offboard.error'), { description: error.message })
+    onError: async (error) => {
+      const description = await barkdErrorMessage(error)
+      toast.error(t('vtxos.offboard.error'), { description })
     },
     onSuccess: () => {
       toast.success(t('vtxos.offboard.success'))

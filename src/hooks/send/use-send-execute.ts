@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { useOnchainSend } from '@/hooks/barkd/use-onchain-send'
 import { useSend } from '@/hooks/barkd/use-send'
 import { useSendOnchain } from '@/hooks/barkd/use-send-onchain'
+import { barkdErrorMessage } from '@/lib/barkd-errors'
 import { useMetadataStore } from '@/stores/metadata'
 import type { SendRoute } from '@/utils/payment'
 
@@ -62,32 +63,21 @@ export function useSendExecute({
     onOpenChange(false)
   }
 
-  const { mutate: send, isPending: isSendingArk } = useSend({
-    onError: (error) => {
-      toast.error(t('send.errors.send_failed'), { description: error.message })
+  const mutationCallbacks = {
+    onError: async (error: Error) => {
+      const description = await barkdErrorMessage(error)
+      toast.error(t('send.errors.send_failed'), { description })
     },
     onSuccess: () => {
       handleSendSuccess()
     }
-  })
+  }
 
-  const { mutate: sendOnchain, isPending: isSendingOnchain } = useSendOnchain({
-    onError: (error) => {
-      toast.error(t('send.errors.send_failed'), { description: error.message })
-    },
-    onSuccess: () => {
-      handleSendSuccess()
-    }
-  })
+  const { mutate: send, isPending: isSendingArk } = useSend(mutationCallbacks)
 
-  const { mutate: onchainSend, isPending: isSendingFromWallet } = useOnchainSend({
-    onError: (error) => {
-      toast.error(t('send.errors.send_failed'), { description: error.message })
-    },
-    onSuccess: () => {
-      handleSendSuccess()
-    }
-  })
+  const { mutate: sendOnchain, isPending: isSendingOnchain } = useSendOnchain(mutationCallbacks)
+
+  const { mutate: onchainSend, isPending: isSendingFromWallet } = useOnchainSend(mutationCallbacks)
 
   const isSending = isSendingArk || isSendingOnchain || isSendingFromWallet
 

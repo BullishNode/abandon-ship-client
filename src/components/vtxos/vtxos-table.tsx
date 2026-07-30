@@ -27,6 +27,7 @@ import { useRefreshVtxos } from '@/hooks/barkd/use-refresh-vtxos'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
 import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
 import { usePrivateAmount } from '@/hooks/use-private-amount'
+import { barkdErrorMessage } from '@/lib/barkd-errors'
 import { useSettingsStore } from '@/stores/settings'
 import { useWalletStore } from '@/stores/wallet'
 import {
@@ -90,8 +91,9 @@ export function VtxosTable() {
   }
 
   const { mutate: refresh, isPending: isRefreshing } = useRefreshVtxos({
-    onError: (error) => {
-      toast.error(t('vtxos.refresh.error'), { description: error.message })
+    onError: async (error) => {
+      const description = await barkdErrorMessage(error)
+      toast.error(t('vtxos.refresh.error'), { description })
     },
     onSuccess: () => {
       toast.success(t('vtxos.refresh.success'))
