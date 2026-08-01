@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-08-01
+
+### Added
+
+- Bitcoind as a chain source, configured with `BITCOIND_RPC_URL` and `BITCOIND_RPC_COOKIE_FILE`. If both bitcoind and `CHAIN_SOURCE` are set, bitcoind wins and the api logs a warning. Applies to newly created wallets only.
+- Birthday height field when importing a wallet: required for a bitcoind chain source, optional for esplora.
+
+### Fixed
+
+- Mutation error toasts (send, offboard, emergency exit) show the barkd error body instead of a generic HTTP status message.
+
 ## [0.4.0] - 2026-07-22
 
 ### Added
