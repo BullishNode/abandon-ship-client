@@ -43,9 +43,10 @@ const walletNameSchema = z.object({
     .regex(/[a-zA-Z0-9]/u, 'Name must contain at least one letter or number')
 })
 
+// `chainSource` is not a form field: it is display-only, so it is read off
+// `config` at submit time instead.
 const networkAndServerSchema = z.object({
   arkServer: z.url(),
-  chainSource: z.url(),
   network: z.enum(Object.values(BarkNetwork))
 })
 
@@ -86,7 +87,6 @@ export default function CreateWalletPage() {
   const form = useForm({
     defaultValues: {
       arkServer: config.arkServer,
-      chainSource: config.chainSource,
       name: '',
       network: config.network
     },
@@ -115,10 +115,10 @@ export default function CreateWalletPage() {
       return stepper.next()
     }
 
-    if ('arkServer' in values && 'chainSource' in values && 'network' in values) {
+    if ('arkServer' in values && 'network' in values) {
       createWallet({
         arkServer: values.arkServer,
-        chainSource: { esplora: { url: values.chainSource } },
+        chainSource: config.chainSource,
         createdAt: new Date(),
         mnemonic,
         name,
@@ -332,7 +332,7 @@ function NetworkAndServersComponent() {
         </Field>
         <Field>
           <FieldLabel>{t('backend.server')}</FieldLabel>
-          <Input disabled value={config.chainSource} />
+          <Input disabled value={config.chainSourceLabel} />
         </Field>
       </FieldGroup>
     </StepsLayoutContent>

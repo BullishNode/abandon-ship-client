@@ -33,7 +33,7 @@ describe(useAutoCreateWallet, () => {
     useWalletStore.setState({ wallet: null })
     __setRuntimeConfigForTests({
       arkServer: 'https://ark.example.com',
-      chainSource: 'https://mempool.example.com/api',
+      chainSource: { esplora: { url: 'https://mempool.example.com/api' } },
       client: new Configuration({ basePath: '/api/barkd' }),
       network: BarkNetwork.Signet,
       walletDataPath: '/data/.bark/'

@@ -5,6 +5,7 @@ import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import { loadEnv } from 'vite'
 import type { Plugin, ProxyOptions } from 'vite'
 import { defineConfig } from 'vitest/config'
+import { buildChainSource } from './api/src/chain-source.ts'
 
 const DEFAULT_API_TARGET = 'http://localhost:4001'
 const DEFAULT_BARKD_TARGET = 'http://localhost:4000'
@@ -16,6 +17,14 @@ type Env = Record<string, string | undefined>
 // Bring-your-own-barkd: serve runtime config from env vars so the Hono api
 // process is not needed in this dev flow.
 function byobConfigPlugin(env: Env): Plugin {
+  const { chainSource, warnings } = buildChainSource({
+    bitcoindRpcCookieFile: env.BITCOIND_RPC_COOKIE_FILE,
+    bitcoindRpcUrl: env.BITCOIND_RPC_URL,
+    chainSource: env.CHAIN_SOURCE
+  })
+  for (const warning of warnings) {
+    console.warn(warning)
+  }
   return {
     configureServer(server) {
       server.middlewares.use('/api/config', (req, res, next) => {
@@ -27,7 +36,7 @@ function byobConfigPlugin(env: Env): Plugin {
         res.end(
           JSON.stringify({
             arkServer: env.ARK_SERVER ?? '',
-            chainSource: env.CHAIN_SOURCE ?? '',
+            ...(chainSource === undefined ? {} : { chainSource }),
             network: env.BARK_NETWORK ?? 'signet'
           })
         )

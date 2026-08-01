@@ -124,7 +124,16 @@
   "backend": {
     "network": "Network",
     "ark": "Ark server",
-    "server": "Chain source"
+    "server": "Chain source",
+    "birthday_height": {
+      "label": "Birthday height (optional)",
+      "label_required": "Birthday height",
+      "placeholder": "e.g. 850000",
+      "description": "The block height your wallet was first used at. This chain source scans from its own index, so the value is not used — leave it blank unless you know it.",
+      "description_required": "The block height your wallet was first used at. Blocks before it are skipped during the initial scan. A bitcoind chain source requires it when importing a seed; if you are unsure, use the height your wallet was created at or an earlier one.",
+      "error": "Enter a whole block height greater than 0, or leave the field blank.",
+      "error_required": "Enter a whole block height greater than 0."
+    }
   },
   "links": {
     "forum": "Community forum",

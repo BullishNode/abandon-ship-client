@@ -21,7 +21,7 @@ import {
 import { SeedWordAutocomplete } from '@/components/seed-word-autocomplete'
 import { StepIndicator } from '@/components/step-indicator'
 import { Button } from '@/components/ui/button'
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -32,6 +32,11 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { useCreateWallet } from '@/hooks/barkd/use-create-wallet'
+import {
+  BIRTHDAY_HEIGHT_REQUIRED,
+  birthdayHeightSchemaFor,
+  requiresBirthdayHeight
+} from '@/utils/birthday-height'
 
 const walletNameSchema = z.object({
   name: z
@@ -44,14 +49,20 @@ const mnemonicSchema = z.object({
   words: z.array(z.string().min(1, 'Word is required')).length(12, 'Must have exactly 12 words')
 })
 
+// `chainSource` is not a form field: it is display-only, so it is read off
+// `config` at submit time instead.
 const networkAndServerSchema = z.object({
   arkServer: z.url(),
-  chainSource: z.url(),
+  birthdayHeight: birthdayHeightSchemaFor(() => config.chainSource),
   network: z.enum(Object.values(BarkNetwork))
 })
 
 type WalletNameFormValues = z.infer<typeof walletNameSchema>
 type MnemonicFormValues = z.infer<typeof mnemonicSchema>
+// The registered input yields a string; the resolver outputs `number | undefined`.
+interface NetworkAndServerFormValues {
+  birthdayHeight: string
+}
 
 const { useStepper, utils } = defineStepper(
   { id: 'name', label: 'wallet.name.title', schema: walletNameSchema },
@@ -86,7 +97,7 @@ export default function ImportWalletPage() {
   const form = useForm({
     defaultValues: {
       arkServer: config.arkServer,
-      chainSource: config.chainSource,
+      birthdayHeight: '',
       name: '',
       network: config.network,
       words: Array.from({ length: 12 }).map(() => '')
@@ -108,10 +119,11 @@ export default function ImportWalletPage() {
       return stepper.next()
     }
 
-    if ('arkServer' in values && 'chainSource' in values && 'network' in values) {
+    if ('arkServer' in values && 'network' in values) {
       createWallet({
         arkServer: values.arkServer,
-        chainSource: { esplora: { url: values.chainSource } },
+        birthdayHeight: values.birthdayHeight,
+        chainSource: config.chainSource,
         createdAt: new Date(),
         mnemonic,
         name,
@@ -250,6 +262,13 @@ function MnemonicInputComponent({
 
 function NetworkAndServersComponent() {
   const { t } = useTranslation()
+  const {
+    register,
+    formState: { errors }
+  } = useFormContext<NetworkAndServerFormValues>()
+  const isRequired = requiresBirthdayHeight(config.chainSource)
+  const error = errors.birthdayHeight
+  const isMissing = error?.message === BIRTHDAY_HEIGHT_REQUIRED
 
   return (
     <StepsLayoutContent
@@ -276,7 +295,34 @@ function NetworkAndServersComponent() {
         </Field>
         <Field>
           <FieldLabel>{t('backend.server')}</FieldLabel>
-          <Input disabled value={config.chainSource} />
+          <Input disabled value={config.chainSourceLabel} />
+        </Field>
+        <Field data-invalid={error !== undefined}>
+          <FieldLabel htmlFor="birthdayHeight">
+            {isRequired
+              ? t('backend.birthday_height.label_required')
+              : t('backend.birthday_height.label')}
+          </FieldLabel>
+          <Input
+            {...register('birthdayHeight')}
+            aria-invalid={error !== undefined}
+            aria-required={isRequired}
+            id="birthdayHeight"
+            inputMode="numeric"
+            placeholder={t('backend.birthday_height.placeholder')}
+          />
+          <FieldDescription>
+            {isRequired
+              ? t('backend.birthday_height.description_required')
+              : t('backend.birthday_height.description')}
+          </FieldDescription>
+          {error !== undefined && (
+            <FieldError>
+              {isMissing
+                ? t('backend.birthday_height.error_required')
+                : t('backend.birthday_height.error')}
+            </FieldError>
+          )}
         </Field>
       </FieldGroup>
     </StepsLayoutContent>

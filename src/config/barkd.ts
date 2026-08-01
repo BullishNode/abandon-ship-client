@@ -1,6 +1,8 @@
 import { BarkNetwork, Configuration } from '@secondts/barkd'
+import type { ChainSourceConfig } from '@secondts/barkd'
 import { z } from 'zod'
 import { useAuthStore } from '@/stores/auth'
+import { chainSourceLabel } from '@/utils/chain-source'
 
 const UNAUTHORIZED = 401
 
@@ -23,15 +25,35 @@ declare global {
 
 interface RuntimeConfig {
   arkServer: string
-  chainSource: string
+  chainSource: ChainSourceConfig
   network: BarkNetwork
   walletDataPath: string
   client: Configuration
 }
 
+// Unknown shapes must fail here rather than be coerced: the generated
+// `ChainSourceConfigToJSON` returns `{}` for a value matching neither variant,
+// which would POST `chain_source: {}` and fail at barkd with a confusing error.
+// The bitcoind address and cookie path are not URLs — operators may supply a
+// bare `host:port` and a filesystem path, and barkd validates the rest.
+// bitcoind is matched before esplora so a payload carrying both keys resolves
+// the same way the api's builder does.
+const chainSourceSchema = z.union([
+  // barkd's embedded build serves its own `/api/config` and still sends a plain
+  // esplora URL.
+  z.url().transform((url) => ({ esplora: { url } })),
+  z.object({
+    bitcoind: z.object({
+      bitcoind: z.string().min(1),
+      bitcoindAuth: z.object({ cookie: z.object({ cookie: z.string().min(1) }) })
+    })
+  }),
+  z.object({ esplora: z.object({ url: z.url() }) })
+])
+
 const configResponseSchema = z.object({
   arkServer: z.url(),
-  chainSource: z.url(),
+  chainSource: chainSourceSchema,
   network: z.enum([
     BarkNetwork.Mainnet,
     BarkNetwork.Signet,
@@ -64,8 +86,11 @@ export const config = {
   get arkServer(): string {
     return requireConfig().arkServer
   },
-  get chainSource(): string {
+  get chainSource(): ChainSourceConfig {
     return requireConfig().chainSource
+  },
+  get chainSourceLabel(): string {
+    return chainSourceLabel(requireConfig().chainSource)
   },
   get client(): Configuration {
     return requireConfig().client
