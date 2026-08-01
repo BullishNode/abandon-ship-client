@@ -20,7 +20,7 @@ async function createWalletOrNull(mnemonic: string): Promise<CreateWalletRespons
     return await walletApi.createWallet({
       createWalletRequest: {
         arkServer: config.arkServer,
-        chainSource: { esplora: { url: config.chainSource } },
+        chainSource: config.chainSource,
         mnemonic,
         network: config.network
       }

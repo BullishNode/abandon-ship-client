@@ -7,6 +7,7 @@ import type { Context, Next } from 'hono'
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
 import { cors } from 'hono/cors'
 import { Authenticator } from './auth.js'
+import { buildChainSource } from './chain-source.js'
 
 const WALLET_DIR = process.env.WALLET_DIR ?? '/wallet-data/.bark'
 const PORT = Number.parseInt(process.env.PORT ?? '4001', 10)
@@ -14,7 +15,6 @@ const HOSTNAME =
   process.env.HOST !== undefined && process.env.HOST !== '' ? process.env.HOST : '0.0.0.0'
 const BARKD_URL = process.env.BARKD_URL ?? 'http://barkd:4000'
 const ARK_SERVER = process.env.ARK_SERVER ?? ''
-const CHAIN_SOURCE = process.env.CHAIN_SOURCE ?? ''
 const BARK_NETWORK = process.env.BARK_NETWORK ?? 'signet'
 const WALLET_DATA_PATH = process.env.WALLET_DATA_PATH ?? '/data/.bark/'
 const ALLOWED_ORIGINS = new Set(
@@ -23,6 +23,15 @@ const ALLOWED_ORIGINS = new Set(
     .map((entry) => entry.trim())
     .filter((entry) => entry.length > 0)
 )
+
+// A misconfigured chain source warns instead of throwing: this process also
+// serves `/api/barkd/*` for every existing wallet, and a startup throw would
+// crash-loop the whole deployment.
+const { chainSource: CHAIN_SOURCE_CONFIG, warnings: CHAIN_SOURCE_WARNINGS } = buildChainSource({
+  bitcoindRpcCookieFile: process.env.BITCOIND_RPC_COOKIE_FILE,
+  bitcoindRpcUrl: process.env.BITCOIND_RPC_URL,
+  chainSource: process.env.CHAIN_SOURCE
+})
 
 const TOKEN_PATH = `${WALLET_DIR}/auth_token`
 const LOG_PATH = `${WALLET_DIR}/debug.log`
@@ -97,7 +106,7 @@ app.get('/health', (c) => c.json({ ok: true }))
 app.get('/api/config', (c) =>
   c.json({
     arkServer: ARK_SERVER,
-    chainSource: CHAIN_SOURCE,
+    ...(CHAIN_SOURCE_CONFIG === undefined ? {} : { chainSource: CHAIN_SOURCE_CONFIG }),
     network: BARK_NETWORK,
     walletDataPath: WALLET_DATA_PATH
   })
@@ -264,5 +273,8 @@ app.all('/api/barkd/*', async (c) => {
 })
 
 serve({ fetch: app.fetch, hostname: HOSTNAME, port: PORT }, (info) => {
+  for (const warning of CHAIN_SOURCE_WARNINGS) {
+    console.warn(warning)
+  }
   console.log(`bark-web-api listening on :${info.port}`)
 })

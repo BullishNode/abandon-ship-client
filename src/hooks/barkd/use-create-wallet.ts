@@ -16,6 +16,7 @@ async function createWallet(params: CreateWalletParams) {
   const response = await walletApi.createWallet({
     createWalletRequest: {
       arkServer: params.arkServer,
+      birthdayHeight: params.birthdayHeight,
       chainSource: params.chainSource,
       mnemonic: params.mnemonic,
       network: params.network
