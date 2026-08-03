@@ -1,7 +1,5 @@
 import type { WalletVtxoInfo } from '@secondts/barkd'
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -13,11 +11,9 @@ import {
 } from '@/components/ui/dialog'
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { useOffboardVtxos } from '@/hooks/barkd/use-offboard-vtxos'
-import { useOnchainAddress } from '@/hooks/barkd/use-onchain-address'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
-import { barkdErrorMessage } from '@/lib/barkd-errors'
-import { sumVtxoAmount } from '@/utils/vtxo'
+import { useFormatFiat } from '@/hooks/use-format-fiat'
+import { useOffboardFlow } from '@/hooks/use-offboard-flow'
 
 interface OffboardDialogProps {
   open: boolean
@@ -29,67 +25,24 @@ interface OffboardDialogProps {
 export function OffboardDialog({ open, onOpenChange, vtxos, onOffboarded }: OffboardDialogProps) {
   const { t } = useTranslation()
   const formatBitcoin = useFormatBitcoin()
-  const [address, setAddress] = useState('')
-  const [prevOpen, setPrevOpen] = useState(open)
-
-  if (open && !prevOpen) {
-    setAddress('')
-  }
-  if (open !== prevOpen) {
-    setPrevOpen(open)
-  }
-
-  const { mutate: offboard, isPending } = useOffboardVtxos({
-    onError: async (error) => {
-      const description = await barkdErrorMessage(error)
-      toast.error(t('vtxos.offboard.error'), { description })
-    },
-    onSuccess: () => {
-      toast.success(t('vtxos.offboard.success'))
-      onOffboarded()
-      onOpenChange(false)
-    }
-  })
-
-  const { mutate: fetchOnchainAddress, isPending: isFetchingWalletAddress } = useOnchainAddress()
-
-  function handleUseWalletAddress() {
-    fetchOnchainAddress(undefined, {
-      onSuccess: (walletAddress) => {
-        setAddress(walletAddress)
-      }
-    })
-  }
-
-  function handleClose(nextOpen: boolean) {
-    if (isPending) {
-      return
-    }
-    onOpenChange(nextOpen)
-  }
+  const formatFiat = useFormatFiat()
+  const flow = useOffboardFlow({ onOffboarded, onOpenChange, open, vtxos })
 
   function handleSubmit(event: React.SyntheticEvent<HTMLFormElement>) {
     event.preventDefault()
-    const trimmedAddress = address.trim()
-    offboard({
-      address: trimmedAddress === '' ? undefined : trimmedAddress,
-      vtxos: vtxos.map((vtxo) => vtxo.id)
-    })
+    flow.submit()
   }
 
-  const totalSat = sumVtxoAmount(vtxos)
-  const count = vtxos.length
-
   return (
-    <Dialog onOpenChange={handleClose} open={open}>
+    <Dialog onOpenChange={flow.close} open={open}>
       <DialogContent showCloseButton={false}>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{t('vtxos.offboard.title', { count })}</DialogTitle>
+            <DialogTitle>{t('vtxos.offboard.title', { count: flow.count })}</DialogTitle>
             <DialogDescription>
               {t('vtxos.offboard.description', {
-                amount: formatBitcoin(totalSat),
-                count
+                amount: formatBitcoin(flow.totalSat),
+                count: flow.count
               })}
             </DialogDescription>
           </DialogHeader>
@@ -101,9 +54,9 @@ export function OffboardDialog({ open, onOpenChange, vtxos, onOffboarded }: Offb
                 </FieldLabel>
                 <Button
                   className="text-muted-foreground no-underline hover:text-foreground hover:no-underline"
-                  disabled={isPending || isFetchingWalletAddress}
-                  loading={isFetchingWalletAddress}
-                  onClick={handleUseWalletAddress}
+                  disabled={flow.isPending || flow.isFetchingWalletAddress}
+                  loading={flow.isFetchingWalletAddress}
+                  onClick={flow.fillWalletAddress}
                   size="xs"
                   type="button"
                   variant="link"
@@ -113,12 +66,21 @@ export function OffboardDialog({ open, onOpenChange, vtxos, onOffboarded }: Offb
               </div>
               <Input
                 autoComplete="off"
-                disabled={isPending}
+                disabled={flow.isPending}
                 id="offboard-address"
-                onChange={(event) => setAddress(event.target.value)}
+                onChange={(event) => flow.setAddress(event.target.value)}
                 spellCheck={false}
-                value={address}
+                value={flow.address}
               />
+              {(flow.feeSat !== undefined || flow.isFetchingFee) && (
+                <span className="text-muted-foreground text-xs leading-none">
+                  {t('vtxos.offboard.fee_estimate')}:{' '}
+                  {flow.feeSat === undefined ? '…' : formatBitcoin(flow.feeSat)}
+                  {flow.feeSat !== undefined && flow.feeSat > 0 && (
+                    <> • {formatFiat(flow.feeSat)}</>
+                  )}
+                </span>
+              )}
               <FieldDescription className="text-xs">
                 {t('vtxos.offboard.fee_note')}
               </FieldDescription>
@@ -126,14 +88,14 @@ export function OffboardDialog({ open, onOpenChange, vtxos, onOffboarded }: Offb
           </div>
           <DialogFooter className="mt-6">
             <Button
-              disabled={isPending}
-              onClick={() => handleClose(false)}
+              disabled={flow.isPending}
+              onClick={() => flow.close(false)}
               type="button"
               variant="outline"
             >
               {t('vtxos.offboard.cancel')}
             </Button>
-            <Button loading={isPending} type="submit">
+            <Button loading={flow.isPending} type="submit">
               {t('vtxos.offboard.confirm')}
             </Button>
           </DialogFooter>

@@ -384,6 +384,7 @@
       "description_other": "Move {{count}} VTXOs totaling {{amount}} on-chain.",
       "address_label": "Destination address",
       "use_wallet_address": "Use my Bark on-chain wallet",
+      "fee_estimate": "Estimated fee",
       "fee_note": "On-chain transaction fee is deducted from the offboarded amount.",
       "cancel": "Cancel",
       "confirm": "Offboard",
