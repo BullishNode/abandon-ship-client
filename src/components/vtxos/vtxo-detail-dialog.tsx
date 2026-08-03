@@ -9,6 +9,7 @@ import { VtxoExitBadge } from '@/components/vtxos/vtxo-exit-badge'
 import { VtxoStatusBadge } from '@/components/vtxos/vtxo-status-badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useVtxoEncoded } from '@/hooks/barkd/use-vtxo-encoded'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import type { VtxoExitPhase, VtxoExitState } from '@/utils/vtxo'
 import {
@@ -90,6 +91,8 @@ function VtxoDetailContent({
 }: VtxoDetailContentProps) {
   const { t } = useTranslation()
   const { copy, isCopied } = useCopyToClipboard()
+  const { copy: copyHex, isCopied: isHexCopied } = useCopyToClipboard()
+  const { data: encodedVtxo } = useVtxoEncoded(vtxo.id)
   const [isEditAddressOpen, setIsEditAddressOpen] = useState(false)
   const hasClaimAddress = claimAddress !== undefined && claimAddress.length > 0
   const canEditClaimAddress =
@@ -161,17 +164,33 @@ function VtxoDetailContent({
             <DetailRow label={t('vtxos.detail.locked_action')} value={lockedActionId} />
           )}
         </div>
-        <Button
-          className="w-full"
-          onClick={() => {
-            void copy(getVtxoRawJson(vtxo))
-          }}
-          type="button"
-          variant="outline"
-        >
-          {isCopied ? <CheckIcon /> : <CopyIcon />}
-          {isCopied ? t('vtxos.detail.copied') : t('vtxos.detail.copy_raw_json')}
-        </Button>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Button
+            className="w-full"
+            onClick={() => {
+              void copy(getVtxoRawJson(vtxo))
+            }}
+            type="button"
+            variant="outline"
+          >
+            {isCopied ? <CheckIcon /> : <CopyIcon />}
+            {isCopied ? t('vtxos.detail.copied') : t('vtxos.detail.copy_raw_json')}
+          </Button>
+          <Button
+            className="w-full"
+            disabled={encodedVtxo === undefined}
+            onClick={() => {
+              if (encodedVtxo !== undefined) {
+                void copyHex(encodedVtxo)
+              }
+            }}
+            type="button"
+            variant="outline"
+          >
+            {isHexCopied ? <CheckIcon /> : <CopyIcon />}
+            {isHexCopied ? t('vtxos.detail.copied') : t('vtxos.detail.copy_raw_hex')}
+          </Button>
+        </div>
       </div>
       {canEditClaimAddress ? (
         <EditExitClaimAddressDialog

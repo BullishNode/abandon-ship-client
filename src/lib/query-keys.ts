@@ -8,6 +8,7 @@ export const walletKeys = {
   nextRound: () => [...walletKeys.all, 'next-round'] as const,
   pendingRounds: () => [...walletKeys.all, 'pending-rounds'] as const,
   transactions: () => [...walletKeys.all, 'transactions'] as const,
+  vtxoEncoded: (id: string) => [...walletKeys.all, 'vtxos', id, 'encoded'] as const,
   vtxos: () => [...walletKeys.all, 'vtxos'] as const,
   vtxosAll: () => [...walletKeys.all, 'vtxos', 'all'] as const
 }

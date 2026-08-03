@@ -374,6 +374,7 @@
       "change_claim_address": "Change",
       "no_claim_address": "No address set",
       "copy_raw_json": "Copy raw JSON",
+      "copy_raw_hex": "Copy raw hex",
       "copied": "Copied"
     },
     "offboard": {
