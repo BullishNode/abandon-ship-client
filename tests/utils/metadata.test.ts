@@ -28,15 +28,15 @@ describe(dedupeNonEmpty, () => {
 
 describe(movementDirection, () => {
   it('returns incoming for positive balance', () => {
-    expect(movementDirection(createMovement({ effectiveBalanceSat: 100 }))).toBe('incoming')
+    expect(movementDirection(createMovement({ effectiveBalanceSats: 100 }))).toBe('incoming')
   })
 
   it('returns outgoing for negative balance', () => {
-    expect(movementDirection(createMovement({ effectiveBalanceSat: -100 }))).toBe('outgoing')
+    expect(movementDirection(createMovement({ effectiveBalanceSats: -100 }))).toBe('outgoing')
   })
 
   it('returns null on zero balance', () => {
-    expect(movementDirection(createMovement({ effectiveBalanceSat: 0 }))).toBeNull()
+    expect(movementDirection(createMovement({ effectiveBalanceSats: 0 }))).toBeNull()
   })
 })
 
@@ -44,8 +44,8 @@ describe(movementDestinationValues, () => {
   it('returns receivedOn values for incoming direction', () => {
     const movement = createMovement({
       receivedOn: [
-        { amountSat: 10, destination: { type: 'bitcoin', value: 'bc1q...a' } },
-        { amountSat: 5, destination: { type: 'bitcoin', value: '' } }
+        { amountSats: 10, paymentType: 'bitcoin', value: 'bc1q...a' },
+        { amountSats: 5, paymentType: 'bitcoin', value: '' }
       ]
     })
     expect(movementDestinationValues(movement, 'incoming')).toStrictEqual(['bc1q...a'])
@@ -53,7 +53,7 @@ describe(movementDestinationValues, () => {
 
   it('returns sentTo values for outgoing direction', () => {
     const movement = createMovement({
-      sentTo: [{ amountSat: 10, destination: { type: 'invoice', value: 'lnbc1...' } }]
+      sentTo: [{ amountSats: 10, paymentType: 'invoice', value: 'lnbc1...' }]
     })
     expect(movementDestinationValues(movement, 'outgoing')).toStrictEqual(['lnbc1...'])
   })
@@ -183,7 +183,7 @@ function makeBinding(overrides: Partial<DestinationBinding> = {}): DestinationBi
 describe(computeBindingPromotions, () => {
   it('returns empty list when there are no bindings', () => {
     expect(
-      computeBindingPromotions([createMovement({ effectiveBalanceSat: 100, id: 1 })], [])
+      computeBindingPromotions([createMovement({ effectiveBalanceSats: 100, id: 1 })], [])
     ).toStrictEqual([])
   })
 
@@ -191,9 +191,9 @@ describe(computeBindingPromotions, () => {
     const promotions = computeBindingPromotions(
       [
         createMovement({
-          effectiveBalanceSat: 100,
+          effectiveBalanceSats: 100,
           id: 1,
-          receivedOn: [{ amountSat: 100, destination: { type: 'bitcoin', value: 'addr-a' } }]
+          receivedOn: [{ amountSats: 100, paymentType: 'bitcoin', value: 'addr-a' }]
         })
       ],
       [makeBinding({ label: 'coffee' })]
@@ -210,10 +210,10 @@ describe(computeBindingPromotions, () => {
     const promotions = computeBindingPromotions(
       [
         createMovement({
-          effectiveBalanceSat: 100,
+          effectiveBalanceSats: 100,
           id: 1,
           metadata: { 'bark-web': { label: 'existing' } },
-          receivedOn: [{ amountSat: 100, destination: { type: 'bitcoin', value: 'addr-a' } }]
+          receivedOn: [{ amountSats: 100, paymentType: 'bitcoin', value: 'addr-a' }]
         })
       ],
       [makeBinding({ label: 'binding' })]
@@ -225,9 +225,9 @@ describe(computeBindingPromotions, () => {
     const promotions = computeBindingPromotions(
       [
         createMovement({
-          effectiveBalanceSat: 100,
+          effectiveBalanceSats: 100,
           id: 1,
-          receivedOn: [{ amountSat: 100, destination: { type: 'bitcoin', value: 'addr-a' } }]
+          receivedOn: [{ amountSats: 100, paymentType: 'bitcoin', value: 'addr-a' }]
         })
       ],
       [makeBinding({ direction: 'outgoing' })]
@@ -239,9 +239,9 @@ describe(computeBindingPromotions, () => {
     const promotions = computeBindingPromotions(
       [
         createMovement({
-          effectiveBalanceSat: 100,
+          effectiveBalanceSats: 100,
           id: 1,
-          receivedOn: [{ amountSat: 100, destination: { type: 'bitcoin', value: 'addr-a' } }]
+          receivedOn: [{ amountSats: 100, paymentType: 'bitcoin', value: 'addr-a' }]
         })
       ],
       [
@@ -265,14 +265,14 @@ describe(computeBindingPromotions, () => {
     const promotions = computeBindingPromotions(
       [
         createMovement({
-          effectiveBalanceSat: 100,
+          effectiveBalanceSats: 100,
           id: 1,
-          receivedOn: [{ amountSat: 100, destination: { type: 'bitcoin', value: 'addr-a' } }]
+          receivedOn: [{ amountSats: 100, paymentType: 'bitcoin', value: 'addr-a' }]
         }),
         createMovement({
-          effectiveBalanceSat: 50,
+          effectiveBalanceSats: 50,
           id: 2,
-          receivedOn: [{ amountSat: 50, destination: { type: 'bitcoin', value: 'addr-a' } }]
+          receivedOn: [{ amountSats: 50, paymentType: 'bitcoin', value: 'addr-a' }]
         })
       ],
       [makeBinding({ label: 'one-shot' })]

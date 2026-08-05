@@ -35,7 +35,7 @@ import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
 import { useOnchainTransactions } from '@/hooks/barkd/use-onchain-transactions'
 import { useOnchainUtxos } from '@/hooks/barkd/use-onchain-utxos'
 import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
-import { config } from '@/config/barkd'
+import { config } from '@/config/runtime'
 import { usePrivateAmount } from '@/hooks/use-private-amount'
 import { useOnchainFirstSeen } from '@/stores/metadata'
 import { usePendingOffboards } from '@/stores/pending-offboards'
@@ -98,7 +98,7 @@ export function MovementsTable() {
     hideRefresh: hideRefreshMovements,
     network: config.network,
     pendingOffboards,
-    tipHeight: tip?.tipHeight,
+    tipHeight: tip,
     transactions,
     utxos
   })

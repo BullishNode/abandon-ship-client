@@ -1,18 +1,10 @@
-import type { BarkNetwork } from '@secondts/barkd'
 import type { networks } from 'bitcoinjs-lib'
 import { address, Transaction } from 'bitcoinjs-lib'
+import type { Network } from '@/types/domain/network'
+import type { DecodedInput, DecodedOutput } from '@/types/domain/onchain'
 import { networkFor } from '@/utils/bitcoin'
 
-export interface DecodedOutput {
-  vout: number
-  address: string | undefined
-  valueSat: number
-}
-
-export interface DecodedInput {
-  prevTxid: string
-  prevVout: number
-}
+export type { DecodedInput, DecodedOutput }
 
 function safeAddressFromScript(script: Uint8Array, net: networks.Network): string | undefined {
   try {
@@ -52,7 +44,7 @@ function bufferToTxidHex(hashLE: Uint8Array): string {
   return [...reversed].map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
-export function decodeOutputs(rawTxHex: string, network: BarkNetwork): DecodedOutput[] {
+export function decodeOutputs(rawTxHex: string, network: Network): DecodedOutput[] {
   try {
     const tx = Transaction.fromHex(rawTxHex)
     const net = networkFor(network)

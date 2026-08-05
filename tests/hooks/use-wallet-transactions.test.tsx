@@ -1,4 +1,3 @@
-import type { Movement } from '@secondts/barkd'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
@@ -8,6 +7,7 @@ import { historyApi } from '../../src/lib/barkd-client'
 import { useMetadataStore } from '../../src/stores/metadata'
 import { useWalletStore } from '../../src/stores/wallet'
 import { createMovement } from '../fixtures/movements'
+import type { Movement } from '@/types/domain/movement'
 
 const TEST_FP = 'test-fingerprint'
 
@@ -52,9 +52,9 @@ describe('useWalletTransactions promoteBindings', () => {
   it('returns movements untouched when no bindings exist', async () => {
     const movements: Movement[] = [
       createMovement({
-        effectiveBalanceSat: 100,
+        effectiveBalanceSats: 100,
         id: 1,
-        receivedOn: [{ amountSat: 100, destination: { type: 'bitcoin', value: 'addr-a' } }]
+        receivedOn: [{ amountSats: 100, paymentType: 'bitcoin', value: 'addr-a' }]
       })
     ]
     listSpy.mockResolvedValue(movements)
@@ -75,9 +75,9 @@ describe('useWalletTransactions promoteBindings', () => {
     })
     listSpy.mockResolvedValue([
       createMovement({
-        effectiveBalanceSat: 100,
+        effectiveBalanceSats: 100,
         id: 42,
-        receivedOn: [{ amountSat: 100, destination: { type: 'bitcoin', value: 'addr-a' } }]
+        receivedOn: [{ amountSats: 100, paymentType: 'bitcoin', value: 'addr-a' }]
       })
     ])
     updateMetadataSpy.mockResolvedValue()
@@ -88,7 +88,7 @@ describe('useWalletTransactions promoteBindings', () => {
     expect(updateMetadataSpy).toHaveBeenCalledOnce()
     const [firstCall] = updateMetadataSpy.mock.calls
     expect(firstCall[0].id).toBe(42)
-    expect(firstCall[0].body).toMatchObject({
+    expect(firstCall[0].metadata).toMatchObject({
       'bark-web': { label: 'Coffee', tags: ['food'] }
     })
     expect(useMetadataStore.getState().bindings[TEST_FP] ?? []).toHaveLength(0)
@@ -108,9 +108,9 @@ describe('useWalletTransactions promoteBindings', () => {
     })
     listSpy.mockResolvedValue([
       createMovement({
-        effectiveBalanceSat: 100,
+        effectiveBalanceSats: 100,
         id: 7,
-        receivedOn: [{ amountSat: 100, destination: { type: 'bitcoin', value: 'addr-fail' } }]
+        receivedOn: [{ amountSats: 100, paymentType: 'bitcoin', value: 'addr-fail' }]
       })
     ])
     updateMetadataSpy.mockRejectedValue(new Error('boom'))
@@ -138,14 +138,14 @@ describe('useWalletTransactions promoteBindings', () => {
     })
     listSpy.mockResolvedValue([
       createMovement({
-        effectiveBalanceSat: 100,
+        effectiveBalanceSats: 100,
         id: 1,
-        receivedOn: [{ amountSat: 100, destination: { type: 'bitcoin', value: 'addr-ok' } }]
+        receivedOn: [{ amountSats: 100, paymentType: 'bitcoin', value: 'addr-ok' }]
       }),
       createMovement({
-        effectiveBalanceSat: 100,
+        effectiveBalanceSats: 100,
         id: 2,
-        receivedOn: [{ amountSat: 100, destination: { type: 'bitcoin', value: 'addr-fail' } }]
+        receivedOn: [{ amountSats: 100, paymentType: 'bitcoin', value: 'addr-fail' }]
       })
     ])
     updateMetadataSpy.mockResolvedValueOnce().mockRejectedValueOnce(new Error('boom'))
@@ -170,10 +170,10 @@ describe('useWalletTransactions promoteBindings', () => {
     })
     listSpy.mockResolvedValue([
       createMovement({
-        effectiveBalanceSat: 100,
+        effectiveBalanceSats: 100,
         id: 9,
         metadata: { 'bark-web': { label: 'Existing' } },
-        receivedOn: [{ amountSat: 100, destination: { type: 'bitcoin', value: 'addr-existing' } }]
+        receivedOn: [{ amountSats: 100, paymentType: 'bitcoin', value: 'addr-existing' }]
       })
     ])
     const { result } = renderHook(() => useWalletTransactions(), {

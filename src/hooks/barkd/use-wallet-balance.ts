@@ -1,4 +1,4 @@
-import type { Balance } from '@secondts/barkd'
+import type { Balance } from '@/types/domain/balance'
 import { replaceEqualDeep, useQuery } from '@tanstack/react-query'
 import type { UseQueryOptions } from '@tanstack/react-query'
 import { walletApi } from '@/lib/barkd-client'

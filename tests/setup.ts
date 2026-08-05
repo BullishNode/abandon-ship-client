@@ -1,17 +1,15 @@
 import '@testing-library/jest-dom/vitest'
-import { BarkNetwork, Configuration } from '@secondts/barkd'
 import { cleanup } from '@testing-library/react'
 import * as i18next from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import { afterEach, vi } from 'vitest'
-import { __setRuntimeConfigForTests } from '../src/config/barkd'
+import { __setRuntimeConfigForTests } from '../src/config/runtime'
 import enTranslation from '../src/i18n/locales/en.json'
 
 __setRuntimeConfigForTests({
   arkServer: 'http://localhost:3535',
   chainSource: { esplora: { url: 'http://localhost:18443' } },
-  client: new Configuration({ basePath: '/api/barkd' }),
-  network: BarkNetwork.Signet,
+  network: 'signet',
   walletDataPath: '/data/.bark/'
 })
 

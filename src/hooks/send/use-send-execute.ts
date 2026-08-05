@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { useOnchainSend } from '@/hooks/barkd/use-onchain-send'
 import { useSend } from '@/hooks/barkd/use-send'
 import { useSendOnchain } from '@/hooks/barkd/use-send-onchain'
-import { barkdErrorMessage } from '@/lib/barkd-errors'
+import { backendErrorMessage } from '@/lib/error-message'
 import { useMetadataStore } from '@/stores/metadata'
 import type { SendRoute } from '@/utils/payment'
 
@@ -65,7 +65,7 @@ export function useSendExecute({
 
   const mutationCallbacks = {
     onError: async (error: Error) => {
-      const description = await barkdErrorMessage(error)
+      const description = await backendErrorMessage(error)
       toast.error(t('send.errors.send_failed'), { description })
     },
     onSuccess: () => {
@@ -90,7 +90,7 @@ export function useSendExecute({
 
     if (sendRoute === 'ark' || sendRoute === 'lightning') {
       send({
-        amountSat: sendAmountSat,
+        amountSats: sendAmountSat,
         comment: selectedMethodType === 'lnaddress' && message !== '' ? message : undefined,
         destination
       })
@@ -102,11 +102,11 @@ export function useSendExecute({
     }
 
     if (sendRoute === 'onchain-from-ark') {
-      sendOnchain({ amountSat: sendAmountSat, destination })
+      sendOnchain({ amountSats: sendAmountSat, destination })
       return
     }
 
-    onchainSend({ amountSat: sendAmountSat, destination })
+    onchainSend({ amountSats: sendAmountSat, destination })
   }
 
   const canSend =

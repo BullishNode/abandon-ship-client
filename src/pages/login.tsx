@@ -1,9 +1,10 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 import { FullScreenLayout } from '@/components/full-screen-layout'
+import { LoadingScreen } from '@/components/loading-screen'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
@@ -16,7 +17,24 @@ const loginSchema = z.object({
 })
 type LoginFormValues = z.infer<typeof loginSchema>
 
+// In WASM mode the login screen is the seed-unlock screen. The lazy import is
+// guarded by the build-time backend literal so the WASM client (and its worker)
+// is dropped entirely from barkd builds by dead-code elimination.
+const WasmUnlock =
+  __BACKEND__ === 'wasm' ? lazy(async () => await import('@/components/wasm-unlock')) : null
+
 export default function LoginPage() {
+  if (WasmUnlock !== null) {
+    return (
+      <Suspense fallback={<LoadingScreen />}>
+        <WasmUnlock />
+      </Suspense>
+    )
+  }
+  return <BarkdLoginPage />
+}
+
+function BarkdLoginPage() {
   const { t } = useTranslation()
   const [failure, setFailure] = useState<LoginFailureReason | null>(null)
   const { formState, handleSubmit, register } = useForm<LoginFormValues>({

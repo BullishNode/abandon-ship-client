@@ -1,5 +1,5 @@
 import { ArrowSquareOutIcon, DownloadSimpleIcon, WarningIcon } from '@phosphor-icons/react'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -20,7 +20,7 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { config } from '@/config/barkd'
+import { config } from '@/config/runtime'
 import { externalLinks } from '@/config/links'
 import { WALLET_NAME_MAX_LENGTH } from '@/constants/wallet'
 import { changeThemeWithTransition } from '@/lib/theme-transition'
@@ -46,6 +46,7 @@ import {
   vtxoIdsWithMutableClaimAddress
 } from '@/utils/exit-progress'
 import { downloadDebugLog } from '@/utils/logs'
+import { downloadWalletExport } from '@/utils/wallet-export'
 import type { RefreshThresholdOption } from '@/utils/refresh'
 import {
   getRefreshThresholdOptions,
@@ -74,6 +75,17 @@ const FIAT_CURRENCIES: { value: FiatCurrency; label: string }[] = [
 ]
 
 const THEME_OPTIONS: Theme[] = ['light', 'dark', 'system']
+
+// The debug-log download hits the barkd deployment's `/api/logs`; a static
+// WASM deployment has no such endpoint (see WASM_MODE.md at the repo root).
+const DIAGNOSTICS_ENABLED = __BACKEND__ !== 'wasm'
+
+// WASM-only: password protection for the in-browser wallet. Lazy + build-guarded
+// so the vault/crypto code is dead-code-eliminated from barkd builds.
+const WasmSecuritySettings =
+  __BACKEND__ === 'wasm'
+    ? lazy(async () => await import('@/components/wasm-security-settings'))
+    : null
 
 type ExitDialogMode = 'start' | 'edit'
 
@@ -137,6 +149,7 @@ export default function SettingsPage() {
   const [draftExitAddress, setDraftExitAddress] = useState('')
   const [claimAddressDismissed, setClaimAddressDismissed] = useState(false)
   const [isDownloadingLogs, setDownloadingLogs] = useState(false)
+  const [isExportingDb, setExportingDb] = useState(false)
 
   async function handleDownloadLogs() {
     setDownloadingLogs(true)
@@ -146,6 +159,17 @@ export default function SettingsPage() {
       toast.error(t('settings.diagnostics.error'))
     } finally {
       setDownloadingLogs(false)
+    }
+  }
+
+  async function handleExportDb() {
+    setExportingDb(true)
+    try {
+      await downloadWalletExport()
+    } catch {
+      toast.error(t('settings.export_db.error'))
+    } finally {
+      setExportingDb(false)
     }
   }
 
@@ -162,7 +186,7 @@ export default function SettingsPage() {
   const { data: arkInfo } = useArkInfo()
   const thresholdOptions = getRefreshThresholdOptions(
     arkInfo?.vtxoExpiryDelta,
-    arkInfo?.fees.refresh
+    arkInfo?.fees?.refresh
   )
   const selectedThresholdBlocks = resolveThresholdBlocks(
     autoRefreshThresholdBlocks,
@@ -200,7 +224,7 @@ export default function SettingsPage() {
       setExitDialogOpen(false)
     }
   })
-  const onchainSpendable = onchainBalance?.trustedSpendableSat ?? 0
+  const onchainSpendable = onchainBalance?.trustedSpendableSats ?? 0
   const hasNoVtxos = (vtxos?.length ?? 0) === 0
 
   const allVtxoIds = (vtxos ?? []).map((vtxo) => vtxo.id)
@@ -441,6 +465,11 @@ export default function SettingsPage() {
           </AlertDescription>
         </Alert>
       </Field>
+      {WasmSecuritySettings === null ? null : (
+        <Suspense fallback={null}>
+          <WasmSecuritySettings />
+        </Suspense>
+      )}
       <Field orientation="responsive">
         <FieldContent>
           <FieldLabel>{t('settings.community_forum.label')}</FieldLabel>
@@ -479,20 +508,39 @@ export default function SettingsPage() {
       </Field>
       <Field orientation="responsive">
         <FieldContent>
-          <FieldLabel>{t('settings.diagnostics.label')}</FieldLabel>
-          <FieldDescription>{t('settings.diagnostics.description')}</FieldDescription>
+          <FieldLabel>{t('settings.export_db.label')}</FieldLabel>
+          <FieldDescription>{t('settings.export_db.description')}</FieldDescription>
         </FieldContent>
         <Button
-          loading={isDownloadingLogs}
+          disabled={!wallet}
+          loading={isExportingDb}
           onClick={() => {
-            void handleDownloadLogs()
+            void handleExportDb()
           }}
           variant="outline"
         >
           <DownloadSimpleIcon />
-          {t('settings.diagnostics.button')}
+          {t('settings.export_db.button')}
         </Button>
       </Field>
+      {DIAGNOSTICS_ENABLED && (
+        <Field orientation="responsive">
+          <FieldContent>
+            <FieldLabel>{t('settings.diagnostics.label')}</FieldLabel>
+            <FieldDescription>{t('settings.diagnostics.description')}</FieldDescription>
+          </FieldContent>
+          <Button
+            loading={isDownloadingLogs}
+            onClick={() => {
+              void handleDownloadLogs()
+            }}
+            variant="outline"
+          >
+            <DownloadSimpleIcon />
+            {t('settings.diagnostics.button')}
+          </Button>
+        </Field>
+      )}
       <section className="space-y-4 rounded-lg border border-destructive/30 p-4">
         <h2 className="font-semibold text-destructive text-lg">{t('settings.danger.title')}</h2>
         <Field className="gap-4" orientation="responsive">

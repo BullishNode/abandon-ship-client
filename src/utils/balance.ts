@@ -1,11 +1,12 @@
-import type { Balance, OnchainBalance, UtxoInfo, WalletTxInfo } from '@secondts/barkd'
+import type { Balance, OnchainBalance } from '@/types/domain/balance'
+import type { Utxo, WalletTx } from '@/types/domain/onchain'
 
 function isBalance(value: unknown): value is Balance {
-  return typeof value === 'object' && value !== null && 'spendableSat' in value
+  return typeof value === 'object' && value !== null && 'spendableSats' in value
 }
 
 /**
- * `pendingExitSat` is `null`/`undefined` only when the exit subsystem is
+ * `pendingExitSats` is `null`/`undefined` only when the exit subsystem is
  * momentarily unavailable (e.g. while it advances an active exit), not when no
  * exit exists — an idle or completed exit returns a real `0`. Coercing the
  * unavailable case to `0` makes the total flicker by the pending-exit amount
@@ -16,8 +17,8 @@ export function carryForwardPendingExit(previous: unknown, next: unknown): unkno
   if (!(isBalance(previous) && isBalance(next))) {
     return next
   }
-  if (next.pendingExitSat === null || next.pendingExitSat === undefined) {
-    return { ...next, pendingExitSat: previous.pendingExitSat }
+  if (next.pendingExitSats === null || next.pendingExitSats === undefined) {
+    return { ...next, pendingExitSats: previous.pendingExitSats }
   }
   return next
 }
@@ -35,7 +36,7 @@ export interface BalanceTotals {
   totalSat: number
 }
 
-export function sumUnconfirmedCpfpUtxoSat(transactions: WalletTxInfo[], utxos: UtxoInfo[]): number {
+export function sumUnconfirmedCpfpUtxoSat(transactions: WalletTx[], utxos: Utxo[]): number {
   const cpfpTxids = new Set(transactions.filter((tx) => tx.isCpfp).map((tx) => tx.txid))
   return utxos
     .filter(
@@ -43,28 +44,28 @@ export function sumUnconfirmedCpfpUtxoSat(transactions: WalletTxInfo[], utxos: U
         (utxo.confirmationHeight === null || utxo.confirmationHeight === undefined) &&
         cpfpTxids.has(utxo.outpoint.split(':')[0])
     )
-    .reduce((total, utxo) => total + utxo.amountSat, 0)
+    .reduce((total, utxo) => total + utxo.amountSats, 0)
 }
 
 export function getBalanceTotals(
   balance?: Balance,
   onchainBalance?: OnchainBalance,
-  transactions: WalletTxInfo[] = [],
-  utxos: UtxoInfo[] = []
+  transactions: WalletTx[] = [],
+  utxos: Utxo[] = []
 ): BalanceTotals {
-  const onchainSat = onchainBalance?.trustedSpendableSat ?? 0
-  const untrustedPendingSat = onchainBalance?.untrustedPendingSat ?? 0
+  const onchainSat = onchainBalance?.trustedSpendableSats ?? 0
+  const untrustedPendingSat = onchainBalance?.untrustedPendingSats ?? 0
   const exitChangePendingSat = Math.min(
     sumUnconfirmedCpfpUtxoSat(transactions, utxos),
     untrustedPendingSat
   )
   const onchainPendingSat = untrustedPendingSat - exitChangePendingSat
-  const offchainSat = balance?.spendableSat ?? 0
-  const pendingBoardSat = balance?.pendingBoardSat ?? 0
-  const pendingInRoundSat = balance?.pendingInRoundSat ?? 0
-  const pendingLightningSendSat = balance?.pendingLightningSendSat ?? 0
-  const claimableLightningReceiveSat = balance?.claimableLightningReceiveSat ?? 0
-  const pendingExitSat = balance?.pendingExitSat ?? 0
+  const offchainSat = balance?.spendableSats ?? 0
+  const pendingBoardSat = balance?.pendingBoardSats ?? 0
+  const pendingInRoundSat = balance?.pendingInRoundSats ?? 0
+  const pendingLightningSendSat = balance?.pendingLightningSendSats ?? 0
+  const claimableLightningReceiveSat = balance?.claimableLightningReceiveSats ?? 0
+  const pendingExitSat = balance?.pendingExitSats ?? 0
   const totalSat =
     offchainSat +
     onchainSat +

@@ -1,4 +1,4 @@
-import type { Movement } from '@secondts/barkd'
+import type { Movement } from '@/types/domain/movement'
 import { useReceivedPayment } from '@/hooks/barkd/use-received-payment'
 import { useRefreshVtxos } from '@/hooks/barkd/use-refresh-vtxos'
 import { useSettingsStore } from '@/stores/settings'

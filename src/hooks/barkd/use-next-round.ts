@@ -1,4 +1,4 @@
-import type { NextRoundStart } from '@secondts/barkd'
+import type { NextRoundStart } from '@/types/domain/round'
 import { useQuery } from '@tanstack/react-query'
 import type { UseQueryOptions } from '@tanstack/react-query'
 import { walletApi } from '@/lib/barkd-client'

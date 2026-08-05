@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { config } from '@/config/barkd'
+import { config } from '@/config/runtime'
 import { isValidOnchainAddress } from '@/utils/bitcoin'
 import { Button } from '@/components/ui/button'
 import {

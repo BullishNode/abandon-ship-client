@@ -1,4 +1,3 @@
-import type { WalletVtxoInfo } from '@secondts/barkd'
 import { useState } from 'react'
 import { useOnchainAddress } from '@/hooks/barkd/use-onchain-address'
 import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
@@ -6,6 +5,7 @@ import { useOnchainFeeRates } from '@/hooks/barkd/use-onchain-fee-rates'
 import { useStartEmergencyExitVtxos } from '@/hooks/barkd/use-start-emergency-exit-vtxos'
 import { useWalletStore } from '@/stores/wallet'
 import type { EmergencyExitFeeEstimate } from '@/components/emergency-exit-start-dialog'
+import type { Vtxo } from '@/types/domain/vtxo'
 import { estimateEmergencyExitFeeSat } from '@/utils/exit-progress'
 
 interface UseEmergencyExitVtxosOptions {
@@ -14,7 +14,7 @@ interface UseEmergencyExitVtxosOptions {
 }
 
 export function useEmergencyExitVtxos(
-  vtxos: WalletVtxoInfo[],
+  vtxos: Vtxo[],
   { onStarted, isExitingAll }: UseEmergencyExitVtxosOptions
 ) {
   const [address, setAddress] = useState('')
@@ -32,7 +32,7 @@ export function useEmergencyExitVtxos(
   } = useStartEmergencyExitVtxos({ onSuccess: onStarted })
 
   const feeRateSatPerVb = feeRates?.regularSatPerVb ?? 0
-  const onchainSat = onchainBalance?.trustedSpendableSat ?? 0
+  const onchainSat = onchainBalance?.trustedSpendableSats ?? 0
 
   const feeEstimate: EmergencyExitFeeEstimate | undefined =
     vtxos.length > 0 && feeRateSatPerVb > 0

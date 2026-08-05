@@ -8,10 +8,7 @@ export function useVtxoEncoded(
   options?: Omit<UseQueryOptions<string>, 'queryKey' | 'queryFn'>
 ) {
   return useQuery({
-    queryFn: async () => {
-      const response = await walletApi.getVtxoEncoded({ id })
-      return response.encoded
-    },
+    queryFn: async () => await walletApi.vtxoEncoded(id),
     queryKey: walletKeys.vtxoEncoded(id),
     staleTime: Number.POSITIVE_INFINITY,
     ...options

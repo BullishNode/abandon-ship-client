@@ -1,4 +1,3 @@
-import type { WalletTxInfo } from '@secondts/barkd'
 import { describe, expect, it } from 'vitest'
 import {
   getMovementCounterparty,
@@ -10,12 +9,13 @@ import {
   sumExitCpfpFeeSat
 } from '../../src/utils/movement'
 import { createMovement } from '../fixtures/movements'
+import type { WalletTx } from '@/types/domain/onchain'
 
-function createWalletTx(overrides: Partial<WalletTxInfo> = {}): WalletTxInfo {
+function createWalletTx(overrides: Partial<WalletTx> = {}): WalletTx {
   return {
-    balanceChangeSat: 0,
+    balanceChangeSats: 0,
     isCpfp: false,
-    onchainFeeSat: null,
+    onchainFeeSats: null,
     tx: '00',
     txid: 'tx',
     ...overrides
@@ -26,17 +26,17 @@ const EXIT_SUBSYSTEM = { kind: 'exit', name: 'bark.exit' } as const
 
 describe(getMovementDirection, () => {
   it('returns incoming for positive balance', () => {
-    const movement = createMovement({ effectiveBalanceSat: 50_000 })
+    const movement = createMovement({ effectiveBalanceSats: 50_000 })
     expect(getMovementDirection(movement)).toBe('incoming')
   })
 
   it('returns incoming for zero balance', () => {
-    const movement = createMovement({ effectiveBalanceSat: 0 })
+    const movement = createMovement({ effectiveBalanceSats: 0 })
     expect(getMovementDirection(movement)).toBe('incoming')
   })
 
   it('returns outgoing for negative balance', () => {
-    const movement = createMovement({ effectiveBalanceSat: -10_000 })
+    const movement = createMovement({ effectiveBalanceSats: -10_000 })
     expect(getMovementDirection(movement)).toBe('outgoing')
   })
 })
@@ -44,11 +44,12 @@ describe(getMovementDirection, () => {
 describe(getMovementCounterparty, () => {
   it('returns formatted sentTo address for outgoing movement', () => {
     const movement = createMovement({
-      effectiveBalanceSat: -50_000,
+      effectiveBalanceSats: -50_000,
       sentTo: [
         {
-          amountSat: 50_000,
-          destination: { type: 'bitcoin', value: 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq' }
+          amountSats: 50_000,
+          paymentType: 'bitcoin',
+          value: 'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq'
         }
       ]
     })
@@ -57,11 +58,12 @@ describe(getMovementCounterparty, () => {
 
   it('returns formatted receivedOn address for incoming movement', () => {
     const movement = createMovement({
-      effectiveBalanceSat: 50_000,
+      effectiveBalanceSats: 50_000,
       receivedOn: [
         {
-          amountSat: 50_000,
-          destination: { type: 'invoice', value: 'lnbc1pvjluezpp5qqqsyqcyq5rqwzqf' }
+          amountSats: 50_000,
+          paymentType: 'invoice',
+          value: 'lnbc1pvjluezpp5qqqsyqcyq5rqwzqf'
         }
       ]
     })
@@ -70,7 +72,7 @@ describe(getMovementCounterparty, () => {
 
   it('returns subsystem name when outgoing has no sentTo', () => {
     const movement = createMovement({
-      effectiveBalanceSat: -10_000,
+      effectiveBalanceSats: -10_000,
       sentTo: [],
       subsystem: { kind: 'lightning', name: 'Lightning' }
     })
@@ -79,7 +81,7 @@ describe(getMovementCounterparty, () => {
 
   it('returns subsystem name when incoming has no receivedOn', () => {
     const movement = createMovement({
-      effectiveBalanceSat: 10_000,
+      effectiveBalanceSats: 10_000,
       receivedOn: [],
       subsystem: { kind: 'ark', name: 'Ark' }
     })
@@ -90,34 +92,34 @@ describe(getMovementCounterparty, () => {
 describe(getMovementSource, () => {
   it('returns ark when a destination has type ark', () => {
     const movement = createMovement({
-      sentTo: [{ amountSat: 1, destination: { type: 'ark', value: 'ark1abc' } }]
+      sentTo: [{ amountSats: 1, paymentType: 'ark', value: 'ark1abc' }]
     })
     expect(getMovementSource(movement)).toBe('ark')
   })
 
   it('returns onchain when a destination has type bitcoin', () => {
     const movement = createMovement({
-      sentTo: [{ amountSat: 1, destination: { type: 'bitcoin', value: 'bc1qabc' } }]
+      sentTo: [{ amountSats: 1, paymentType: 'bitcoin', value: 'bc1qabc' }]
     })
     expect(getMovementSource(movement)).toBe('onchain')
   })
 
   it('returns onchain when a destination has type output-script', () => {
     const movement = createMovement({
-      sentTo: [{ amountSat: 1, destination: { type: 'output-script', value: '00' } }]
+      sentTo: [{ amountSats: 1, paymentType: 'output-script', value: '00' }]
     })
     expect(getMovementSource(movement)).toBe('onchain')
   })
 
   it('returns lightning for invoice/offer/lightning-address destinations', () => {
     const invoice = createMovement({
-      sentTo: [{ amountSat: 1, destination: { type: 'invoice', value: 'lnbc1' } }]
+      sentTo: [{ amountSats: 1, paymentType: 'invoice', value: 'lnbc1' }]
     })
     const offer = createMovement({
-      sentTo: [{ amountSat: 1, destination: { type: 'offer', value: 'lno1' } }]
+      sentTo: [{ amountSats: 1, paymentType: 'offer', value: 'lno1' }]
     })
     const lnaddr = createMovement({
-      sentTo: [{ amountSat: 1, destination: { type: 'lightning-address', value: 'a@b' } }]
+      sentTo: [{ amountSats: 1, paymentType: 'lightning-address', value: 'a@b' }]
     })
     expect(getMovementSource(invoice)).toBe('lightning')
     expect(getMovementSource(offer)).toBe('lightning')
@@ -145,7 +147,7 @@ describe(getMovementSource, () => {
 
   it('prefers destination type over subsystem name', () => {
     const movement = createMovement({
-      receivedOn: [{ amountSat: 1, destination: { type: 'invoice', value: 'lnbc' } }],
+      receivedOn: [{ amountSats: 1, paymentType: 'invoice', value: 'lnbc' }],
       subsystem: { kind: 'ark', name: 'Ark' }
     })
     expect(getMovementSource(movement)).toBe('lightning')
@@ -153,7 +155,7 @@ describe(getMovementSource, () => {
 
   it('classifies a bark.offboard with a bitcoin destination as onchain', () => {
     const movement = createMovement({
-      sentTo: [{ amountSat: 5000, destination: { type: 'bitcoin', value: 'tb1p9lwzpy' } }],
+      sentTo: [{ amountSats: 5000, paymentType: 'bitcoin', value: 'tb1p9lwzpy' }],
       subsystem: { kind: 'send_onchain', name: 'bark.offboard' }
     })
     expect(getMovementSource(movement)).toBe('onchain')
@@ -161,7 +163,7 @@ describe(getMovementSource, () => {
 
   it('falls back to ark for a bark.offboard whose destination type is unrecognized', () => {
     const movement = createMovement({
-      sentTo: [{ amountSat: 5000, destination: { type: 'custom', value: 'x' } }],
+      sentTo: [{ amountSats: 5000, paymentType: 'custom', value: 'x' }],
       subsystem: { kind: 'send_onchain', name: 'bark.offboard' }
     })
     expect(getMovementSource(movement)).toBe('ark')
@@ -169,7 +171,7 @@ describe(getMovementSource, () => {
 
   it('classifies bark.exit as exit even with bitcoin destination', () => {
     const movement = createMovement({
-      sentTo: [{ amountSat: 5000, destination: { type: 'bitcoin', value: 'tb1p9lwzpy' } }],
+      sentTo: [{ amountSats: 5000, paymentType: 'bitcoin', value: 'tb1p9lwzpy' }],
       subsystem: { kind: 'exit', name: 'bark.exit' }
     })
     expect(getMovementSource(movement)).toBe('exit')
@@ -217,31 +219,31 @@ describe(isArkToOnchainTransfer, () => {
 
 describe(getMovementFeeSat, () => {
   it('returns the offchainFeeSat when present', () => {
-    expect(getMovementFeeSat(createMovement({ offchainFeeSat: 250 }))).toBe(250)
+    expect(getMovementFeeSat(createMovement({ offchainFeeSats: 250 }))).toBe(250)
   })
 
   it('returns zero when fee is zero', () => {
-    expect(getMovementFeeSat(createMovement({ offchainFeeSat: 0 }))).toBe(0)
+    expect(getMovementFeeSat(createMovement({ offchainFeeSats: 0 }))).toBe(0)
   })
 
   it('ignores transactions for non-exit movements', () => {
-    const movement = createMovement({ offchainFeeSat: 250 })
-    const transactions = [createWalletTx({ isCpfp: true, onchainFeeSat: 573 })]
+    const movement = createMovement({ offchainFeeSats: 250 })
+    const transactions = [createWalletTx({ isCpfp: true, onchainFeeSats: 573 })]
     expect(getMovementFeeSat(movement, transactions)).toBe(250)
   })
 
   it('adds CPFP on-chain fees to an exit movement', () => {
-    const movement = createMovement({ offchainFeeSat: 0, subsystem: EXIT_SUBSYSTEM })
+    const movement = createMovement({ offchainFeeSats: 0, subsystem: EXIT_SUBSYSTEM })
     const transactions = [
-      createWalletTx({ isCpfp: true, onchainFeeSat: 573, txid: 'a' }),
-      createWalletTx({ isCpfp: true, onchainFeeSat: 642, txid: 'b' }),
-      createWalletTx({ isCpfp: false, onchainFeeSat: 9999, txid: 'c' })
+      createWalletTx({ isCpfp: true, onchainFeeSats: 573, txid: 'a' }),
+      createWalletTx({ isCpfp: true, onchainFeeSats: 642, txid: 'b' }),
+      createWalletTx({ isCpfp: false, onchainFeeSats: 9999, txid: 'c' })
     ]
     expect(getMovementFeeSat(movement, transactions)).toBe(1215)
   })
 
   it('returns zero on-chain fee for an exit with no CPFP transactions yet', () => {
-    const movement = createMovement({ offchainFeeSat: 0, subsystem: EXIT_SUBSYSTEM })
+    const movement = createMovement({ offchainFeeSats: 0, subsystem: EXIT_SUBSYSTEM })
     expect(getMovementFeeSat(movement, [])).toBe(0)
   })
 })
@@ -249,24 +251,24 @@ describe(getMovementFeeSat, () => {
 describe(sumExitCpfpFeeSat, () => {
   it('sums onchainFeeSat across CPFP transactions only', () => {
     const transactions = [
-      createWalletTx({ isCpfp: true, onchainFeeSat: 573 }),
-      createWalletTx({ isCpfp: true, onchainFeeSat: 642 }),
-      createWalletTx({ isCpfp: false, onchainFeeSat: 100 })
+      createWalletTx({ isCpfp: true, onchainFeeSats: 573 }),
+      createWalletTx({ isCpfp: true, onchainFeeSats: 642 }),
+      createWalletTx({ isCpfp: false, onchainFeeSats: 100 })
     ]
     expect(sumExitCpfpFeeSat(transactions)).toBe(1215)
   })
 
   it('skips CPFP transactions whose fee is not yet known', () => {
     const transactions = [
-      createWalletTx({ isCpfp: true, onchainFeeSat: 573 }),
-      createWalletTx({ isCpfp: true, onchainFeeSat: null })
+      createWalletTx({ isCpfp: true, onchainFeeSats: 573 }),
+      createWalletTx({ isCpfp: true, onchainFeeSats: null })
     ]
     expect(sumExitCpfpFeeSat(transactions)).toBe(573)
   })
 
   it('grows as more tree levels confirm', () => {
-    const firstLevel = [createWalletTx({ isCpfp: true, onchainFeeSat: 573 })]
-    const bothLevels = [...firstLevel, createWalletTx({ isCpfp: true, onchainFeeSat: 642 })]
+    const firstLevel = [createWalletTx({ isCpfp: true, onchainFeeSats: 573 })]
+    const bothLevels = [...firstLevel, createWalletTx({ isCpfp: true, onchainFeeSats: 642 })]
     expect(sumExitCpfpFeeSat(firstLevel)).toBe(573)
     expect(sumExitCpfpFeeSat(bothLevels)).toBe(1215)
   })

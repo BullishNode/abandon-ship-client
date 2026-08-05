@@ -1,22 +1,13 @@
-import {
-  BitcoinApi,
-  BoardsApi,
-  ExitsApi,
-  FeesApi,
-  HistoryApi,
-  LightningApi,
-  NotificationsApi,
-  OnchainApi,
-  WalletApi
-} from '@secondts/barkd'
-import { config } from '@/config/barkd'
+import { backend } from '@/lib/backend'
 
-export const walletApi = new WalletApi(config.client)
-export const boardsApi = new BoardsApi(config.client)
-export const historyApi = new HistoryApi(config.client)
-export const onchainApi = new OnchainApi(config.client)
-export const feesApi = new FeesApi(config.client)
-export const lightningApi = new LightningApi(config.client)
-export const notificationsApi = new NotificationsApi(config.client)
-export const exitsApi = new ExitsApi(config.client)
-export const bitcoinApi = new BitcoinApi(config.client)
+// The selected backend (barkd REST or WASM) is exposed under these stable names
+// so hooks keep their existing import paths. Both backends implement the same
+// domain-typed interfaces from '@/types/backend'.
+export const { walletApi } = backend
+export const { boardsApi } = backend
+export const { historyApi } = backend
+export const { onchainApi } = backend
+export const { feesApi } = backend
+export const { lightningApi } = backend
+export const { exitsApi } = backend
+export const { bitcoinApi } = backend

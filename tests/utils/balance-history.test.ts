@@ -36,38 +36,36 @@ describe(computeBalanceHistory, () => {
 
   it('filters out failed and canceled movements', () => {
     const failed = createMovement({
-      effectiveBalanceSat: 1000,
+      createdAt: new Date('2026-01-01').toISOString(),
+      effectiveBalanceSats: 1000,
       id: 1,
       status: 'failed',
-      time: { createdAt: new Date('2026-01-01'), updatedAt: new Date('2026-01-01') }
+      updatedAt: new Date('2026-01-01').toISOString()
     })
     const canceled = createMovement({
-      effectiveBalanceSat: 1000,
+      createdAt: new Date('2026-01-01').toISOString(),
+      effectiveBalanceSats: 1000,
       id: 2,
       status: 'canceled',
-      time: { createdAt: new Date('2026-01-01'), updatedAt: new Date('2026-01-01') }
+      updatedAt: new Date('2026-01-01').toISOString()
     })
     expect(computeBalanceHistory([failed, canceled], [], 0).points).toStrictEqual([])
   })
 
   it('keeps pending movements so pending board sats are not absorbed into the initial balance', () => {
     const received = createMovement({
-      effectiveBalanceSat: 30_000,
+      createdAt: new Date('2026-06-02T11:48:43Z').toISOString(),
+      effectiveBalanceSats: 30_000,
       id: 1,
       status: 'successful',
-      time: {
-        createdAt: new Date('2026-06-02T11:48:43Z'),
-        updatedAt: new Date('2026-06-02T11:48:44Z')
-      }
+      updatedAt: new Date('2026-06-02T11:48:44Z').toISOString()
     })
     const pendingBoard = createMovement({
-      effectiveBalanceSat: 10_000,
+      createdAt: new Date('2026-06-02T12:07:52Z').toISOString(),
+      effectiveBalanceSats: 10_000,
       id: 2,
       status: 'pending',
-      time: {
-        createdAt: new Date('2026-06-02T12:07:52Z'),
-        updatedAt: new Date('2026-06-02T12:07:52Z')
-      }
+      updatedAt: new Date('2026-06-02T12:07:52Z').toISOString()
     })
     const result = computeBalanceHistory([received, pendingBoard], [], 40_000)
     expect(result.initialBalanceSat).toBe(0)
@@ -76,14 +74,16 @@ describe(computeBalanceHistory, () => {
 
   it('produces a running balance ending at the endpoint total', () => {
     const m1 = createMovement({
-      effectiveBalanceSat: 100,
+      createdAt: new Date('2026-01-01').toISOString(),
+      effectiveBalanceSats: 100,
       id: 1,
-      time: { createdAt: new Date('2026-01-01'), updatedAt: new Date('2026-01-01') }
+      updatedAt: new Date('2026-01-01').toISOString()
     })
     const m2 = createMovement({
-      effectiveBalanceSat: -25,
+      createdAt: new Date('2026-01-02').toISOString(),
+      effectiveBalanceSats: -25,
       id: 2,
-      time: { createdAt: new Date('2026-01-02'), updatedAt: new Date('2026-01-02') }
+      updatedAt: new Date('2026-01-02').toISOString()
     })
     const result = computeBalanceHistory([m1, m2], [], 75)
     expect(result.points).toHaveLength(2)
@@ -94,8 +94,9 @@ describe(computeBalanceHistory, () => {
 
   it('merges onchain entries and sorts by time ascending', () => {
     const movement = createMovement({
-      effectiveBalanceSat: 500,
-      time: { createdAt: new Date('2026-01-02'), updatedAt: new Date('2026-01-02') }
+      createdAt: new Date('2026-01-02').toISOString(),
+      effectiveBalanceSats: 500,
+      updatedAt: new Date('2026-01-02').toISOString()
     })
     const onchain = makeOnchainEntry({
       amountSat: 200,
@@ -111,22 +112,18 @@ describe(computeBalanceHistory, () => {
 
   it('collapses an exit and its on-chain landing into a single fee-only step', () => {
     const received = createMovement({
-      effectiveBalanceSat: 10_000,
+      createdAt: new Date('2026-06-16T00:00:00Z').toISOString(),
+      effectiveBalanceSats: 10_000,
       id: 1,
-      time: {
-        createdAt: new Date('2026-06-16T00:00:00Z'),
-        updatedAt: new Date('2026-06-16T00:00:00Z')
-      }
+      updatedAt: new Date('2026-06-16T00:00:00Z').toISOString()
     })
     const exit = createMovement({
-      effectiveBalanceSat: -10_000,
+      createdAt: new Date('2026-06-17T00:00:00Z').toISOString(),
+      effectiveBalanceSats: -10_000,
       id: 2,
       sentTo: [destination('bitcoin', 'bc1pexit', 10_000)],
       subsystem: { kind: 'start', name: 'bark.exit' },
-      time: {
-        createdAt: new Date('2026-06-17T00:00:00Z'),
-        updatedAt: new Date('2026-06-17T00:00:00Z')
-      }
+      updatedAt: new Date('2026-06-17T00:00:00Z').toISOString()
     })
     const landing = makeOnchainEntry({
       amountSat: 9800,
@@ -142,22 +139,18 @@ describe(computeBalanceHistory, () => {
 
   it('collapses a cooperative offboard and its landing into a single fee-only step', () => {
     const received = createMovement({
-      effectiveBalanceSat: 10_000,
+      createdAt: new Date('2026-06-16T00:00:00Z').toISOString(),
+      effectiveBalanceSats: 10_000,
       id: 1,
-      time: {
-        createdAt: new Date('2026-06-16T00:00:00Z'),
-        updatedAt: new Date('2026-06-16T00:00:00Z')
-      }
+      updatedAt: new Date('2026-06-16T00:00:00Z').toISOString()
     })
     const offboard = createMovement({
-      effectiveBalanceSat: -10_000,
+      createdAt: new Date('2026-06-17T00:00:00Z').toISOString(),
+      effectiveBalanceSats: -10_000,
       id: 2,
       sentTo: [destination('bitcoin', 'bc1poffboard', 10_000)],
       subsystem: { kind: 'send_onchain', name: 'bark.offboard' },
-      time: {
-        createdAt: new Date('2026-06-17T00:00:00Z'),
-        updatedAt: new Date('2026-06-17T00:00:00Z')
-      }
+      updatedAt: new Date('2026-06-17T00:00:00Z').toISOString()
     })
     const landing = makeOnchainEntry({
       amountSat: 9800,
@@ -173,14 +166,12 @@ describe(computeBalanceHistory, () => {
 
   it('collapses a round-based offboard (bark.round/send_onchain) and its landing', () => {
     const offboard = createMovement({
-      effectiveBalanceSat: -10_000,
+      createdAt: new Date('2026-06-17T00:00:00Z').toISOString(),
+      effectiveBalanceSats: -10_000,
       id: 1,
       sentTo: [destination('bitcoin', 'bc1pround', 10_000)],
       subsystem: { kind: 'send_onchain', name: 'bark.round' },
-      time: {
-        createdAt: new Date('2026-06-17T00:00:00Z'),
-        updatedAt: new Date('2026-06-17T00:00:00Z')
-      }
+      updatedAt: new Date('2026-06-17T00:00:00Z').toISOString()
     })
     const landing = makeOnchainEntry({
       amountSat: 9800,
@@ -195,22 +186,18 @@ describe(computeBalanceHistory, () => {
 
   it('leaves an unmatched exit as a normal debit so a pending exit still dips', () => {
     const received = createMovement({
-      effectiveBalanceSat: 10_000,
+      createdAt: new Date('2026-06-16T00:00:00Z').toISOString(),
+      effectiveBalanceSats: 10_000,
       id: 1,
-      time: {
-        createdAt: new Date('2026-06-16T00:00:00Z'),
-        updatedAt: new Date('2026-06-16T00:00:00Z')
-      }
+      updatedAt: new Date('2026-06-16T00:00:00Z').toISOString()
     })
     const exit = createMovement({
-      effectiveBalanceSat: -10_000,
+      createdAt: new Date('2026-06-17T00:00:00Z').toISOString(),
+      effectiveBalanceSats: -10_000,
       id: 2,
       sentTo: [destination('bitcoin', 'bc1pexit', 10_000)],
       subsystem: { kind: 'start', name: 'bark.exit' },
-      time: {
-        createdAt: new Date('2026-06-17T00:00:00Z'),
-        updatedAt: new Date('2026-06-17T00:00:00Z')
-      }
+      updatedAt: new Date('2026-06-17T00:00:00Z').toISOString()
     })
     const result = computeBalanceHistory([received, exit], [], 0)
     expect(result.points.map((point) => point.balanceSat)).toStrictEqual([10_000, 0])
@@ -218,15 +205,13 @@ describe(computeBalanceHistory, () => {
 
   it('does not collapse a failed exit, leaving its landing as an independent credit', () => {
     const exit = createMovement({
-      effectiveBalanceSat: -10_000,
+      createdAt: new Date('2026-06-17T00:00:00Z').toISOString(),
+      effectiveBalanceSats: -10_000,
       id: 1,
       sentTo: [destination('bitcoin', 'bc1pexit', 10_000)],
       status: 'failed',
       subsystem: { kind: 'start', name: 'bark.exit' },
-      time: {
-        createdAt: new Date('2026-06-17T00:00:00Z'),
-        updatedAt: new Date('2026-06-17T00:00:00Z')
-      }
+      updatedAt: new Date('2026-06-17T00:00:00Z').toISOString()
     })
     const landing = makeOnchainEntry({
       amountSat: 9800,
@@ -241,14 +226,12 @@ describe(computeBalanceHistory, () => {
 
   it('does not pair an exit without a destination address', () => {
     const exit = createMovement({
-      effectiveBalanceSat: -10_000,
+      createdAt: new Date('2026-06-17T00:00:00Z').toISOString(),
+      effectiveBalanceSats: -10_000,
       id: 1,
       sentTo: [],
       subsystem: { kind: 'start', name: 'bark.exit' },
-      time: {
-        createdAt: new Date('2026-06-17T00:00:00Z'),
-        updatedAt: new Date('2026-06-17T00:00:00Z')
-      }
+      updatedAt: new Date('2026-06-17T00:00:00Z').toISOString()
     })
     const orphanCredit = makeOnchainEntry({
       amountSat: 9800,
@@ -260,6 +243,83 @@ describe(computeBalanceHistory, () => {
     const result = computeBalanceHistory([exit], [orphanCredit], -200)
     expect(result.points).toHaveLength(2)
     expect(result.points.at(-1)?.balanceSat).toBe(-200)
+  })
+
+  it('collapses a board and its funding tx so the balance never double-counts', () => {
+    const receive = makeOnchainEntry({
+      amountSat: 57_200,
+      approximateTimestampMs: new Date('2026-08-01T10:00:00Z').getTime(),
+      txid: 'receive'
+    })
+    const board = createMovement({
+      createdAt: new Date('2026-08-01T11:00:00Z').toISOString(),
+      effectiveBalanceSats: 57_000,
+      id: 1,
+      metadata: { chain_anchor: 'funding:0' },
+      subsystem: { kind: 'board', name: 'bark.board' },
+      updatedAt: new Date('2026-08-01T11:00:00Z').toISOString()
+    })
+    const funding = makeOnchainEntry({
+      amountSat: -57_200,
+      approximateTimestampMs: new Date('2026-08-01T11:00:45Z').getTime(),
+      direction: 'outgoing',
+      txid: 'funding'
+    })
+    const result = computeBalanceHistory([board], [receive, funding], 57_000)
+    expect(result.points.map((point) => point.balanceSat)).toStrictEqual([57_200, 57_000])
+    expect(Math.max(...result.points.map((point) => point.balanceSat))).toBe(57_200)
+  })
+
+  it('matches the board funding tx through output VTXO IDs when chain_anchor is missing', () => {
+    const board = createMovement({
+      createdAt: new Date('2026-08-01T11:00:00Z').toISOString(),
+      effectiveBalanceSats: 10_000,
+      id: 1,
+      outputVtxos: ['funding:1'],
+      subsystem: { kind: 'board', name: 'bark.board' },
+      updatedAt: new Date('2026-08-01T11:00:00Z').toISOString()
+    })
+    const funding = makeOnchainEntry({
+      amountSat: -10_100,
+      approximateTimestampMs: new Date('2026-08-01T11:00:45Z').getTime(),
+      direction: 'outgoing',
+      txid: 'funding'
+    })
+    const result = computeBalanceHistory([board], [funding], -100)
+    expect(result.points.map((point) => point.balanceSat)).toStrictEqual([-100])
+  })
+
+  it('does not collapse a failed board, leaving its funding tx as an independent debit', () => {
+    const board = createMovement({
+      createdAt: new Date('2026-08-01T11:00:00Z').toISOString(),
+      effectiveBalanceSats: 10_000,
+      id: 1,
+      metadata: { chain_anchor: 'funding:0' },
+      status: 'failed',
+      subsystem: { kind: 'board', name: 'bark.board' },
+      updatedAt: new Date('2026-08-01T11:00:00Z').toISOString()
+    })
+    const funding = makeOnchainEntry({
+      amountSat: -10_100,
+      approximateTimestampMs: new Date('2026-08-01T11:00:45Z').getTime(),
+      direction: 'outgoing',
+      txid: 'funding'
+    })
+    const result = computeBalanceHistory([board], [funding], -10_100)
+    expect(result.points.map((point) => point.balanceSat)).toStrictEqual([-10_100])
+  })
+
+  it('leaves a board without a visible funding tx as a normal credit', () => {
+    const board = createMovement({
+      createdAt: new Date('2026-08-01T11:00:00Z').toISOString(),
+      effectiveBalanceSats: 10_000,
+      id: 1,
+      metadata: { chain_anchor: 'funding:0' },
+      subsystem: { kind: 'board', name: 'bark.board' },
+      updatedAt: new Date('2026-08-01T11:00:00Z').toISOString()
+    })
+    const result = computeBalanceHistory([board], [], 10_000)
+    expect(result.points.map((point) => point.balanceSat)).toStrictEqual([10_000])
   })
 
   it('includes pending onchain entries so they are not absorbed into the initial balance', () => {

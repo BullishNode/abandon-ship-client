@@ -117,6 +117,22 @@
       "error": "Something went wrong. Please try again."
     }
   },
+  "unlock": {
+    "password": {
+      "title": "Unlock $t(app.name)",
+      "description": "Enter your password to unlock your wallet",
+      "label": "Password",
+      "submit": "Unlock",
+      "forgot": "Forgot password? Use your recovery phrase",
+      "error_invalid": "Incorrect password",
+      "error_generic": "Could not unlock the wallet. Check your connection and try again."
+    },
+    "mnemonic": {
+      "back": "Back to password",
+      "error": "Could not unlock the wallet. Make sure this seed phrase belongs to this wallet and try again.",
+      "vault_cleared": "Password removed. Set a new one in Settings → Security."
+    }
+  },
   "onboarding": {
     "create": "Create new wallet",
     "import": "Import existing wallet"
@@ -448,6 +464,30 @@
       "title": "Your seed phrase is not a complete backup",
       "description": "To recover your wallet, you'll need both your seed phrase and a continuous backup of the wallet data directory at <code>{{path}}</code>."
     },
+    "password": {
+      "label": "Password protection",
+      "description": "Require a password to unlock this wallet. Without one, the wallet unlocks automatically in this browser.",
+      "set_button": "Set password",
+      "change_button": "Change password",
+      "remove_button": "Remove password",
+      "dialog": {
+        "set_title": "Set a password",
+        "set_description": "Your password encrypts your wallet's seed phrase in this browser. If you forget it, you can still recover with your seed phrase.",
+        "change_title": "Change password",
+        "change_description": "Enter your current password, then choose a new one.",
+        "remove_title": "Remove password",
+        "remove_description": "Enter your current password to remove password protection. The wallet will then unlock automatically in this browser.",
+        "current_label": "Current password",
+        "new_label": "New password",
+        "confirm_label": "Confirm new password",
+        "error_mismatch": "Passwords do not match",
+        "error_invalid_current": "Incorrect password",
+        "error_generic": "Something went wrong. Please try again.",
+        "set_success": "Password set",
+        "change_success": "Password changed",
+        "remove_success": "Password removed"
+      }
+    },
     "community_forum": {
       "label": "Community forum",
       "description": "Ask questions and get advice from the community",
@@ -462,6 +502,12 @@
       "label": "Report an issue",
       "description": "Report a bug or request a feature",
       "button": "Open GitLab"
+    },
+    "export_db": {
+      "label": "Export wallet data",
+      "description": "Download a backup of your wallet's database for safekeeping or support.",
+      "button": "Export",
+      "error": "Could not export wallet data. Please try again."
     },
     "diagnostics": {
       "label": "Diagnostic logs",

@@ -1,4 +1,3 @@
-import type { PendingRoundInfo, RefreshFees, WalletVtxoInfo } from '@secondts/barkd'
 import { describe, expect, it } from 'vitest'
 import {
   getExpiringVtxoIds,
@@ -9,12 +8,15 @@ import {
   isRoundInProgress,
   resolveThresholdBlocks
 } from '../../src/utils/refresh'
+import type { RefreshFees } from '@/types/domain/fees'
+import type { PendingRound } from '@/types/domain/round'
+import type { Vtxo } from '@/types/domain/vtxo'
 
 const MAINNET_EXPIRY_DELTA = 4032
 const SIGNET_EXPIRY_DELTA = 144
 
 const REFRESH_FEES: RefreshFees = {
-  baseFeeSat: 0,
+  baseFeeSats: 0,
   ppmExpiryTable: [
     { expiryBlocksThreshold: 0, ppm: 0 },
     { expiryBlocksThreshold: 288, ppm: 2000 },
@@ -23,9 +25,9 @@ const REFRESH_FEES: RefreshFees = {
   ]
 }
 
-function makeVtxo(overrides: Partial<WalletVtxoInfo> = {}): WalletVtxoInfo {
+function makeVtxo(overrides: Partial<Vtxo> = {}): Vtxo {
   return {
-    amountSat: 1000,
+    amountSats: 1000,
     chainAnchor: 'txid:0',
     exitDelta: 0,
     exitDepth: 0,
@@ -39,13 +41,13 @@ function makeVtxo(overrides: Partial<WalletVtxoInfo> = {}): WalletVtxoInfo {
   }
 }
 
-function makeRound(overrides: Partial<PendingRoundInfo> = {}): PendingRoundInfo {
+function makeRound(overrides: Partial<PendingRound> = {}): PendingRound {
   return {
     fundingTxHex: null,
     fundingTxid: null,
     id: 1,
     participation: { inputs: [], outputs: [] },
-    status: { error: '', status: 'sync-error' },
+    status: { error: '', type: 'sync-error' },
     unlockHash: null,
     ...overrides
   }

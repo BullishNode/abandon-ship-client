@@ -1,4 +1,4 @@
-import type { Movement } from '@secondts/barkd'
+import type { Movement } from '@/types/domain/movement'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { BARK_WEB_METADATA_KEY } from '@/constants/metadata'
 import { historyApi } from '@/lib/barkd-client'
@@ -52,8 +52,8 @@ export function useUpdateMovementMetadata() {
   return useMutation<undefined, Error, UpdateMovementMetadataVars, UpdateContext>({
     mutationFn: async ({ id, patch }) => {
       await historyApi.updateMetadata({
-        body: buildMovementMetadataPatchBody(patch),
-        id
+        id,
+        metadata: buildMovementMetadataPatchBody(patch)
       })
     },
     onError: (_error, _vars, context) => {

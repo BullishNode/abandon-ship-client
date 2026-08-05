@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { validateMnemonic } from '@scure/bip39'
 import { wordlist } from '@scure/bip39/wordlists/english.js'
-import { BarkNetwork } from '@secondts/barkd'
 import { defineStepper } from '@stepperize/react'
 import { useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
@@ -9,7 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { SeedLayout } from '@/components/layout/seed-layout'
-import { config } from '@/config/barkd'
+import { config } from '@/config/runtime'
 import {
   StepsLayout,
   StepsLayoutContent,
@@ -32,6 +31,7 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { useCreateWallet } from '@/hooks/barkd/use-create-wallet'
+import { NETWORKS } from '@/types/domain/network'
 import {
   BIRTHDAY_HEIGHT_REQUIRED,
   birthdayHeightSchemaFor,
@@ -54,7 +54,7 @@ const mnemonicSchema = z.object({
 const networkAndServerSchema = z.object({
   arkServer: z.url(),
   birthdayHeight: birthdayHeightSchemaFor(() => config.chainSource),
-  network: z.enum(Object.values(BarkNetwork))
+  network: z.enum(NETWORKS)
 })
 
 type WalletNameFormValues = z.infer<typeof walletNameSchema>
@@ -121,13 +121,10 @@ export default function ImportWalletPage() {
 
     if ('arkServer' in values && 'network' in values) {
       createWallet({
-        arkServer: values.arkServer,
         birthdayHeight: values.birthdayHeight,
-        chainSource: config.chainSource,
         createdAt: new Date(),
         mnemonic,
-        name,
-        network: values.network
+        name
       })
     }
   }

@@ -1,5 +1,7 @@
-import type { BarkNetwork, Movement, MovementStatus, UtxoInfo, WalletTxInfo } from '@secondts/barkd'
 import { AVERAGE_BLOCK_INTERVAL_MS } from '@/constants/btc'
+import type { Movement, MovementStatus } from '@/types/domain/movement'
+import type { Network } from '@/types/domain/network'
+import type { DecodedInput, DecodedOutput, Utxo, WalletTx } from '@/types/domain/onchain'
 import type { MovementsTab, PendingOffboard } from '@/types/movements'
 import { getBoardFundingTxids, getMovementSource } from '@/utils/movement'
 import type { MovementSource } from '@/utils/movement'
@@ -56,14 +58,25 @@ function approximateTimestampMs(
   return Date.now() - elapsedBlocks * AVERAGE_BLOCK_INTERVAL_MS
 }
 
-function buildOwnedOutpoints(transactions: WalletTxInfo[], utxos: UtxoInfo[]): Set<string> {
+// Backends without raw-tx hex forward the tx graph pre-decoded, so prefer that
+// over re-parsing `tx` — `decodeOutputs`/`decodeInputs` swallow parse failures
+// and would silently yield nothing for an empty hex string.
+function txOutputs(tx: WalletTx, network: Network): DecodedOutput[] {
+  return tx.outputs ?? decodeOutputs(tx.tx, network)
+}
+
+function txInputs(tx: WalletTx): DecodedInput[] {
+  return tx.inputs ?? decodeInputs(tx.tx)
+}
+
+function buildOwnedOutpoints(transactions: WalletTx[], utxos: Utxo[]): Set<string> {
   const ownedOutpoints = new Set<string>()
   for (const utxo of utxos) {
     ownedOutpoints.add(utxo.outpoint)
   }
   const ourTxids = new Set(transactions.map((tx) => tx.txid))
   for (const tx of transactions) {
-    for (const input of decodeInputs(tx.tx)) {
+    for (const input of txInputs(tx)) {
       if (ourTxids.has(input.prevTxid)) {
         ownedOutpoints.add(makeOutpoint(input.prevTxid, input.prevVout))
       }
@@ -73,13 +86,13 @@ function buildOwnedOutpoints(transactions: WalletTxInfo[], utxos: UtxoInfo[]): S
 }
 
 function findBindingAddress(
-  tx: WalletTxInfo,
+  tx: WalletTx,
   ownedOutpoints: Set<string>,
   direction: 'incoming' | 'outgoing',
-  network: BarkNetwork
+  network: Network
 ): string | undefined {
   const lookForOwned = direction === 'incoming'
-  for (const out of decodeOutputs(tx.tx, network)) {
+  for (const out of txOutputs(tx, network)) {
     const isOwned = ownedOutpoints.has(makeOutpoint(tx.txid, out.vout))
     if (isOwned === lookForOwned && out.address !== undefined) {
       return out.address
@@ -90,21 +103,21 @@ function findBindingAddress(
 
 interface BuildOnchainOptions {
   tipHeight?: number
-  network: BarkNetwork
+  network: Network
   firstSeenAt?: Record<string, string>
   boardTxids?: Set<string>
 }
 
 export function buildOnchainTxEntries(
-  transactions: WalletTxInfo[],
-  utxos: UtxoInfo[],
+  transactions: WalletTx[],
+  utxos: Utxo[],
   options: BuildOnchainOptions
 ): OnchainTxEntry[] {
   const ownedOutpoints = buildOwnedOutpoints(transactions, utxos)
   const firstSeenAt = options.firstSeenAt ?? {}
   const entries: OnchainTxEntry[] = []
   for (const tx of transactions) {
-    const amountSat = tx.balanceChangeSat
+    const amountSat = tx.balanceChangeSats
     const direction: 'incoming' | 'outgoing' = amountSat >= 0 ? 'incoming' : 'outgoing'
     const confirmationHeight = tx.confirmation?.height ?? null
     const status: MovementStatus = confirmationHeight === null ? 'pending' : 'successful'
@@ -119,7 +132,7 @@ export function buildOnchainTxEntries(
       bindingAddress: findBindingAddress(tx, ownedOutpoints, direction, options.network),
       confirmationHeight,
       direction,
-      feeSat: tx.onchainFeeSat ?? null,
+      feeSat: tx.onchainFeeSats ?? null,
       firstSeenMs: firstSeen,
       isBoard: options.boardTxids?.has(tx.txid) ?? false,
       isCpfp: tx.isCpfp,
@@ -133,14 +146,14 @@ export function buildOnchainTxEntries(
 
 function rowTimestampMs(row: MovementsFeedRow): number {
   if (row.kind === 'movement') {
-    return row.movement.time.createdAt.getTime()
+    return new Date(row.movement.createdAt).getTime()
   }
   return row.approximateTimestampMs
 }
 
 function rowTieBreak(row: MovementsFeedRow): number {
   if (row.kind === 'movement') {
-    return row.movement.time.createdAt.getTime()
+    return new Date(row.movement.createdAt).getTime()
   }
   if (row.firstSeenMs !== null) {
     return row.firstSeenMs
@@ -158,9 +171,9 @@ function compareRows(a: MovementsFeedRow, b: MovementsFeedRow): number {
 
 interface BuildFeedOptions {
   tipHeight?: number
-  transactions?: WalletTxInfo[]
-  utxos?: UtxoInfo[]
-  network?: BarkNetwork
+  transactions?: WalletTx[]
+  utxos?: Utxo[]
+  network?: Network
   firstSeenAt?: Record<string, string>
   hideRefresh?: boolean
   hideExitFee?: boolean

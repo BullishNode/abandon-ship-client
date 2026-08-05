@@ -1,4 +1,3 @@
-import type { MovementStatus } from '@secondts/barkd'
 import type { ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CircleCheckIcon } from '@/components/icons/circle-check'
@@ -6,6 +5,7 @@ import { CircleMinusIcon } from '@/components/icons/circle-minus'
 import { CircleSpinnerIcon } from '@/components/icons/circle-spinner'
 import { CircleXIcon } from '@/components/icons/circle-x'
 import { Badge } from '@/components/ui/badge'
+import type { MovementStatus } from '@/types/domain/movement'
 
 const STATUS_CONFIG: Record<
   MovementStatus,

@@ -1,13 +1,13 @@
-import type { WalletVtxoInfo } from '@secondts/barkd'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EmergencyExitStartDialog } from '@/components/emergency-exit-start-dialog'
 import { useEmergencyExitVtxos } from '@/hooks/use-emergency-exit-vtxos'
+import type { Vtxo } from '@/types/domain/vtxo'
 
 interface EmergencyExitVtxosDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  vtxos: WalletVtxoInfo[]
+  vtxos: Vtxo[]
   isExitingAll: boolean
   onStarted: () => void
 }

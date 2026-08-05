@@ -1,27 +1,20 @@
-import type { WalletDeleteRequest } from '@secondts/barkd'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseMutationOptions } from '@tanstack/react-query'
 import { walletApi } from '@/lib/barkd-client'
-import { invalidateWalletExistence } from '@/lib/query-invalidations'
+import { resetWalletQueriesAfterDelete } from '@/lib/query-invalidations'
 import { useWalletStore } from '@/stores/wallet'
+import type { DeleteWalletParams, DeleteWalletResult } from '@/types/domain/wallet'
 
-async function deleteWallet(params: WalletDeleteRequest) {
-  const response = await walletApi.walletDelete({
-    walletDeleteRequest: params
-  })
-
+async function deleteWallet(params: DeleteWalletParams): Promise<DeleteWalletResult> {
+  const response = await walletApi.walletDelete(params)
   if (response.deleted) {
     useWalletStore.getState().clearWallet()
   }
-
   return response
 }
 
 export function useDeleteWallet(
-  options?: Omit<
-    UseMutationOptions<{ deleted: boolean; message: string }, Error, WalletDeleteRequest>,
-    'mutationFn'
-  >
+  options?: Omit<UseMutationOptions<DeleteWalletResult, Error, DeleteWalletParams>, 'mutationFn'>
 ) {
   const queryClient = useQueryClient()
 
@@ -29,7 +22,10 @@ export function useDeleteWallet(
     mutationFn: deleteWallet,
     ...options,
     onSuccess: async (...args) => {
-      await invalidateWalletExistence(queryClient)
+      // Full post-delete reset: invalidating existence alone would leave the
+      // infinite-staleTime autoCreate query cached as "done", so the root page
+      // would never create a wallet again after a delete.
+      await resetWalletQueriesAfterDelete(queryClient)
       options?.onSuccess?.(...args)
     }
   })

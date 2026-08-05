@@ -1,4 +1,4 @@
-import type { PendingRoundInfo } from '@secondts/barkd'
+import type { PendingRound } from '@/types/domain/round'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseMutationOptions } from '@tanstack/react-query'
 import { walletApi } from '@/lib/barkd-client'
@@ -9,16 +9,15 @@ interface RefreshVtxosParams {
 }
 
 export function useRefreshVtxos(
-  options?: Omit<UseMutationOptions<PendingRoundInfo, Error, RefreshVtxosParams>, 'mutationFn'>
+  options?: Omit<UseMutationOptions<PendingRound, Error, RefreshVtxosParams>, 'mutationFn'>
 ) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ vtxos }: RefreshVtxosParams) =>
-      await walletApi.refreshVtxos({ refreshRequest: { vtxos } }),
+    mutationFn: async ({ vtxos }: RefreshVtxosParams) => await walletApi.refreshVtxos({ vtxos }),
     ...options,
-    onSuccess: async (...args) => {
-      await invalidateRefreshState(queryClient)
+    onSuccess: (...args) => {
+      void invalidateRefreshState(queryClient)
       options?.onSuccess?.(...args)
     }
   })

@@ -1,4 +1,5 @@
-import type { ExitState, ExitTransactionStatus, WalletVtxoInfo } from '@secondts/barkd'
+import type { ExitState, ExitTransactionStatus } from '@/types/domain/exit'
+import type { Vtxo } from '@/types/domain/vtxo'
 
 export type ExitStateType = ExitState['type']
 
@@ -17,10 +18,7 @@ const VBYTES_PER_EXIT_LEVEL = EXIT_TX_VBYTES_PER_LEVEL + CPFP_CHILD_VBYTES_PER_L
  * the whole tree as one blob. A safety multiplier absorbs fee-rate drift while
  * the exit ripens, since underfunding stalls the exit part-way through.
  */
-export function estimateEmergencyExitFeeSat(
-  vtxos: WalletVtxoInfo[],
-  feeRateSatPerVb: number
-): number {
+export function estimateEmergencyExitFeeSat(vtxos: Vtxo[], feeRateSatPerVb: number): number {
   if (vtxos.length === 0 || feeRateSatPerVb <= 0) {
     return 0
   }
@@ -51,7 +49,10 @@ function exitTotalLevels(exit: ExitTransactionStatus): number {
   }
   const { state } = exit
   if (state.type === 'processing') {
-    return state.transactions.length
+    // A processing exit with no per-level data yet (the WASM backend supplies
+    // none) must still weigh at least one unconfirmed level, or it would count
+    // 0/0 and the bar could show 100% while exits are in flight.
+    return Math.max(state.transactions.length, 1)
   }
   return 1
 }

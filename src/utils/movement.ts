@@ -1,4 +1,5 @@
-import type { Movement, MovementDestination, WalletTxInfo } from '@secondts/barkd'
+import type { Movement, MovementDestination } from '@/types/domain/movement'
+import type { WalletTx } from '@/types/domain/onchain'
 import { formatAddress } from '@/utils/format'
 
 export type MovementSource =
@@ -12,7 +13,7 @@ export type MovementSource =
   | 'unknown'
 
 export function getMovementDirection(movement: Movement): 'incoming' | 'outgoing' {
-  return movement.effectiveBalanceSat >= 0 ? 'incoming' : 'outgoing'
+  return movement.effectiveBalanceSats >= 0 ? 'incoming' : 'outgoing'
 }
 
 export function getMovementCounterpartyDestination(movement: Movement): MovementDestination | null {
@@ -29,7 +30,7 @@ export function getMovementCounterpartyDestination(movement: Movement): Movement
 export function getMovementCounterparty(movement: Movement): string {
   const destination = getMovementCounterpartyDestination(movement)
   if (destination) {
-    return formatAddress(destination.destination.value)
+    return formatAddress(destination.value)
   }
   return movement.subsystem.name
 }
@@ -128,7 +129,10 @@ export function getMovementSource(movement: Movement): MovementSource {
   }
   const destinations = [...movement.sentTo, ...movement.receivedOn]
   for (const destination of destinations) {
-    const source = sourceFromPaymentType(destination.destination.type)
+    if (destination.paymentType === undefined) {
+      continue
+    }
+    const source = sourceFromPaymentType(destination.paymentType)
     if (source) {
       return source
     }
@@ -141,15 +145,15 @@ export function getMovementSource(movement: Movement): MovementSource {
 
 /**
  * An exit pays its real cost as on-chain CPFP fees that barkd attaches to each
- * exit-tree level, not as `offchainFeeSat` (which is 0). Those CPFP children
+ * exit-tree level, not as `offchainFeeSats` (which is 0). Those CPFP children
  * arrive as `isCpfp` wallet transactions; sum their fees to get the on-chain
  * exit cost. The total grows as more tree levels confirm, so it is recomputed
  * from the live transaction list rather than stored.
  */
-export function sumExitCpfpFeeSat(transactions: WalletTxInfo[]): number {
+export function sumExitCpfpFeeSat(transactions: WalletTx[]): number {
   return transactions
-    .filter((tx) => tx.isCpfp && typeof tx.onchainFeeSat === 'number')
-    .reduce((total, tx) => total + (tx.onchainFeeSat ?? 0), 0)
+    .filter((tx) => tx.isCpfp && typeof tx.onchainFeeSats === 'number')
+    .reduce((total, tx) => total + (tx.onchainFeeSats ?? 0), 0)
 }
 
 export function getMovementRawJson(movement: Movement): string {
@@ -158,13 +162,13 @@ export function getMovementRawJson(movement: Movement): string {
 
 export function getMovementFeeSat(
   movement: Movement,
-  transactions: WalletTxInfo[] = []
+  transactions: WalletTx[] = []
 ): number | null {
   if (isExitSubsystem(movement.subsystem.name)) {
-    return movement.offchainFeeSat + sumExitCpfpFeeSat(transactions)
+    return movement.offchainFeeSats + sumExitCpfpFeeSat(transactions)
   }
-  if (typeof movement.offchainFeeSat === 'number') {
-    return movement.offchainFeeSat
+  if (typeof movement.offchainFeeSats === 'number') {
+    return movement.offchainFeeSats
   }
   return null
 }

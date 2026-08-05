@@ -6,10 +6,7 @@ export function useWalletMnemonic(enabled: boolean) {
   return useQuery({
     enabled,
     gcTime: 0,
-    queryFn: async () => {
-      const { mnemonic } = await walletApi.mnemonic()
-      return mnemonic
-    },
+    queryFn: async () => await walletApi.mnemonic(),
     queryKey: walletKeys.mnemonic(),
     staleTime: Number.POSITIVE_INFINITY
   })

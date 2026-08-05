@@ -27,7 +27,10 @@ export function StatsCard({ className, bottomMetric = 'price' }: StatsCardProps)
   const { data: nextRound, isLoading: isLoadingRound } = useNextRound()
   const { data: arkInfo } = useArkInfo()
   const totalMs = parseDurationToMs(arkInfo?.roundInterval)
-  const countdown = useRoundCountdown(nextRound?.startTime, totalMs)
+  const countdown = useRoundCountdown(
+    nextRound ? new Date(nextRound.startTime) : undefined,
+    totalMs
+  )
   const { data: btcPrice, isLoading: isLoadingPrice } = useBitcoinPrice({
     enabled: !showBlockHeight
   })
@@ -39,8 +42,7 @@ export function StatsCard({ className, bottomMetric = 'price' }: StatsCardProps)
     isLoadingPrice || btcPrice?.currentPrice === undefined
       ? PLACEHOLDER
       : formatCurrency(btcPrice.currentPrice, fiatCurrency)
-  const blockHeightLabel =
-    tip?.tipHeight === undefined ? PLACEHOLDER : tip.tipHeight.toLocaleString()
+  const blockHeightLabel = tip === undefined ? PLACEHOLDER : tip.toLocaleString()
 
   const bottomLabel = showBlockHeight ? 'Block height' : 'Bitcoin price'
   const bottomValue = showBlockHeight ? blockHeightLabel : priceLabel

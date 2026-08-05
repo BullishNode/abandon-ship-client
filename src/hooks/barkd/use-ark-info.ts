@@ -1,4 +1,4 @@
-import type { ArkInfo } from '@secondts/barkd'
+import type { ArkInfo } from '@/types/domain/ark'
 import { useQuery } from '@tanstack/react-query'
 import type { UseQueryOptions } from '@tanstack/react-query'
 import { walletApi } from '@/lib/barkd-client'

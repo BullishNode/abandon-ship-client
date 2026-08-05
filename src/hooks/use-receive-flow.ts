@@ -179,7 +179,7 @@ export function useReceiveFlow({ open, onOpenChange }: UseReceiveFlowOptions) {
   useReceivedPayment(
     (movement) => {
       handleReceived({
-        amountSat: movement.effectiveBalanceSat,
+        amountSat: movement.effectiveBalanceSats,
         pending: false,
         rail: 'offchain'
       })

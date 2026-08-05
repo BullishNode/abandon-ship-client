@@ -1,9 +1,9 @@
-import type { ExitClaimResponse } from '@secondts/barkd'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseMutationOptions } from '@tanstack/react-query'
 import { exitsApi } from '@/lib/barkd-client'
 import { invalidateExitState } from '@/lib/query-invalidations'
 import { useWalletStore } from '@/stores/wallet'
+import type { ExitClaimResult } from '@/types/domain/exit'
 
 interface ClaimEmergencyExitVtxosParams {
   destination: string
@@ -12,7 +12,7 @@ interface ClaimEmergencyExitVtxosParams {
 
 export function useClaimEmergencyExitVtxos(
   options?: Omit<
-    UseMutationOptions<ExitClaimResponse, Error, ClaimEmergencyExitVtxosParams>,
+    UseMutationOptions<ExitClaimResult, Error, ClaimEmergencyExitVtxosParams>,
     'mutationFn'
   >
 ) {
@@ -21,7 +21,7 @@ export function useClaimEmergencyExitVtxos(
 
   return useMutation({
     mutationFn: async ({ destination, vtxos }: ClaimEmergencyExitVtxosParams) =>
-      await exitsApi.exitClaimVtxos({ exitClaimVtxosRequest: { destination, vtxos } }),
+      await exitsApi.exitClaimVtxos({ destination, vtxos }),
     ...options,
     onSuccess: async (...args) => {
       const [, variables] = args

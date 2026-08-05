@@ -1,4 +1,3 @@
-import type { ExitTransactionStatus, WalletVtxoInfo } from '@secondts/barkd'
 import i18next from 'i18next'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
@@ -8,16 +7,14 @@ import {
   mapVtxoExitStates,
   sortVtxosForDisplay
 } from '../../src/utils/vtxo'
+import type { ExitTransactionStatus } from '@/types/domain/exit'
+import type { Vtxo } from '@/types/domain/vtxo'
 
 const t = i18next.t.bind(i18next)
 
-function makeVtxo(
-  id: string,
-  expiryHeight: number,
-  state?: WalletVtxoInfo['state']
-): WalletVtxoInfo {
+function makeVtxo(id: string, expiryHeight: number, state?: Vtxo['state']): Vtxo {
   return {
-    amountSat: 1000,
+    amountSats: 1000,
     chainAnchor: `${id}-anchor`,
     exitDelta: 144,
     expiryHeight,
@@ -83,7 +80,7 @@ describe(getExpiryTimeLabel, () => {
   })
 })
 
-function statesFromExits(vtxos: WalletVtxoInfo[], exits: ExitTransactionStatus[]) {
+function statesFromExits(vtxos: Vtxo[], exits: ExitTransactionStatus[]) {
   return mapVtxoExitStates(vtxos, mapVtxoExitPhases(exits))
 }
 

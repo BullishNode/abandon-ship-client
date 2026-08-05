@@ -1,4 +1,4 @@
-import type { WalletVtxoInfo } from '@secondts/barkd'
+import type { Vtxo } from '@/types/domain/vtxo'
 import { useQuery } from '@tanstack/react-query'
 import type { UseQueryOptions } from '@tanstack/react-query'
 import { walletApi } from '@/lib/barkd-client'
@@ -10,7 +10,7 @@ interface UseVtxosParams {
 
 export function useVtxos(
   params?: UseVtxosParams,
-  options?: Omit<UseQueryOptions<WalletVtxoInfo[]>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<Vtxo[]>, 'queryKey' | 'queryFn'>
 ) {
   const all = params?.all ?? false
   return useQuery({

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import babel from '@rolldown/plugin-babel'
 import tailwindcss from '@tailwindcss/vite'
@@ -90,15 +91,101 @@ function defaultProxy(): Record<string, ProxyOptions> {
   }
 }
 
+// WASM backend: the app talks to the ark server + esplora directly from the
+// browser, so there is no Hono `/api/config`. Runtime config is baked in at
+// build time from env vars (Vite `define`) instead.
+function wasmConfig(env: Env): string {
+  return JSON.stringify({
+    arkServer: env.ARK_SERVER ?? '',
+    chainSource: env.CHAIN_SOURCE ?? '',
+    network: env.BARK_NETWORK ?? 'signet'
+  })
+}
+
+// WASM mode ships a static site with the wallet seed in browser memory, so the
+// only thing standing between an injected script and the funds is a CSP that
+// forbids running attacker JS. `script-src` is the real control:
+// `'wasm-unsafe-eval'` is required to instantiate the WASM module, and any
+// inline scripts in index.html (the pre-paint theme bootstrap) are allowlisted
+// by their sha256 hash rather than by `'unsafe-inline'`, so an injected inline
+// script still cannot run. `connect-src` stays open to https/wss because
+// lightning-address sends hit arbitrary user-supplied domains and price quotes
+// hit third-party APIs — pinning it would break both without meaningfully
+// containing an XSS (which could exfiltrate over an allowed https origin anyway).
+const INLINE_SCRIPT_PATTERN = /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/giu
+
+function inlineScriptHashes(html: string): string[] {
+  const hashes: string[] = []
+  for (const match of html.matchAll(INLINE_SCRIPT_PATTERN)) {
+    const [, body] = match
+    const digest = createHash('sha256').update(body).digest('base64')
+    hashes.push(`'sha256-${digest}'`)
+  }
+  return hashes
+}
+
+function buildWasmCsp(scriptHashes: string[]): string {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'wasm-unsafe-eval' ${scriptHashes.join(' ')}`.trim(),
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data:",
+    "font-src 'self'",
+    "connect-src 'self' https: wss:",
+    "worker-src 'self' blob:",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "frame-ancestors 'none'"
+  ].join('; ')
+}
+
+function wasmCspPlugin(): Plugin {
+  return {
+    name: 'wasm-csp',
+    transformIndexHtml: {
+      // Run after other plugins have injected their tags so the inline-script
+      // hashes cover the final HTML. The bundled entry/module tags carry `src`,
+      // so they are ignored by the inline-only pattern.
+      handler(html) {
+        return [
+          {
+            attrs: {
+              content: buildWasmCsp(inlineScriptHashes(html)),
+              'http-equiv': 'Content-Security-Policy'
+            },
+            injectTo: 'head-prepend',
+            tag: 'meta'
+          }
+        ]
+      },
+      order: 'post'
+    }
+  }
+}
+
 export default defineConfig(({ mode }) => {
   const isByob = mode === 'byob'
+  const isWasm = mode === 'wasm'
+  const backend = isWasm ? 'wasm' : 'barkd'
   const env: Env = { ...process.env, ...loadEnv(mode, process.cwd(), '') }
   return {
+    define: {
+      __BACKEND__: JSON.stringify(backend),
+      __WASM_CONFIG__: isWasm ? wasmConfig(env) : 'null'
+    },
+    // Keep the bark bindings out of dev pre-bundling: the pre-bundled copy in
+    // .vite/deps resolves `new URL('..._bg.wasm', import.meta.url)` to a path
+    // where no .wasm exists, so `init()` gets the SPA HTML fallback and WASM
+    // instantiation fails. Serving the package as-is keeps the asset adjacent.
+    optimizeDeps: {
+      exclude: ['@secondts/bark']
+    },
     plugins: [
       react(),
       babel({ presets: [reactCompilerPreset()] }),
       tailwindcss(),
-      ...(isByob ? [byobConfigPlugin(env)] : [])
+      ...(isByob ? [byobConfigPlugin(env)] : []),
+      ...(isWasm ? [wasmCspPlugin()] : [])
     ],
     resolve: {
       alias: {
@@ -131,6 +218,12 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       globals: true,
       setupFiles: ['./tests/setup.ts']
+    },
+    // ES-format workers so the WASM worker can `import` the bark bindings and
+    // resolve `new URL('..._bg.wasm', import.meta.url)` inside its own realm.
+    // The default `iife` format cannot, which strands the wasm on the main thread.
+    worker: {
+      format: 'es'
     }
   }
 })

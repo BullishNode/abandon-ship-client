@@ -1,5 +1,4 @@
 import { CheckIcon, CopyIcon } from '@phosphor-icons/react'
-import type { WalletVtxoInfo } from '@secondts/barkd'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CopyableValueRow, DetailRow } from '@/components/movement-detail-shared'
@@ -11,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useVtxoEncoded } from '@/hooks/barkd/use-vtxo-encoded'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
+import type { Vtxo } from '@/types/domain/vtxo'
 import type { VtxoExitPhase, VtxoExitState } from '@/utils/vtxo'
 import {
   getExpiryTimeLabel,
@@ -20,7 +20,7 @@ import {
 } from '@/utils/vtxo'
 
 interface VtxoDetailDialogProps {
-  vtxo: WalletVtxoInfo | null
+  vtxo: Vtxo | null
   open: boolean
   onOpenChange: (open: boolean) => void
   formatSats: (sats: number) => string
@@ -69,7 +69,7 @@ export function VtxoDetailDialog({
 }
 
 interface VtxoDetailContentProps {
-  vtxo: WalletVtxoInfo
+  vtxo: Vtxo
   formatSats: (sats: number) => string
   formatFiat: (sats: number) => string
   tipHeight?: number
@@ -114,10 +114,10 @@ function VtxoDetailContent({
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col leading-tight">
               <span className="font-semibold text-2xl tabular-nums">
-                {formatSats(vtxo.amountSat)}
+                {formatSats(vtxo.amountSats)}
               </span>
               <span className="text-muted-foreground text-sm tabular-nums">
-                {formatFiat(vtxo.amountSat)}
+                {formatFiat(vtxo.amountSats)}
               </span>
             </div>
             {exitState === undefined ? (
@@ -126,17 +126,21 @@ function VtxoDetailContent({
               <VtxoExitBadge phase={exitPhase} state={exitState} />
             )}
           </div>
-          <DetailRow
-            label={t('vtxos.detail.policy_type')}
-            tooltip={t('vtxos.detail.policy_tooltip')}
-            value={vtxo.policyType}
-          />
+          {vtxo.policyType === undefined ? null : (
+            <DetailRow
+              label={t('vtxos.detail.policy_type')}
+              tooltip={t('vtxos.detail.policy_tooltip')}
+              value={vtxo.policyType}
+            />
+          )}
           <DetailRow label={t('vtxos.detail.expiry')} value={expiryValue} />
-          <DetailRow
-            label={t('vtxos.detail.exit_delta')}
-            tooltip={t('vtxos.detail.exit_delta_tooltip')}
-            value={t('vtxos.detail.blocks_value', { count: vtxo.exitDelta })}
-          />
+          {vtxo.exitDelta === undefined ? null : (
+            <DetailRow
+              label={t('vtxos.detail.exit_delta')}
+              tooltip={t('vtxos.detail.exit_delta_tooltip')}
+              value={t('vtxos.detail.blocks_value', { count: vtxo.exitDelta })}
+            />
+          )}
           <DetailRow
             label={t('vtxos.detail.exit_depth')}
             tooltip={t('vtxos.detail.exit_depth_tooltip')}
@@ -147,11 +151,13 @@ function VtxoDetailContent({
             label={t('vtxos.detail.id')}
             value={vtxo.id}
           />
-          <CopyableValueRow
-            displayValue={truncateVtxoId(vtxo.chainAnchor)}
-            label={t('vtxos.detail.chain_anchor')}
-            value={vtxo.chainAnchor}
-          />
+          {vtxo.chainAnchor === undefined ? null : (
+            <CopyableValueRow
+              displayValue={truncateVtxoId(vtxo.chainAnchor)}
+              label={t('vtxos.detail.chain_anchor')}
+              value={vtxo.chainAnchor}
+            />
+          )}
           {exitPhase === undefined ? null : (
             <ClaimAddressRow
               address={claimAddress}

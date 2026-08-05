@@ -1,26 +1,22 @@
-import type { CreateWalletRequest } from '@secondts/barkd'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { UseMutationOptions } from '@tanstack/react-query'
 import { walletApi } from '@/lib/barkd-client'
 import { invalidateWalletExistence } from '@/lib/query-invalidations'
 import { useWalletStore } from '@/stores/wallet'
-interface CreateWalletParams extends CreateWalletRequest {
+
+interface CreateWalletParams {
   name: string
   mnemonic: string
   createdAt: Date
+  birthdayHeight?: number
 }
 
 async function createWallet(params: CreateWalletParams) {
   const { setWallet } = useWalletStore.getState()
 
   const response = await walletApi.createWallet({
-    createWalletRequest: {
-      arkServer: params.arkServer,
-      birthdayHeight: params.birthdayHeight,
-      chainSource: params.chainSource,
-      mnemonic: params.mnemonic,
-      network: params.network
-    }
+    birthdayHeight: params.birthdayHeight,
+    mnemonic: params.mnemonic
   })
   const { fingerprint } = response
 

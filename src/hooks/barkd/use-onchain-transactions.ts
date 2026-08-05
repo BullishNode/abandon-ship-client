@@ -1,27 +1,11 @@
-import type { WalletTxInfo } from '@secondts/barkd'
-import { useQuery } from '@tanstack/react-query'
-import type { UseQueryOptions } from '@tanstack/react-query'
-import { onchainApi } from '@/lib/barkd-client'
-import { onchainKeys } from '@/lib/query-keys'
-import { useMetadataStore } from '@/stores/metadata'
-import { hasPendingOffboards, usePendingOffboardsStore } from '@/stores/pending-offboards'
+import type { OnchainSnapshot, WalletTx } from '@/types/domain/onchain'
+import { useOnchainSnapshot } from './use-onchain-snapshot'
+import type { OnchainSnapshotQueryOptions } from './use-onchain-snapshot'
 
-const FAST_REFETCH_MS = 3000
-const DEFAULT_REFETCH_MS = 30_000
+function selectTransactions(snapshot: OnchainSnapshot): WalletTx[] {
+  return snapshot.transactions
+}
 
-export function useOnchainTransactions(
-  options?: Omit<UseQueryOptions<WalletTxInfo[]>, 'queryKey' | 'queryFn'>
-) {
-  return useQuery({
-    queryFn: async () => {
-      const transactions = await onchainApi.onchainTransactions()
-      const txids = transactions.map((tx) => tx.txid)
-      useMetadataStore.getState().recordOnchainFirstSeen(txids)
-      usePendingOffboardsStore.getState().reconcile(txids, Date.now())
-      return transactions
-    },
-    queryKey: onchainKeys.transactions(),
-    refetchInterval: () => (hasPendingOffboards() ? FAST_REFETCH_MS : DEFAULT_REFETCH_MS),
-    ...options
-  })
+export function useOnchainTransactions(options?: OnchainSnapshotQueryOptions<WalletTx[]>) {
+  return useOnchainSnapshot(selectTransactions, options)
 }

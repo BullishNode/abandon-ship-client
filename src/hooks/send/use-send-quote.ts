@@ -45,10 +45,10 @@ export function useSendQuote({
     isOnchainRoute ? destination : undefined
   )
 
-  let feeEstimate: { feeSat: number; grossAmountSat?: number } | undefined
+  let feeEstimate: { feeSats: number; grossAmountSats?: number } | undefined
   let isFetchingFee = false
   if (sendRoute === 'ark') {
-    feeEstimate = { feeSat: 0 }
+    feeEstimate = { feeSats: 0 }
   } else if (isLightningRoute) {
     feeEstimate = lightningSendFee
     isFetchingFee = isFetchingLnFee
@@ -63,17 +63,17 @@ export function useSendQuote({
   } else if (isFetchingFee) {
     feeDisplay = '...'
   } else if (feeEstimate) {
-    feeDisplay = formatBitcoin(feeEstimate.feeSat)
+    feeDisplay = formatBitcoin(feeEstimate.feeSats)
   }
-  const feeSat = sendRoute === 'ark' ? undefined : feeEstimate?.feeSat
+  const feeSat = sendRoute === 'ark' ? undefined : feeEstimate?.feeSats
 
   const { data: walletBalance } = useWalletBalance()
   const { data: onchainBalance } = useOnchainBalance()
 
-  const arkBalanceSat = walletBalance?.spendableSat ?? 0
-  const onchainTrustedSpendableSat = onchainBalance?.trustedSpendableSat ?? 0
-  const onchainTrustedPendingSat = onchainBalance?.trustedPendingSat ?? 0
-  const onchainUntrustedPendingSat = onchainBalance?.untrustedPendingSat ?? 0
+  const arkBalanceSat = walletBalance?.spendableSats ?? 0
+  const onchainTrustedSpendableSat = onchainBalance?.trustedSpendableSats ?? 0
+  const onchainTrustedPendingSat = onchainBalance?.trustedPendingSats ?? 0
+  const onchainUntrustedPendingSat = onchainBalance?.untrustedPendingSats ?? 0
   const onchainPendingTotalSat = onchainTrustedPendingSat + onchainUntrustedPendingSat
   const onchainBalanceSat = onchainTrustedSpendableSat + onchainPendingTotalSat
   const availableBalance = sendRoute === 'onchain-from-wallet' ? onchainBalanceSat : arkBalanceSat
@@ -81,7 +81,7 @@ export function useSendQuote({
   const requiredSat =
     validAmountSat === undefined
       ? undefined
-      : (feeEstimate?.grossAmountSat ?? validAmountSat + (feeEstimate?.feeSat ?? 0))
+      : (feeEstimate?.grossAmountSats ?? validAmountSat + (feeEstimate?.feeSats ?? 0))
 
   const hasEnoughFunds = requiredSat === undefined ? true : availableBalance >= requiredSat
   const insufficientFunds = requiredSat !== undefined && !hasEnoughFunds

@@ -1,5 +1,5 @@
-import type { Movement } from '@secondts/barkd'
 import { BARK_WEB_METADATA_KEY } from '@/constants/metadata'
+import type { Movement } from '@/types/domain/movement'
 import type {
   BarkWebMovementMetadata,
   BindingDirection,
@@ -22,10 +22,10 @@ export function dedupeNonEmpty(values: string[]): string[] {
 }
 
 export function movementDirection(movement: Movement): BindingDirection | null {
-  if (movement.effectiveBalanceSat > 0) {
+  if (movement.effectiveBalanceSats > 0) {
     return 'incoming'
   }
-  if (movement.effectiveBalanceSat < 0) {
+  if (movement.effectiveBalanceSats < 0) {
     return 'outgoing'
   }
   return null
@@ -38,7 +38,7 @@ export function movementDestinationValues(
   const entries = direction === 'incoming' ? movement.receivedOn : movement.sentTo
   const values: string[] = []
   for (const entry of entries) {
-    const { value } = entry.destination
+    const { value } = entry
     if (value !== '') {
       values.push(value)
     }

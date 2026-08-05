@@ -10,9 +10,7 @@ async function resetWallet() {
   if (fingerprint === undefined || fingerprint === null || fingerprint.length === 0) {
     throw new Error('No wallet to delete')
   }
-  await walletApi.walletDelete({
-    walletDeleteRequest: { dangerous: true, fingerprint }
-  })
+  await walletApi.walletDelete({ dangerous: true, fingerprint })
   useWalletStore.getState().clearWallet()
 }
 

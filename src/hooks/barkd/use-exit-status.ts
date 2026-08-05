@@ -1,4 +1,4 @@
-import type { ExitTransactionStatus } from '@secondts/barkd'
+import type { ExitTransactionStatus } from '@/types/domain/exit'
 import { useQuery } from '@tanstack/react-query'
 import type { UseQueryOptions } from '@tanstack/react-query'
 import { exitsApi } from '@/lib/barkd-client'
@@ -11,7 +11,7 @@ export function useExitStatus(
   options?: Omit<UseQueryOptions<ExitTransactionStatus[]>, 'queryKey' | 'queryFn'>
 ) {
   return useQuery({
-    queryFn: async () => await exitsApi.getAllExitStatus({}),
+    queryFn: async () => await exitsApi.getAllExitStatus(),
     queryKey: exitKeys.status(),
     refetchInterval: (query) => {
       const exits = query.state.data

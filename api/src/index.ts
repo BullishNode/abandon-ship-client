@@ -1,5 +1,9 @@
+import { randomBytes } from 'node:crypto'
 import { createReadStream } from 'node:fs'
-import { readFile, stat } from 'node:fs/promises'
+import { readFile, rm, stat } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { DatabaseSync } from 'node:sqlite'
 import { Readable } from 'node:stream'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
@@ -36,6 +40,7 @@ const { chainSource: CHAIN_SOURCE_CONFIG, warnings: CHAIN_SOURCE_WARNINGS } = bu
 const TOKEN_PATH = `${WALLET_DIR}/auth_token`
 const LOG_PATH = `${WALLET_DIR}/debug.log`
 const LOG_DOWNLOAD_NAME = 'barkd-debug.log'
+const DB_PATH = `${WALLET_DIR}/db.sqlite`
 
 const UI_AUTH = (process.env.UI_AUTH ?? 'false').toLowerCase() === 'true'
 const UI_PASSWORD_FILE = process.env.UI_PASSWORD_FILE ?? `${WALLET_DIR}/ui_password`
@@ -200,6 +205,10 @@ app.use('/api/logs', async (c: Context, next: Next) => {
   await requireSession(c, next)
 })
 
+app.use('/api/export-db', async (c: Context, next: Next) => {
+  await requireSession(c, next)
+})
+
 async function getLogSize(): Promise<number | null> {
   try {
     const stats = await stat(LOG_PATH)
@@ -224,6 +233,51 @@ app.get('/api/logs', async (c) => {
       'Content-Type': 'text/plain; charset=utf-8'
     }
   })
+})
+
+async function fileExists(path: string): Promise<boolean> {
+  try {
+    await stat(path)
+    return true
+  } catch {
+    return false
+  }
+}
+
+// Consistent snapshot of the live wallet database. barkd keeps the SQLite file
+// open (WAL mode), so a raw file copy could ship a torn page set; VACUUM INTO
+// runs inside a read transaction and writes a compacted, self-contained copy.
+// The source is opened read-only so the export can never mutate wallet state.
+function snapshotDatabase(sourcePath: string, targetPath: string): void {
+  const db = new DatabaseSync(sourcePath, { readOnly: true })
+  try {
+    db.exec(`VACUUM INTO '${targetPath.replaceAll("'", "''")}'`)
+  } finally {
+    db.close()
+  }
+}
+
+app.get('/api/export-db', async (c) => {
+  if (!(await fileExists(DB_PATH))) {
+    return c.json({ error: 'db_unavailable' }, 404)
+  }
+  const snapshotPath = join(tmpdir(), `bark-db-export-${randomBytes(8).toString('hex')}.sqlite`)
+  try {
+    snapshotDatabase(DB_PATH, snapshotPath)
+    const snapshot = await readFile(snapshotPath)
+    const timestamp = new Date().toISOString().replaceAll(':', '-').slice(0, 19)
+    return new Response(new Uint8Array(snapshot), {
+      headers: {
+        'Content-Disposition': `attachment; filename="bark-wallet-${BARK_NETWORK}-${timestamp}.sqlite"`,
+        'Content-Length': String(snapshot.byteLength),
+        'Content-Type': 'application/octet-stream'
+      }
+    })
+  } catch {
+    return c.json({ error: 'export_failed' }, 500)
+  } finally {
+    await rm(snapshotPath, { force: true })
+  }
 })
 
 app.all('/api/barkd/*', async (c) => {
