@@ -72,6 +72,23 @@ docker compose --env-file .env.mainnet down -v
 
 Then run `npm run dev:signet` (or `:mainnet`) again.
 
+### WASM mode (no daemon)
+
+The app can also run the wallet entirely in the browser on [`@secondts/bark`](https://www.npmjs.com/package/@secondts/bark), with no `barkd` and no server. Wallet state lives in IndexedDB and the browser talks to the Ark server and esplora directly.
+
+1. Copy the example env file:
+
+```bash
+cp .env.wasm.example .env.wasm
+```
+
+2. Run it, or build a static bundle:
+
+```bash
+npm run dev:wasm       # vite --mode wasm
+npm run build:wasm     # static site in dist/
+```
+
 ### Bump bark versions
 
 Use the helper script to bump bark/barkd versions:
@@ -107,6 +124,7 @@ npm run fix
 - [Hono](https://hono.dev/) — HTTP server for the bark-web API
 - [nginx](https://nginx.org/) — static asset server and reverse proxy in the production image
 - [barkd](https://www.npmjs.com/package/@secondts/barkd) — Bark daemon client
+- [bark](https://www.npmjs.com/package/@secondts/bark) — in-browser WASM wallet bindings, used in WASM mode
 - [Branta](https://branta.pro/) — wallet address verification
 
 ## Contributing
