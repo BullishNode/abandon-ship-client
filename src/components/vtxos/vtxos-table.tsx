@@ -1,4 +1,3 @@
-import type { WalletVtxoInfo } from '@secondts/barkd'
 import type { RowSelectionState } from '@tanstack/react-table'
 import { CaretDownIcon, CoinsIcon, FunnelSimpleIcon } from '@phosphor-icons/react'
 import { useState } from 'react'
@@ -27,9 +26,10 @@ import { useRefreshVtxos } from '@/hooks/barkd/use-refresh-vtxos'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
 import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
 import { usePrivateAmount } from '@/hooks/use-private-amount'
-import { barkdErrorMessage } from '@/lib/barkd-errors'
+import { backendErrorMessage } from '@/lib/error-message'
 import { useSettingsStore } from '@/stores/settings'
 import { useWalletStore } from '@/stores/wallet'
+import type { Vtxo } from '@/types/domain/vtxo'
 import {
   isSpendable,
   mapVtxoExitClaimHeights,
@@ -52,7 +52,7 @@ export function VtxosTable() {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [offboardOpen, setOffboardOpen] = useState(false)
   const [exitOpen, setExitOpen] = useState(false)
-  const [detailVtxo, setDetailVtxo] = useState<WalletVtxoInfo | null>(null)
+  const [detailVtxo, setDetailVtxo] = useState<Vtxo | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
 
   const exitPhaseById = mapVtxoExitPhases(exitStatuses)
@@ -72,7 +72,7 @@ export function VtxosTable() {
   })
   const visibleVtxos = sortVtxosForDisplay(filteredVtxos, exitStateById, exitClaimHeightById)
 
-  function isSelectable(vtxo: WalletVtxoInfo): boolean {
+  function isSelectable(vtxo: Vtxo): boolean {
     return isSpendable(vtxo) && !exitStateById.has(vtxo.id)
   }
 
@@ -92,7 +92,7 @@ export function VtxosTable() {
 
   const { mutate: refresh, isPending: isRefreshing } = useRefreshVtxos({
     onError: async (error) => {
-      const description = await barkdErrorMessage(error)
+      const description = await backendErrorMessage(error)
       toast.error(t('vtxos.refresh.error'), { description })
     },
     onSuccess: () => {
@@ -110,7 +110,7 @@ export function VtxosTable() {
     clearSelection()
   }
 
-  function handleRowClick(vtxo: WalletVtxoInfo) {
+  function handleRowClick(vtxo: Vtxo) {
     setDetailVtxo(vtxo)
     setDetailOpen(true)
   }
@@ -129,7 +129,7 @@ export function VtxosTable() {
     formatSats,
     lockLabelById,
     t,
-    tipHeight: tip?.tipHeight
+    tipHeight: tip
   })
 
   if (isPending) {
@@ -213,7 +213,7 @@ export function VtxosTable() {
         lockLabel={detailVtxo ? lockLabelById.get(detailVtxo.id) : undefined}
         onOpenChange={handleDetailOpenChange}
         open={detailOpen}
-        tipHeight={tip?.tipHeight}
+        tipHeight={tip}
         vtxo={detailVtxo}
       />
     </>

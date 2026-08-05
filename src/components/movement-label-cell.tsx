@@ -1,5 +1,5 @@
-import type { Movement } from '@secondts/barkd'
 import { Badge } from '@/components/ui/badge'
+import type { Movement } from '@/types/domain/movement'
 import { getMovementMetadata } from '@/utils/metadata'
 
 interface MovementLabelCellProps {

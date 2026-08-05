@@ -8,10 +8,11 @@ import { AuthGate } from './components/auth-gate'
 import { ErrorBoundary } from './components/error-boundary'
 import { FullScreenLayout } from './components/full-screen-layout'
 import { LoadingScreen } from './components/loading-screen'
-import { initConfig } from './config/barkd'
+import { initConfig } from './config/runtime'
 import { fetchAuthStatus } from './lib/auth-api'
 import { queryClient } from './lib/query-client'
 import { useAuthStore } from './stores/auth'
+import type { AuthStatus } from './types/auth'
 
 const root = document.querySelector('#root')
 if (!root) {
@@ -76,12 +77,31 @@ function BootError({ message, onRetry }: { message: string; onRetry: () => void 
   )
 }
 
+// In WASM mode the "auth gate" guards seed re-entry: a wallet persisted in
+// IndexedDB whose in-memory seed was lost on reload is locked until it can be
+// reopened. Passwordless wallets reopen silently from the device vault; only
+// when that fails (password set, vault missing, private mode) does the gate
+// prompt for the password or the phrase. In barkd mode it reflects the
+// daemon's auth status. The WASM module is dynamically imported so it never
+// enters the barkd bundle.
+async function resolveInitialAuthStatus(): Promise<AuthStatus> {
+  if (__BACKEND__ === 'wasm') {
+    const { isWalletLocked, tryDeviceUnlock } = await import('./lib/backend/wasm')
+    let locked = await isWalletLocked()
+    if (locked) {
+      locked = !(await tryDeviceUnlock())
+    }
+    return { authRequired: locked, authed: !locked }
+  }
+  return await fetchAuthStatus()
+}
+
 async function bootstrap(reactRoot: Root): Promise<void> {
   reactRoot.render(<LoadingScreen />)
   try {
     await initConfigWithRetry()
 
-    useAuthStore.getState().setStatus(await fetchAuthStatus())
+    useAuthStore.getState().setStatus(await resolveInitialAuthStatus())
 
     const { default: App } = await import('./App.tsx')
 

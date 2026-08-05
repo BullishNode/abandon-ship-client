@@ -1,4 +1,4 @@
-import type { Movement } from '@secondts/barkd'
+import type { Movement } from '@/types/domain/movement'
 import { useNotifications } from './use-notifications'
 
 interface UseReceivedPaymentOptions {
@@ -13,7 +13,7 @@ export function useReceivedPayment(
     if (notification.type !== 'movement-created') {
       return
     }
-    if (notification.movement.effectiveBalanceSat <= 0) {
+    if (notification.movement.effectiveBalanceSats <= 0) {
       return
     }
     handler(notification.movement)

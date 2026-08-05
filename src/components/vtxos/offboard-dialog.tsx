@@ -1,4 +1,3 @@
-import type { WalletVtxoInfo } from '@secondts/barkd'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,11 +13,12 @@ import { Input } from '@/components/ui/input'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
 import { useFormatFiat } from '@/hooks/use-format-fiat'
 import { useOffboardFlow } from '@/hooks/use-offboard-flow'
+import type { Vtxo } from '@/types/domain/vtxo'
 
 interface OffboardDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  vtxos: WalletVtxoInfo[]
+  vtxos: Vtxo[]
   onOffboarded: () => void
 }
 

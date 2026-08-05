@@ -1,9 +1,9 @@
-import type { WalletVtxoInfo } from '@secondts/barkd'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { TFunction } from 'i18next'
 import { Checkbox } from '@/components/ui/checkbox'
 import { VtxoExitBadge } from '@/components/vtxos/vtxo-exit-badge'
 import { VtxoStatusBadge } from '@/components/vtxos/vtxo-status-badge'
+import type { Vtxo } from '@/types/domain/vtxo'
 import type { VtxoExitPhase, VtxoExitState } from '@/utils/vtxo'
 import { getExpiryTimeLabel, truncateVtxoId } from '@/utils/vtxo'
 
@@ -35,7 +35,7 @@ export function getVtxoColumns({
   exitPhaseById,
   exitStateById,
   lockLabelById
-}: VtxoColumnsOptions): ColumnDef<WalletVtxoInfo>[] {
+}: VtxoColumnsOptions): ColumnDef<Vtxo>[] {
   return [
     {
       cell: ({ row }) => (
@@ -98,9 +98,9 @@ export function getVtxoColumns({
     {
       cell: ({ row }) => (
         <div className="flex flex-col items-end leading-tight">
-          <span className="font-medium tabular-nums">{formatSats(row.original.amountSat)}</span>
+          <span className="font-medium tabular-nums">{formatSats(row.original.amountSats)}</span>
           <span className="text-muted-foreground text-xs tabular-nums">
-            {formatFiat(row.original.amountSat)}
+            {formatFiat(row.original.amountSats)}
           </span>
         </div>
       ),

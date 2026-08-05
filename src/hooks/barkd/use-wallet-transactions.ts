@@ -1,4 +1,4 @@
-import type { Movement } from '@secondts/barkd'
+import type { Movement } from '@/types/domain/movement'
 import { useQuery } from '@tanstack/react-query'
 import type { UseQueryOptions } from '@tanstack/react-query'
 import { historyApi } from '@/lib/barkd-client'
@@ -24,12 +24,12 @@ async function promoteBindings(movements: Movement[]): Promise<Movement[]> {
   const settled = await Promise.allSettled(
     promotions.map(async (promotion) => {
       await historyApi.updateMetadata({
-        body: buildMovementMetadataPatchBody({
+        id: promotion.movementId,
+        metadata: buildMovementMetadataPatchBody({
           contactId: promotion.metadata.contactId,
           label: promotion.metadata.label,
           tags: promotion.metadata.tags
-        }),
-        id: promotion.movementId
+        })
       })
     })
   )

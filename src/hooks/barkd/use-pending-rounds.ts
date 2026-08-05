@@ -1,4 +1,4 @@
-import type { PendingRoundInfo } from '@secondts/barkd'
+import type { PendingRound } from '@/types/domain/round'
 import { useQuery } from '@tanstack/react-query'
 import type { UseQueryOptions } from '@tanstack/react-query'
 import { walletApi } from '@/lib/barkd-client'
@@ -7,7 +7,7 @@ import { walletKeys } from '@/lib/query-keys'
 const PENDING_ROUNDS_POLL_MS = 10_000
 
 export function usePendingRounds(
-  options?: Omit<UseQueryOptions<PendingRoundInfo[]>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<PendingRound[]>, 'queryKey' | 'queryFn'>
 ) {
   return useQuery({
     queryFn: async () => await walletApi.pendingRounds(),

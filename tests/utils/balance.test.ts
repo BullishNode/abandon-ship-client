@@ -1,50 +1,51 @@
-import type { Balance, OnchainBalance, UtxoInfo, WalletTxInfo } from '@secondts/barkd'
 import { describe, expect, it } from 'vitest'
 import {
   carryForwardPendingExit,
   getBalanceTotals,
   sumUnconfirmedCpfpUtxoSat
 } from '../../src/utils/balance'
+import type { Balance, OnchainBalance } from '@/types/domain/balance'
+import type { Utxo, WalletTx } from '@/types/domain/onchain'
 
 function makeBalance(overrides: Partial<Balance> = {}): Balance {
   return {
-    claimableLightningReceiveSat: 0,
-    pendingBoardSat: 0,
-    pendingExitSat: null,
-    pendingInRoundSat: 0,
-    pendingLightningSendSat: 0,
-    spendableSat: 0,
+    claimableLightningReceiveSats: 0,
+    pendingBoardSats: 0,
+    pendingExitSats: null,
+    pendingInRoundSats: 0,
+    pendingLightningSendSats: 0,
+    spendableSats: 0,
     ...overrides
   }
 }
 
 function makeOnchainBalance(overrides: Partial<OnchainBalance> = {}): OnchainBalance {
   return {
-    confirmedSat: 0,
-    immatureSat: 0,
-    totalSat: 0,
-    trustedPendingSat: 0,
-    trustedSpendableSat: 0,
-    untrustedPendingSat: 0,
+    confirmedSats: 0,
+    immatureSats: 0,
+    totalSats: 0,
+    trustedPendingSats: 0,
+    trustedSpendableSats: 0,
+    untrustedPendingSats: 0,
     ...overrides
   }
 }
 
-function makeTx(overrides: Partial<WalletTxInfo> = {}): WalletTxInfo {
+function makeTx(overrides: Partial<WalletTx> = {}): WalletTx {
   return {
-    balanceChangeSat: 0,
+    balanceChangeSats: 0,
     confirmation: null,
     isCpfp: false,
-    onchainFeeSat: null,
+    onchainFeeSats: null,
     tx: '',
     txid: 'tx',
     ...overrides
   }
 }
 
-function makeUtxo(overrides: Partial<UtxoInfo> = {}): UtxoInfo {
+function makeUtxo(overrides: Partial<Utxo> = {}): Utxo {
   return {
-    amountSat: 0,
+    amountSats: 0,
     confirmationHeight: null,
     outpoint: 'tx:0',
     ...overrides
@@ -68,7 +69,7 @@ describe(getBalanceTotals, () => {
   })
 
   it('returns onchain totals only when ark balance is undefined', () => {
-    const onchain = makeOnchainBalance({ trustedSpendableSat: 1000, untrustedPendingSat: 200 })
+    const onchain = makeOnchainBalance({ trustedSpendableSats: 1000, untrustedPendingSats: 200 })
     expect(getBalanceTotals(undefined, onchain)).toStrictEqual({
       claimableLightningReceiveSat: 0,
       exitChangePendingSat: 0,
@@ -85,14 +86,14 @@ describe(getBalanceTotals, () => {
 
   it('keeps each pending bucket separate and sums everything into totalSat', () => {
     const balance = makeBalance({
-      claimableLightningReceiveSat: 50,
-      pendingBoardSat: 10,
-      pendingExitSat: 400,
-      pendingInRoundSat: 20,
-      pendingLightningSendSat: 30,
-      spendableSat: 5000
+      claimableLightningReceiveSats: 50,
+      pendingBoardSats: 10,
+      pendingExitSats: 400,
+      pendingInRoundSats: 20,
+      pendingLightningSendSats: 30,
+      spendableSats: 5000
     })
-    const onchain = makeOnchainBalance({ trustedSpendableSat: 1000, untrustedPendingSat: 100 })
+    const onchain = makeOnchainBalance({ trustedSpendableSats: 1000, untrustedPendingSats: 100 })
     expect(getBalanceTotals(balance, onchain)).toStrictEqual({
       claimableLightningReceiveSat: 50,
       exitChangePendingSat: 0,
@@ -108,21 +109,21 @@ describe(getBalanceTotals, () => {
   })
 
   it('treats undefined pendingExitSat as zero', () => {
-    const balance = makeBalance({ pendingExitSat: undefined, spendableSat: 100 })
+    const balance = makeBalance({ pendingExitSats: undefined, spendableSats: 100 })
     const result = getBalanceTotals(balance)
     expect(result.pendingExitSat).toBe(0)
     expect(result.totalSat).toBe(100)
   })
 
   it('treats null pendingExitSat as zero', () => {
-    const balance = makeBalance({ pendingExitSat: null, spendableSat: 100 })
+    const balance = makeBalance({ pendingExitSats: null, spendableSats: 100 })
     const result = getBalanceTotals(balance)
     expect(result.pendingExitSat).toBe(0)
     expect(result.totalSat).toBe(100)
   })
 
   it('falls back to zero when onchain fields are absent', () => {
-    const balance = makeBalance({ spendableSat: 7 })
+    const balance = makeBalance({ spendableSats: 7 })
     const onchain = makeOnchainBalance()
     const result = getBalanceTotals(balance, onchain)
     expect(result.onchainSat).toBe(0)
@@ -132,9 +133,9 @@ describe(getBalanceTotals, () => {
   })
 
   it('attributes the whole untrusted-pending bucket to exit change when all is cpfp', () => {
-    const onchain = makeOnchainBalance({ untrustedPendingSat: 500 })
+    const onchain = makeOnchainBalance({ untrustedPendingSats: 500 })
     const transactions = [makeTx({ isCpfp: true, txid: 'exit' })]
-    const utxos = [makeUtxo({ amountSat: 500, confirmationHeight: null, outpoint: 'exit:0' })]
+    const utxos = [makeUtxo({ amountSats: 500, confirmationHeight: null, outpoint: 'exit:0' })]
     const result = getBalanceTotals(undefined, onchain, transactions, utxos)
     expect(result.exitChangePendingSat).toBe(500)
     expect(result.onchainPendingSat).toBe(0)
@@ -142,11 +143,11 @@ describe(getBalanceTotals, () => {
   })
 
   it('splits the untrusted-pending bucket between exit change and external receive', () => {
-    const onchain = makeOnchainBalance({ untrustedPendingSat: 800 })
+    const onchain = makeOnchainBalance({ untrustedPendingSats: 800 })
     const transactions = [makeTx({ isCpfp: true, txid: 'exit' }), makeTx({ txid: 'recv' })]
     const utxos = [
-      makeUtxo({ amountSat: 300, confirmationHeight: null, outpoint: 'exit:0' }),
-      makeUtxo({ amountSat: 500, confirmationHeight: null, outpoint: 'recv:0' })
+      makeUtxo({ amountSats: 300, confirmationHeight: null, outpoint: 'exit:0' }),
+      makeUtxo({ amountSats: 500, confirmationHeight: null, outpoint: 'recv:0' })
     ]
     const result = getBalanceTotals(undefined, onchain, transactions, utxos)
     expect(result.exitChangePendingSat).toBe(300)
@@ -155,16 +156,16 @@ describe(getBalanceTotals, () => {
   })
 
   it('keeps the full amount as plain pending when transaction data is missing', () => {
-    const onchain = makeOnchainBalance({ untrustedPendingSat: 400 })
+    const onchain = makeOnchainBalance({ untrustedPendingSats: 400 })
     const result = getBalanceTotals(undefined, onchain)
     expect(result.exitChangePendingSat).toBe(0)
     expect(result.onchainPendingSat).toBe(400)
   })
 
   it('clamps exit change to the untrusted-pending bucket', () => {
-    const onchain = makeOnchainBalance({ untrustedPendingSat: 200 })
+    const onchain = makeOnchainBalance({ untrustedPendingSats: 200 })
     const transactions = [makeTx({ isCpfp: true, txid: 'exit' })]
-    const utxos = [makeUtxo({ amountSat: 1000, confirmationHeight: null, outpoint: 'exit:0' })]
+    const utxos = [makeUtxo({ amountSats: 1000, confirmationHeight: null, outpoint: 'exit:0' })]
     const result = getBalanceTotals(undefined, onchain, transactions, utxos)
     expect(result.exitChangePendingSat).toBe(200)
     expect(result.onchainPendingSat).toBe(0)
@@ -175,52 +176,52 @@ describe(sumUnconfirmedCpfpUtxoSat, () => {
   it('sums only unconfirmed utxos sourced from cpfp transactions', () => {
     const transactions = [makeTx({ isCpfp: true, txid: 'exit' }), makeTx({ txid: 'recv' })]
     const utxos = [
-      makeUtxo({ amountSat: 300, confirmationHeight: null, outpoint: 'exit:0' }),
-      makeUtxo({ amountSat: 999, confirmationHeight: null, outpoint: 'recv:0' })
+      makeUtxo({ amountSats: 300, confirmationHeight: null, outpoint: 'exit:0' }),
+      makeUtxo({ amountSats: 999, confirmationHeight: null, outpoint: 'recv:0' })
     ]
     expect(sumUnconfirmedCpfpUtxoSat(transactions, utxos)).toBe(300)
   })
 
   it('ignores confirmed cpfp utxos', () => {
     const transactions = [makeTx({ isCpfp: true, txid: 'exit' })]
-    const utxos = [makeUtxo({ amountSat: 300, confirmationHeight: 800_000, outpoint: 'exit:0' })]
+    const utxos = [makeUtxo({ amountSats: 300, confirmationHeight: 800_000, outpoint: 'exit:0' })]
     expect(sumUnconfirmedCpfpUtxoSat(transactions, utxos)).toBe(0)
   })
 
   it('returns zero when there are no cpfp transactions', () => {
     const transactions = [makeTx({ txid: 'recv' })]
-    const utxos = [makeUtxo({ amountSat: 300, confirmationHeight: null, outpoint: 'recv:0' })]
+    const utxos = [makeUtxo({ amountSats: 300, confirmationHeight: null, outpoint: 'recv:0' })]
     expect(sumUnconfirmedCpfpUtxoSat(transactions, utxos)).toBe(0)
   })
 })
 
 describe(carryForwardPendingExit, () => {
   it('keeps the last known pending-exit amount when the subsystem reports null', () => {
-    const previous = makeBalance({ pendingExitSat: 1000, spendableSat: 785 })
-    const next = makeBalance({ pendingExitSat: null, spendableSat: 785 })
+    const previous = makeBalance({ pendingExitSats: 1000, spendableSats: 785 })
+    const next = makeBalance({ pendingExitSats: null, spendableSats: 785 })
     expect(carryForwardPendingExit(previous, next)).toStrictEqual({
       ...next,
-      pendingExitSat: 1000
+      pendingExitSats: 1000
     })
   })
 
   it('carries forward when the subsystem reports undefined', () => {
-    const previous = makeBalance({ pendingExitSat: 1000, spendableSat: 785 })
-    const next = makeBalance({ pendingExitSat: undefined, spendableSat: 785 })
+    const previous = makeBalance({ pendingExitSats: 1000, spendableSats: 785 })
+    const next = makeBalance({ pendingExitSats: undefined, spendableSats: 785 })
     expect(carryForwardPendingExit(previous, next)).toStrictEqual({
       ...next,
-      pendingExitSat: 1000
+      pendingExitSats: 1000
     })
   })
 
   it('clears a carried value once a real number arrives', () => {
-    const previous = makeBalance({ pendingExitSat: 1000, spendableSat: 785 })
-    const next = makeBalance({ pendingExitSat: 0, spendableSat: 1785 })
+    const previous = makeBalance({ pendingExitSats: 1000, spendableSats: 785 })
+    const next = makeBalance({ pendingExitSats: 0, spendableSats: 1785 })
     expect(carryForwardPendingExit(previous, next)).toStrictEqual(next)
   })
 
   it('returns next unchanged when there is no previous balance', () => {
-    const next = makeBalance({ pendingExitSat: null, spendableSat: 785 })
+    const next = makeBalance({ pendingExitSats: null, spendableSats: 785 })
     expect(carryForwardPendingExit(undefined, next)).toBe(next)
   })
 })

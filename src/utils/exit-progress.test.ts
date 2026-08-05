@@ -1,5 +1,6 @@
-import type { BlockRef, ExitTransactionStatus, ExitTx } from '@secondts/barkd'
 import { describe, expect, it } from 'vitest'
+import type { BlockRef } from '@/types/domain/chain'
+import type { ExitTransactionStatus, ExitTx } from '@/types/domain/exit'
 import {
   hasUnaddressedClaimable,
   resolveClaimGroups,

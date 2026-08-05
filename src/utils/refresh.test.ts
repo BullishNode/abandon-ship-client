@@ -1,9 +1,10 @@
-import type { RefreshFees, WalletVtxoInfo } from '@secondts/barkd'
 import { describe, expect, it } from 'vitest'
+import type { RefreshFees } from '@/types/domain/fees'
+import type { Vtxo } from '@/types/domain/vtxo'
 import { estimateRefreshAllFeeSat } from './refresh'
 
 const refreshFees: RefreshFees = {
-  baseFeeSat: 30,
+  baseFeeSats: 30,
   ppmExpiryTable: [
     { expiryBlocksThreshold: 0, ppm: 0 },
     { expiryBlocksThreshold: 144, ppm: 1000 },
@@ -12,16 +13,16 @@ const refreshFees: RefreshFees = {
 }
 
 function makeVtxo(
-  amountSat: number,
+  amountSats: number,
   expiryHeight: number,
   stateType: 'spendable' | 'spent' = 'spendable'
-): WalletVtxoInfo {
+): Vtxo {
   return {
-    amountSat,
+    amountSats,
     chainAnchor: 'anchor-txid',
     exitDelta: 0,
     expiryHeight,
-    id: `vtxo-${expiryHeight}-${amountSat}`,
+    id: `vtxo-${expiryHeight}-${amountSats}`,
     policyType: 'pubkey',
     serverPubkey: 'server-pubkey',
     state: { type: stateType },

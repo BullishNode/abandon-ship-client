@@ -1,5 +1,5 @@
-import type { ChainSourceConfig } from '@secondts/barkd'
 import { describe, expect, it } from 'vitest'
+import type { ChainSource } from '../../src/types/domain/chain-source'
 import {
   BIRTHDAY_HEIGHT_REQUIRED,
   birthdayHeightSchema,
@@ -9,8 +9,8 @@ import {
 
 const ABSENT: unknown = undefined
 
-const ESPLORA: ChainSourceConfig = { esplora: { url: 'https://esplora.example.com' } }
-const BITCOIND: ChainSourceConfig = {
+const ESPLORA: ChainSource = { esplora: { url: 'https://esplora.example.com' } }
+const BITCOIND: ChainSource = {
   bitcoind: {
     bitcoind: '127.0.0.1:38332',
     bitcoindAuth: { cookie: { cookie: '/root/.bitcoin/.cookie' } }
@@ -69,7 +69,7 @@ describe('birthday height requiredness per chain source', () => {
   // The schema is built at module scope, before `initConfig()` runs, so the
   // chain source must only be read when a value is parsed.
   it('reads the chain source at parse time, not at construction', () => {
-    let chainSource: ChainSourceConfig = ESPLORA
+    let chainSource: ChainSource = ESPLORA
     const schema = birthdayHeightSchemaFor(() => chainSource)
     expect(schema.parse('')).toBeUndefined()
     chainSource = BITCOIND

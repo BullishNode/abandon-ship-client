@@ -28,7 +28,7 @@ export function getMovementColumns({
       cell: ({ row }) => {
         const entry = row.original
         if (entry.kind === 'movement') {
-          return formatDate(entry.movement.time.createdAt)
+          return formatDate(new Date(entry.movement.createdAt))
         }
         return formatDate(new Date(entry.approximateTimestampMs))
       },
@@ -64,7 +64,7 @@ export function getMovementColumns({
       cell: ({ row }) => {
         const entry = row.original
         const sats =
-          entry.kind === 'movement' ? entry.movement.effectiveBalanceSat : entry.amountSat
+          entry.kind === 'movement' ? entry.movement.effectiveBalanceSats : entry.amountSat
         const pending = entry.kind === 'onchain' && entry.isOptimistic === true
         return (
           <MovementAmountCell

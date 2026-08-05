@@ -1,12 +1,12 @@
+import { describe, expect, it } from 'vitest'
+import { estimateEmergencyExitFeeSat, summarizeExits } from '../../src/utils/exit-progress'
 import type {
   ExitState,
   ExitTransactionPackage,
   ExitTransactionStatus,
-  ExitTx,
-  WalletVtxoInfo
-} from '@secondts/barkd'
-import { describe, expect, it } from 'vitest'
-import { estimateEmergencyExitFeeSat, summarizeExits } from '../../src/utils/exit-progress'
+  ExitTx
+} from '@/types/domain/exit'
+import type { Vtxo } from '@/types/domain/vtxo'
 
 const BLOCK = { hash: '00', height: 0 }
 
@@ -33,9 +33,9 @@ function makePackages(count: number): ExitTransactionPackage[] {
   return Array.from({ length: count }, () => ({ exit: { tx: '00', txid: 'tx' } }))
 }
 
-function makeVtxo(overrides: Partial<WalletVtxoInfo> = {}): WalletVtxoInfo {
+function makeVtxo(overrides: Partial<Vtxo> = {}): Vtxo {
   return {
-    amountSat: 1000,
+    amountSats: 1000,
     chainAnchor: 'tx:0',
     exitDelta: 144,
     exitDepth: 1,

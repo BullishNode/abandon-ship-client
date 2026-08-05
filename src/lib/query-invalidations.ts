@@ -12,19 +12,17 @@ export async function invalidateMovements(queryClient: QueryClient) {
   await queryClient.invalidateQueries({ queryKey: walletKeys.transactions() })
 }
 
+export async function invalidateOnchainState(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: onchainKeys.snapshot() })
+}
+
 export async function invalidateMovementState(queryClient: QueryClient) {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: walletKeys.balance() }),
     queryClient.invalidateQueries({ queryKey: walletKeys.transactions() }),
     queryClient.invalidateQueries({ queryKey: walletKeys.vtxos() }),
-    queryClient.invalidateQueries({ queryKey: walletKeys.vtxosAll() })
-  ])
-}
-
-export async function invalidateOnchainState(queryClient: QueryClient) {
-  await Promise.all([
-    queryClient.invalidateQueries({ queryKey: onchainKeys.balance() }),
-    queryClient.invalidateQueries({ queryKey: onchainKeys.transactions() })
+    queryClient.invalidateQueries({ queryKey: walletKeys.vtxosAll() }),
+    invalidateOnchainState(queryClient)
   ])
 }
 
@@ -56,9 +54,7 @@ export async function invalidateBoardState(queryClient: QueryClient) {
     queryClient.invalidateQueries({ queryKey: walletKeys.vtxos() }),
     queryClient.invalidateQueries({ queryKey: walletKeys.vtxosAll() }),
     queryClient.invalidateQueries({ queryKey: walletKeys.transactions() }),
-    queryClient.invalidateQueries({ queryKey: onchainKeys.balance() }),
-    queryClient.invalidateQueries({ queryKey: onchainKeys.transactions() }),
-    queryClient.invalidateQueries({ queryKey: onchainKeys.utxos() })
+    invalidateOnchainState(queryClient)
   ])
 }
 
@@ -68,8 +64,7 @@ export async function invalidateOffboardState(queryClient: QueryClient) {
     queryClient.invalidateQueries({ queryKey: walletKeys.vtxos() }),
     queryClient.invalidateQueries({ queryKey: walletKeys.vtxosAll() }),
     queryClient.invalidateQueries({ queryKey: walletKeys.transactions() }),
-    queryClient.invalidateQueries({ queryKey: onchainKeys.balance() }),
-    queryClient.invalidateQueries({ queryKey: onchainKeys.transactions() })
+    invalidateOnchainState(queryClient)
   ])
 }
 

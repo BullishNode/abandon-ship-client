@@ -1,5 +1,4 @@
 import { CheckIcon, CopyIcon } from '@phosphor-icons/react'
-import type { Movement, WalletTxInfo } from '@secondts/barkd'
 import { useTranslation } from 'react-i18next'
 import { MovementAmountCell } from '@/components/movement-amount-cell'
 import { CopyableValueRow, DetailRow, LabelEditor } from '@/components/movement-detail-shared'
@@ -11,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Label } from '@/components/ui/label'
 import { useUpdateMovementMetadata } from '@/hooks/barkd/use-update-movement-metadata'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
+import type { Movement } from '@/types/domain/movement'
+import type { WalletTx } from '@/types/domain/onchain'
 import { getMovementMetadata } from '@/utils/metadata'
 import {
   getMovementCounterpartyDestination,
@@ -22,7 +23,7 @@ import {
 
 interface MovementDetailDialogProps {
   movement: Movement | null
-  transactions: WalletTxInfo[]
+  transactions: WalletTx[]
   open: boolean
   onOpenChange: (open: boolean) => void
   formatSats: (sats: number) => string
@@ -65,7 +66,7 @@ export function MovementDetailDialog({
 
 interface MovementDetailContentProps {
   movement: Movement
-  transactions: WalletTxInfo[]
+  transactions: WalletTx[]
   formatSats: (sats: number) => string
   formatFiat: (sats: number) => string
   formatDateAbsolute: (date: Date) => string
@@ -92,9 +93,9 @@ function MovementDetailContent({
   const counterpartyLabel =
     direction === 'outgoing' ? t('movements.detail.sent_to') : t('movements.detail.received_on')
   const completedAt =
-    movement.time.completedAt &&
-    movement.time.completedAt.getTime() !== movement.time.createdAt.getTime()
-      ? movement.time.completedAt
+    typeof movement.completedAt === 'string' &&
+    new Date(movement.completedAt).getTime() !== new Date(movement.createdAt).getTime()
+      ? movement.completedAt
       : null
   return (
     <>
@@ -109,7 +110,7 @@ function MovementDetailContent({
               discreetMode={discreetMode}
               formatFiat={formatFiat}
               formatSats={formatSats}
-              sats={movement.effectiveBalanceSat}
+              sats={movement.effectiveBalanceSats}
               size="lg"
             />
             <div className="flex flex-col items-end gap-2">
@@ -118,7 +119,7 @@ function MovementDetailContent({
             </div>
           </div>
           {counterparty ? (
-            <CopyableValueRow label={counterpartyLabel} value={counterparty.destination.value} />
+            <CopyableValueRow label={counterpartyLabel} value={counterparty.value} />
           ) : (
             <DetailRow label={counterpartyLabel} value={t('movements.detail.no_counterparty')} />
           )}
@@ -132,14 +133,14 @@ function MovementDetailContent({
           />
           <DetailRow
             label={t('movements.detail.date_created')}
-            value={formatDateAbsolute(movement.time.createdAt)}
+            value={formatDateAbsolute(new Date(movement.createdAt))}
           />
-          {completedAt ? (
+          {completedAt !== null && (
             <DetailRow
               label={t('movements.detail.date_completed')}
-              value={formatDateAbsolute(completedAt)}
+              value={formatDateAbsolute(new Date(completedAt))}
             />
-          ) : null}
+          )}
         </div>
         <LabelEditor
           inputId="movement-label"

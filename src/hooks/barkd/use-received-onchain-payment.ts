@@ -1,5 +1,5 @@
-import type { WalletTxInfo } from '@secondts/barkd'
 import { useEffect, useRef } from 'react'
+import type { WalletTx } from '@/types/domain/onchain'
 import { useOnchainTransactions } from './use-onchain-transactions'
 
 const RECEIVE_POLL_INTERVAL_MS = 5000
@@ -13,11 +13,8 @@ export interface ReceivedOnchainPayment {
   pending: boolean
 }
 
-function findFreshIncoming(
-  transactions: WalletTxInfo[],
-  baseline: Set<string>
-): WalletTxInfo | undefined {
-  return transactions.find((tx) => tx.balanceChangeSat > 0 && !baseline.has(tx.txid))
+function findFreshIncoming(transactions: WalletTx[], baseline: Set<string>): WalletTx | undefined {
+  return transactions.find((tx) => tx.balanceChangeSats > 0 && !baseline.has(tx.txid))
 }
 
 export function useReceivedOnchainPayment(
@@ -46,7 +43,7 @@ export function useReceivedOnchainPayment(
     }
     if (baselineRef.current === null) {
       baselineRef.current = new Set(
-        transactions.filter((tx) => tx.balanceChangeSat > 0).map((tx) => tx.txid)
+        transactions.filter((tx) => tx.balanceChangeSats > 0).map((tx) => tx.txid)
       )
       return
     }
@@ -56,7 +53,7 @@ export function useReceivedOnchainPayment(
     }
     handledRef.current = true
     handlerRef.current({
-      amountSat: fresh.balanceChangeSat,
+      amountSat: fresh.balanceChangeSats,
       pending: (fresh.confirmation?.height ?? null) === null
     })
   }, [enabled, transactions])

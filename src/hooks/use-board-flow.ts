@@ -8,7 +8,7 @@ import { useBoardFee } from '@/hooks/barkd/use-board-fee'
 import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
 import { useAmountInput } from '@/hooks/use-amount-input'
 import { useDebounce } from '@/hooks/use-debounce'
-import { barkdErrorMessage } from '@/lib/barkd-errors'
+import { backendErrorMessage } from '@/lib/error-message'
 import { validateBoardAmount } from '@/utils/board'
 
 const FEE_DEBOUNCE_MS = 500
@@ -32,8 +32,8 @@ export function useBoardFlow({ open, onOpenChange }: UseBoardFlowOptions) {
 
   const { data: onchainBalance } = useOnchainBalance()
   const { data: arkInfo } = useArkInfo()
-  const onchainSpendableSat = onchainBalance?.trustedSpendableSat ?? 0
-  const minBoardAmountSat = arkInfo?.minBoardAmountSat
+  const onchainSpendableSat = onchainBalance?.trustedSpendableSats ?? 0
+  const minBoardAmountSat = arkInfo?.minBoardAmountSats
 
   const { validAmountSat } = amountInput
   const debouncedAmountSat = useDebounce(validAmountSat, FEE_DEBOUNCE_MS)
@@ -51,12 +51,12 @@ export function useBoardFlow({ open, onOpenChange }: UseBoardFlowOptions) {
     validAmountSat,
     onchainSpendableSat,
     minBoardAmountSat,
-    isFeeCurrent ? boardFee.netAmountSat : undefined
+    isFeeCurrent ? boardFee.netAmountSats : undefined
   )
 
   const mutationCallbacks = {
     onError: async (error: Error) => {
-      const description = await barkdErrorMessage(error)
+      const description = await backendErrorMessage(error)
       toast.error(t('board.toast.error'), { description })
     },
     onSuccess: () => {
@@ -96,7 +96,7 @@ export function useBoardFlow({ open, onOpenChange }: UseBoardFlowOptions) {
     amountDisplay: amountInput.amountDisplay,
     canUseFiat: amountInput.canUseFiat,
     entryMode: amountInput.entryMode,
-    feeSat: isFeeCurrent ? boardFee.feeSat : undefined,
+    feeSat: isFeeCurrent ? boardFee.feeSats : undefined,
     hasOnchainFunds: onchainSpendableSat > 0,
     isBoarding,
     isFetchingFee: shouldEstimateFee && !(isFeeCurrent || isFeeError),

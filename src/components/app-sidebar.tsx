@@ -9,7 +9,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem
 } from '@/components/ui/sidebar'
-import { config } from '@/config/barkd'
+import { config } from '@/config/runtime'
 import { useWalletStore } from '@/stores/wallet'
 import { MarbleAvatar } from './marble-avatar'
 import { NavGroup } from './nav-group'

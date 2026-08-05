@@ -15,9 +15,7 @@ export function useLightningInvoice({ amountSat, enabled }: UseLightningInvoiceO
       if (amountSat === undefined) {
         throw new Error('amountSat is required to generate an invoice')
       }
-      const response = await lightningApi.generateInvoice({
-        lightningInvoiceRequest: { amountSat }
-      })
+      const response = await lightningApi.generateInvoice({ amountSats: amountSat })
       return response.invoice
     },
     queryKey: lightningKeys.invoice(amountSat),

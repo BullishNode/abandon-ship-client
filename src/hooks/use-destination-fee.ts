@@ -30,7 +30,7 @@ export function useDestinationFee(
     return { feeSat: 0, isFetching: false }
   }
   if (isLightning) {
-    return { feeSat: lightningFee?.feeSat, isFetching: isFetchingLn }
+    return { feeSat: lightningFee?.feeSats, isFetching: isFetchingLn }
   }
-  return { feeSat: onchainFee?.feeSat, isFetching: isFetchingOnchain }
+  return { feeSat: onchainFee?.feeSats, isFetching: isFetchingOnchain }
 }

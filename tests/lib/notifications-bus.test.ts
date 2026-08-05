@@ -1,5 +1,5 @@
-import type { WalletNotification } from '@secondts/barkd'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { WalletNotification } from '@/types/domain/notification'
 import type * as NotificationsBus from '../../src/lib/notifications-bus'
 
 type MessageHandler = (event: MessageEvent) => void
@@ -90,10 +90,20 @@ describe('notifications-bus', () => {
     subscribeNotifications(a)
     subscribeNotifications(b)
     sockets[0].messageHandler?.(
+      new MessageEvent('message', { data: JSON.stringify({ type: 'channel-lagging' }) })
+    )
+    expect(a).toHaveBeenCalledExactlyOnceWith({ type: 'channel-lagging' })
+    expect(b).toHaveBeenCalledExactlyOnceWith({ type: 'channel-lagging' })
+  })
+
+  it('ignores notification types this client does not know', async () => {
+    const { subscribeNotifications } = await loadModule()
+    const listener = vi.fn<(n: WalletNotification) => void>()
+    subscribeNotifications(listener)
+    sockets[0].messageHandler?.(
       new MessageEvent('message', { data: JSON.stringify({ type: 'unknown' }) })
     )
-    expect(a).toHaveBeenCalledOnce()
-    expect(b).toHaveBeenCalledOnce()
+    expect(listener).not.toHaveBeenCalled()
   })
 
   it('ignores non-string message data', async () => {

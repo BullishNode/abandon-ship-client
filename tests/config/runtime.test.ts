@@ -1,14 +1,13 @@
-import { BarkNetwork } from '@secondts/barkd'
-import { ZodError } from 'zod'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { ZodError } from 'zod'
 import { buildChainSource } from '../../api/src/chain-source.ts'
-import { config, initConfig } from '../../src/config/barkd'
+import { config, initConfig } from '../../src/config/runtime'
 
 const COOKIE_FILE = '/root/.bitcoin/signet/.cookie'
 
 const baseResponse = {
   arkServer: 'https://ark.signet.2nd.dev',
-  network: BarkNetwork.Signet,
+  network: 'signet',
   walletDataPath: '/data/.bark/'
 }
 
@@ -117,6 +116,17 @@ describe(initConfig, () => {
     mockConfigResponse({
       ...baseResponse,
       chainSource: { bitcoind: { bitcoind: '127.0.0.1:38332' } }
+    })
+    await expect(initConfig()).rejects.toThrow(ZodError)
+  })
+
+  it('rejects a malformed bitcoind entry even when a valid esplora one sits beside it', async () => {
+    mockConfigResponse({
+      ...baseResponse,
+      chainSource: {
+        bitcoind: { bitcoind: '127.0.0.1:38332' },
+        esplora: { url: 'https://esplora.signet.2nd.dev' }
+      }
     })
     await expect(initConfig()).rejects.toThrow(ZodError)
   })

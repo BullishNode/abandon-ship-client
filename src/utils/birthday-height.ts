@@ -1,5 +1,5 @@
-import type { ChainSourceConfig } from '@secondts/barkd'
 import { z } from 'zod'
+import type { ChainSource } from '@/types/domain/chain-source'
 
 // Sentinel message so the field can tell "missing" from "malformed" and pick
 // the matching i18n key. Never rendered.
@@ -19,14 +19,14 @@ export const birthdayHeightSchema = z.preprocess(
 // recovering from mnemonic." (bark 0.4.0, `try_create_wallet`). The check runs
 // before the node is contacted, so a blank field is a 500 the user cannot act
 // on. Esplora ignores the value server-side, so it stays optional there.
-export function requiresBirthdayHeight(chainSource: ChainSourceConfig): boolean {
+export function requiresBirthdayHeight(chainSource: ChainSource): boolean {
   return 'bitcoind' in chainSource
 }
 
 // The chain source is read through a getter: this schema is built at module
 // scope, before `initConfig()` has populated the runtime config, while the
 // refinement only runs at parse time.
-export function birthdayHeightSchemaFor(getChainSource: () => ChainSourceConfig) {
+export function birthdayHeightSchemaFor(getChainSource: () => ChainSource) {
   return birthdayHeightSchema.superRefine((value, ctx) => {
     if (value === undefined && requiresBirthdayHeight(getChainSource())) {
       ctx.addIssue({ code: 'custom', message: BIRTHDAY_HEIGHT_REQUIRED })

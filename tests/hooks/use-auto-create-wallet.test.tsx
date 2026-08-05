@@ -1,14 +1,18 @@
-import { BarkNetwork, Configuration, ResponseError } from '@secondts/barkd'
+import { ResponseError } from '@secondts/barkd'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { __setRuntimeConfigForTests } from '../../src/config/barkd'
+import { __setRuntimeConfigForTests } from '../../src/config/runtime'
 import { useAutoCreateWallet } from '../../src/hooks/barkd/use-auto-create-wallet'
 import { useCheckWallet } from '../../src/hooks/barkd/use-check-wallet'
 import { walletApi } from '../../src/lib/barkd-client'
 import { walletKeys } from '../../src/lib/query-keys'
 import { useWalletStore } from '../../src/stores/wallet'
+
+// barkd error boundary: the wallet-already-exists detection in src/lib/backend/barkd/errors.ts
+// narrows with `error instanceof ResponseError` against the barkd class, so this test
+// (which exercises that barkd-specific path) constructs the real barkd ResponseError.
 
 function makeWrapper(queryClient: QueryClient) {
   return ({ children }: { children: ReactNode }) => (
@@ -34,8 +38,7 @@ describe(useAutoCreateWallet, () => {
     __setRuntimeConfigForTests({
       arkServer: 'https://ark.example.com',
       chainSource: { esplora: { url: 'https://mempool.example.com/api' } },
-      client: new Configuration({ basePath: '/api/barkd' }),
-      network: BarkNetwork.Signet,
+      network: 'signet',
       walletDataPath: '/data/.bark/'
     })
   })

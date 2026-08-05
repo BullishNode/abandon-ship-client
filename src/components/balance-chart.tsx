@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import type { ChartConfig } from '@/components/ui/chart'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
-import { config } from '@/config/barkd'
+import { config } from '@/config/runtime'
 import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
 import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
 import { useOnchainTransactions } from '@/hooks/barkd/use-onchain-transactions'
@@ -47,7 +47,7 @@ export function BalanceChart() {
   const onchainEntries = buildOnchainTxEntries(transactions, utxos, {
     firstSeenAt,
     network: config.network,
-    tipHeight: tip?.tipHeight
+    tipHeight: tip
   })
   const balanceHistory = computeBalanceHistory(movements, onchainEntries, endpointTotalSat)
   const { data, domainStartMs, domainEndMs, ticks } = buildChartSeries(

@@ -23,9 +23,9 @@ export function useAutoRefresh(): void {
   const { mutate: refreshVtxos, isPending: isRefreshing } = useRefreshVtxos()
   const lastAttemptRef = useRef<{ ids: string; attemptedAt: number }>({ attemptedAt: 0, ids: '' })
 
-  const tipHeight = tip?.tipHeight
+  const tipHeight = tip
   const vtxoExpiryDelta = arkInfo?.vtxoExpiryDelta
-  const refreshFees = arkInfo?.fees.refresh
+  const refreshFees = arkInfo?.fees?.refresh
   const roundInProgress = isRoundInProgress(pendingRounds)
   const thresholdOptions = getRefreshThresholdOptions(vtxoExpiryDelta, refreshFees)
   const thresholdBlocks = resolveThresholdBlocks(autoRefreshThresholdBlocks, thresholdOptions)

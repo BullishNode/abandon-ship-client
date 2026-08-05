@@ -1,5 +1,5 @@
-import type { Movement } from '@secondts/barkd'
 import { describe, expect, it } from 'vitest'
+import type { Movement } from '@/types/domain/movement'
 import { createMovement } from '../../tests/fixtures/movements'
 import { filterFeedByTab, getFeedRowSource } from './movements-feed'
 import type { MovementEntry, OnchainTxEntry } from './movements-feed'

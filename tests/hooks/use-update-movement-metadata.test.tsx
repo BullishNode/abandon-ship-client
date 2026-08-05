@@ -1,4 +1,3 @@
-import type { Movement } from '@secondts/barkd'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook } from '@testing-library/react'
 import type { ReactNode } from 'react'
@@ -7,6 +6,7 @@ import { historyApi } from '../../src/lib/barkd-client'
 import { useUpdateMovementMetadata } from '../../src/hooks/barkd/use-update-movement-metadata'
 import { walletKeys } from '../../src/lib/query-keys'
 import { createMovement } from '../fixtures/movements'
+import type { Movement } from '@/types/domain/movement'
 
 function makeWrapper(queryClient: QueryClient) {
   return ({ children }: { children: ReactNode }) => (
@@ -43,14 +43,14 @@ describe(useUpdateMovementMetadata, () => {
     expect(updateMetadataSpy).toHaveBeenCalledOnce()
     const [firstCall] = updateMetadataSpy.mock.calls
     expect(firstCall[0]).toStrictEqual({
-      body: {
+      id: 42,
+      metadata: {
         'bark-web': {
           label: 'coffee',
           tags: ['food'],
           updatedAt: '2026-05-28T00:00:00.000Z'
         }
-      },
-      id: 42
+      }
     })
   })
 
@@ -63,7 +63,7 @@ describe(useUpdateMovementMetadata, () => {
       await result.current.mutateAsync({ id: 7, patch: { label: null, tags: null } })
     })
     const [firstCall] = updateMetadataSpy.mock.calls
-    expect(firstCall[0].body).toMatchObject({ 'bark-web': { label: null, tags: null } })
+    expect(firstCall[0].metadata).toMatchObject({ 'bark-web': { label: null, tags: null } })
   })
 
   it('optimistically merges patch fields into the cached transactions list', async () => {

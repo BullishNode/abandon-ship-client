@@ -10,9 +10,11 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dist-wasm-check
 api/dist
 *.local
 .env.byob
+.env.wasm
 coverage
 
 # Editor directories and files

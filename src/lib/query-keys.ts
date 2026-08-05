@@ -15,9 +15,7 @@ export const walletKeys = {
 
 export const onchainKeys = {
   all: ['onchain'] as const,
-  balance: () => [...onchainKeys.all, 'balance'] as const,
-  transactions: () => [...onchainKeys.all, 'transactions'] as const,
-  utxos: () => [...onchainKeys.all, 'utxos'] as const
+  snapshot: () => [...onchainKeys.all, 'snapshot'] as const
 }
 
 export const feeKeys = {

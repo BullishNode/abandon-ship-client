@@ -1,11 +1,13 @@
-import type { ExitTransactionStatus, Movement, WalletVtxoInfo } from '@secondts/barkd'
 import type { TFunction } from 'i18next'
+import type { ExitTransactionStatus } from '@/types/domain/exit'
+import type { Movement } from '@/types/domain/movement'
+import type { Vtxo } from '@/types/domain/vtxo'
 import { AVERAGE_BLOCK_INTERVAL_MS } from '@/constants/btc'
 import type { ExitStateType } from '@/utils/exit-progress'
 import { formatRelativeTime } from '@/utils/relative-time'
 import { truncateMiddleChars } from '@/utils/truncate-middle'
 
-export type VtxoStatus = WalletVtxoInfo['state']['type']
+export type VtxoStatus = Vtxo['state']['type']
 
 export type VtxoExitPhase = ExitStateType
 
@@ -20,7 +22,7 @@ export function isCanceledPhase(phase: VtxoExitPhase): boolean {
 }
 
 export function mapVtxoExitStates(
-  vtxos: WalletVtxoInfo[],
+  vtxos: Vtxo[],
   exitPhaseById: Map<string, VtxoExitPhase>
 ): Map<string, VtxoExitState> {
   const states = new Map<string, VtxoExitState>()
@@ -63,10 +65,10 @@ export function mapVtxoExitClaimHeights(exits: ExitTransactionStatus[]): Map<str
 }
 
 export function sortVtxosForDisplay(
-  vtxos: WalletVtxoInfo[],
+  vtxos: Vtxo[],
   exitStateById: Map<string, VtxoExitState>,
   exitClaimHeightById: Map<string, number>
-): WalletVtxoInfo[] {
+): Vtxo[] {
   return [...vtxos].toSorted((a, b) => {
     const aExited = exitStateById.get(a.id) === 'exited'
     const bExited = exitStateById.get(b.id) === 'exited'
@@ -82,16 +84,16 @@ export function sortVtxosForDisplay(
   })
 }
 
-export function isSpendable(vtxo: WalletVtxoInfo): boolean {
+export function isSpendable(vtxo: Vtxo): boolean {
   return vtxo.state.type === 'spendable'
 }
 
-export function getSpendableVtxos(vtxos: WalletVtxoInfo[]): WalletVtxoInfo[] {
+export function getSpendableVtxos(vtxos: Vtxo[]): Vtxo[] {
   return vtxos.filter(isSpendable)
 }
 
-export function sumVtxoAmount(vtxos: WalletVtxoInfo[]): number {
-  return vtxos.reduce((total, vtxo) => total + vtxo.amountSat, 0)
+export function sumVtxoAmount(vtxos: Vtxo[]): number {
+  return vtxos.reduce((total, vtxo) => total + vtxo.amountSats, 0)
 }
 
 export function truncateVtxoId(id: string): string {
@@ -114,7 +116,7 @@ export function getExpiryTimeLabel(expiryHeight: number, t: TFunction, tipHeight
   return formatRelativeTime(expiryDate).replace(/\d/u, (digit) => `~${digit}`)
 }
 
-export function getVtxoRawJson(vtxo: WalletVtxoInfo): string {
+export function getVtxoRawJson(vtxo: Vtxo): string {
   return JSON.stringify(vtxo, null, 2)
 }
 
@@ -148,7 +150,7 @@ function getVtxoLockReasonKey(subsystem: Movement['subsystem']): string | null {
 }
 
 export function mapVtxoLockLabels(
-  vtxos: WalletVtxoInfo[],
+  vtxos: Vtxo[],
   movements: Movement[],
   t: TFunction
 ): Map<string, string> {

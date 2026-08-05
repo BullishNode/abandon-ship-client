@@ -1,4 +1,3 @@
-import type { WalletVtxoInfo } from '@secondts/barkd'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -6,7 +5,8 @@ import { useOffboardFee } from '@/hooks/barkd/use-offboard-fee'
 import { useOffboardVtxos } from '@/hooks/barkd/use-offboard-vtxos'
 import { useOnchainAddress } from '@/hooks/barkd/use-onchain-address'
 import { useDebounce } from '@/hooks/use-debounce'
-import { barkdErrorMessage } from '@/lib/barkd-errors'
+import { backendErrorMessage } from '@/lib/error-message'
+import type { Vtxo } from '@/types/domain/vtxo'
 import { sumVtxoAmount } from '@/utils/vtxo'
 
 const FEE_DEBOUNCE_MS = 500
@@ -14,7 +14,7 @@ const FEE_DEBOUNCE_MS = 500
 interface UseOffboardFlowOptions {
   open: boolean
   onOpenChange: (open: boolean) => void
-  vtxos: WalletVtxoInfo[]
+  vtxos: Vtxo[]
   onOffboarded: () => void
 }
 
@@ -47,7 +47,7 @@ export function useOffboardFlow({
 
   const { mutate: offboard, isPending } = useOffboardVtxos({
     onError: async (error) => {
-      const description = await barkdErrorMessage(error)
+      const description = await backendErrorMessage(error)
       toast.error(t('vtxos.offboard.error'), { description })
     },
     onSuccess: () => {
@@ -88,7 +88,7 @@ export function useOffboardFlow({
     address,
     close,
     count: vtxos.length,
-    feeSat: isFeeCurrent ? offboardFee.feeSat : undefined,
+    feeSat: isFeeCurrent ? offboardFee.feeSats : undefined,
     fillWalletAddress,
     isFetchingFee: shouldEstimateFee && !(isFeeCurrent || isFeeError),
     isFetchingWalletAddress,

@@ -1,10 +1,7 @@
-import type {
-  PendingRoundInfo,
-  PpmExpiryFeeEntry,
-  RefreshFees,
-  WalletVtxoInfo
-} from '@secondts/barkd'
 import { PPM_DENOMINATOR } from '@/constants/btc'
+import type { PpmExpiryFeeEntry, RefreshFees } from '@/types/domain/fees'
+import type { PendingRound } from '@/types/domain/round'
+import type { Vtxo } from '@/types/domain/vtxo'
 
 const BLOCKS_PER_HOUR = 6
 const BLOCKS_PER_DAY = 144
@@ -92,7 +89,7 @@ export function resolveThresholdBlocks(
 }
 
 export function getExpiringVtxoIds(
-  vtxos: WalletVtxoInfo[],
+  vtxos: Vtxo[],
   tipHeight: number | undefined,
   thresholdBlocks: number,
   vtxoExpiryDelta?: number
@@ -111,7 +108,7 @@ export function getExpiringVtxoIds(
   return expiring
 }
 
-export function isRoundInProgress(pendingRounds?: PendingRoundInfo[]): boolean {
+export function isRoundInProgress(pendingRounds?: PendingRound[]): boolean {
   return (pendingRounds?.length ?? 0) > 0
 }
 
@@ -121,7 +118,7 @@ function refreshPpmForBlocksToExpiry(blocksToExpiry: number, table: PpmExpiryFee
 }
 
 export function estimateRefreshAllFeeSat(
-  vtxos?: WalletVtxoInfo[],
+  vtxos?: Vtxo[],
   tipHeight?: number,
   refreshFees?: RefreshFees
 ): number | undefined {
@@ -135,10 +132,10 @@ export function estimateRefreshAllFeeSat(
   const table = refreshFees.ppmExpiryTable.toSorted(
     (a, b) => a.expiryBlocksThreshold - b.expiryBlocksThreshold
   )
-  let feeSat = refreshFees.baseFeeSat
+  let feeSat = refreshFees.baseFeeSats
   for (const vtxo of spendable) {
     const ppm = refreshPpmForBlocksToExpiry(vtxo.expiryHeight - tipHeight, table)
-    feeSat += Math.floor((vtxo.amountSat * ppm) / PPM_DENOMINATOR)
+    feeSat += Math.floor((vtxo.amountSats * ppm) / PPM_DENOMINATOR)
   }
   return feeSat
 }

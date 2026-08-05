@@ -1,5 +1,5 @@
-import type { Movement, MovementStatus } from '@secondts/barkd'
-import { isArkToOnchainTransfer } from '@/utils/movement'
+import type { Movement, MovementStatus } from '@/types/domain/movement'
+import { getBoardFundingTxids, isArkToOnchainTransfer, isBoardSubsystem } from '@/utils/movement'
 import type { OnchainTxEntry } from '@/utils/movements-feed'
 
 export interface BalanceDataPoint {
@@ -33,8 +33,8 @@ function movementEvents(movements: Movement[]): BalanceEvent[] {
       continue
     }
     out.push({
-      deltaSat: movement.effectiveBalanceSat,
-      timestampMs: movement.time.createdAt.getTime()
+      deltaSat: movement.effectiveBalanceSats,
+      timestampMs: new Date(movement.createdAt).getTime()
     })
   }
   return out
@@ -80,7 +80,7 @@ function collapseArkToOnchainTransfers(
     if (NON_BALANCE_MOVEMENT_STATUSES.has(movement.status)) {
       continue
     }
-    const address = movement.sentTo[0]?.destination.value
+    const address = movement.sentTo[0]?.value
     if (address === undefined) {
       continue
     }
@@ -96,8 +96,52 @@ function collapseArkToOnchainTransfers(
     consumedTxids.add(landing.txid)
     consumedMovementIds.add(movement.id)
     collapsedEvents.push({
-      deltaSat: movement.effectiveBalanceSat + landing.amountSat,
-      timestampMs: movement.time.createdAt.getTime()
+      deltaSat: movement.effectiveBalanceSats + landing.amountSat,
+      timestampMs: new Date(movement.createdAt).getTime()
+    })
+  }
+  return { collapsedEvents, consumedMovementIds, consumedTxids }
+}
+
+/**
+ * A board is the mirror internal transfer (onchain→ark): the movement leg
+ * credits the ark balance at `createdAt` while the funding tx debits the
+ * on-chain wallet at its own (later) timestamp. Counted separately, the
+ * balance is double-counted between the two timestamps and the chart spikes
+ * to a value the wallet never held. Collapse each board movement with its
+ * funding tx into a single net (fee-only) step at the movement time.
+ */
+function collapseBoardTransfers(
+  movements: Movement[],
+  onchainEntries: OnchainTxEntry[],
+  alreadyConsumedTxids: Set<string>
+): CollapsedTransfers {
+  const collapsedEvents: BalanceEvent[] = []
+  const consumedMovementIds = new Set<number>()
+  const consumedTxids = new Set<string>()
+  for (const movement of movements) {
+    if (!isBoardSubsystem(movement.subsystem)) {
+      continue
+    }
+    if (NON_BALANCE_MOVEMENT_STATUSES.has(movement.status)) {
+      continue
+    }
+    const fundingTxids = getBoardFundingTxids([movement])
+    const funding = onchainEntries.find(
+      (entry) =>
+        entry.direction === 'outgoing' &&
+        fundingTxids.has(entry.txid) &&
+        !alreadyConsumedTxids.has(entry.txid) &&
+        !consumedTxids.has(entry.txid)
+    )
+    if (funding === undefined) {
+      continue
+    }
+    consumedTxids.add(funding.txid)
+    consumedMovementIds.add(movement.id)
+    collapsedEvents.push({
+      deltaSat: movement.effectiveBalanceSats + funding.amountSat,
+      timestampMs: new Date(movement.createdAt).getTime()
     })
   }
   return { collapsedEvents, consumedMovementIds, consumedTxids }
@@ -108,14 +152,18 @@ export function computeBalanceHistory(
   onchainEntries: OnchainTxEntry[],
   endpointTotalSat: number
 ): BalanceHistory {
-  const { collapsedEvents, consumedMovementIds, consumedTxids } = collapseArkToOnchainTransfers(
-    movements,
-    onchainEntries
-  )
+  const arkToOnchain = collapseArkToOnchainTransfers(movements, onchainEntries)
+  const boards = collapseBoardTransfers(movements, onchainEntries, arkToOnchain.consumedTxids)
+  const consumedMovementIds = new Set([
+    ...arkToOnchain.consumedMovementIds,
+    ...boards.consumedMovementIds
+  ])
+  const consumedTxids = new Set([...arkToOnchain.consumedTxids, ...boards.consumedTxids])
   const events = [
     ...movementEvents(movements.filter((movement) => !consumedMovementIds.has(movement.id))),
     ...onchainTxEvents(onchainEntries.filter((entry) => !consumedTxids.has(entry.txid))),
-    ...collapsedEvents
+    ...arkToOnchain.collapsedEvents,
+    ...boards.collapsedEvents
   ]
   if (events.length === 0) {
     return { initialBalanceSat: endpointTotalSat, points: [] }

@@ -1,16 +1,11 @@
-import type { UtxoInfo } from '@secondts/barkd'
-import { useQuery } from '@tanstack/react-query'
-import type { UseQueryOptions } from '@tanstack/react-query'
-import { onchainApi } from '@/lib/barkd-client'
-import { onchainKeys } from '@/lib/query-keys'
+import type { OnchainSnapshot, Utxo } from '@/types/domain/onchain'
+import { useOnchainSnapshot } from './use-onchain-snapshot'
+import type { OnchainSnapshotQueryOptions } from './use-onchain-snapshot'
 
-export function useOnchainUtxos(
-  options?: Omit<UseQueryOptions<UtxoInfo[]>, 'queryKey' | 'queryFn'>
-) {
-  return useQuery({
-    queryFn: async () => await onchainApi.onchainUtxos(),
-    queryKey: onchainKeys.utxos(),
-    refetchInterval: 30_000,
-    ...options
-  })
+function selectUtxos(snapshot: OnchainSnapshot): Utxo[] {
+  return snapshot.utxos
+}
+
+export function useOnchainUtxos(options?: OnchainSnapshotQueryOptions<Utxo[]>) {
+  return useOnchainSnapshot(selectUtxos, options)
 }

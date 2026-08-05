@@ -1,4 +1,4 @@
-import type { FeeEstimateResponse } from '@secondts/barkd'
+import type { FeeEstimate } from '@/types/domain/fees'
 import { useQuery } from '@tanstack/react-query'
 import type { UseQueryOptions } from '@tanstack/react-query'
 import { feesApi } from '@/lib/barkd-client'
@@ -7,7 +7,7 @@ import { feeKeys } from '@/lib/query-keys'
 export function useSendOnchainFee(
   amountSat: number | undefined,
   address: string | undefined,
-  options?: Omit<UseQueryOptions<FeeEstimateResponse>, 'queryKey' | 'queryFn' | 'enabled'>
+  options?: Omit<UseQueryOptions<FeeEstimate>, 'queryKey' | 'queryFn' | 'enabled'>
 ) {
   return useQuery({
     enabled: amountSat !== undefined && amountSat > 0 && address !== undefined && address !== '',
@@ -15,7 +15,7 @@ export function useSendOnchainFee(
       if (amountSat === undefined || address === undefined) {
         throw new Error('amountSat and address are required')
       }
-      const fee = await feesApi.sendOnchainFee({ address, amountSat })
+      const fee = await feesApi.sendOnchainFee({ address, amountSats: amountSat })
       return fee
     },
     queryKey: feeKeys.onchainSend(amountSat, address),
