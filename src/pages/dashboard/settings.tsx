@@ -76,10 +76,6 @@ const FIAT_CURRENCIES: { value: FiatCurrency; label: string }[] = [
 
 const THEME_OPTIONS: Theme[] = ['light', 'dark', 'system']
 
-// The debug-log download hits the barkd deployment's `/api/logs`; a static
-// WASM deployment has no such endpoint (see WASM_MODE.md at the repo root).
-const DIAGNOSTICS_ENABLED = __BACKEND__ !== 'wasm'
-
 // WASM-only: password protection for the in-browser wallet. Lazy + build-guarded
 // so the vault/crypto code is dead-code-eliminated from barkd builds.
 const WasmSecuritySettings =
@@ -523,24 +519,22 @@ export default function SettingsPage() {
           {t('settings.export_db.button')}
         </Button>
       </Field>
-      {DIAGNOSTICS_ENABLED && (
-        <Field orientation="responsive">
-          <FieldContent>
-            <FieldLabel>{t('settings.diagnostics.label')}</FieldLabel>
-            <FieldDescription>{t('settings.diagnostics.description')}</FieldDescription>
-          </FieldContent>
-          <Button
-            loading={isDownloadingLogs}
-            onClick={() => {
-              void handleDownloadLogs()
-            }}
-            variant="outline"
-          >
-            <DownloadSimpleIcon />
-            {t('settings.diagnostics.button')}
-          </Button>
-        </Field>
-      )}
+      <Field orientation="responsive">
+        <FieldContent>
+          <FieldLabel>{t('settings.diagnostics.label')}</FieldLabel>
+          <FieldDescription>{t('settings.diagnostics.description')}</FieldDescription>
+        </FieldContent>
+        <Button
+          loading={isDownloadingLogs}
+          onClick={() => {
+            void handleDownloadLogs()
+          }}
+          variant="outline"
+        >
+          <DownloadSimpleIcon />
+          {t('settings.diagnostics.button')}
+        </Button>
+      </Field>
       <section className="space-y-4 rounded-lg border border-destructive/30 p-4">
         <h2 className="font-semibold text-destructive text-lg">{t('settings.danger.title')}</h2>
         <Field className="gap-4" orientation="responsive">

@@ -100,6 +100,10 @@ async function ensureOpen(): Promise<void> {
   await openWithSeed(seed, false)
 }
 
+export async function getDiagnosticsLog(): Promise<string[]> {
+  return await remote().getDiagnosticsLog()
+}
+
 // A wallet is "locked" when its data is persisted in IndexedDB but the session
 // seed is not in memory (after a reload). The auth gate uses this to decide
 // whether to prompt for the seed.

@@ -22,6 +22,7 @@ import type {
   WalletTransaction
 } from '@secondts/bark'
 import init, { extractTxFromPsbt, OnchainWallet, Wallet } from '@secondts/bark/web'
+import { createDiagnosticsLog, describeError } from '@/lib/backend/wasm/diagnostics-log'
 
 // The Wallet + OnchainWallet handles are non-serializable WASM objects, so they
 // can never cross `postMessage`. They live here, in the worker, and the main
@@ -44,6 +45,8 @@ interface OpenArgs {
 // concurrent/repeated opens instantiate once.
 let wasmReady: Promise<unknown> | null = null
 
+const diagnostics = createDiagnosticsLog()
+
 async function ensureWasm(): Promise<void> {
   const pending = (wasmReady ??= init())
   try {
@@ -55,6 +58,7 @@ async function ensureWasm(): Promise<void> {
     if (wasmReady === pending) {
       wasmReady = null
     }
+    diagnostics.append('error', `wasm init failed: ${describeError(error)}`)
     throw error
   }
 }
@@ -109,8 +113,11 @@ function scheduleSync(): void {
       syncInFlight = running
       try {
         await running
-      } catch {
-        // swallow transient sync errors; the next tick retries
+      } catch (error) {
+        // Swallow transient sync errors (the next tick retries), but record
+        // them: these are otherwise invisible and are exactly what support
+        // needs when a wallet looks stale.
+        diagnostics.append('error', `sync failed: ${describeError(error)}`)
       } finally {
         if (syncInFlight === running) {
           syncInFlight = null
@@ -179,7 +186,8 @@ async function drainNotifications(
     let notification: WalletNotification | null | undefined
     try {
       notification = await holder.nextNotification()
-    } catch {
+    } catch (error) {
+      diagnostics.append('error', `notification wait failed: ${describeError(error)}`)
       break
     }
     // The bindings' docstring says a cancelled wait resolves to null while
@@ -271,8 +279,13 @@ async function openWallet(args: OpenArgs): Promise<string> {
       runDaemon: true
     })
   } catch (error) {
+    diagnostics.append(
+      'error',
+      `open failed (createIfNotExists: ${args.createIfNotExists}): ${describeError(error)}`
+    )
     oc.free()
     if (!hadOnchainDb) {
+      diagnostics.append('info', 'open cleanup: deleting orphaned onchain store')
       await deleteDatabase(args.onchainDbName)
     }
     throw error
@@ -281,6 +294,7 @@ async function openWallet(args: OpenArgs): Promise<string> {
   onchain = oc
   sessionMnemonic = args.mnemonic
   startSyncLoop()
+  diagnostics.append('info', `wallet opened (${opened.fingerprint()})`)
   return opened.fingerprint()
 }
 
@@ -297,6 +311,9 @@ async function closeWallet(): Promise<void> {
   await syncInFlight?.catch(() => {
     // the wallet is being torn down; a failed final sync is irrelevant
   })
+  if (wallet !== null) {
+    diagnostics.append('info', 'wallet closed')
+  }
   wallet?.free()
   onchain?.free()
   wallet = null
@@ -347,10 +364,12 @@ const api = {
       }
       const deleted = await Promise.all([...names].map(deleteDatabase))
       if (deleted.includes(false)) {
+        diagnostics.append('error', 'wallet delete: some stores could not be deleted')
         throw new Error(
           'Wallet storage could not be fully deleted. Close other tabs using this wallet and try again.'
         )
       }
+      diagnostics.append('info', `wallet deleted (${names.size} stores)`)
     } finally {
       deleting = false
     }
@@ -386,6 +405,12 @@ const api = {
 
   async getBalance(): Promise<Balance> {
     return await requireWallet().balance()
+  },
+
+  // Deliberately not wallet-gated: failed opens and wasm-init errors are
+  // exactly what this log exists to expose, and they happen while locked.
+  getDiagnosticsLog(): string[] {
+    return diagnostics.snapshot()
   },
 
   async getExitStatuses(): Promise<{ vtxo: ExitVtxo; history: ExitState[] | null }[]> {

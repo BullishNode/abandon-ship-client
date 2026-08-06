@@ -518,7 +518,7 @@
     },
     "diagnostics": {
       "label": "Diagnostic logs",
-      "description": "Download the barkd debug log to share with support when troubleshooting.",
+      "description": "Download the wallet debug log to share with support when troubleshooting.",
       "button": "Download logs",
       "error": "Could not download logs. Please try again."
     },
