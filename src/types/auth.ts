@@ -1,6 +1,7 @@
 export interface AuthStatus {
   authRequired: boolean
   authed: boolean
+  deviceUnlockFailed?: boolean
 }
 
 export type LoginFailureReason = 'invalid' | 'rate_limited' | 'error'

@@ -2,7 +2,13 @@ import { useMutation } from '@tanstack/react-query'
 // Static import of the WASM module: safe only because this hook is reachable
 // solely through `__BACKEND__`-guarded lazy imports, which keeps it (and the
 // WASM client) out of barkd bundles. Do not import this hook from shared code.
-import { clearVault, hasVault, saveDeviceVault, unlockWallet } from '@/lib/backend/wasm'
+import {
+  clearVault,
+  hasVault,
+  saveDeviceVault,
+  tryDeviceUnlock,
+  unlockWallet
+} from '@/lib/backend/wasm'
 import { useAuthStore } from '@/stores/auth'
 
 interface UnlockWalletParams {
@@ -32,6 +38,23 @@ export function useUnlockWallet() {
     },
     onSuccess: () => {
       useAuthStore.getState().setStatus({ authRequired: true, authed: true })
+    }
+  })
+}
+
+export function useRetryDeviceUnlock() {
+  return useMutation({
+    mutationFn: async (): Promise<'unlocked' | 'no-vault'> => {
+      const result = await tryDeviceUnlock()
+      if (result.status === 'failed') {
+        throw result.error
+      }
+      return result.status
+    },
+    onSuccess: (status) => {
+      if (status === 'unlocked') {
+        useAuthStore.getState().setStatus({ authRequired: true, authed: true })
+      }
     }
   })
 }

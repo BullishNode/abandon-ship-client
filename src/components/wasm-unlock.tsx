@@ -7,21 +7,35 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { InputGroup, InputGroupTextarea } from '@/components/ui/input-group'
 import { Input } from '@/components/ui/input'
-import { useUnlockWallet } from '@/hooks/use-unlock-wallet'
+import { useRetryDeviceUnlock, useUnlockWallet } from '@/hooks/use-unlock-wallet'
 import { useUnlockWithPassword } from '@/hooks/use-wallet-password'
 // Static imports of the WASM vault: this component is only reached through the
 // login page's __BACKEND__-guarded lazy import, so it stays out of barkd builds.
 import { hasVault, InvalidPasswordError } from '@/lib/backend/wasm'
+import { useAuthStore } from '@/stores/auth'
 import { isValidMnemonic, MNEMONIC_WORD_COUNT, normalizeMnemonic } from '@/utils/mnemonic'
 
-type UnlockMode = 'password' | 'mnemonic'
+type UnlockMode = 'password' | 'mnemonic' | 'retry'
+
+function initialUnlockMode(hadVault: boolean, deviceUnlockFailed: boolean): UnlockMode {
+  if (hadVault) {
+    return 'password'
+  }
+  return deviceUnlockFailed ? 'retry' : 'mnemonic'
+}
 
 export default function WasmUnlock() {
   const [hadVault] = useState(hasVault)
-  const [mode, setMode] = useState<UnlockMode>(hadVault ? 'password' : 'mnemonic')
+  const deviceUnlockFailed = useAuthStore((state) => state.deviceUnlockFailed)
+  const [mode, setMode] = useState<UnlockMode>(() =>
+    initialUnlockMode(hadVault, deviceUnlockFailed)
+  )
 
   if (mode === 'password') {
     return <PasswordUnlock onForgot={() => setMode('mnemonic')} />
+  }
+  if (mode === 'retry') {
+    return <RetryUnlock onUseMnemonic={() => setMode('mnemonic')} />
   }
   return (
     <MnemonicUnlock
@@ -29,6 +43,49 @@ export default function WasmUnlock() {
       clearVaultOnSuccess={hadVault}
       onBack={() => setMode('password')}
     />
+  )
+}
+
+function RetryUnlock({ onUseMnemonic }: { onUseMnemonic: () => void }) {
+  const { t } = useTranslation()
+  const { mutate, isPending, isError } = useRetryDeviceUnlock()
+
+  return (
+    <FullScreenLayout>
+      <Card className="min-w-sm shadow-none ring-0">
+        <CardHeader>
+          <CardTitle className="text-center font-bold text-3xl">
+            {t('unlock.retry.title')}
+          </CardTitle>
+          <CardDescription className="text-center text-lg">
+            {t('unlock.retry.description')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FieldGroup>
+            {isError ? <FieldError>{t('unlock.retry.error')}</FieldError> : null}
+            <Button
+              loading={isPending}
+              onClick={() =>
+                mutate(undefined, {
+                  onSuccess: (status) => {
+                    if (status === 'no-vault') {
+                      onUseMnemonic()
+                    }
+                  }
+                })
+              }
+              type="button"
+            >
+              {t('unlock.retry.submit')}
+            </Button>
+            <Button onClick={onUseMnemonic} type="button" variant="ghost">
+              {t('unlock.retry.use_mnemonic')}
+            </Button>
+          </FieldGroup>
+        </CardContent>
+      </Card>
+    </FullScreenLayout>
   )
 }
 

@@ -87,11 +87,21 @@ function BootError({ message, onRetry }: { message: string; onRetry: () => void 
 async function resolveInitialAuthStatus(): Promise<AuthStatus> {
   if (__BACKEND__ === 'wasm') {
     const { isWalletLocked, tryDeviceUnlock } = await import('./lib/backend/wasm')
-    let locked = await isWalletLocked()
-    if (locked) {
-      locked = !(await tryDeviceUnlock())
+    if (!(await isWalletLocked())) {
+      return { authRequired: false, authed: true }
     }
-    return { authRequired: locked, authed: !locked }
+    const unlock = await tryDeviceUnlock()
+    if (unlock.status === 'unlocked') {
+      return { authRequired: false, authed: true }
+    }
+    if (unlock.status === 'failed') {
+      console.error('Silent unlock failed', unlock.error)
+    }
+    return {
+      authRequired: true,
+      authed: false,
+      deviceUnlockFailed: unlock.status === 'failed'
+    }
   }
   return await fetchAuthStatus()
 }

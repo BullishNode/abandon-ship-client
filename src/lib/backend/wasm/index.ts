@@ -5,6 +5,7 @@ export {
   WalletLockedError,
   wasmBackend
 } from '@/lib/backend/wasm/client'
+export type { DeviceUnlockResult } from '@/lib/backend/wasm/client'
 export {
   clearDeviceVault,
   isDeviceVaultSupported,

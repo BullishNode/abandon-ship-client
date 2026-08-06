@@ -119,23 +119,37 @@ export async function unlockWallet(mnemonic: string): Promise<void> {
   setSessionMnemonic(mnemonic)
 }
 
+export type DeviceUnlockResult =
+  // The silent path succeeded; the session is unlocked.
+  | { status: 'unlocked' }
+  // No usable device vault (password set, vault missing/corrupt): the gate
+  // must collect the password or the seed phrase.
+  | { status: 'no-vault' }
+  // The vault decrypted fine but reopening the wallet failed. The seed is
+  // provably present, so this is environmental (chain source unreachable,
+  // wasm fetch failed) — retryable, and the device vault stays armed.
+  | { status: 'failed'; error: Error }
+
 // Silent unlock for passwordless wallets: the device vault holds the mnemonic
 // encrypted under a non-extractable IndexedDB key. A password vault always
 // wins — its whole point is to gate unlocking behind the password — so its
 // presence disables the silent path even if a stale device vault remains.
-export async function tryDeviceUnlock(): Promise<boolean> {
+export async function tryDeviceUnlock(): Promise<DeviceUnlockResult> {
   if (hasVault()) {
-    return false
+    return { status: 'no-vault' }
   }
   const mnemonic = await openDeviceVault()
   if (mnemonic === null) {
-    return false
+    return { status: 'no-vault' }
   }
   try {
     await unlockWallet(mnemonic)
-    return true
-  } catch {
-    return false
+    return { status: 'unlocked' }
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error : new Error(String(error)),
+      status: 'failed'
+    }
   }
 }
 

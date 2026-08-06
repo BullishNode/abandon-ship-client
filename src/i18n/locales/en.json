@@ -131,6 +131,13 @@
       "back": "Back to password",
       "error": "Could not unlock the wallet. Make sure this seed phrase belongs to this wallet and try again.",
       "vault_cleared": "Password removed. Set a new one in Settings → Security."
+    },
+    "retry": {
+      "title": "Connection problem",
+      "description": "Your wallet is safe on this device, but it could not be opened — the network may be unreachable.",
+      "submit": "Try again",
+      "use_mnemonic": "Unlock with recovery phrase instead",
+      "error": "Still unable to connect. Check your connection and try again."
     }
   },
   "onboarding": {
