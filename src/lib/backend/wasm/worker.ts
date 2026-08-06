@@ -6,16 +6,19 @@ import type {
   Config,
   ExitVtxo,
   FeeEstimate,
+  FeeRates,
   LightningInvoice,
   LightningSendStatus,
   Movement,
   Network,
   NotificationHolder,
   OnchainBalance,
+  OnchainUtxo,
   PendingBoard,
   RoundState,
   Vtxo,
-  WalletNotification
+  WalletNotification,
+  WalletTransaction
 } from '@secondts/bark'
 import init, { extractTxFromPsbt, OnchainWallet, Wallet } from '@secondts/bark/web'
 
@@ -65,8 +68,6 @@ let openingMnemonic: string | null = null
 // Set while deleteWallet tears down, so a racing ensureOpen cannot resurrect
 // the wallet mid-delete.
 let deleting = false
-
-const onchainAddresses = new Set<string>()
 
 // A generation counter (not a boolean) keyed to each subscription: a fast
 // unsubscribe/resubscribe bumps the generation, so a still-draining old loop
@@ -300,7 +301,6 @@ async function closeWallet(): Promise<void> {
   wallet = null
   onchain = null
   sessionMnemonic = null
-  onchainAddresses.clear()
   // The awaited sync's continuation resumes before this function's (it awaited
   // `running` first), sees the wallet still open, and re-arms the loop. Now that
   // the wallet is null, clear that stale timer or startSyncLoop() would treat
@@ -404,13 +404,7 @@ const api = {
   },
 
   async getOnchainAddress(): Promise<string> {
-    const address = await requireOnchain().newAddress()
-    onchainAddresses.add(address)
-    return address
-  },
-
-  getOnchainAddresses(): string[] {
-    return [...onchainAddresses]
+    return await requireOnchain().newAddress()
   },
 
   async getOnchainBalance(): Promise<OnchainBalance> {
@@ -442,8 +436,20 @@ const api = {
     return await requireWallet().offboardVtxos(vtxoIds, address)
   },
 
+  async onchainFeeRates(): Promise<FeeRates> {
+    return await requireOnchain().feeRates()
+  },
+
   async onchainSend(address: string, amountSats: number, feeRateSatPerVb: number): Promise<string> {
     return await requireOnchain().send(address, amountSats, feeRateSatPerVb)
+  },
+
+  async onchainTransactions(): Promise<WalletTransaction[]> {
+    return await requireOnchain().transactions()
+  },
+
+  async onchainUtxos(): Promise<OnchainUtxo[]> {
+    return await requireOnchain().utxos()
   },
 
   async open(args: OpenArgs): Promise<string> {
@@ -482,6 +488,27 @@ const api = {
   // a thrown error instead of firing and forgetting.
   async payInvoice(invoice: string, amountSats?: number): Promise<LightningSendStatus> {
     return await requireWallet().payLightningInvoice({ amountSats, invoice, wait: true })
+  },
+
+  async payLightningAddress(
+    lightningAddress: string,
+    amountSats: number,
+    comment?: string
+  ): Promise<LightningSendStatus> {
+    return await requireWallet().payLightningAddress({
+      amountSats,
+      comment,
+      lightningAddress,
+      wait: true
+    })
+  },
+
+  async payLnurl(
+    lnurl: string,
+    amountSats: number,
+    comment?: string
+  ): Promise<LightningSendStatus> {
+    return await requireWallet().payLnurl({ amountSats, comment, lnurl, wait: true })
   },
 
   async payOffer(offer: string, amountSats?: number): Promise<LightningSendStatus> {
@@ -535,6 +562,10 @@ const api = {
     notificationHolder = holder
     notificationGeneration += 1
     void drainNotifications(holder, notificationGeneration, callback)
+  },
+
+  async tipHeight(): Promise<number> {
+    return await requireOnchain().tipHeight()
   },
 
   unsubscribeNotifications(): void {

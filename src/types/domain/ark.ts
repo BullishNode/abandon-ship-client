@@ -14,11 +14,9 @@ export interface ArkInfo {
   minBoardAmountSats: number
   requiredBoardConfirmations: number
   lnReceiveAntiDosRequired: boolean
-  // Optional: not exposed by the WASM backend. barkd always supplies these; the
-  // WASM backend either lacks them (mailboxPubkey) or ships the fee schedule as
-  // an opaque JSON string it does not fully model (fees).
+  // Optional: not exposed by the WASM backend. barkd always supplies these.
   mailboxPubkey?: string
   maxVtxoAmountSats?: number
   offboardFeerateSatPerKvb?: number
-  fees?: FeeSchedule
+  fees: FeeSchedule
 }

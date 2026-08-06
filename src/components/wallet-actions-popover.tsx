@@ -69,7 +69,7 @@ export function WalletActionsPopover() {
   const isRoundActive = isRoundInProgress(pendingRounds)
   const hasNoVtxos = (vtxos?.length ?? 0) === 0
   const isRefreshBusy = isRoundActive || isRefreshing
-  const refreshFeeSat = estimateRefreshAllFeeSat(vtxos, tip, arkInfo?.fees?.refresh)
+  const refreshFeeSat = estimateRefreshAllFeeSat(vtxos, tip, arkInfo?.fees.refresh)
 
   function handleBoard() {
     setOpen(false)

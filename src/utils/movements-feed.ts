@@ -58,15 +58,12 @@ function approximateTimestampMs(
   return Date.now() - elapsedBlocks * AVERAGE_BLOCK_INTERVAL_MS
 }
 
-// Backends without raw-tx hex forward the tx graph pre-decoded, so prefer that
-// over re-parsing `tx` — `decodeOutputs`/`decodeInputs` swallow parse failures
-// and would silently yield nothing for an empty hex string.
 function txOutputs(tx: WalletTx, network: Network): DecodedOutput[] {
-  return tx.outputs ?? decodeOutputs(tx.tx, network)
+  return decodeOutputs(tx.tx, network)
 }
 
 function txInputs(tx: WalletTx): DecodedInput[] {
-  return tx.inputs ?? decodeInputs(tx.tx)
+  return decodeInputs(tx.tx)
 }
 
 function buildOwnedOutpoints(transactions: WalletTx[], utxos: Utxo[]): Set<string> {

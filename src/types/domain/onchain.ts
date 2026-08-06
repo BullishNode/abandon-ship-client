@@ -32,6 +32,4 @@ export interface WalletTx {
   confirmation?: BlockRef | null
   isCpfp: boolean
   onchainFeeSats?: number | null
-  outputs?: DecodedOutput[]
-  inputs?: DecodedInput[]
 }

@@ -186,7 +186,7 @@ export default function SettingsPage() {
   const { data: arkInfo } = useArkInfo()
   const thresholdOptions = getRefreshThresholdOptions(
     arkInfo?.vtxoExpiryDelta,
-    arkInfo?.fees?.refresh
+    arkInfo?.fees.refresh
   )
   const selectedThresholdBlocks = resolveThresholdBlocks(
     autoRefreshThresholdBlocks,

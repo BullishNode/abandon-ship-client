@@ -25,7 +25,7 @@ export function useAutoRefresh(): void {
 
   const tipHeight = tip
   const vtxoExpiryDelta = arkInfo?.vtxoExpiryDelta
-  const refreshFees = arkInfo?.fees?.refresh
+  const refreshFees = arkInfo?.fees.refresh
   const roundInProgress = isRoundInProgress(pendingRounds)
   const thresholdOptions = getRefreshThresholdOptions(vtxoExpiryDelta, refreshFees)
   const thresholdBlocks = resolveThresholdBlocks(autoRefreshThresholdBlocks, thresholdOptions)

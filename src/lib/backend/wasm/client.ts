@@ -3,13 +3,7 @@ import type {
   LightningSendStatus,
   WalletNotification as WasmWalletNotification
 } from '@secondts/bark'
-import {
-  clearStoredOnchainAddresses,
-  getStoredOnchainAddresses,
-  rememberOnchainAddress
-} from '@/lib/backend/wasm/address-store'
 import { buildWasmConfig, onchainDbName, toWasmNetwork } from '@/lib/backend/wasm/config'
-import { fetchFeeRates, fetchTip, fetchTransactions, fetchUtxos } from '@/lib/backend/wasm/esplora'
 import {
   toArkInfo,
   toBalance,
@@ -19,13 +13,16 @@ import {
   toNextRoundStart,
   toOffboardTxid,
   toOnchainBalance,
+  toOnchainFeeRates,
   toPendingBoard,
   toPendingRound,
+  toUtxos,
   toVtxo,
-  toWalletNotification
+  toWalletNotification,
+  toWalletTx
 } from '@/lib/backend/wasm/map'
 import { clearMovementMetadata, setMovementMetadata } from '@/lib/backend/wasm/metadata-store'
-import { classifyDestination, resolveToInvoice } from '@/lib/backend/wasm/send-router'
+import { classifyDestination } from '@/lib/backend/wasm/send-router'
 import type { SendKind } from '@/lib/backend/wasm/send-router'
 import {
   clearSessionMnemonic,
@@ -209,19 +206,6 @@ function subscribeNotifications(listener: (notification: WalletNotification) => 
   }
 }
 
-async function newOnchainAddress(): Promise<string> {
-  const address = await remote().getOnchainAddress()
-  rememberOnchainAddress(address)
-  return address
-}
-
-// Union of the worker's in-memory addresses and the persisted ones, so onchain
-// history survives a reload (the worker set is empty in a fresh session).
-async function knownOnchainAddresses(): Promise<string[]> {
-  const fromWorker = await remote().getOnchainAddresses()
-  return [...new Set([...fromWorker, ...getStoredOnchainAddresses()])]
-}
-
 function lightningSendMessage(status: LightningSendStatus): string {
   return status.type === 'paid' ? 'Lightning payment sent' : 'Lightning payment in progress'
 }
@@ -243,15 +227,32 @@ async function routeSend(
     const status = await remote().payOffer(destination, amountSats ?? undefined)
     return { message: lightningSendMessage(status) }
   }
-  const invoice =
-    kind === 'bolt11' ? destination : await resolveToInvoice(destination, kind, amountSats, comment)
-  const status = await remote().payInvoice(invoice, amountSats ?? undefined)
+  if (kind === 'lightning-address' || kind === 'lnurl') {
+    if (amountSats === null || amountSats === undefined) {
+      throw new Error('An amount is required to pay a lightning address')
+    }
+    // The bindings resolve LNURL-pay themselves (browser fetch, so the endpoint
+    // must allow CORS). Forward only a non-empty comment: the bindings do no
+    // LUD-12 commentAllowed gating, and an unexpected param can be rejected.
+    const trimmedComment = comment?.trim()
+    const lnurlComment =
+      trimmedComment !== undefined && trimmedComment.length > 0 ? trimmedComment : undefined
+    const status =
+      kind === 'lightning-address'
+        ? await remote().payLightningAddress(destination.trim(), amountSats, lnurlComment)
+        : await remote().payLnurl(destination.trim(), amountSats, lnurlComment)
+    return { message: lightningSendMessage(status) }
+  }
+  const status = await remote().payInvoice(destination, amountSats ?? undefined)
   return { message: lightningSendMessage(status) }
 }
 
 export const wasmBackend: Backend = {
   bitcoinApi: {
-    tip: async () => await fetchTip()
+    tip: async () => {
+      await ensureOpen()
+      return await remote().tipHeight()
+    }
   },
   boardsApi: {
     boardAll: async () => {
@@ -281,8 +282,8 @@ export const wasmBackend: Backend = {
     },
     getAllExitStatus: async () => {
       await ensureOpen()
-      const [exitVtxos, tip] = await Promise.all([remote().getExitVtxos(), fetchTip()])
-      return exitVtxos.map((exitVtxo) => toExitStatus(exitVtxo, tip))
+      const exitVtxos = await remote().getExitVtxos()
+      return exitVtxos.map(toExitStatus)
     }
   },
   feesApi: {
@@ -298,7 +299,10 @@ export const wasmBackend: Backend = {
       await ensureOpen()
       return toFeeEstimate(await remote().estimateOffboardFee(address, vtxos))
     },
-    onchainFeeRates: async () => await fetchFeeRates(),
+    onchainFeeRates: async () => {
+      await ensureOpen()
+      return toOnchainFeeRates(await remote().onchainFeeRates())
+    },
     sendOnchainFee: async ({ address, amountSats }) => {
       await ensureOpen()
       return toFeeEstimate(await remote().estimateSendOnchainFee(address, amountSats))
@@ -328,7 +332,7 @@ export const wasmBackend: Backend = {
   onchainApi: {
     onchainAddress: async () => {
       await ensureOpen()
-      return await newOnchainAddress()
+      return await remote().getOnchainAddress()
     },
     onchainBalance: async () => {
       await ensureOpen()
@@ -336,17 +340,18 @@ export const wasmBackend: Backend = {
     },
     onchainSend: async ({ destination, amountSats }) => {
       await ensureOpen()
-      const feeRates = await fetchFeeRates()
+      const feeRates = toOnchainFeeRates(await remote().onchainFeeRates())
       const txid = await remote().onchainSend(destination, amountSats, feeRates.regularSatPerVb)
       return { txid }
     },
     onchainTransactions: async () => {
       await ensureOpen()
-      return await fetchTransactions(await knownOnchainAddresses())
+      const transactions = await remote().onchainTransactions()
+      return transactions.map(toWalletTx)
     },
     onchainUtxos: async () => {
       await ensureOpen()
-      return await fetchUtxos(await knownOnchainAddresses())
+      return toUtxos(await remote().onchainUtxos())
     }
   },
   walletApi: {
@@ -395,7 +400,7 @@ export const wasmBackend: Backend = {
     },
     offboardVtxos: async ({ vtxos, address }) => {
       await ensureOpen()
-      const target = address ?? (await newOnchainAddress())
+      const target = address ?? (await remote().getOnchainAddress())
       const roundStatus = await remote().offboardVtxos(vtxos, target)
       return { offboardTxid: toOffboardTxid(roundStatus) }
     },
@@ -444,9 +449,11 @@ export const wasmBackend: Backend = {
       clearVault()
       await clearDeviceVault()
       if (fingerprint !== null && fingerprint.length > 0) {
-        clearStoredOnchainAddresses(fingerprint)
         clearMovementMetadata(fingerprint)
       }
+      // Stale key from the pre-0.16 address side-store, superseded by the
+      // bindings' own transaction/utxo listing.
+      localStorage.removeItem('bark-web-wasm-onchain-addresses')
       // The worker's teardown killed its notification loop; resync the client
       // flag through the queue so the next wallet re-subscribes instead of
       // no-opping on a stale `true`.

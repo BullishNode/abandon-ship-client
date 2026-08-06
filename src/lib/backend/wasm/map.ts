@@ -1,25 +1,40 @@
 import type {
   ArkInfo as WasmArkInfo,
   Balance as WasmBalance,
+  ExitState as WasmExitState,
+  ExitTx as WasmExitTx,
+  ExitTxOrigin as WasmExitTxOrigin,
+  ExitTxStatus as WasmExitTxStatus,
   ExitVtxo as WasmExitVtxo,
   FeeEstimate as WasmFeeEstimate,
+  FeeRates as WasmFeeRates,
+  FeeSchedule as WasmFeeSchedule,
   Movement as WasmMovement,
   OnchainBalance as WasmOnchainBalance,
+  OnchainUtxo as WasmOnchainUtxo,
   PendingBoard as WasmPendingBoard,
   RoundState as WasmRoundState,
   Vtxo as WasmVtxo,
-  WalletNotification as WasmWalletNotification
+  VtxoState as WasmVtxoState,
+  WalletNotification as WasmWalletNotification,
+  WalletTransaction as WasmWalletTransaction
 } from '@secondts/bark'
-import { parseFeeSchedule } from '@/lib/backend/wasm/fee-schedule'
 import { getMovementMetadata } from '@/lib/backend/wasm/metadata-store'
 import type { ArkInfo } from '@/types/domain/ark'
 import type { Balance, OnchainBalance } from '@/types/domain/balance'
 import type { PendingBoard } from '@/types/domain/board'
-import type { ExitState, ExitTransactionStatus } from '@/types/domain/exit'
-import type { FeeEstimate } from '@/types/domain/fees'
+import type {
+  ExitState,
+  ExitTransactionStatus,
+  ExitTx,
+  ExitTxOrigin,
+  ExitTxStatus
+} from '@/types/domain/exit'
+import type { FeeEstimate, FeeSchedule, OnchainFeeRates } from '@/types/domain/fees'
 import { PAYMENT_TYPES } from '@/types/domain/movement'
 import type { Movement, MovementDestination, MovementStatus } from '@/types/domain/movement'
 import type { WalletNotification } from '@/types/domain/notification'
+import type { Utxo, WalletTx } from '@/types/domain/onchain'
 import type { NextRoundStart, PendingRound } from '@/types/domain/round'
 import type { Vtxo, VtxoState } from '@/types/domain/vtxo'
 
@@ -48,9 +63,37 @@ export function toOnchainBalance(dto: WasmOnchainBalance): OnchainBalance {
   }
 }
 
+function toFeeSchedule(dto: WasmFeeSchedule): FeeSchedule {
+  return {
+    board: {
+      baseFeeSats: dto.board.baseFeeSats,
+      minFeeSats: dto.board.minFeeSats,
+      ppm: dto.board.ppm
+    },
+    lightningReceive: {
+      baseFeeSats: dto.lightningReceive.baseFeeSats,
+      ppm: dto.lightningReceive.ppm
+    },
+    lightningSend: {
+      baseFeeSats: dto.lightningSend.baseFeeSats,
+      minFeeSats: dto.lightningSend.minFeeSats,
+      ppmExpiryTable: dto.lightningSend.ppmExpiryTable
+    },
+    offboard: {
+      baseFeeSats: dto.offboard.baseFeeSats,
+      fixedAdditionalVb: dto.offboard.fixedAdditionalVb,
+      ppmExpiryTable: dto.offboard.ppmExpiryTable
+    },
+    refresh: {
+      baseFeeSats: dto.refresh.baseFeeSats,
+      ppmExpiryTable: dto.refresh.ppmExpiryTable
+    }
+  }
+}
+
 export function toArkInfo(dto: WasmArkInfo): ArkInfo {
   return {
-    fees: parseFeeSchedule(dto.feeScheduleJson),
+    fees: toFeeSchedule(dto.feeSchedule),
     htlcExpiryDelta: dto.htlcExpiryDelta,
     htlcSendExpiryDelta: dto.htlcSendExpiryDelta,
     lnReceiveAntiDosRequired: dto.lnReceiveAntiDosRequired,
@@ -68,24 +111,20 @@ export function toArkInfo(dto: WasmArkInfo): ArkInfo {
   }
 }
 
-// The WASM `Vtxo.state` string is the serde-tagged bark enum: spendable / locked
-// / spent / exited (verified against the bindings). `movementId` is never
-// available here, so the lock label falls back to none (see mapVtxoLockLabels).
-function toVtxoState(state: string): VtxoState {
-  switch (state.toLowerCase()) {
-    case 'spent': {
-      return { type: 'spent' }
-    }
-    case 'exited': {
-      return { type: 'exited' }
-    }
-    case 'locked': {
-      return { type: 'locked' }
-    }
-    default: {
-      return { type: 'spendable' }
-    }
+// A locked VTXO's holder is legitimately absent in the window between creating
+// the locked VTXO and pinning it to an operation, so `{ type: 'locked' }`
+// without ids is a valid state, not a mapping failure.
+function toVtxoState(state: WasmVtxoState): VtxoState {
+  if (state.type !== 'locked') {
+    return { type: state.type }
   }
+  if (state.holder?.type === 'movement') {
+    return { movementId: state.holder.id, type: 'locked' }
+  }
+  if (state.holder?.type === 'action') {
+    return { actionId: state.holder.id, type: 'locked' }
+  }
+  return { type: 'locked' }
 }
 
 export function toVtxo(dto: WasmVtxo): Vtxo {
@@ -217,66 +256,157 @@ export function toWalletNotification(dto: WasmWalletNotification): WalletNotific
   return { type: 'channel-lagging' }
 }
 
-// The WASM `ExitVtxo.state` string is the Rust Debug rendering of bark's
-// ExitState — a PascalCase variant name usually followed by its payload, e.g.
-// "Claimable(ExitClaimableState { tip_height: 123, .. })" — not the serde
-// kebab-case tag. Take the leading variant identifier and kebab-case it; the
-// serde tags are accepted too in case a future ffi switches to them.
-const EXIT_STATE_IDENTIFIER = /^[A-Za-z-]+/u
-const PASCAL_BOUNDARY = /(?<=[a-z])(?=[A-Z])/gu
-
-function exitStateTag(state: string): string {
-  const identifier = EXIT_STATE_IDENTIFIER.exec(state)?.[0] ?? ''
-  return identifier.replaceAll(PASCAL_BOUNDARY, '-').toLowerCase()
+function toExitTxOrigin(origin: WasmExitTxOrigin): ExitTxOrigin {
+  if (origin.type === 'block') {
+    return { confirmedIn: origin.confirmedIn, type: 'block' }
+  }
+  if (origin.type === 'wallet') {
+    return { confirmedIn: origin.confirmedIn, type: 'wallet' }
+  }
+  return { type: 'mempool' }
 }
 
-// Block references are not exposed by this surface, so block fields are filled
-// with the current tip height as a placeholder. `isClaimable` backstops the
-// string parsing: a claimable exit must never be missed by the auto-claim flow.
-function toExitState(state: string, tipHeight: number, isClaimable: boolean): ExitState {
-  const block = { hash: '', height: tipHeight }
-  const tag = exitStateTag(state)
-  if (isClaimable && tag !== 'claim-in-progress' && tag !== 'claimed') {
-    return { claimableSince: block, tipHeight, type: 'claimable' }
+function toExitTxStatus(status: WasmExitTxStatus): ExitTxStatus {
+  if (status.type === 'awaiting-input-confirmation') {
+    return { txids: status.txids, type: 'awaiting-input-confirmation' }
   }
-  switch (tag) {
-    case 'claimed': {
-      return { block, tipHeight, txid: '', type: 'claimed' }
+  if (status.type === 'awaiting-confirmation') {
+    return {
+      childTxid: status.childTxid,
+      origin: toExitTxOrigin(status.origin),
+      type: 'awaiting-confirmation'
     }
-    case 'vtxo-already-spent': {
-      return { tipHeight, type: 'vtxo-already-spent' }
+  }
+  if (status.type === 'confirmed') {
+    return {
+      block: status.block,
+      childTxid: status.childTxid,
+      origin: toExitTxOrigin(status.origin),
+      type: 'confirmed'
     }
-    case 'canceled': {
-      return { tipHeight, type: 'canceled' }
-    }
-    case 'claim-in-progress': {
-      return { claimTxid: '', claimableSince: block, tipHeight, type: 'claim-in-progress' }
-    }
-    case 'claimable': {
-      return { claimableSince: block, tipHeight, type: 'claimable' }
+  }
+  return { type: status.type }
+}
+
+function toExitTx(tx: WasmExitTx): ExitTx {
+  return { status: toExitTxStatus(tx.status), txid: tx.txid }
+}
+
+// A state type added by newer bindings: degrade it to a placeholder so one
+// unknown variant cannot reject the whole exits response, mirroring the barkd
+// mapper's fallback.
+function unknownExitState(state: unknown): ExitState {
+  const tipHeight =
+    typeof state === 'object' &&
+    state !== null &&
+    'tipHeight' in state &&
+    typeof state.tipHeight === 'number'
+      ? state.tipHeight
+      : 0
+  return { tipHeight, type: 'start' }
+}
+
+function toExitState(state: WasmExitState): ExitState {
+  switch (state.type) {
+    case 'processing': {
+      return {
+        tipHeight: state.tipHeight,
+        transactions: state.transactions.map(toExitTx),
+        type: 'processing'
+      }
     }
     case 'awaiting-delta': {
       return {
-        claimableHeight: tipHeight,
-        confirmedBlock: block,
-        tipHeight,
+        claimableHeight: state.claimableHeight,
+        confirmedBlock: state.confirmedBlock,
+        tipHeight: state.tipHeight,
         type: 'awaiting-delta'
       }
     }
-    case 'processing': {
-      return { tipHeight, transactions: [], type: 'processing' }
+    case 'claimable': {
+      return {
+        claimableSince: state.claimableSince,
+        lastScannedBlock: state.lastScannedBlock,
+        tipHeight: state.tipHeight,
+        type: 'claimable'
+      }
+    }
+    case 'claim-in-progress': {
+      return {
+        claimTxid: state.claimTxid,
+        claimableSince: state.claimableSince,
+        tipHeight: state.tipHeight,
+        type: 'claim-in-progress'
+      }
+    }
+    case 'claimed': {
+      return { block: state.block, tipHeight: state.tipHeight, txid: state.txid, type: 'claimed' }
+    }
+    case 'vtxo-already-spent': {
+      return { tipHeight: state.tipHeight, type: 'vtxo-already-spent' }
+    }
+    case 'canceled': {
+      return { tipHeight: state.tipHeight, type: 'canceled' }
+    }
+    case 'start': {
+      return { tipHeight: state.tipHeight, type: 'start' }
     }
     default: {
-      return { tipHeight, type: 'start' }
+      return unknownExitState(state)
     }
   }
 }
 
-export function toExitStatus(dto: WasmExitVtxo, tipHeight: number): ExitTransactionStatus {
+export function toExitStatus(dto: WasmExitVtxo): ExitTransactionStatus {
   return {
-    state: toExitState(dto.state, tipHeight, dto.isClaimable),
+    state: toExitState(dto.state),
     vtxoId: dto.vtxoId
   }
+}
+
+export function toWalletTx(dto: WasmWalletTransaction): WalletTx {
+  return {
+    balanceChangeSats: dto.balanceChangeSats,
+    confirmation: dto.confirmation,
+    isCpfp: dto.isCpfp,
+    onchainFeeSats: dto.onchainFeeSats,
+    tx: dto.txHex,
+    txid: dto.txid
+  }
+}
+
+// Exit-variant UTXOs carry no outpoint, and every consumer keys on the
+// `txid:vout` shape; they were also invisible on the old esplora path. Only
+// local (BDK-owned) UTXOs map into the domain.
+export function toUtxos(dtos: WasmOnchainUtxo[]): Utxo[] {
+  const utxos: Utxo[] = []
+  for (const dto of dtos) {
+    if (dto.type === 'local') {
+      utxos.push({
+        amountSats: dto.amountSats,
+        confirmationHeight: dto.confirmationHeight,
+        outpoint: `${dto.outpoint.txid}:${dto.outpoint.vout}`
+      })
+    }
+  }
+  return utxos
+}
+
+const KWU_PER_VB = 250
+const MIN_SAT_PER_VB = 1
+
+function toSatPerVb(satPerKwu: number): number {
+  return Math.max(MIN_SAT_PER_VB, Math.ceil(satPerKwu / KWU_PER_VB))
+}
+
+// The bindings report sat/kwu; the domain speaks sat/vB. Clamp the tiers
+// monotonic (regular ≤ fast, slow ≤ regular) so a noisy estimator can never
+// price "slow" above "fast".
+export function toOnchainFeeRates(dto: WasmFeeRates): OnchainFeeRates {
+  const fast = toSatPerVb(dto.fastSatPerKwu)
+  const regular = Math.min(toSatPerVb(dto.regularSatPerKwu), fast)
+  const slow = Math.min(toSatPerVb(dto.slowSatPerKwu), regular)
+  return { fastSatPerVb: fast, regularSatPerVb: regular, slowSatPerVb: slow }
 }
 
 // The bindings' offboardVtxos() resolves to the Rust Debug rendering of bark's

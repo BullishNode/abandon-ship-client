@@ -1,4 +1,3 @@
-import { ONCHAIN_ADDRESSES_STORAGE_KEY } from '@/lib/backend/wasm/address-store'
 import { onchainDbName } from '@/lib/backend/wasm/config'
 import { encodeValue } from '@/lib/backend/wasm/export-codec'
 import type { EncodedValue } from '@/lib/backend/wasm/export-codec'
@@ -152,7 +151,7 @@ async function walletDatabaseNames(
 
 function exportedLocalStorage(): Record<string, string> {
   const entries: Record<string, string> = {}
-  for (const key of [MOVEMENT_METADATA_STORAGE_KEY, ONCHAIN_ADDRESSES_STORAGE_KEY]) {
+  for (const key of [MOVEMENT_METADATA_STORAGE_KEY]) {
     const value = localStorage.getItem(key)
     if (value !== null) {
       entries[key] = value
