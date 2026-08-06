@@ -5,4 +5,5 @@ chown app:app /data/.bark
 exec s6-setuidgid app /usr/local/bin/barkd \
   --port 4000 \
   --host 127.0.0.1 \
-  --datadir /data/.bark
+  --datadir /data/.bark \
+  --expose-mnemonic
