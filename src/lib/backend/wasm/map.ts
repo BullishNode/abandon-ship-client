@@ -357,8 +357,12 @@ function toExitState(state: WasmExitState): ExitState {
   }
 }
 
-export function toExitStatus(dto: WasmExitVtxo): ExitTransactionStatus {
+export function toExitStatus(
+  dto: WasmExitVtxo,
+  history?: WasmExitState[] | null
+): ExitTransactionStatus {
   return {
+    history: history?.map(toExitState) ?? null,
     state: toExitState(dto.state),
     vtxoId: dto.vtxoId
   }

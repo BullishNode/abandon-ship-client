@@ -4,6 +4,7 @@ import type {
   ArkInfo,
   Balance,
   Config,
+  ExitState,
   ExitVtxo,
   FeeEstimate,
   FeeRates,
@@ -387,8 +388,19 @@ const api = {
     return await requireWallet().balance()
   },
 
-  async getExitVtxos(): Promise<ExitVtxo[]> {
-    return await requireWallet().getExitVtxos()
+  async getExitStatuses(): Promise<{ vtxo: ExitVtxo; history: ExitState[] | null }[]> {
+    const w = requireWallet()
+    const vtxos = await w.getExitVtxos()
+    const statuses: { vtxo: ExitVtxo; history: ExitState[] | null }[] = []
+    for (const vtxo of vtxos) {
+      const status = await w.getExitStatus({
+        includeHistory: true,
+        includeTransactions: false,
+        vtxoId: vtxo.vtxoId
+      })
+      statuses.push({ history: status?.history ?? null, vtxo })
+    }
+    return statuses
   },
 
   getFingerprint(): string | null {

@@ -138,6 +138,29 @@ describe(toExitStatus, () => {
       type: 'start'
     })
   })
+
+  it('maps history entries through the same state mapper', () => {
+    const status = toExitStatus(
+      {
+        amountSats: 1000,
+        isClaimable: false,
+        state: { block: BLOCK, tipHeight: TIP_HEIGHT, txid: 'd'.repeat(64), type: 'claimed' },
+        vtxoId: 'vtxo-1'
+      },
+      [
+        { tipHeight: 100, type: 'start' },
+        { claimableSince: BLOCK, lastScannedBlock: undefined, tipHeight: 200, type: 'claimable' }
+      ]
+    )
+    expect(status.history).toStrictEqual([
+      { tipHeight: 100, type: 'start' },
+      { claimableSince: BLOCK, lastScannedBlock: undefined, tipHeight: 200, type: 'claimable' }
+    ])
+  })
+
+  it('leaves history null when the bindings supply none', () => {
+    expect(exitStatus({ tipHeight: TIP_HEIGHT, type: 'start' }).history).toBeNull()
+  })
 })
 
 function vtxo(state: WasmVtxoState): WasmVtxo {

@@ -296,8 +296,8 @@ export const wasmBackend: Backend = {
     },
     getAllExitStatus: async () => {
       await ensureOpen()
-      const exitVtxos = await remote().getExitVtxos()
-      return exitVtxos.map(toExitStatus)
+      const statuses = await remote().getExitStatuses()
+      return statuses.map(({ vtxo, history }) => toExitStatus(vtxo, history))
     }
   },
   feesApi: {
