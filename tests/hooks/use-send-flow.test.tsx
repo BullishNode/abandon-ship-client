@@ -38,6 +38,14 @@ function makeBalance(spendableSats: number, pendingLightningSendSats = 0): Balan
   }
 }
 
+const NETWORK_DISABLED = new Error('network disabled in tests')
+
+// Must stay `async`: the fetch stub has to reject rather than throw synchronously.
+// oxlint-disable-next-line eslint/require-await
+async function rejectNetworkAccess() {
+  throw NETWORK_DISABLED
+}
+
 function makeWrapper(queryClient: QueryClient) {
   return ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
@@ -54,10 +62,7 @@ describe(useSendFlow, () => {
   const onchainUtxosSpy = vi.spyOn(onchainApi, 'onchainUtxos')
 
   beforeEach(() => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(() => Promise.reject(new Error('network disabled in tests')))
-    )
+    vi.stubGlobal('fetch', vi.fn(rejectNetworkAccess))
     queryClient = new QueryClient({
       defaultOptions: { mutations: { retry: false }, queries: { retry: false } }
     })
