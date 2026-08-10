@@ -66,12 +66,17 @@ export function useSendFlow({ open, onOpenChange, initialStep = 'scan' }: UseSen
     }
   }
 
+  // An in-flight send already moved its funds out of the spendable balance, so
+  // validating against that balance reports the sent amount as unaffordable.
+  const insufficientFunds = quote.insufficientFunds && !exec.isSending
+
   return {
     ...dest,
     ...quote,
     ...exec,
     goToSend,
     handlePaste,
+    insufficientFunds,
     isPasteSupported: canReadClipboard(),
     isScanSupported: canUseCamera(),
     verifyDestination
