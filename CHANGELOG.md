@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-08-10
+
+### Added
+
+- Downloadable diagnostics log for WASM mode.
+- Retry screen when a device-stored WASM wallet fails to open, instead of the recovery-phrase prompt.
+- Exit state history in WASM mode.
+
+### Changed
+
+- Updated `@secondts/bark` to 0.16.1 and `@secondts/barkd` to 0.6.1, and bumped the Docker images to bark 0.6.1.
+- WASM mode reads on-chain transactions, UTXOs, fee rates, chain tip, and LNURL-pay sends from the bark bindings, replacing the local esplora client, address store, and LNURL resolver.
+- `barkd` runs with `--expose-mnemonic`, required by the seed reveal in Settings.
+
+### Fixed
+
+- On-chain history in WASM mode no longer depends on addresses this app recorded, so it survives a reload or a wallet restored elsewhere.
+
 ## [0.6.0] - 2026-08-05
 
 ### Added
