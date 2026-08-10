@@ -1,6 +1,6 @@
 {
   "name": "bark-web",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "private": true,
   "description": "A web-based graphical user interface for managing bark wallets",
   "keywords": [
