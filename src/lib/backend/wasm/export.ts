@@ -2,7 +2,7 @@ import { onchainDbName } from '@/lib/backend/wasm/config'
 import { encodeValue } from '@/lib/backend/wasm/export-codec'
 import type { EncodedValue } from '@/lib/backend/wasm/export-codec'
 import { MOVEMENT_METADATA_STORAGE_KEY } from '@/lib/backend/wasm/metadata-store'
-import { canEnumerateDatabases } from '@/lib/backend/wasm/wallet-marker'
+import { canEnumerateDatabases } from '@/lib/backend/wasm/idb'
 import { config } from '@/config/runtime'
 import { useWalletStore } from '@/stores/wallet'
 
@@ -124,7 +124,9 @@ async function dumpDatabase(name: string): Promise<ExportedDatabase> {
 
 // The ark wallet's store names are derived from the fingerprint inside the
 // bindings, so they can only be discovered by enumeration — the same
-// fingerprint-substring match the worker's deleteWallet uses.
+// fingerprint-substring match the wallet delete uses. This variant keeps only
+// the stores that exist, because a dump opens each name and opening an absent
+// database would create it.
 async function walletDatabaseNames(
   fingerprint: string | null
 ): Promise<{ names: string[]; complete: boolean }> {

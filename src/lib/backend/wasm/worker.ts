@@ -23,6 +23,7 @@ import type {
 } from '@secondts/bark'
 import init, { extractTxFromPsbt, OnchainWallet, Wallet } from '@secondts/bark/web'
 import { createDiagnosticsLog, describeError } from '@/lib/backend/wasm/diagnostics-log'
+import { deleteDatabase, hasDatabase } from '@/lib/backend/wasm/idb'
 
 // The Wallet + OnchainWallet handles are non-serializable WASM objects, so they
 // can never cross `postMessage`. They live here, in the worker, and the main
@@ -70,9 +71,6 @@ let openPromise: Promise<string> | null = null
 // The mnemonic behind the in-flight openPromise, so a concurrent open with a
 // different seed is rejected instead of silently receiving the wrong wallet.
 let openingMnemonic: string | null = null
-// Set while deleteWallet tears down, so a racing ensureOpen cannot resurrect
-// the wallet mid-delete.
-let deleting = false
 
 // A generation counter (not a boolean) keyed to each subscription: a fast
 // unsubscribe/resubscribe bumps the generation, so a still-draining old loop
@@ -87,9 +85,6 @@ let notificationHolder: NotificationHolder | null = null
 // transient failure does not kill the loop.
 const SYNC_INTERVAL_MS = 20_000
 let syncTimer: ReturnType<typeof setTimeout> | null = null
-// Tracked so closeWallet can await a mid-flight sync before freeing the WASM
-// handles — free() while sync() holds the handle is a use-after-free.
-let syncInFlight: Promise<void> | null = null
 
 async function runSync(): Promise<void> {
   if (wallet === null) {
@@ -109,19 +104,13 @@ function scheduleSync(): void {
       syncTimer = null
     }
     void (async () => {
-      const running = runSync()
-      syncInFlight = running
       try {
-        await running
+        await runSync()
       } catch (error) {
         // Swallow transient sync errors (the next tick retries), but record
         // them: these are otherwise invisible and are exactly what support
         // needs when a wallet looks stale.
         diagnostics.append('error', `sync failed: ${describeError(error)}`)
-      } finally {
-        if (syncInFlight === running) {
-          syncInFlight = null
-        }
       }
       // Re-arm only when no other timer took over meanwhile (e.g. a reopen
       // called startSyncLoop while this sync was still running).
@@ -136,13 +125,6 @@ function scheduleSync(): void {
 function startSyncLoop(): void {
   if (syncTimer === null) {
     scheduleSync()
-  }
-}
-
-function stopSyncLoop(): void {
-  if (syncTimer !== null) {
-    clearTimeout(syncTimer)
-    syncTimer = null
   }
 }
 
@@ -218,43 +200,6 @@ async function drainNotifications(
   }
 }
 
-// Browsers without `indexedDB.databases()` (e.g. older Firefox) cannot confirm
-// absence, so report the database as existing: the only consumer that acts on
-// `false` is the openWallet failure cleanup, which must never delete a store it
-// cannot prove it just created.
-async function hasDatabase(name: string): Promise<boolean> {
-  if (typeof indexedDB.databases !== 'function') {
-    return true
-  }
-  const existing = await indexedDB.databases()
-  return existing.some((db) => db.name === name)
-}
-
-const DELETE_DB_TIMEOUT_MS = 10_000
-
-// Resolves true only when the database is really gone. A `blocked` event is not
-// terminal — the delete completes (firing `success`) once other connections
-// close — so wait for the outcome, bounded by a timeout.
-async function deleteDatabase(name: string): Promise<boolean> {
-  const request = indexedDB.deleteDatabase(name)
-  // oxlint-disable-next-line promise/avoid-new
-  const outcome = new Promise<boolean>((resolve) => {
-    request.addEventListener('success', () => {
-      resolve(true)
-    })
-    request.addEventListener('error', () => {
-      resolve(false)
-    })
-  })
-  // oxlint-disable-next-line promise/avoid-new
-  const timeout = new Promise<boolean>((resolve) => {
-    setTimeout(() => {
-      resolve(false)
-    }, DELETE_DB_TIMEOUT_MS)
-  })
-  return await Promise.race([outcome, timeout])
-}
-
 async function openWallet(args: OpenArgs): Promise<string> {
   await ensureWasm()
   // Creating the OnchainWallet persists its IndexedDB before the wallet open
@@ -298,34 +243,6 @@ async function openWallet(args: OpenArgs): Promise<string> {
   return opened.fingerprint()
 }
 
-async function closeWallet(): Promise<void> {
-  // Settle an in-flight open first, or it would repopulate the wallet (and
-  // restart the sync loop) after this teardown completed.
-  await openPromise?.catch(() => {
-    // a failed open means there is nothing extra to tear down
-  })
-  notificationGeneration += 1
-  notificationHolder?.cancelNextNotificationWait()
-  notificationHolder = null
-  stopSyncLoop()
-  await syncInFlight?.catch(() => {
-    // the wallet is being torn down; a failed final sync is irrelevant
-  })
-  if (wallet !== null) {
-    diagnostics.append('info', 'wallet closed')
-  }
-  wallet?.free()
-  onchain?.free()
-  wallet = null
-  onchain = null
-  sessionMnemonic = null
-  // The awaited sync's continuation resumes before this function's (it awaited
-  // `running` first), sees the wallet still open, and re-arms the loop. Now that
-  // the wallet is null, clear that stale timer or startSyncLoop() would treat
-  // the loop as alive and never restart it after a reopen.
-  stopSyncLoop()
-}
-
 const api = {
   async boardAll(): Promise<PendingBoard> {
     return await requireWallet().boardAll()
@@ -342,37 +259,6 @@ const api = {
     const w = requireWallet()
     const claim = await w.drainExits({ address, feeRateSatPerVb, vtxoIds })
     return await w.broadcastTx(extractTxFromPsbt(claim.psbtBase64))
-  },
-
-  async deleteWallet(onchainDbName: string, fingerprint: string | null): Promise<void> {
-    deleting = true
-    try {
-      await closeWallet()
-      // Delete only this wallet's stores: the exact onchain DB plus the ark
-      // wallet's fingerprint-derived DBs. A broader substring match (e.g.
-      // 'bark') would also destroy other networks' wallets living on the same
-      // origin — and an empty fingerprint would match everything.
-      const names = new Set<string>([onchainDbName])
-      const hasFingerprint = fingerprint !== null && fingerprint.length > 0
-      if (hasFingerprint && typeof indexedDB.databases === 'function') {
-        const existing = await indexedDB.databases()
-        for (const db of existing) {
-          if (db.name !== undefined && db.name.includes(fingerprint)) {
-            names.add(db.name)
-          }
-        }
-      }
-      const deleted = await Promise.all([...names].map(deleteDatabase))
-      if (deleted.includes(false)) {
-        diagnostics.append('error', 'wallet delete: some stores could not be deleted')
-        throw new Error(
-          'Wallet storage could not be fully deleted. Close other tabs using this wallet and try again.'
-        )
-      }
-      diagnostics.append('info', `wallet deleted (${names.size} stores)`)
-    } finally {
-      deleting = false
-    }
   },
 
   async estimateBoardFee(amountSats: number): Promise<FeeEstimate> {
@@ -452,15 +338,6 @@ const api = {
     return await requireWallet().newAddress()
   },
 
-  async hasStoredWallet(dbNames: string[]): Promise<boolean> {
-    if (typeof indexedDB.databases !== 'function') {
-      return false
-    }
-    const existing = await indexedDB.databases()
-    const names = new Set(existing.map((db) => db.name))
-    return dbNames.some((name) => names.has(name))
-  },
-
   isOpen(): boolean {
     return wallet !== null
   },
@@ -490,9 +367,6 @@ const api = {
   },
 
   async open(args: OpenArgs): Promise<string> {
-    if (deleting) {
-      throw new Error('Wallet is being deleted')
-    }
     if (wallet !== null) {
       // Never silently answer for a different seed: the caller would end up
       // with a session mnemonic that does not control the open wallet's funds.

@@ -14,10 +14,6 @@ function markerKey(): string {
   return `${STORAGE_KEY_PREFIX}-${config.network}`
 }
 
-export function canEnumerateDatabases(): boolean {
-  return typeof indexedDB.databases === 'function'
-}
-
 export function setWalletMarker(): void {
   localStorage.setItem(markerKey(), 'true')
 }

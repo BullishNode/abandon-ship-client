@@ -34,6 +34,11 @@ import { clearDeviceVault, openDeviceVault, saveDeviceVault } from '@/lib/backen
 import { clearVault, hasVault } from '@/lib/backend/wasm/vault'
 import {
   canEnumerateDatabases,
+  deleteDatabase,
+  hasDatabase,
+  walletDatabaseNames
+} from '@/lib/backend/wasm/idb'
+import {
   clearWalletMarker,
   hasWalletMarker,
   setWalletMarker
@@ -56,10 +61,12 @@ export class WalletLockedError extends Error {
 // The worker is created lazily so this module has no top-level side effects and
 // is fully dropped by dead-code elimination in barkd builds.
 let remoteRef: Comlink.Remote<WasmWorkerApi> | null = null
+let workerRef: Worker | null = null
 
 function remote(): Comlink.Remote<WasmWorkerApi> {
   if (remoteRef === null) {
     const worker = new Worker(new URL('worker.ts', import.meta.url), { type: 'module' })
+    workerRef = worker
     remoteRef = Comlink.wrap<WasmWorkerApi>(worker)
   }
   return remoteRef
@@ -78,18 +85,28 @@ async function openWithSeed(mnemonic: string, createIfNotExists: boolean): Promi
 }
 
 // Wallet persistence check. IndexedDB enumeration is authoritative; the
-// localStorage marker only stands in where the enumeration API is missing.
+// localStorage marker only stands in where the enumeration API is missing. The
+// stores are origin-scoped, so this realm can answer without booting a worker.
 async function hasPersistedWallet(): Promise<boolean> {
   if (canEnumerateDatabases()) {
-    return await remote().hasStoredWallet([onchainDbName()])
+    return await hasDatabase(onchainDbName())
   }
   return hasWalletMarker()
 }
+
+// The in-flight wallet delete, so a racing query cannot spin up a fresh worker
+// and reopen (recreating) the very stores being deleted, and a racing create
+// waits for the teardown instead of opening a new wallet on the same
+// (network-derived) onchain store name while it is being dropped.
+let deletion: Promise<unknown> | null = null
 
 // Ensure the worker has an open wallet before a read/write. On reload the worker
 // is empty; if the session seed is present we reopen, otherwise the wallet is
 // locked and the caller must collect the seed.
 async function ensureOpen(): Promise<void> {
+  if (deletion !== null) {
+    throw new Error('Wallet is being deleted')
+  }
   if (await remote().isOpen()) {
     return
   }
@@ -195,6 +212,23 @@ function enqueueWorkerOp(op: () => Promise<void>): void {
   })()
 }
 
+// Killing the worker is the only reliable way to release the IndexedDB
+// connections the WASM wallet holds: freeing the handles does not close them,
+// so `deleteDatabase` stays blocked forever and the delete never completes.
+// Terminating also cannot be held up by an in-flight sync (a graceful close
+// awaits it, which hangs for as long as the network does). The next `remote()`
+// call spins up a fresh worker, which starts with no subscription.
+function terminateWorker(): void {
+  workerRef?.terminate()
+  workerRef = null
+  remoteRef = null
+  workerSubscribed = false
+  // A queued op awaiting the terminated worker never settles (its reply message
+  // can no longer arrive), so drop the chain: otherwise every later
+  // subscribe/unsubscribe would wait behind it forever.
+  workerQueue = Promise.resolve()
+}
+
 function fanOutNotification(notification: WasmWalletNotification): void {
   const domain = toWalletNotification(notification)
   for (const listener of notificationListeners) {
@@ -263,6 +297,33 @@ async function routeSend(
   }
   const status = await remote().payInvoice(destination, amountSats ?? undefined)
   return { message: lightningSendMessage(status) }
+}
+
+// Every unlock path is cleared before the stores: once they are gone, a
+// lingering seed would make the next walletExists() try to reopen the deleted
+// wallet and fail instead of reporting "no wallet" (which routes the app to the
+// create flow).
+async function deleteWalletStorage(fingerprint: string | null): Promise<void> {
+  clearSessionMnemonic()
+  clearWalletMarker()
+  clearVault()
+  await clearDeviceVault()
+  if (fingerprint !== null && fingerprint.length > 0) {
+    clearMovementMetadata(fingerprint)
+  }
+  // Stale key from the pre-0.16 address side-store, superseded by the bindings'
+  // own transaction/utxo listing.
+  localStorage.removeItem('bark-web-wasm-onchain-addresses')
+  // Enumerate before terminating: the names are read from this realm, but the
+  // stores can only be dropped once the worker's connections are gone.
+  const names = await walletDatabaseNames(onchainDbName(), fingerprint)
+  terminateWorker()
+  const deleted = await Promise.all(names.map(deleteDatabase))
+  if (deleted.includes(false)) {
+    throw new Error(
+      'Wallet storage could not be fully deleted. Close other tabs using this wallet and try again.'
+    )
+  }
 }
 
 export const wasmBackend: Backend = {
@@ -386,6 +447,17 @@ export const wasmBackend: Backend = {
       return toBalance(await remote().getBalance())
     },
     createWallet: async ({ mnemonic }) => {
+      // A delete in flight is dropping stores this create would immediately
+      // recreate under the same onchain name — and would then have deleted out
+      // from under it. Wait it out instead of racing it.
+      if (deletion !== null) {
+        try {
+          await deletion
+        } catch {
+          // A delete that could not drop every store still ended its teardown;
+          // creating on top of the leftovers is better than refusing to create.
+        }
+      }
       const fingerprint = await openWithSeed(mnemonic, true)
       setSessionMnemonic(mnemonic)
       // Vaults surviving from a previous wallet (e.g. IndexedDB cleared but
@@ -458,30 +530,19 @@ export const wasmBackend: Backend = {
       return vtxos.map(toVtxo)
     },
     walletDelete: async ({ fingerprint }) => {
-      await remote().deleteWallet(onchainDbName(), fingerprint)
-      // Drop the session seed too, or the next walletExists() would try to
-      // reopen the just-deleted wallet with it and fail instead of reporting
-      // "no wallet" (which routes the app to the create flow).
-      clearSessionMnemonic()
-      clearWalletMarker()
-      clearVault()
-      await clearDeviceVault()
-      if (fingerprint !== null && fingerprint.length > 0) {
-        clearMovementMetadata(fingerprint)
+      const pending = deleteWalletStorage(fingerprint)
+      deletion = pending
+      try {
+        await pending
+        return { deleted: true, message: 'Wallet deleted' }
+      } finally {
+        deletion = null
       }
-      // Stale key from the pre-0.16 address side-store, superseded by the
-      // bindings' own transaction/utxo listing.
-      localStorage.removeItem('bark-web-wasm-onchain-addresses')
-      // The worker's teardown killed its notification loop; resync the client
-      // flag through the queue so the next wallet re-subscribes instead of
-      // no-opping on a stale `true`.
-      // oxlint-disable-next-line require-await
-      enqueueWorkerOp(async () => {
-        workerSubscribed = false
-      })
-      return { deleted: true, message: 'Wallet deleted' }
     },
     walletExists: async () => {
+      if (deletion !== null) {
+        return { fingerprint: undefined }
+      }
       if (await remote().isOpen()) {
         return { fingerprint: (await remote().getFingerprint()) ?? undefined }
       }
