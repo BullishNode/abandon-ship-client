@@ -11,7 +11,6 @@ import {
   toFeeEstimate,
   toMovement,
   toNextRoundStart,
-  toOffboardTxid,
   toOnchainBalance,
   toOnchainFeeRates,
   toPendingBoard,
@@ -491,8 +490,8 @@ export const wasmBackend: Backend = {
     offboardVtxos: async ({ vtxos, address }) => {
       await ensureOpen()
       const target = address ?? (await remote().getOnchainAddress())
-      const roundStatus = await remote().offboardVtxos(vtxos, target)
-      return { offboardTxid: toOffboardTxid(roundStatus) }
+      const result = await remote().offboardVtxos(vtxos, target)
+      return { offboardTxid: result.txid }
     },
     pendingRounds: async () => {
       await ensureOpen()

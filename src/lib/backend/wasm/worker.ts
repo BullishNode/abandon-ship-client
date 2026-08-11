@@ -13,6 +13,7 @@ import type {
   Movement,
   Network,
   NotificationHolder,
+  OffboardResult,
   OnchainBalance,
   OnchainUtxo,
   PendingBoard,
@@ -346,7 +347,7 @@ const api = {
     return await requireWallet().nextRoundStartTime()
   },
 
-  async offboardVtxos(vtxoIds: string[], address: string): Promise<string> {
+  async offboardVtxos(vtxoIds: string[], address: string): Promise<OffboardResult> {
     return await requireWallet().offboardVtxos(vtxoIds, address)
   },
 

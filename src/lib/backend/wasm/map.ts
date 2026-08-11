@@ -412,15 +412,3 @@ export function toOnchainFeeRates(dto: WasmFeeRates): OnchainFeeRates {
   const slow = Math.min(toSatPerVb(dto.slowSatPerKwu), regular)
   return { fastSatPerVb: fast, regularSatPerVb: regular, slowSatPerVb: slow }
 }
-
-// The bindings' offboardVtxos() resolves to the Rust Debug rendering of bark's
-// RoundStatus, not a bare txid: "Confirmed { funding_txid: <hex> }",
-// "Unconfirmed { funding_txid: <hex> }", "Pending", "Failed { error: \"…\" }"
-// or "Canceled". Only the first two carry the funding txid; anything else (or
-// a future format change) yields null rather than a malformed "txid".
-const OFFBOARD_FUNDING_TXID =
-  /^(?:Confirmed|Unconfirmed) \{ funding_txid: (?:[A-Za-z_]+\()?([0-9a-f]{64})/u
-
-export function toOffboardTxid(roundStatus: string): string | null {
-  return OFFBOARD_FUNDING_TXID.exec(roundStatus)?.[1] ?? null
-}

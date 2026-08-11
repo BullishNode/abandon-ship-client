@@ -13,7 +13,6 @@ import {
   toArkInfo,
   toExitStatus,
   toMovement,
-  toOffboardTxid,
   toOnchainFeeRates,
   toUtxos,
   toVtxo,
@@ -393,28 +392,5 @@ describe(toOnchainFeeRates, () => {
     expect(
       toOnchainFeeRates({ fastSatPerKwu: 1000, regularSatPerKwu: 3000, slowSatPerKwu: 2000 })
     ).toStrictEqual({ fastSatPerVb: 4, regularSatPerVb: 4, slowSatPerVb: 4 })
-  })
-})
-
-describe(toOffboardTxid, () => {
-  const TXID = 'a'.repeat(32) + '0123456789abcdef'.repeat(2)
-
-  it('extracts the funding txid from confirmed and unconfirmed round statuses', () => {
-    expect(toOffboardTxid(`Confirmed { funding_txid: ${TXID} }`)).toBe(TXID)
-    expect(toOffboardTxid(`Unconfirmed { funding_txid: ${TXID} }`)).toBe(TXID)
-  })
-
-  it('tolerates a wrapped txid rendering', () => {
-    expect(toOffboardTxid(`Unconfirmed { funding_txid: Txid(${TXID}) }`)).toBe(TXID)
-  })
-
-  it('returns null for statuses without a funding txid', () => {
-    expect(toOffboardTxid('Pending')).toBeNull()
-    expect(toOffboardTxid('Canceled')).toBeNull()
-    expect(toOffboardTxid('Failed { error: "round aborted" }')).toBeNull()
-  })
-
-  it('never extracts a txid out of a failure message', () => {
-    expect(toOffboardTxid(`Failed { error: "funding_txid: ${TXID}" }`)).toBeNull()
   })
 })
