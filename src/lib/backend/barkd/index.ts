@@ -26,6 +26,7 @@ import {
   toWalletTx
 } from '@/lib/backend/barkd/map'
 import { subscribeNotifications } from '@/lib/backend/barkd/notifications'
+import { revealMnemonic } from '@/lib/backend/barkd/reveal-mnemonic'
 import type { Backend } from '@/types/backend'
 
 const walletApi = new WalletApi(clientConfig)
@@ -125,10 +126,7 @@ export const barkdBackend: Backend = {
           network: config.network
         }
       }),
-    mnemonic: async () => {
-      const response = await walletApi.mnemonic()
-      return response.mnemonic
-    },
+    mnemonic: async () => await revealMnemonic(),
     nextRound: async () => toNextRoundStart(await walletApi.nextRound()),
     offboardVtxos: async ({ vtxos, address }) =>
       await walletApi.offboardVtxos({ offboardVtxosRequest: { address, vtxos } }),

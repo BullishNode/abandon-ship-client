@@ -11,6 +11,7 @@ import type { Context, Next } from 'hono'
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
 import { cors } from 'hono/cors'
 import { Authenticator } from './auth.js'
+import { isBlockedBarkdSubPath } from './barkd-proxy.js'
 import { buildChainSource } from './chain-source.js'
 
 const WALLET_DIR = process.env.WALLET_DIR ?? '/wallet-data/.bark'
@@ -18,6 +19,7 @@ const PORT = Number.parseInt(process.env.PORT ?? '4001', 10)
 const HOSTNAME =
   process.env.HOST !== undefined && process.env.HOST !== '' ? process.env.HOST : '0.0.0.0'
 const BARKD_URL = process.env.BARKD_URL ?? 'http://barkd:4000'
+const BARKD_REQUEST_TIMEOUT_MS = 10_000
 const ARK_SERVER = process.env.ARK_SERVER ?? ''
 const BARK_NETWORK = process.env.BARK_NETWORK ?? 'signet'
 const WALLET_DATA_PATH = process.env.WALLET_DATA_PATH ?? '/data/.bark/'
@@ -88,6 +90,26 @@ const HOP_BY_HOP_HEADERS = new Set([
 ])
 
 const BARKD_PATH_PREFIX = /^\/api\/barkd/u
+
+// Any inbound `authorization` header is dropped so callers can never override
+// the proxy's own injected credential.
+async function barkdHeaders(inbound?: Record<string, string>): Promise<Headers> {
+  const headers = new Headers()
+  if (inbound !== undefined) {
+    for (const [key, value] of Object.entries(inbound)) {
+      const lower = key.toLowerCase()
+      if (HOP_BY_HOP_HEADERS.has(lower) || lower === 'authorization') {
+        continue
+      }
+      headers.set(key, value)
+    }
+  }
+  const token = await getToken()
+  if (token !== null) {
+    headers.set('authorization', `Bearer ${token}`)
+  }
+  return headers
+}
 
 const app = new Hono()
 
@@ -209,6 +231,10 @@ app.use('/api/export-db', async (c: Context, next: Next) => {
   await requireSession(c, next)
 })
 
+app.use('/api/reveal-mnemonic', async (c: Context, next: Next) => {
+  await requireSession(c, next)
+})
+
 async function getLogSize(): Promise<number | null> {
   try {
     const stats = await stat(LOG_PATH)
@@ -280,23 +306,49 @@ app.get('/api/export-db', async (c) => {
   }
 })
 
+function extractMnemonic(payload: unknown): string | null {
+  if (typeof payload !== 'object' || payload === null || !('mnemonic' in payload)) {
+    return null
+  }
+  const { mnemonic } = payload
+  return typeof mnemonic === 'string' ? mnemonic : null
+}
+
+// POST (not GET) keeps this off the drive-by URL surface and, under UI_AUTH,
+// subjects it to the CSRF check in `requireSession`.
+app.post('/api/reveal-mnemonic', async (c) => {
+  const headers = await barkdHeaders()
+  let upstream: Response
+  try {
+    upstream = await fetch(`${BARKD_URL}/api/v1/wallet/mnemonic`, {
+      headers,
+      method: 'GET',
+      signal: AbortSignal.timeout(BARKD_REQUEST_TIMEOUT_MS)
+    })
+  } catch {
+    return c.json({ error: 'mnemonic_unavailable' }, 502)
+  }
+  if (!upstream.ok) {
+    return c.json({ error: 'mnemonic_unavailable' }, 502)
+  }
+  const payload = await upstream.json().catch(() => null)
+  const mnemonic = extractMnemonic(payload)
+  if (mnemonic === null) {
+    return c.json({ error: 'mnemonic_unavailable' }, 502)
+  }
+  return c.json({ mnemonic })
+})
+
 app.all('/api/barkd/*', async (c) => {
   const subPath = c.req.path.replace(BARKD_PATH_PREFIX, '')
+  // 404 (not 403) mirrors barkd's own response when mnemonic exposure is off.
+  if (isBlockedBarkdSubPath(subPath)) {
+    return c.json({ error: 'not_found' }, 404)
+  }
   const incoming = new URL(c.req.url)
   const upstreamUrl = `${BARKD_URL}${subPath}${incoming.search}`
 
-  const headers = new Headers()
-  for (const [key, value] of Object.entries(c.req.header())) {
-    const lower = key.toLowerCase()
-    if (HOP_BY_HOP_HEADERS.has(lower) || lower === 'authorization') {
-      continue
-    }
-    headers.set(key, value)
-  }
-  const token = await getToken()
-  if (token !== null) {
-    headers.set('authorization', `Bearer ${token}`)
-  }
+  const headers = await barkdHeaders(c.req.header())
 
   const { method } = c.req
   const hasBody = !(method === 'GET' || method === 'HEAD')
