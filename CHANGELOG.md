@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2026-08-11
+
+### Added
+
+- `SECURITY.md` with the vulnerability disclosure policy.
+
+### Changed
+
+- Updated `@secondts/bark` to 0.17.0.
+
+### Fixed
+
+- Offboard in WASM mode reads the transaction ID from the bindings' typed result, so the offboard txid is reported reliably.
+
+### Security
+
+- The barkd proxy blocks mnemonic endpoints. Seed reveal moved to a dedicated `POST /api/reveal-mnemonic` endpoint that requires an authenticated session. Callers can no longer inject their own `authorization` header through the proxy. Barkd requests from the reveal endpoint time out after 10 seconds and failures return 502.
+
 ## [0.7.1] - 2026-08-10
 
 ### Fixed
