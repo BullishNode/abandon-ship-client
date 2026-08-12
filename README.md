@@ -5,6 +5,25 @@
 <p>A web-based graphical user interface for managing Bark wallets</p>
 </div>
 
+## Screenshots
+
+<details>
+<summary>Show screenshots</summary>
+
+<br />
+
+![Dashboard](assets/screenshots/dashboard.png)
+
+![Receive](assets/screenshots/receive.png)
+
+![VTXOs](assets/screenshots/vtxos.png)
+
+![Umbrel](assets/screenshots/umbrel.png)
+
+![Start9](assets/screenshots/start9.png)
+
+</details>
+
 ## Getting started
 
 ### Requirements
