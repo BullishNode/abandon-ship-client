@@ -5,13 +5,14 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { Readable } from 'node:stream'
+import { pathToFileURL } from 'node:url'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import type { Context, Next } from 'hono'
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
 import { cors } from 'hono/cors'
 import { Authenticator } from './auth.js'
-import { isBlockedBarkdSubPath } from './barkd-proxy.js'
+import { isAllowedBarkdPath } from './barkd-proxy.js'
 import { buildChainSource } from './chain-source.js'
 
 const WALLET_DIR = process.env.WALLET_DIR ?? '/wallet-data/.bark'
@@ -111,7 +112,7 @@ async function barkdHeaders(inbound?: Record<string, string>): Promise<Headers> 
   return headers
 }
 
-const app = new Hono()
+export const app = new Hono()
 
 app.use(
   '*',
@@ -341,12 +342,16 @@ app.post('/api/reveal-mnemonic', async (c) => {
 
 app.all('/api/barkd/*', async (c) => {
   const subPath = c.req.path.replace(BARKD_PATH_PREFIX, '')
-  // 404 (not 403) mirrors barkd's own response when mnemonic exposure is off.
-  if (isBlockedBarkdSubPath(subPath)) {
+  const incoming = new URL(c.req.url)
+  // Build the upstream URL first, then allowlist against `pathname` — the exact
+  // path undici will send, with control bytes stripped and `..` resolved. Checking
+  // the canonical upstream path (not the raw inbound one) is what closes the
+  // normalization-mismatch bypass class.
+  const upstreamUrl = new URL(`${BARKD_URL}${subPath}${incoming.search}`)
+  // 404 (not 403) mirrors barkd's own response for an unknown/hidden route.
+  if (!isAllowedBarkdPath(upstreamUrl.pathname)) {
     return c.json({ error: 'not_found' }, 404)
   }
-  const incoming = new URL(c.req.url)
-  const upstreamUrl = `${BARKD_URL}${subPath}${incoming.search}`
 
   const headers = await barkdHeaders(c.req.header())
 
@@ -378,9 +383,16 @@ app.all('/api/barkd/*', async (c) => {
   })
 })
 
-serve({ fetch: app.fetch, hostname: HOSTNAME, port: PORT }, (info) => {
-  for (const warning of CHAIN_SOURCE_WARNINGS) {
-    console.warn(warning)
-  }
-  console.log(`bark-web-api listening on :${info.port}`)
-})
+// Only bind a port when run as the entrypoint. Importing this module (e.g. from
+// tests to exercise `app.fetch`) must stay side-effect-free.
+const isEntrypoint =
+  process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href
+
+if (isEntrypoint) {
+  serve({ fetch: app.fetch, hostname: HOSTNAME, port: PORT }, (info) => {
+    for (const warning of CHAIN_SOURCE_WARNINGS) {
+      console.warn(warning)
+    }
+    console.log(`bark-web-api listening on :${info.port}`)
+  })
+}
