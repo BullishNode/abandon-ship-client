@@ -13,20 +13,26 @@ __setRuntimeConfigForTests({
   walletDataPath: '/data/.bark/'
 })
 
-Object.defineProperty(window, 'matchMedia', {
-  configurable: true,
-  value: (query: string) => ({
-    addEventListener: vi.fn(),
-    addListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-    matches: false,
-    media: query,
-    onchange: null,
-    removeEventListener: vi.fn(),
-    removeListener: vi.fn()
-  }),
-  writable: true
-})
+// Guarded so this shared setup also runs under the `node` test environment
+// (used by backend/proxy tests), where `window` and the storage globals are absent.
+const hasDom = typeof window !== 'undefined'
+
+if (hasDom) {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: (query: string) => ({
+      addEventListener: vi.fn(),
+      addListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      matches: false,
+      media: query,
+      onchange: null,
+      removeEventListener: vi.fn(),
+      removeListener: vi.fn()
+    }),
+    writable: true
+  })
+}
 
 vi.stubGlobal(
   'ResizeObserver',
@@ -60,7 +66,9 @@ if (!i18next.default.isInitialized) {
 }
 
 afterEach(() => {
-  cleanup()
-  localStorage.clear()
-  sessionStorage.clear()
+  if (hasDom) {
+    cleanup()
+    localStorage.clear()
+    sessionStorage.clear()
+  }
 })
