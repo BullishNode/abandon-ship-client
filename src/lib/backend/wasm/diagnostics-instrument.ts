@@ -29,8 +29,11 @@ export const MUTATIONS = new Set([
   'startExitForVtxos'
 ])
 
-// Reading the log must not append to it, and the open path logs richer lines by hand.
-const UNINSTRUMENTED = new Set(['getDiagnosticsLog', 'open'])
+// Reading or draining the log must not append to it (the flush timer would grow
+// the buffer on every tick), and the open path logs richer lines by hand.
+// Exported alongside MUTATIONS so a test catches a stale name here too: an
+// exclusion that no longer matches would quietly start logging these.
+export const UNINSTRUMENTED = new Set(['getDiagnosticsLog', 'drainDiagnostics', 'open'])
 
 function describeCall(method: string, args: readonly unknown[]): string {
   const summary = summarizeArgs(args)
@@ -49,6 +52,18 @@ function logSuccess(
   const outcome = summarizeResult(result)
   const suffix = outcome.length > 0 ? ` -> ${outcome}` : ''
   log.append('info', `${describeCall(method, args)}${suffix}`)
+}
+
+// Diagnostics must never change the outcome of a wallet operation. Summarizing
+// walks caller-supplied values, so a future allowlist entry holding a cyclic or
+// throwing-getter object would otherwise turn a successful send into a failure —
+// logSuccess runs before the value is returned.
+function logSafely(record: () => void): void {
+  try {
+    record()
+  } catch {
+    // A log line is never worth failing (or masking) the operation itself.
+  }
 }
 
 function logFailure(
@@ -78,10 +93,14 @@ async function awaitLogged(
 ): Promise<unknown> {
   try {
     const value = await pending
-    logSuccess(log, method, args, value)
+    logSafely(() => {
+      logSuccess(log, method, args, value)
+    })
     return value
   } catch (error) {
-    logFailure(log, method, args, error)
+    logSafely(() => {
+      logFailure(log, method, args, error)
+    })
     throw error
   }
 }
@@ -101,10 +120,14 @@ function instrumentMethod(
       if (isPromise(result)) {
         return awaitLogged(log, method, args, result)
       }
-      logSuccess(log, method, args, result)
+      logSafely(() => {
+        logSuccess(log, method, args, result)
+      })
       return result
     } catch (error) {
-      logFailure(log, method, args, error)
+      logSafely(() => {
+        logFailure(log, method, args, error)
+      })
       throw error
     }
   }

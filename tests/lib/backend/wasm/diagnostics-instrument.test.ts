@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { instrumentApi, MUTATIONS } from '@/lib/backend/wasm/diagnostics-instrument'
+import { instrumentApi, MUTATIONS, UNINSTRUMENTED } from '@/lib/backend/wasm/diagnostics-instrument'
 import { createDiagnosticsLog } from '@/lib/backend/wasm/diagnostics-log'
 
 const TXID = 'b'.repeat(64)
@@ -81,6 +81,16 @@ describe(instrumentApi, () => {
     expect(log.snapshot()).toStrictEqual([])
   })
 
+  // The client drains on a timer, so instrumenting this would append an entry on
+  // every flush and grow the log without bound.
+  it('leaves drainDiagnostics uninstrumented so flushing never appends', () => {
+    const log = createDiagnosticsLog(10)
+    const api = instrumentApi({ drainDiagnostics: () => ['entry'] }, log)
+    api.drainDiagnostics()
+    api.drainDiagnostics()
+    expect(log.snapshot()).toStrictEqual([])
+  })
+
   it('leaves open uninstrumented so the worker owns its richer lines', async () => {
     const log = createDiagnosticsLog(10)
     const api = instrumentApi({ open: async () => await resolves('fingerprint') }, log)
@@ -102,7 +112,7 @@ describe(instrumentApi, () => {
 
   it('names only methods that exist on the worker API', () => {
     const methods = workerApiMethodNames()
-    const missing = [...MUTATIONS].filter((name) => !methods.has(name))
+    const missing = [...MUTATIONS, ...UNINSTRUMENTED].filter((name) => !methods.has(name))
     expect(missing).toStrictEqual([])
   })
 

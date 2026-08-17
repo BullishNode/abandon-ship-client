@@ -20,6 +20,12 @@ import {
   toWalletNotification,
   toWalletTx
 } from '@/lib/backend/wasm/map'
+import {
+  appendMissingDiagnostics,
+  appendPersistedDiagnostics,
+  clearPersistedDiagnostics,
+  readPersistedDiagnostics
+} from '@/lib/backend/wasm/diagnostics-store'
 import { clearMovementMetadata, setMovementMetadata } from '@/lib/backend/wasm/metadata-store'
 import { classifyDestination } from '@/lib/backend/wasm/send-router'
 import type { SendKind } from '@/lib/backend/wasm/send-router'
@@ -62,11 +68,58 @@ export class WalletLockedError extends Error {
 let remoteRef: Comlink.Remote<WasmWorkerApi> | null = null
 let workerRef: Worker | null = null
 
+// Diagnostics flush. The worker's log is memory-only, so it dies on reload and
+// on the terminateWorker() that every wallet delete performs. Draining it into
+// localStorage on a timer keeps the history support actually needs.
+const DIAGNOSTICS_FLUSH_INTERVAL_MS = 5000
+let diagnosticsFlushTimer: ReturnType<typeof setInterval> | null = null
+
+// Never throws: a diagnostics failure must not surface as a wallet error. A dead
+// or terminated worker simply has nothing to drain.
+async function flushDiagnostics(): Promise<void> {
+  if (remoteRef === null) {
+    return
+  }
+  try {
+    const drained = await remoteRef.drainDiagnostics()
+    appendPersistedDiagnostics(drained)
+  } catch {
+    // Worker terminated or unreachable; the entries are gone either way.
+  }
+}
+
+// Flushing on hide (not on 'unload', which modern browsers may skip) is the last
+// chance to persist before a tab close or navigation.
+function handleVisibilityChange(): void {
+  if (document.visibilityState === 'hidden') {
+    void flushDiagnostics()
+  }
+}
+
+function startDiagnosticsFlush(): void {
+  if (diagnosticsFlushTimer !== null) {
+    return
+  }
+  diagnosticsFlushTimer = setInterval(() => {
+    void flushDiagnostics()
+  }, DIAGNOSTICS_FLUSH_INTERVAL_MS)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+}
+
+function stopDiagnosticsFlush(): void {
+  if (diagnosticsFlushTimer !== null) {
+    clearInterval(diagnosticsFlushTimer)
+    diagnosticsFlushTimer = null
+  }
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+}
+
 function remote(): Comlink.Remote<WasmWorkerApi> {
   if (remoteRef === null) {
     const worker = new Worker(new URL('worker.ts', import.meta.url), { type: 'module' })
     workerRef = worker
     remoteRef = Comlink.wrap<WasmWorkerApi>(worker)
+    startDiagnosticsFlush()
   }
   return remoteRef
 }
@@ -116,8 +169,20 @@ async function ensureOpen(): Promise<void> {
   await openWithSeed(seed, false)
 }
 
+// The export merges what is stored with the live worker buffer: the worker holds
+// entries appended since the last flush, and (after a reload) storage holds the
+// history the worker never saw.
 export async function getDiagnosticsLog(): Promise<string[]> {
-  return await remote().getDiagnosticsLog()
+  await flushDiagnostics()
+  const persisted = readPersistedDiagnostics()
+  if (remoteRef === null) {
+    return persisted
+  }
+  try {
+    return appendMissingDiagnostics(persisted, await remoteRef.getDiagnosticsLog())
+  } catch {
+    return persisted
+  }
 }
 
 // A wallet is "locked" when its data is persisted in IndexedDB but the session
@@ -218,6 +283,7 @@ function enqueueWorkerOp(op: () => Promise<void>): void {
 // awaits it, which hangs for as long as the network does). The next `remote()`
 // call spins up a fresh worker, which starts with no subscription.
 function terminateWorker(): void {
+  stopDiagnosticsFlush()
   workerRef?.terminate()
   workerRef = null
   remoteRef = null
@@ -317,6 +383,9 @@ async function deleteWalletStorage(fingerprint: string | null): Promise<void> {
   // stores can only be dropped once the worker's connections are gone.
   const names = await walletDatabaseNames(onchainDbName(), fingerprint)
   terminateWorker()
+  // The deleted wallet's activity must not outlive it. Cleared after the worker
+  // is gone (nothing can append) and before the drop, which may throw.
+  clearPersistedDiagnostics()
   const deleted = await Promise.all(names.map(deleteDatabase))
   if (deleted.includes(false)) {
     throw new Error(

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  redactErrorMessage,
   summarizeArgs,
   summarizeResult,
   summarizeValue
@@ -20,6 +21,17 @@ describe(summarizeValue, () => {
 
   it('renders hex ids in full', () => {
     expect(summarizeValue(TXID)).toBe(TXID)
+  })
+
+  it('renders an 8-char fingerprint', () => {
+    expect(summarizeValue('1f6f40b2')).toBe('1f6f40b2')
+  })
+
+  // The allowlist only renders shapes the bindings actually emit. A short hex
+  // run is not one of them, and proves nothing about what it holds.
+  it('redacts hex runs that match no emitted id shape', () => {
+    expect(summarizeValue('deadbeefcafe')).toBe('<string:12>')
+    expect(summarizeValue('a'.repeat(40))).toBe('<string:40>')
   })
 
   it('redacts mnemonics, invoices and addresses', () => {
@@ -71,6 +83,88 @@ describe(summarizeArgs, () => {
 
   it('caps the number of rendered arguments', () => {
     expect(summarizeArgs([1, 2, 3, 4, 5, 6])).toBe('1, 2, 3, 4')
+  })
+})
+
+// The inputs below are bark's own error formats, read verbatim out of
+// bark_ffi_wasm_bg.wasm — each interpolates the value that failed to parse.
+describe(redactErrorMessage, () => {
+  it('keeps the prose so the message stays useful', () => {
+    expect(redactErrorMessage('insufficient funds')).toBe('insufficient funds')
+  })
+
+  it('redacts an address echoed back by a parse failure', () => {
+    const redacted = redactErrorMessage(`Failed to parse address ${ADDRESS}`)
+    expect(redacted).not.toContain(ADDRESS)
+    expect(redacted).toContain('Failed to parse address')
+  })
+
+  it('redacts an invoice echoed back by a parse failure', () => {
+    const redacted = redactErrorMessage(`cannot parse invoice ${BOLT11}`)
+    expect(redacted).not.toContain(BOLT11)
+    expect(redacted).toContain('cannot parse invoice')
+  })
+
+  it('redacts an ark address', () => {
+    const arkAddress = `ark1${'q'.repeat(60)}`
+    expect(redactErrorMessage(`invalid address: ${arkAddress}`)).not.toContain(arkAddress)
+  })
+
+  it('redacts a bech32 payload behind the bindings bech32 error', () => {
+    const redacted = redactErrorMessage(`Invalid bech32: ${ADDRESS}`)
+    expect(redacted).not.toContain(ADDRESS)
+  })
+
+  // "mnemonic contains an unknown word (word {})" exists verbatim in the wasm.
+  it('redacts a mnemonic word rather than echoing it', () => {
+    const redacted = redactErrorMessage('mnemonic contains an unknown word (word abandon)')
+    expect(redacted).not.toContain('abandon')
+    expect(redacted).toContain('unknown word')
+  })
+
+  // A seed pasted into the destination field reaches the error as plain prose,
+  // which no shape rule catches — only BIP39 membership does.
+  it('redacts a mnemonic carried through as free text', () => {
+    const redacted = redactErrorMessage(`Failed to parse address ${MNEMONIC}`)
+    expect(redacted).not.toContain('abandon')
+    expect(redacted).not.toContain('about')
+  })
+
+  it('redacts a realistic 12-word mnemonic', () => {
+    const seed = 'legal winner thank year wave sausage worth useful legal winner thank yellow'
+    const redacted = redactErrorMessage(`invalid address ${seed}`)
+    expect(redacted).not.toContain('sausage')
+    expect(redacted).not.toContain('yellow')
+  })
+
+  // The wordlist holds common English words, so ordinary error prose must
+  // survive or the redaction would eat the messages it exists to preserve.
+  it('leaves ordinary error prose untouched', () => {
+    const prose = [
+      'insufficient funds to cover the requested amount and fee',
+      'failed to connect to the ark server, please try again later',
+      'transaction rejected by the network because the fee rate is too low',
+      'amount is below the dust threshold and cannot be sent',
+      'unable to find a vtxo that can cover this payment'
+    ]
+    for (const message of prose) {
+      expect(redactErrorMessage(message)).toBe(message)
+    }
+  })
+
+  it('redacts long hex blobs such as keys and preimages', () => {
+    const preimage = 'c'.repeat(128)
+    expect(redactErrorMessage(`invalid preimage ${preimage}`)).not.toContain(preimage)
+  })
+
+  it('redacts a base64 PSBT', () => {
+    const psbt = `cHNidP${'A'.repeat(120)}`
+    expect(redactErrorMessage(`bad psbt ${psbt}`)).not.toContain(psbt)
+  })
+
+  // A txid in an error is the most useful thing in the line, and is public.
+  it('keeps a txid intact', () => {
+    expect(redactErrorMessage(`broadcast failed for ${TXID}`)).toContain(TXID)
   })
 })
 

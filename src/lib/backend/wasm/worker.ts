@@ -266,6 +266,12 @@ const api = {
     return await w.broadcastTx(extractTxFromPsbt(claim.psbtBase64))
   },
 
+  // Handed to the client so it can persist them; workers cannot reach
+  // localStorage. Not wallet-gated, for the same reason as getDiagnosticsLog.
+  drainDiagnostics(): string[] {
+    return diagnostics.drain()
+  },
+
   async estimateBoardFee(amountSats: number): Promise<FeeEstimate> {
     return await requireWallet().estimateBoardFee(amountSats)
   },
