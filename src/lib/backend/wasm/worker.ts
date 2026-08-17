@@ -23,6 +23,7 @@ import type {
   WalletTransaction
 } from '@secondts/bark'
 import init, { extractTxFromPsbt, OnchainWallet, Wallet } from '@secondts/bark/web'
+import { instrumentApi } from '@/lib/backend/wasm/diagnostics-instrument'
 import { createDiagnosticsLog, describeError } from '@/lib/backend/wasm/diagnostics-log'
 import { deleteDatabase, hasDatabase } from '@/lib/backend/wasm/idb'
 
@@ -47,7 +48,9 @@ interface OpenArgs {
 // concurrent/repeated opens instantiate once.
 let wasmReady: Promise<unknown> | null = null
 
-const diagnostics = createDiagnosticsLog()
+const DIAGNOSTICS_CAPACITY = 2000
+
+const diagnostics = createDiagnosticsLog(DIAGNOSTICS_CAPACITY)
 
 async function ensureWasm(): Promise<void> {
   const pending = (wasmReady ??= init())
@@ -177,6 +180,7 @@ async function drainNotifications(
     // the type says undefined — guard both, or teardown would fan out a
     // null notification and crash the client-side mapper.
     if (notification !== undefined && notification !== null) {
+      diagnostics.append('info', `notification received (${notification.type})`)
       // oxlint-disable-next-line promise/prefer-await-to-callbacks
       callback(notification)
     }
@@ -499,4 +503,4 @@ const api = {
 
 export type WasmWorkerApi = typeof api
 
-Comlink.expose(api)
+Comlink.expose(instrumentApi(api, diagnostics))
