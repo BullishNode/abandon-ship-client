@@ -1,0 +1,46 @@
+# Deploys the WASM-mode static build to Railway on v* release tags.
+#
+# `railway up` uploads the checked-out source; Railway builds it with
+# docker/bark-web.wasm.Dockerfile (selected via railway.json) and serves the
+# static bundle with nginx. Per-network config (BARK_NETWORK / ARK_SERVER /
+# CHAIN_SOURCE) lives in each Railway service's variables — Railway passes
+# service variables to Dockerfile builds as build args when a matching ARG is
+# declared. The Dockerfile defaults to signet, so only the mainnet service
+# strictly needs them set.
+#
+# Required GitLab CI/CD variables (Settings → CI/CD → Variables, masked):
+#   RAILWAY_TOKEN_SIGNET  — Railway project token scoped to the signet service's environment
+#   RAILWAY_TOKEN_MAINNET — Railway project token scoped to the mainnet service's environment
+
+.deploy-railway:
+  stage: deploy
+  image:
+    name: ghcr.io/railwayapp/cli:latest
+    entrypoint: ['']
+  cache: []
+  script:
+    - railway up --ci --service "$RAILWAY_SERVICE"
+
+deploy-signet:
+  extends:
+    - .deploy-railway
+    - .release-rules-gitlab
+  variables:
+    RAILWAY_TOKEN: $RAILWAY_TOKEN_SIGNET
+    RAILWAY_SERVICE: aa560a86-4699-48c4-99ee-caca1fd51589
+  environment:
+    name: signet
+
+# Mainnet is gated behind a manual play button on the tag pipeline; it deploys
+# the same tag to the mainnet service (own domain, own Railway variables).
+deploy-mainnet:
+  extends: .deploy-railway
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v/ && $CI_PROJECT_URL =~ /^https:\/\/gitlab\.com\/ark-bitcoin\/labs\/bark-web$/
+      when: manual
+  allow_failure: true
+  variables:
+    RAILWAY_TOKEN: $RAILWAY_TOKEN_MAINNET
+    RAILWAY_SERVICE: 7da243c8-145b-47b6-af55-54533dfee371
+  environment:
+    name: mainnet

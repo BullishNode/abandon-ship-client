@@ -2,6 +2,7 @@ stages:
   - check
   - test
   - release
+  - deploy
 
 default:
   image: node:22-alpine
@@ -18,3 +19,4 @@ workflow:
 include:
   - local: .gitlab/ci.yml
   - local: .gitlab/release.yml
+  - local: .gitlab/deploy.yml
