@@ -130,12 +130,11 @@ function buildWasmCsp(scriptHashes: string[]): string {
     `script-src 'self' 'wasm-unsafe-eval' ${scriptHashes.join(' ')}`.trim(),
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data:",
-    "font-src 'self'",
+    "font-src 'self' data:",
     "connect-src 'self' https: wss:",
     "worker-src 'self' blob:",
     "object-src 'none'",
-    "base-uri 'none'",
-    "frame-ancestors 'none'"
+    "base-uri 'none'"
   ].join('; ')
 }
 

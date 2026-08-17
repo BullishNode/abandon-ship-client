@@ -2,6 +2,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { StrictMode } from 'react'
 import type { Root } from 'react-dom/client'
 import { createRoot } from 'react-dom/client'
+import { config as configureZod } from 'zod'
 import './index.css'
 import './i18n'
 import { AuthGate } from './components/auth-gate'
@@ -13,6 +14,8 @@ import { fetchAuthStatus } from './lib/auth-api'
 import { queryClient } from './lib/query-client'
 import { useAuthStore } from './stores/auth'
 import type { AuthStatus } from './types/auth'
+
+configureZod({ jitless: true })
 
 const root = document.querySelector('#root')
 if (!root) {
