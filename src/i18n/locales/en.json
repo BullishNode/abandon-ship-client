@@ -467,10 +467,6 @@
       "reveal_aria": "Reveal seed phrase",
       "hide_aria": "Hide seed phrase"
     },
-    "backup_warning": {
-      "title": "Your seed phrase is not a complete backup",
-      "description": "To recover your wallet, you'll need both your seed phrase and a continuous backup of the wallet data directory at <code>{{path}}</code>."
-    },
     "password": {
       "label": "Password protection",
       "description": "Require a password to unlock this wallet. Without one, the wallet unlocks automatically in this browser.",

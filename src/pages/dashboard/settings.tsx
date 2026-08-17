@@ -1,6 +1,6 @@
-import { ArrowSquareOutIcon, DownloadSimpleIcon, WarningIcon } from '@phosphor-icons/react'
+import { ArrowSquareOutIcon, DownloadSimpleIcon } from '@phosphor-icons/react'
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { Trans, useTranslation } from 'react-i18next'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useShallow } from 'zustand/react/shallow'
@@ -8,7 +8,6 @@ import { ConfirmDialog } from '@/components/confirm-dialog'
 import { EmergencyExitStartDialog } from '@/components/emergency-exit-start-dialog'
 import { ExitProgressCard } from '@/components/exit-progress'
 import { SeedPhraseInput } from '@/components/seed-phrase-input'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Field, FieldContent, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -20,7 +19,6 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { config } from '@/config/runtime'
 import { externalLinks } from '@/config/links'
 import { WALLET_NAME_MAX_LENGTH } from '@/constants/wallet'
 import { changeThemeWithTransition } from '@/lib/theme-transition'
@@ -449,17 +447,6 @@ export default function SettingsPage() {
           onToggle={handleToggleSeed}
           revealAriaLabel={t('settings.seed_phrase.reveal_aria')}
         />
-        <Alert className="mt-2" variant="destructive">
-          <WarningIcon />
-          <AlertTitle>{t('settings.backup_warning.title')}</AlertTitle>
-          <AlertDescription>
-            <Trans
-              components={{ code: <code className="font-mono text-xs" /> }}
-              i18nKey="settings.backup_warning.description"
-              values={{ path: config.walletDataPath }}
-            />
-          </AlertDescription>
-        </Alert>
       </Field>
       {WasmSecuritySettings === null ? null : (
         <Suspense fallback={null}>
