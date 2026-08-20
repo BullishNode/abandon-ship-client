@@ -1,5 +1,7 @@
 import type { ExitState, ExitTransactionStatus } from '@/types/domain/exit'
+import type { Network } from '@/types/domain/network'
 import type { Vtxo } from '@/types/domain/vtxo'
+import { isValidOnchainAddress } from '@/utils/bitcoin'
 
 export type ExitStateType = ExitState['type']
 
@@ -110,12 +112,13 @@ export interface ExitClaimGroup {
 
 function hasAddress(addresses: Record<string, string>, vtxoId: string): boolean {
   const address = addresses[vtxoId]
-  return address !== undefined && address.length > 0
+  return typeof address === 'string' && address.length > 0
 }
 
 export function resolveClaimGroups(
   exits: ExitTransactionStatus[],
-  addresses: Record<string, string>
+  addresses: Record<string, string>,
+  network: Network
 ): ExitClaimGroup[] {
   const byDestination = new Map<string, string[]>()
   for (const exit of exits) {
@@ -123,6 +126,11 @@ export function resolveClaimGroups(
       continue
     }
     const destination = addresses[exit.vtxoId]
+    // The stored address may come from persisted state that no code path
+    // validated (localStorage rehydration), so re-check before funds move.
+    if (!isValidOnchainAddress(destination, network)) {
+      continue
+    }
     const group = byDestination.get(destination)
     if (group) {
       group.push(exit.vtxoId)
