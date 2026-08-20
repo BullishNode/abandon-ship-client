@@ -415,7 +415,10 @@
       "cancel": "Cancel",
       "confirm": "Offboard",
       "success": "Offboard started",
-      "error": "Offboard failed"
+      "error": "Offboard failed",
+      "fee_estimate_failed": "Could not estimate the fee.",
+      "retry_fee_estimate": "Try again",
+      "address_invalid": "This is not a valid address for the current network."
     },
     "emergency_exit": {
       "title_one": "Emergency exit {{count}} VTXO?",
