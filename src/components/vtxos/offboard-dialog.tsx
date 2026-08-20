@@ -65,13 +65,18 @@ export function OffboardDialog({ open, onOpenChange, vtxos, onOffboarded }: Offb
                 </Button>
               </div>
               <Input
+                aria-invalid={flow.isAddressInvalid}
                 autoComplete="off"
+                className="aria-invalid:ring-0 focus-visible:aria-invalid:ring-[3px]"
                 disabled={flow.isPending}
                 id="offboard-address"
                 onChange={(event) => flow.setAddress(event.target.value)}
                 spellCheck={false}
                 value={flow.address}
               />
+              {flow.isAddressInvalid && (
+                <p className="text-destructive text-sm">{t('vtxos.offboard.address_invalid')}</p>
+              )}
               {(flow.feeSat !== undefined || flow.isFetchingFee) && (
                 <span className="text-muted-foreground text-xs leading-none">
                   {t('vtxos.offboard.fee_estimate')}:{' '}
@@ -79,6 +84,20 @@ export function OffboardDialog({ open, onOpenChange, vtxos, onOffboarded }: Offb
                   {flow.feeSat !== undefined && flow.feeSat > 0 && (
                     <> • {formatFiat(flow.feeSat)}</>
                   )}
+                </span>
+              )}
+              {flow.isFeeError && (
+                <span className="text-destructive text-xs leading-none">
+                  {t('vtxos.offboard.fee_estimate_failed')}{' '}
+                  <Button
+                    className="h-auto p-0 text-xs"
+                    onClick={flow.retryFeeEstimate}
+                    size="xs"
+                    type="button"
+                    variant="link"
+                  >
+                    {t('vtxos.offboard.retry_fee_estimate')}
+                  </Button>
                 </span>
               )}
               <FieldDescription className="text-xs">
@@ -95,7 +114,7 @@ export function OffboardDialog({ open, onOpenChange, vtxos, onOffboarded }: Offb
             >
               {t('vtxos.offboard.cancel')}
             </Button>
-            <Button loading={flow.isPending} type="submit">
+            <Button disabled={!flow.canSubmit} loading={flow.isPending} type="submit">
               {t('vtxos.offboard.confirm')}
             </Button>
           </DialogFooter>
