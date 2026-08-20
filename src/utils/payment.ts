@@ -1,6 +1,7 @@
-import type { Destination } from 'bitcoin-decoder'
+import type { DecodedPayment, Destination } from 'bitcoin-decoder'
 import { decode } from 'bitcoin-decoder'
-import { normalizeDestination } from '@/utils/bitcoin'
+import type { Network } from '@/types/domain/network'
+import { isValidOnchainAddress, normalizeDestination } from '@/utils/bitcoin'
 
 export type SendRoute = 'ark' | 'lightning' | 'onchain-from-ark' | 'onchain-from-wallet'
 
@@ -11,6 +12,70 @@ export function sanitizePaymentInput(input: string): string {
 export async function parsePaymentInput(input: string) {
   const decoded = await decode(sanitizePaymentInput(input))
   return decoded
+}
+
+// `DecodedPayment.network` is derived from one rail only — the lightning one for
+// a BIP-321 URI — and folds signet, mutinynet, and regtest together, so each
+// destination is checked on its own instead.
+type DestinationNetwork = 'mainnet' | 'signet' | 'regtest' | 'any-testnet' | 'unknown'
+
+const BOLT11_NETWORK_PREFIXES: readonly (readonly [string, DestinationNetwork])[] = [
+  ['lnbcrt', 'regtest'],
+  ['lntbs', 'signet'],
+  ['lntb', 'any-testnet'],
+  ['lnbc', 'mainnet']
+]
+
+function bolt11Network(invoice: string): DestinationNetwork {
+  const lower = invoice.toLowerCase()
+  const match = BOLT11_NETWORK_PREFIXES.find(([prefix]) => lower.startsWith(prefix))
+  return match?.[1] ?? 'unknown'
+}
+
+function arkNetwork(arkAddress: string): DestinationNetwork {
+  const lower = arkAddress.toLowerCase()
+  if (lower.startsWith('tark1')) {
+    return 'any-testnet'
+  }
+  if (lower.startsWith('ark1')) {
+    return 'mainnet'
+  }
+  return 'unknown'
+}
+
+function walletAccepts(destinationNetwork: DestinationNetwork, walletNetwork: Network): boolean {
+  if (destinationNetwork === 'unknown') {
+    return true
+  }
+  if (walletNetwork === 'mainnet') {
+    return destinationNetwork === 'mainnet'
+  }
+  if (destinationNetwork === 'mainnet') {
+    return false
+  }
+  if (destinationNetwork === 'any-testnet') {
+    return true
+  }
+  return destinationNetwork === (walletNetwork === 'regtest' ? 'regtest' : 'signet')
+}
+
+// A BOLT12 offer carries its chain in the `offer_chains` TLV rather than in the
+// bech32 prefix, and lnurl/lightning addresses only resolve to an invoice after
+// a server round trip, so neither can be checked here.
+export function destinationMatchesWalletNetwork(
+  destination: Destination,
+  walletNetwork: Network
+): boolean {
+  if (destination.type === 'bitcoin-address') {
+    return isValidOnchainAddress(destination.destination, walletNetwork)
+  }
+  if (destination.type === 'ark-address') {
+    return walletAccepts(arkNetwork(destination.destination), walletNetwork)
+  }
+  if (destination.type === 'bolt11') {
+    return walletAccepts(bolt11Network(destination.destination), walletNetwork)
+  }
+  return true
 }
 
 export function getSendRoute(destinationType: Destination['type']): SendRoute {
@@ -49,4 +114,22 @@ export function pickCheapestDestination(destinations: Destination[]): Destinatio
 
 export function getSelectableDestinations(destinations: Destination[]): Destination[] {
   return sortDestinationsByPriority(destinations).map(normalizeDestination)
+}
+
+// Returns undefined when no rail is payable; a URI with a single off-network
+// rail keeps the others.
+export function restrictPaymentToNetwork(
+  decoded: DecodedPayment,
+  walletNetwork: Network
+): DecodedPayment | undefined {
+  const payable = decoded.destinations.filter((destination) =>
+    destinationMatchesWalletNetwork(destination, walletNetwork)
+  )
+  if (payable.length === 0) {
+    return undefined
+  }
+  if (payable.length === decoded.destinations.length) {
+    return decoded
+  }
+  return { ...decoded, destination: pickCheapestDestination(payable), destinations: payable }
 }

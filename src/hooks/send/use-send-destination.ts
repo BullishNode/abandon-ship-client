@@ -2,6 +2,7 @@ import type { DecodedData, DecodedPayment, Destination } from 'bitcoin-decoder'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import { config } from '@/config/runtime'
 import { useBrantaVerification } from '@/hooks/branta/use-branta-verification'
 import { normalizeDestination } from '@/utils/bitcoin'
 import { canUseCamera } from '@/utils/camera'
@@ -10,7 +11,8 @@ import {
   getSelectableDestinations,
   getSendRoute,
   parsePaymentInput,
-  pickCheapestDestination
+  pickCheapestDestination,
+  restrictPaymentToNetwork
 } from '@/utils/payment'
 
 export type SendStep = 'scan' | 'send'
@@ -61,31 +63,58 @@ export function useSendDestination({ open, initialStep = 'scan' }: UseSendDestin
     setSendRoute(getSendRoute(dest.type))
   }
 
+  // The raw input is what `useBrantaVerification` queries and what
+  // `verifyDestination` compares against to skip re-decoding, so a rejected
+  // input must not stay behind.
+  function rejectInput(message: string, description?: string) {
+    setParsed(undefined)
+    setRawQrInput('')
+    setSelectedMethodType(undefined)
+    setSendRoute('lightning')
+    if (description === undefined) {
+      toast.error(message)
+      return
+    }
+    toast.error(message, { description })
+  }
+
+  function applyPayment(
+    rawInput: string,
+    decoded: DecodedData,
+    applyParsedMetadata?: (decoded: DecodedPayment) => void
+  ): boolean {
+    if (!decoded.valid) {
+      rejectInput(t('send.errors.invalid_destination'), decoded.errorMessage)
+      return false
+    }
+
+    if (decoded.kind !== 'payment') {
+      rejectInput(t('send.errors.invalid_destination'))
+      return false
+    }
+
+    const payable = restrictPaymentToNetwork(decoded, config.network)
+    if (payable === undefined) {
+      rejectInput(t('send.errors.wrong_network'))
+      return false
+    }
+
+    setRawQrInput(rawInput)
+    setParsed(payable)
+    applyDestination(pickCheapestDestination(payable.destinations))
+    applyParsedMetadata?.(payable)
+    return true
+  }
+
   async function goToSend(
     input: string,
     applyParsedMetadata?: (decoded: DecodedPayment) => void
   ): Promise<DecodedData | undefined> {
-    setRawQrInput(input)
     const decoded = await parsePaymentInput(input)
-    setParsed(decoded)
-
-    if (!decoded.valid) {
-      toast.error(t('send.errors.invalid_qr'), {
-        description: decoded.errorMessage
-      })
-      return decoded
+    if (applyPayment(input, decoded, applyParsedMetadata)) {
+      setDirection(1)
+      setStep('send')
     }
-
-    if (decoded.kind !== 'payment') {
-      toast.error(t('send.errors.invalid_qr'))
-      return decoded
-    }
-
-    const cheapest = pickCheapestDestination(decoded.destinations)
-    applyDestination(cheapest)
-    applyParsedMetadata?.(decoded)
-    setDirection(1)
-    setStep('send')
     return decoded
   }
 
@@ -118,12 +147,7 @@ export function useSendDestination({ open, initialStep = 'scan' }: UseSendDestin
       }
     }
     const decoded = await parsePaymentInput(trimmed)
-    if (decoded.valid && decoded.kind === 'payment') {
-      applyDestination(pickCheapestDestination(decoded.destinations))
-      applyParsedMetadata?.(decoded)
-      setParsed(decoded)
-      setRawQrInput(trimmed)
-    }
+    applyPayment(trimmed, decoded, applyParsedMetadata)
   }
 
   const { data: brantaResult, isFetching: isFetchingBranta } = useBrantaVerification(
