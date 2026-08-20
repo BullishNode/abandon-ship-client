@@ -115,6 +115,20 @@ export function BoardModal({ open, onOpenChange }: BoardModalProps) {
                   )}
                 </span>
               )}
+              {flow.isFeeError && (
+                <p className="text-destructive text-xs">
+                  {t('board.errors.fee_estimate_failed')}{' '}
+                  <Button
+                    className="h-auto p-0 text-xs"
+                    onClick={flow.retryFeeEstimate}
+                    size="xs"
+                    type="button"
+                    variant="link"
+                  >
+                    {t('board.errors.retry')}
+                  </Button>
+                </p>
+              )}
               <span className="text-muted-foreground text-xs leading-none">
                 {t('board.onchain_fee_note')}
               </span>
@@ -125,11 +139,7 @@ export function BoardModal({ open, onOpenChange }: BoardModalProps) {
         </ModalBody>
         <ModalFooter>
           {flow.hasOnchainFunds ? (
-            <Button
-              disabled={flow.validation !== 'valid'}
-              loading={flow.isBoarding}
-              onClick={flow.submit}
-            >
+            <Button disabled={!flow.canSubmit} loading={flow.isBoarding} onClick={flow.submit}>
               {t('board.confirm')}
             </Button>
           ) : (

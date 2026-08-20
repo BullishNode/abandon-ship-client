@@ -34,27 +34,20 @@ if (hasDom) {
   })
 }
 
-vi.stubGlobal(
-  'ResizeObserver',
-  vi.fn(() => ({
-    disconnect: vi.fn(),
-    observe: vi.fn(),
-    unobserve: vi.fn()
-  }))
-)
+// Constructible stub: components call `new ResizeObserver(...)`, which an
+// arrow-function mock cannot satisfy.
+class ObserverStub {
+  root = null
+  rootMargin = ''
+  thresholds = []
+  disconnect = vi.fn()
+  observe = vi.fn()
+  takeRecords = vi.fn(() => [])
+  unobserve = vi.fn()
+}
 
-vi.stubGlobal(
-  'IntersectionObserver',
-  vi.fn(() => ({
-    disconnect: vi.fn(),
-    observe: vi.fn(),
-    root: null,
-    rootMargin: '',
-    takeRecords: vi.fn(() => []),
-    thresholds: [],
-    unobserve: vi.fn()
-  }))
-)
+vi.stubGlobal('ResizeObserver', ObserverStub)
+vi.stubGlobal('IntersectionObserver', ObserverStub)
 
 if (!i18next.default.isInitialized) {
   void i18next.default.use(initReactI18next).init({

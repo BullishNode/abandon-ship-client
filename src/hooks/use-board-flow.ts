@@ -43,10 +43,17 @@ export function useBoardFlow({ open, onOpenChange }: UseBoardFlowOptions) {
     minBoardAmountSat
   )
   const shouldEstimateFee = localValidation === 'valid'
-  const { data: boardFee, isError: isFeeError } = useBoardFee(
-    shouldEstimateFee ? debouncedAmountSat : undefined
-  )
-  const isFeeCurrent = boardFee !== undefined && debouncedAmountSat === validAmountSat
+  const {
+    data: boardFee,
+    isError: isFeeQueryError,
+    refetch: refetchBoardFee
+  } = useBoardFee(shouldEstimateFee ? debouncedAmountSat : undefined)
+  const isFeeForCurrentAmount = debouncedAmountSat === validAmountSat
+  const isFeeCurrent = boardFee !== undefined && isFeeForCurrentAmount
+  // A failed refetch keeps the previous estimate, and an error left over from a
+  // superseded amount says nothing about the amount on screen. Only surface the
+  // error when there is no usable estimate for the current input.
+  const isFeeError = shouldEstimateFee && isFeeQueryError && isFeeForCurrentAmount && !isFeeCurrent
   const validation = validateBoardAmount(
     validAmountSat,
     onchainSpendableSat,
@@ -68,6 +75,10 @@ export function useBoardFlow({ open, onOpenChange }: UseBoardFlowOptions) {
   const { mutate: boardAll, isPending: isBoardingAll } = useBoardAll(mutationCallbacks)
   const isBoarding = isBoardingAmount || isBoardingAll
 
+  // The dust check needs the fee-adjusted net amount, so the submit gate must
+  // wait for a fee estimate that matches the current input.
+  const canSubmit = validation === 'valid' && isFeeCurrent && !isBoarding
+
   function setAmount(value: string) {
     setIsMax(false)
     amountInput.setAmount(value)
@@ -82,7 +93,7 @@ export function useBoardFlow({ open, onOpenChange }: UseBoardFlowOptions) {
   }
 
   function submit() {
-    if (validation !== 'valid' || isBoarding || validAmountSat === undefined) {
+    if (!canSubmit || validAmountSat === undefined) {
       return
     }
     if (isMax || validAmountSat === onchainSpendableSat) {
@@ -94,14 +105,19 @@ export function useBoardFlow({ open, onOpenChange }: UseBoardFlowOptions) {
 
   return {
     amountDisplay: amountInput.amountDisplay,
+    canSubmit,
     canUseFiat: amountInput.canUseFiat,
     entryMode: amountInput.entryMode,
     feeSat: isFeeCurrent ? boardFee.feeSats : undefined,
     hasOnchainFunds: onchainSpendableSat > 0,
     isBoarding,
-    isFetchingFee: shouldEstimateFee && !(isFeeCurrent || isFeeError),
+    isFeeError,
+    isFetchingFee: shouldEstimateFee && !isFeeCurrent && !isFeeError,
     minBoardAmountSat,
     onchainSpendableSat,
+    retryFeeEstimate: () => {
+      void refetchBoardFee()
+    },
     secondaryDisplay: amountInput.secondaryDisplay,
     setAmount,
     setMax,
