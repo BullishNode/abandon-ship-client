@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { config } from '@/config/runtime'
 import { useClaimEmergencyExitVtxos } from '@/hooks/barkd/use-claim-emergency-exit-vtxos'
 import { useExitStatus } from '@/hooks/barkd/use-exit-status'
 import { useWalletStore } from '@/stores/wallet'
@@ -22,7 +23,7 @@ export function useAutoClaimEmergencyExit(): void {
     signature: ''
   })
 
-  const groups = resolveClaimGroups(exitStatuses ?? [], exitClaimAddresses)
+  const groups = resolveClaimGroups(exitStatuses ?? [], exitClaimAddresses, config.network)
   const signature = groupsSignature(groups)
 
   useEffect(() => {

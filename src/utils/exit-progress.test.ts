@@ -90,29 +90,60 @@ describe(summarizeExits, () => {
   })
 })
 
+const ADDR_1 = 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx'
+const ADDR_2 = 'tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7'
+
 describe(resolveClaimGroups, () => {
   it('groups claimable exits by their stored destination address', () => {
     const groups = resolveClaimGroups(
       [claimableExit('a'), claimableExit('b'), claimableExit('c')],
-      { a: 'addr-1', b: 'addr-1', c: 'addr-2' }
+      { a: ADDR_1, b: ADDR_1, c: ADDR_2 },
+      'signet'
     )
     expect(groups).toHaveLength(2)
     const byDestination = new Map(groups.map((group) => [group.destination, group.vtxos]))
-    expect(byDestination.get('addr-1')).toStrictEqual(['a', 'b'])
-    expect(byDestination.get('addr-2')).toStrictEqual(['c'])
+    expect(byDestination.get(ADDR_1)).toStrictEqual(['a', 'b'])
+    expect(byDestination.get(ADDR_2)).toStrictEqual(['c'])
   })
 
   it('skips exits that are not yet claimable', () => {
-    const groups = resolveClaimGroups([startExit('a'), claimableExit('b')], {
-      a: 'addr-1',
-      b: 'addr-2'
-    })
-    expect(groups).toStrictEqual([{ destination: 'addr-2', vtxos: ['b'] }])
+    const groups = resolveClaimGroups(
+      [startExit('a'), claimableExit('b')],
+      { a: ADDR_1, b: ADDR_2 },
+      'signet'
+    )
+    expect(groups).toStrictEqual([{ destination: ADDR_2, vtxos: ['b'] }])
   })
 
   it('skips claimable exits with no stored address', () => {
-    const groups = resolveClaimGroups([claimableExit('a'), claimableExit('b')], { b: 'addr-2' })
-    expect(groups).toStrictEqual([{ destination: 'addr-2', vtxos: ['b'] }])
+    const groups = resolveClaimGroups(
+      [claimableExit('a'), claimableExit('b')],
+      { b: ADDR_2 },
+      'signet'
+    )
+    expect(groups).toStrictEqual([{ destination: ADDR_2, vtxos: ['b'] }])
+  })
+
+  it('skips claimable exits whose stored address is not valid on the wallet network', () => {
+    const mainnetAddress = 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4'
+    const groups = resolveClaimGroups(
+      [claimableExit('a'), claimableExit('b'), claimableExit('c')],
+      { a: 'not-an-address', b: mainnetAddress, c: ADDR_1 },
+      'signet'
+    )
+    expect(groups).toStrictEqual([{ destination: ADDR_1, vtxos: ['c'] }])
+  })
+
+  it('skips non-string rehydrated address values without throwing', () => {
+    const rehydrated: Record<string, string> = JSON.parse(
+      `{"a":null,"b":42,"c":["${ADDR_1}"],"d":"${ADDR_1}"}`
+    )
+    const groups = resolveClaimGroups(
+      [claimableExit('a'), claimableExit('b'), claimableExit('c'), claimableExit('d')],
+      rehydrated,
+      'signet'
+    )
+    expect(groups).toStrictEqual([{ destination: ADDR_1, vtxos: ['d'] }])
   })
 })
 
