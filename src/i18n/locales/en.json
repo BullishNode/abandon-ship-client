@@ -43,7 +43,9 @@
     "errors": {
       "insufficient_funds": "Insufficient on-chain bitcoin. Available: {{balance}}",
       "below_min": "Amount is below the minimum board amount of {{amount}}.",
-      "below_dust": "Amount is too small to board after fees."
+      "below_dust": "Amount is too small to board after fees.",
+      "fee_estimate_failed": "Could not estimate the fee.",
+      "retry": "Try again"
     },
     "no_onchain": {
       "description": "You have no on-chain bitcoin to board. Receive bitcoin to your on-chain wallet first.",
