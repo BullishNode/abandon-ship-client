@@ -1,12 +1,14 @@
-import type { Destination } from 'bitcoin-decoder'
+import type { DecodedPayment, Destination } from 'bitcoin-decoder'
 import { decode } from 'bitcoin-decoder'
 import { describe, expect, it, vi } from 'vitest'
 import { normalizeDestination } from './bitcoin'
 import {
+  destinationMatchesWalletNetwork,
   getSelectableDestinations,
   getSendRoute,
   parsePaymentInput,
   pickCheapestDestination,
+  restrictPaymentToNetwork,
   sanitizePaymentInput
 } from './payment'
 
@@ -48,6 +50,187 @@ describe(getSendRoute, () => {
 
   it('returns onchain-from-ark for bitcoin-address', () => {
     expect(getSendRoute('bitcoin-address')).toBe('onchain-from-ark')
+  })
+})
+
+const MAINNET_ADDRESS = 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4'
+const MAINNET_TAPROOT = 'bc1pqqqsyqcyq5rqwzqfpg9scrgwpugpzysnzs23v9ccrydpk8qarc0sg5tmnz'
+const SIGNET_ADDRESS = 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx'
+const REGTEST_ADDRESS = 'bcrt1qw508d6qejxtdg4y5r3zarvary0c5xw7kygt080'
+const LNADDRESS = 'carlos@second.tech'
+
+describe(destinationMatchesWalletNetwork, () => {
+  it('accepts a mainnet address only on a mainnet wallet', () => {
+    const mainnet = makeDestination('bitcoin-address', MAINNET_ADDRESS)
+
+    expect(destinationMatchesWalletNetwork(mainnet, 'mainnet')).toBeTruthy()
+    expect(destinationMatchesWalletNetwork(mainnet, 'signet')).toBeFalsy()
+    expect(destinationMatchesWalletNetwork(mainnet, 'mutinynet')).toBeFalsy()
+    expect(destinationMatchesWalletNetwork(mainnet, 'regtest')).toBeFalsy()
+  })
+
+  it('accepts a signet address on signet and mutinynet wallets', () => {
+    const signet = makeDestination('bitcoin-address', SIGNET_ADDRESS)
+
+    expect(destinationMatchesWalletNetwork(signet, 'signet')).toBeTruthy()
+    expect(destinationMatchesWalletNetwork(signet, 'mutinynet')).toBeTruthy()
+    expect(destinationMatchesWalletNetwork(signet, 'mainnet')).toBeFalsy()
+    expect(destinationMatchesWalletNetwork(signet, 'regtest')).toBeFalsy()
+  })
+
+  it('accepts a regtest address only on a regtest wallet', () => {
+    const regtest = makeDestination('bitcoin-address', REGTEST_ADDRESS)
+
+    expect(destinationMatchesWalletNetwork(regtest, 'regtest')).toBeTruthy()
+    expect(destinationMatchesWalletNetwork(regtest, 'signet')).toBeFalsy()
+    expect(destinationMatchesWalletNetwork(regtest, 'mutinynet')).toBeFalsy()
+    expect(destinationMatchesWalletNetwork(regtest, 'mainnet')).toBeFalsy()
+  })
+
+  it('accepts on-chain addresses regardless of case', () => {
+    const upper = makeDestination('bitcoin-address', MAINNET_ADDRESS.toUpperCase())
+    expect(destinationMatchesWalletNetwork(upper, 'mainnet')).toBeTruthy()
+    expect(destinationMatchesWalletNetwork(upper, 'signet')).toBeFalsy()
+  })
+
+  it('checks taproot addresses without an initialized ECC library', () => {
+    const taproot = makeDestination('bitcoin-address', MAINNET_TAPROOT)
+    expect(destinationMatchesWalletNetwork(taproot, 'mainnet')).toBeTruthy()
+    expect(destinationMatchesWalletNetwork(taproot, 'signet')).toBeFalsy()
+  })
+
+  it('rejects on-chain addresses that are not valid on any network', () => {
+    const garbage = makeDestination('bitcoin-address', 'bc1qnotanaddress')
+    expect(destinationMatchesWalletNetwork(garbage, 'mainnet')).toBeFalsy()
+    expect(destinationMatchesWalletNetwork(garbage, 'signet')).toBeFalsy()
+  })
+
+  it('checks ark addresses by their human readable part', () => {
+    const mainnet = makeDestination('ark-address', 'ark1abcdefgh')
+    const testnet = makeDestination('ark-address', 'tark1abcdefgh')
+
+    expect(destinationMatchesWalletNetwork(mainnet, 'mainnet')).toBeTruthy()
+    expect(destinationMatchesWalletNetwork(mainnet, 'signet')).toBeFalsy()
+    expect(destinationMatchesWalletNetwork(testnet, 'signet')).toBeTruthy()
+    expect(destinationMatchesWalletNetwork(testnet, 'mutinynet')).toBeTruthy()
+    expect(destinationMatchesWalletNetwork(testnet, 'regtest')).toBeTruthy()
+    expect(destinationMatchesWalletNetwork(testnet, 'mainnet')).toBeFalsy()
+  })
+
+  it('checks chain specific bolt11 prefixes', () => {
+    const mainnet = makeDestination('bolt11', 'lnbc500u1p3invoice')
+    const signet = makeDestination('bolt11', 'lntbs500u1p3invoice')
+    const regtest = makeDestination('bolt11', 'lnbcrt500u1p3invoice')
+
+    expect(destinationMatchesWalletNetwork(mainnet, 'mainnet')).toBeTruthy()
+    expect(destinationMatchesWalletNetwork(mainnet, 'signet')).toBeFalsy()
+
+    expect(destinationMatchesWalletNetwork(signet, 'signet')).toBeTruthy()
+    expect(destinationMatchesWalletNetwork(signet, 'mutinynet')).toBeTruthy()
+    expect(destinationMatchesWalletNetwork(signet, 'regtest')).toBeFalsy()
+    expect(destinationMatchesWalletNetwork(signet, 'mainnet')).toBeFalsy()
+
+    expect(destinationMatchesWalletNetwork(regtest, 'regtest')).toBeTruthy()
+    expect(destinationMatchesWalletNetwork(regtest, 'signet')).toBeFalsy()
+    expect(destinationMatchesWalletNetwork(regtest, 'mainnet')).toBeFalsy()
+  })
+
+  it('keeps lntb invoices payable on every non-mainnet wallet', () => {
+    // `lntb` is testnet3/4 but also what older signet nodes emit.
+    const testnet = makeDestination('bolt11', 'lntb500u1p3invoice')
+
+    expect(destinationMatchesWalletNetwork(testnet, 'signet')).toBeTruthy()
+    expect(destinationMatchesWalletNetwork(testnet, 'mutinynet')).toBeTruthy()
+    expect(destinationMatchesWalletNetwork(testnet, 'regtest')).toBeTruthy()
+    expect(destinationMatchesWalletNetwork(testnet, 'mainnet')).toBeFalsy()
+  })
+
+  it('accepts destinations whose network cannot be derived', () => {
+    const offer = makeDestination('bolt12', 'lno1pqqnyzsmx5cx6umpwssx6atvw35j6ut4v9h9g')
+    const lnurl = makeDestination('lnurl', 'lnurl1dp68gurn8ghj7')
+    const lnaddress = makeDestination('lnaddress', LNADDRESS)
+
+    for (const destination of [offer, lnurl, lnaddress]) {
+      expect(destinationMatchesWalletNetwork(destination, 'mainnet')).toBeTruthy()
+      expect(destinationMatchesWalletNetwork(destination, 'signet')).toBeTruthy()
+      expect(destinationMatchesWalletNetwork(destination, 'regtest')).toBeTruthy()
+    }
+  })
+})
+
+function makePayment(
+  destinations: Destination[],
+  network: DecodedPayment['network']
+): DecodedPayment {
+  return {
+    destination: destinations[0],
+    destinations,
+    input: 'bitcoin:example',
+    kind: 'payment',
+    network,
+    valid: true
+  }
+}
+
+describe(restrictPaymentToNetwork, () => {
+  it('returns the payment unchanged when every rail matches', () => {
+    const payment = makePayment(
+      [makeDestination('lnaddress', LNADDRESS), makeDestination('bitcoin-address', SIGNET_ADDRESS)],
+      'unknown'
+    )
+    expect(restrictPaymentToNetwork(payment, 'signet')).toBe(payment)
+  })
+
+  it('drops the rails the wallet cannot pay and repoints the primary destination', () => {
+    const lnaddress = makeDestination('lnaddress', LNADDRESS)
+    const mainnetOnchain = makeDestination('bitcoin-address', MAINNET_ADDRESS)
+    const payment = makePayment([mainnetOnchain, lnaddress], 'unknown')
+
+    const restricted = restrictPaymentToNetwork(payment, 'signet')
+
+    expect(restricted?.destinations).toStrictEqual([lnaddress])
+    expect(restricted?.destination).toStrictEqual(lnaddress)
+  })
+
+  it('keeps the metadata of the original payment', () => {
+    const payment: DecodedPayment = {
+      ...makePayment(
+        [
+          makeDestination('bitcoin-address', MAINNET_ADDRESS),
+          makeDestination('lnaddress', LNADDRESS)
+        ],
+        'unknown'
+      ),
+      metadata: { amount: 1000, description: 'coffee' }
+    }
+
+    expect(restrictPaymentToNetwork(payment, 'signet')?.metadata).toStrictEqual({
+      amount: 1000,
+      description: 'coffee'
+    })
+  })
+
+  it('returns undefined when no rail is payable', () => {
+    const payment = makePayment(
+      [
+        makeDestination('bitcoin-address', MAINNET_ADDRESS),
+        makeDestination('bolt11', 'lnbc500u1p3invoice')
+      ],
+      'mainnet'
+    )
+    expect(restrictPaymentToNetwork(payment, 'signet')).toBeUndefined()
+  })
+
+  it('ignores the payment level network reported by the decoder', () => {
+    // The decoder reads `testnet` off the `m` in the lightning address here.
+    const payment = makePayment(
+      [
+        makeDestination('lnaddress', 'mike@getalby.com'),
+        makeDestination('bitcoin-address', MAINNET_ADDRESS)
+      ],
+      'testnet'
+    )
+    expect(restrictPaymentToNetwork(payment, 'mainnet')).toBe(payment)
   })
 })
 

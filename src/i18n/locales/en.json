@@ -221,9 +221,10 @@
     "destination_placeholder": "Ark, Lightning, or on-chain",
     "amount": "Amount",
     "errors": {
-      "invalid_qr": "Invalid QR code",
       "insufficient_funds": "Insufficient bitcoin. Available: {{balance}}",
-      "send_failed": "Send failed"
+      "send_failed": "Send failed",
+      "invalid_destination": "Invalid destination",
+      "wrong_network": "The destination is for a different network"
     },
     "warnings": {
       "uses_pending_onchain": "Spending unconfirmed bitcoin"
