@@ -604,6 +604,7 @@
       "last_3_months": "Last 3 months",
       "last_30_days": "Last 30 days",
       "last_7_days": "Last 7 days",
+      "all_time": "All time",
       "empty": "No balance history yet",
       "empty_description": "Your balance over time will appear once you start using the wallet."
     }

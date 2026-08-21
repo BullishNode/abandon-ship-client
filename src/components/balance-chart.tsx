@@ -1,12 +1,22 @@
 'use client'
 
 import { ChartLineIcon } from '@phosphor-icons/react'
+import { useState } from 'react'
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import type { ChartConfig } from '@/components/ui/chart'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { config } from '@/config/runtime'
 import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
 import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
@@ -16,16 +26,37 @@ import { useWalletBalance } from '@/hooks/barkd/use-wallet-balance'
 import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
 import { useFormatBitcoin, useFormatBitcoinCompact } from '@/hooks/use-format-bitcoin'
 import { useOnchainFirstSeen } from '@/stores/metadata'
+import { CHART_TIMEFRAMES } from '@/types/chart'
+import type { ChartTickFormat, ChartTimeframe } from '@/types/chart'
 import { getBalanceTotals } from '@/utils/balance'
 import {
   buildChartSeries,
   computeBalanceHistory,
-  extractTimestampMs
+  extractTimestampMs,
+  toChartTimeframe
 } from '@/utils/balance-history'
 import { buildOnchainTxEntries } from '@/utils/movements-feed'
 
+const TIMEFRAME_LABEL_KEYS: Record<ChartTimeframe, string> = {
+  '30d': 'dashboard.chart.last_30_days',
+  '7d': 'dashboard.chart.last_7_days',
+  '90d': 'dashboard.chart.last_3_months',
+  all: 'dashboard.chart.all_time'
+}
+
+function formatTick(value: number, tickFormat: ChartTickFormat): string {
+  if (tickFormat === 'hour') {
+    return new Date(value).toLocaleTimeString('en-US', { hour: 'numeric' })
+  }
+  return new Date(value).toLocaleDateString('en-US', {
+    day: 'numeric',
+    month: 'short'
+  })
+}
+
 export function BalanceChart() {
   const { t } = useTranslation()
+  const [timeframe, setTimeframe] = useState<ChartTimeframe>('all')
   const { data: movements = [] } = useWalletTransactions()
   const { data: balance } = useWalletBalance()
   const { data: utxos = [] } = useOnchainUtxos()
@@ -50,27 +81,53 @@ export function BalanceChart() {
     tipHeight: tip
   })
   const balanceHistory = computeBalanceHistory(movements, onchainEntries, endpointTotalSat)
-  const { data, domainStartMs, domainEndMs, ticks } = buildChartSeries(
+  const { data, domainStartMs, domainEndMs, ticks, tickFormat } = buildChartSeries(
     balanceHistory,
-    endpointTotalSat
+    endpointTotalSat,
+    timeframe
   )
+  const hasHistory = balanceHistory.points.length > 0
 
   return (
     <Card className="pt-0 gap-2">
       <CardHeader className="flex items-center gap-2 space-y-0 py-5 sm:flex-row">
-        <CardTitle>{t('dashboard.chart.title')}</CardTitle>
+        <CardTitle className="flex-1">{t('dashboard.chart.title')}</CardTitle>
+        {hasHistory && (
+          <Tabs onValueChange={(value) => setTimeframe(toChartTimeframe(value))} value={timeframe}>
+            <Label className="sr-only" htmlFor="balance-chart-range-select">
+              {t('dashboard.chart.select_range')}
+            </Label>
+            <Select
+              onValueChange={(value) => setTimeframe(toChartTimeframe(value))}
+              value={timeframe}
+            >
+              <SelectTrigger
+                className="flex w-40 sm:hidden"
+                id="balance-chart-range-select"
+                size="sm"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CHART_TIMEFRAMES.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {t(TIMEFRAME_LABEL_KEYS[value])}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <TabsList className="hidden sm:inline-flex">
+              {CHART_TIMEFRAMES.map((value) => (
+                <TabsTrigger key={value} value={value}>
+                  {t(TIMEFRAME_LABEL_KEYS[value])}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        )}
       </CardHeader>
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        {balanceHistory.points.length === 0 ? (
-          <Empty className="h-62.5 border-0 py-0">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <ChartLineIcon />
-              </EmptyMedia>
-              <EmptyTitle>{t('dashboard.chart.empty')}</EmptyTitle>
-            </EmptyHeader>
-          </Empty>
-        ) : (
+        {hasHistory ? (
           <ChartContainer
             config={chartConfig}
             className="aspect-auto h-62.5 w-full [&_svg]:overflow-visible"
@@ -93,12 +150,7 @@ export function BalanceChart() {
                 axisLine={false}
                 tickMargin={8}
                 minTickGap={32}
-                tickFormatter={(value: number) =>
-                  new Date(value).toLocaleDateString('en-US', {
-                    day: 'numeric',
-                    month: 'short'
-                  })
-                }
+                tickFormatter={(value: number) => formatTick(value, tickFormat)}
               />
               <YAxis
                 tickLine={false}
@@ -136,6 +188,15 @@ export function BalanceChart() {
               />
             </AreaChart>
           </ChartContainer>
+        ) : (
+          <Empty className="h-62.5 border-0 py-0">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <ChartLineIcon />
+              </EmptyMedia>
+              <EmptyTitle>{t('dashboard.chart.empty')}</EmptyTitle>
+            </EmptyHeader>
+          </Empty>
         )}
       </CardContent>
     </Card>

@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   buildChartSeries,
-  buildDayTicks,
+  buildTicks,
   computeBalanceHistory,
   computeWindow,
-  extractTimestampMs
+  extractTimestampMs,
+  toChartTimeframe
 } from '../../src/utils/balance-history'
 import type { OnchainTxEntry } from '../../src/utils/movements-feed'
 import { createMovement, destination } from '../fixtures/movements'
@@ -349,36 +350,70 @@ describe(computeWindow, () => {
   })
 
   it('uses a 1-day window when there are no points', () => {
-    const { startMs, endMs } = computeWindow({ initialBalanceSat: 0, points: [] })
+    const { startMs, endMs } = computeWindow({ initialBalanceSat: 0, points: [] }, 'all')
     expect(endMs).toBe(NOW.getTime())
     expect(startMs).toBe(NOW.getTime() - DAY_MS)
   })
 
   it('clamps to a 1-day minimum for recent points', () => {
     const recent = new Date('2026-05-12T20:00:00Z').getTime()
-    const { startMs } = computeWindow({
-      initialBalanceSat: 0,
-      points: [{ balanceSat: 1, timestampMs: recent }]
-    })
+    const { startMs } = computeWindow(
+      {
+        initialBalanceSat: 0,
+        points: [{ balanceSat: 1, timestampMs: recent }]
+      },
+      'all'
+    )
     expect(startMs).toBe(NOW.getTime() - DAY_MS)
   })
 
   it('grows the window to the oldest point', () => {
     const oldest = new Date('2026-05-03T00:00:00Z').getTime()
-    const { startMs } = computeWindow({
-      initialBalanceSat: 0,
-      points: [{ balanceSat: 1, timestampMs: oldest }]
-    })
+    const { startMs } = computeWindow(
+      {
+        initialBalanceSat: 0,
+        points: [{ balanceSat: 1, timestampMs: oldest }]
+      },
+      'all'
+    )
     expect(startMs).toBe(oldest)
   })
 
-  it('clamps to a 90-day maximum for very old points', () => {
+  it('spans the whole lifetime without a 90-day clamp for very old points', () => {
     const ancient = new Date('2025-01-01T00:00:00Z').getTime()
-    const { startMs } = computeWindow({
+    const { startMs } = computeWindow(
+      {
+        initialBalanceSat: 0,
+        points: [{ balanceSat: 1, timestampMs: ancient }]
+      },
+      'all'
+    )
+    expect(startMs).toBe(ancient)
+  })
+
+  it('uses a fixed window for explicit timeframes regardless of wallet age', () => {
+    const ancient = new Date('2025-01-01T00:00:00Z').getTime()
+    const history = {
       initialBalanceSat: 0,
       points: [{ balanceSat: 1, timestampMs: ancient }]
-    })
-    expect(startMs).toBe(NOW.getTime() - 90 * DAY_MS)
+    }
+    expect(computeWindow(history, '7d').startMs).toBe(NOW.getTime() - 7 * DAY_MS)
+    expect(computeWindow(history, '30d').startMs).toBe(NOW.getTime() - 30 * DAY_MS)
+    expect(computeWindow(history, '90d').startMs).toBe(NOW.getTime() - 90 * DAY_MS)
+  })
+})
+
+describe(toChartTimeframe, () => {
+  it('passes valid timeframes through', () => {
+    expect(toChartTimeframe('7d')).toBe('7d')
+    expect(toChartTimeframe('30d')).toBe('30d')
+    expect(toChartTimeframe('90d')).toBe('90d')
+    expect(toChartTimeframe('all')).toBe('all')
+  })
+
+  it('falls back to all for unknown values', () => {
+    expect(toChartTimeframe('1y')).toBe('all')
+    expect(toChartTimeframe('')).toBe('all')
   })
 })
 
@@ -403,16 +438,17 @@ describe(extractTimestampMs, () => {
   })
 })
 
-describe(buildDayTicks, () => {
+describe(buildTicks, () => {
   it('returns empty when end <= start', () => {
-    expect(buildDayTicks(1000, 1000)).toStrictEqual([])
-    expect(buildDayTicks(2000, 1000)).toStrictEqual([])
+    expect(buildTicks(1000, 1000).ticks).toStrictEqual([])
+    expect(buildTicks(2000, 1000).ticks).toStrictEqual([])
   })
 
-  it('produces ascending ticks within range', () => {
+  it('produces ascending day-format ticks within range', () => {
     const start = new Date('2026-01-01T00:00:00').getTime()
     const end = new Date('2026-01-04T00:00:00').getTime()
-    const ticks = buildDayTicks(start, end)
+    const { ticks, tickFormat } = buildTicks(start, end)
+    expect(tickFormat).toBe('day')
     expect(ticks.length).toBeGreaterThan(0)
     expect(ticks[0]).toBeGreaterThanOrEqual(start)
     for (let i = 1; i < ticks.length; i += 1) {
@@ -424,9 +460,63 @@ describe(buildDayTicks, () => {
   it('grows the step when the range spans many days', () => {
     const start = new Date('2026-01-01T00:00:00').getTime()
     const end = new Date('2026-04-01T00:00:00').getTime()
-    const ticks = buildDayTicks(start, end)
+    const { ticks } = buildTicks(start, end)
     expect(ticks.length).toBeLessThanOrEqual(20)
     expect(ticks.length).toBeGreaterThan(0)
+  })
+
+  it('uses hour-aligned ticks for windows of two days or less', () => {
+    const start = new Date('2026-01-03T06:30:00').getTime()
+    const end = new Date('2026-01-04T06:30:00').getTime()
+    const { ticks, tickFormat } = buildTicks(start, end)
+    expect(tickFormat).toBe('hour')
+    expect(ticks.length).toBeGreaterThan(0)
+    for (const tick of ticks) {
+      expect(new Date(tick).getMinutes()).toBe(0)
+      expect(tick).toBeGreaterThanOrEqual(start)
+      expect(tick).toBeLessThanOrEqual(end)
+    }
+  })
+
+  describe('across DST transitions', () => {
+    const originalTz = process.env.TZ
+
+    afterEach(() => {
+      if (originalTz === undefined) {
+        delete process.env.TZ
+      } else {
+        process.env.TZ = originalTz
+      }
+    })
+
+    function expectLocalMidnights(startMs: number, endMs: number): void {
+      const { ticks, tickFormat } = buildTicks(startMs, endMs)
+      expect(tickFormat).toBe('day')
+      expect(ticks.length).toBeGreaterThan(2)
+      const seenDates = new Set<string>()
+      for (const tick of ticks) {
+        const date = new Date(tick)
+        expect(date.getHours()).toBe(0)
+        expect(date.getMinutes()).toBe(0)
+        const label = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+        expect(seenDates.has(label)).toBeFalsy()
+        seenDates.add(label)
+      }
+    }
+
+    it('keeps day ticks on local midnight across spring forward', () => {
+      process.env.TZ = 'America/New_York'
+      const start = new Date(2026, 2, 5).getTime()
+      const end = new Date(2026, 2, 12).getTime()
+      expectLocalMidnights(start, end)
+    })
+
+    it('keeps day ticks on local midnight across autumn fall back', () => {
+      process.env.TZ = 'America/New_York'
+      const start = new Date(2026, 9, 29).getTime()
+      const end = new Date(2026, 10, 5).getTime()
+      expectLocalMidnights(start, end)
+    })
   })
 })
 
@@ -451,9 +541,10 @@ describe(buildChartSeries, () => {
         { balanceSat: 20_000, timestampMs: sameDay + 60_000 }
       ]
     }
-    const series = buildChartSeries(history, 20_000)
+    const series = buildChartSeries(history, 20_000, 'all')
     expect(series.domainEndMs).toBe(NOW.getTime())
     expect(series.domainStartMs).toBe(NOW.getTime() - 24 * 60 * 60 * 1000)
+    expect(series.tickFormat).toBe('hour')
     expect(series.data.at(0)).toStrictEqual({
       balanceSat: 0,
       timestampMs: series.domainStartMs
@@ -465,7 +556,7 @@ describe(buildChartSeries, () => {
     expect(series.ticks.length).toBeGreaterThan(0)
   })
 
-  it('uses last pre-window point balance as the starting balance', () => {
+  it('uses last pre-window point balance as the starting balance for a fixed timeframe', () => {
     const prior = new Date('2026-01-01T00:00:00Z').getTime()
     const within = new Date('2026-05-10T00:00:00Z').getTime()
     const history = {
@@ -475,14 +566,31 @@ describe(buildChartSeries, () => {
         { balanceSat: 7500, timestampMs: within }
       ]
     }
-    const series = buildChartSeries(history, 7500)
+    const series = buildChartSeries(history, 7500, '90d')
     expect(series.data.at(0)?.balanceSat).toBe(5000)
     expect(series.data.at(0)?.timestampMs).toBe(series.domainStartMs)
     expect(series.data.at(-1)?.balanceSat).toBe(7500)
+    expect(series.data.map((point) => point.timestampMs)).not.toContain(prior)
+  })
+
+  it('includes the full lifetime for the all timeframe', () => {
+    const prior = new Date('2026-01-01T00:00:00Z').getTime()
+    const within = new Date('2026-05-10T00:00:00Z').getTime()
+    const history = {
+      initialBalanceSat: 0,
+      points: [
+        { balanceSat: 5000, timestampMs: prior },
+        { balanceSat: 7500, timestampMs: within }
+      ]
+    }
+    const series = buildChartSeries(history, 7500, 'all')
+    expect(series.domainStartMs).toBe(prior)
+    expect(series.data.map((point) => point.timestampMs)).toContain(prior)
+    expect(series.tickFormat).toBe('day')
   })
 
   it('returns flat series at endpoint when there are no points', () => {
-    const series = buildChartSeries({ initialBalanceSat: 1234, points: [] }, 1234)
+    const series = buildChartSeries({ initialBalanceSat: 1234, points: [] }, 1234, 'all')
     expect(series.data).toStrictEqual([
       { balanceSat: 1234, timestampMs: series.domainStartMs },
       { balanceSat: 1234, timestampMs: series.domainEndMs }
