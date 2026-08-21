@@ -1,3 +1,4 @@
+import type { ChartTickFormat, ChartTimeframe } from '@/types/chart'
 import type { Movement, MovementStatus } from '@/types/domain/movement'
 import { getBoardFundingTxids, isArkToOnchainTransfer, isBoardSubsystem } from '@/utils/movement'
 import type { OnchainTxEntry } from '@/utils/movements-feed'
@@ -17,6 +18,7 @@ export interface ChartSeries {
   domainStartMs: number
   domainEndMs: number
   ticks: number[]
+  tickFormat: ChartTickFormat
 }
 
 interface BalanceEvent {
@@ -185,21 +187,39 @@ export function computeBalanceHistory(
   return { initialBalanceSat, points }
 }
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000
+const MS_PER_HOUR = 60 * 60 * 1000
+const MS_PER_DAY = 24 * MS_PER_HOUR
 const MIN_WINDOW_DAYS = 1
-const MAX_WINDOW_DAYS = 90
+const HOUR_TICKS_MAX_DAYS = 2
+const TARGET_TICK_COUNT = 8
+
+const TIMEFRAME_DAYS: Record<Exclude<ChartTimeframe, 'all'>, number> = {
+  '30d': 30,
+  '7d': 7,
+  '90d': 90
+}
+
+export function toChartTimeframe(value: string): ChartTimeframe {
+  if (value === '7d' || value === '30d' || value === '90d') {
+    return value
+  }
+  return 'all'
+}
 
 export function computeWindow(
   history: BalanceHistory,
+  timeframe: ChartTimeframe,
   nowMs: number = Date.now()
 ): {
   startMs: number
   endMs: number
 } {
+  if (timeframe !== 'all') {
+    return { endMs: nowMs, startMs: nowMs - TIMEFRAME_DAYS[timeframe] * MS_PER_DAY }
+  }
   const oldest = history.points[0]?.timestampMs ?? nowMs
-  const spanDays = (nowMs - oldest) / MS_PER_DAY
-  const windowDays = Math.min(MAX_WINDOW_DAYS, Math.max(MIN_WINDOW_DAYS, spanDays))
-  return { endMs: nowMs, startMs: nowMs - windowDays * MS_PER_DAY }
+  const spanDays = Math.max(MIN_WINDOW_DAYS, (nowMs - oldest) / MS_PER_DAY)
+  return { endMs: nowMs, startMs: nowMs - spanDays * MS_PER_DAY }
 }
 
 export function extractTimestampMs(point: unknown): number | undefined {
@@ -213,28 +233,65 @@ export function extractTimestampMs(point: unknown): number | undefined {
   return typeof ts === 'number' ? ts : undefined
 }
 
-export function buildDayTicks(startMs: number, endMs: number): number[] {
-  if (endMs <= startMs) {
-    return []
-  }
-  const rangeDays = Math.ceil((endMs - startMs) / MS_PER_DAY)
-  const stepDays = Math.max(1, Math.ceil(rangeDays / 8))
-  const firstDay = new Date(startMs)
-  firstDay.setHours(0, 0, 0, 0)
-  let cursor = firstDay.getTime()
+function collectHourTicks(startMs: number, endMs: number, stepHours: number): number[] {
+  const firstHour = new Date(startMs)
+  firstHour.setMinutes(0, 0, 0)
+  let cursor = firstHour.getTime()
   if (cursor < startMs) {
-    cursor += MS_PER_DAY
+    cursor += MS_PER_HOUR
   }
   const ticks: number[] = []
   while (cursor <= endMs) {
     ticks.push(cursor)
-    cursor += stepDays * MS_PER_DAY
+    cursor += stepHours * MS_PER_HOUR
   }
   return ticks
 }
 
-export function buildChartSeries(history: BalanceHistory, endpointTotalSat: number): ChartSeries {
-  const { startMs, endMs } = computeWindow(history)
+/**
+ * Day ticks step through local calendar days via setDate rather than fixed
+ * 24h increments, so ticks stay on local midnight across DST transitions.
+ */
+function collectDayTicks(startMs: number, endMs: number, stepDays: number): number[] {
+  const cursor = new Date(startMs)
+  cursor.setHours(0, 0, 0, 0)
+  if (cursor.getTime() < startMs) {
+    cursor.setDate(cursor.getDate() + 1)
+  }
+  const ticks: number[] = []
+  while (cursor.getTime() <= endMs) {
+    ticks.push(cursor.getTime())
+    cursor.setDate(cursor.getDate() + stepDays)
+  }
+  return ticks
+}
+
+export function buildTicks(
+  startMs: number,
+  endMs: number
+): {
+  ticks: number[]
+  tickFormat: ChartTickFormat
+} {
+  if (endMs <= startMs) {
+    return { tickFormat: 'day', ticks: [] }
+  }
+  const spanMs = endMs - startMs
+  if (spanMs <= HOUR_TICKS_MAX_DAYS * MS_PER_DAY) {
+    const stepHours = Math.max(1, Math.ceil(spanMs / MS_PER_HOUR / TARGET_TICK_COUNT))
+    return { tickFormat: 'hour', ticks: collectHourTicks(startMs, endMs, stepHours) }
+  }
+  const stepDays = Math.max(1, Math.ceil(spanMs / MS_PER_DAY / TARGET_TICK_COUNT))
+  return { tickFormat: 'day', ticks: collectDayTicks(startMs, endMs, stepDays) }
+}
+
+export function buildChartSeries(
+  history: BalanceHistory,
+  endpointTotalSat: number,
+  timeframe: ChartTimeframe,
+  nowMs: number = Date.now()
+): ChartSeries {
+  const { startMs, endMs } = computeWindow(history, timeframe, nowMs)
   let preWindowBalance = history.initialBalanceSat
   const inRange: BalanceDataPoint[] = []
   for (const point of history.points) {
@@ -249,10 +306,12 @@ export function buildChartSeries(history: BalanceHistory, endpointTotalSat: numb
     ...inRange,
     { balanceSat: endpointTotalSat, timestampMs: endMs }
   ]
+  const { ticks, tickFormat } = buildTicks(startMs, endMs)
   return {
     data,
     domainEndMs: endMs,
     domainStartMs: startMs,
-    ticks: buildDayTicks(startMs, endMs)
+    tickFormat,
+    ticks
   }
 }
