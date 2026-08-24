@@ -51,7 +51,7 @@
     "start9:build": "bash scripts/start9-build.sh"
   },
   "dependencies": {
-    "@branta-ops/branta": "^3.1.4",
+    "@branta-ops/branta": "^3.2.1",
     "@chenglou/pretext": "^0.0.6",
     "@fontsource-variable/dm-sans": "^5.2.8",
     "@fontsource-variable/source-code-pro": "^5.2.7",
