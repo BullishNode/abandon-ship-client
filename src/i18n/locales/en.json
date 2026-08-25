@@ -13,7 +13,8 @@
     "back": "Back",
     "confirm": "Confirm",
     "delete": "Delete",
-    "more": "More actions"
+    "more": "More actions",
+    "skip": "Skip"
   },
   "actions_menu": {
     "board": {
@@ -89,12 +90,23 @@
         "description": "Type in all {{count}} words of your seed phrase",
         "error": {
           "invalid": "Invalid seed phrase. Check that all words are correct and in order."
-        }
+        },
+        "recovery_notice": "Restoring from your seed phrase relies on the Ark server.",
+        "scan_incomplete": "Could not scan for existing onchain history. Your wallet works, but past onchain transactions may be missing."
       }
     },
     "backend": {
       "title": "Network and servers",
       "description": "Select a network and server to connect to"
+    },
+    "password": {
+      "title": "Set a password",
+      "description": "A password encrypts your seed phrase in this browser. You can skip it and set one later in Settings.",
+      "label": "Password",
+      "confirm_label": "Confirm password",
+      "error_mismatch": "Passwords do not match",
+      "no_silent_unlock": "This browser cannot store your seed between reloads, so without a password you will have to type your seed phrase every time you open the wallet.",
+      "error_save": "Wallet created, but the password could not be saved. Set one in Settings."
     }
   },
   "network": {
@@ -105,8 +117,10 @@
   },
   "welcome": {
     "title": "Welcome to $t(app.name)",
-    "setting_up": "Setting up your wallet",
-    "loading": "Loading your wallet"
+    "description": "Create a new wallet or recover one from your seed phrase",
+    "loading": "Loading...",
+    "error": "Could not check your wallet status",
+    "retry": "Try again"
   },
   "login": {
     "title": "Unlock $t(app.name)",
@@ -130,9 +144,18 @@
       "error_generic": "Could not unlock the wallet. Check your connection and try again."
     },
     "mnemonic": {
+      "title": "Recover your wallet",
+      "description": "Type in all {{count}} words of your seed phrase",
       "back": "Back to password",
       "error": "Could not unlock the wallet. Make sure this seed phrase belongs to this wallet and try again.",
-      "vault_cleared": "Password removed. Set a new one in Settings → Security."
+      "vault_cleared": "Password removed. Set a new one in Settings → Security.",
+      "erase": {
+        "button": "Erase wallet and start over",
+        "confirm_title": "Erase this wallet?",
+        "confirm_description": "This deletes the wallet stored on this device so you can create or import another one. If you do not have this wallet's recovery phrase saved somewhere else, any funds in it will be permanently lost.",
+        "confirm_label": "Erase wallet",
+        "error": "Could not erase the wallet. Close any other tabs with this wallet open and try again."
+      }
     },
     "retry": {
       "title": "Connection problem",
@@ -162,7 +185,8 @@
   },
   "links": {
     "forum": "Community forum",
-    "chat": "Community chat"
+    "chat": "Community chat",
+    "terms": "Terms of service"
   },
   "receive": {
     "title": "Receive",
@@ -612,5 +636,20 @@
   "errors": {
     "create_wallet_failed": "Failed to create wallet",
     "price_fetch_failed": "Failed to fetch bitcoin price from {{provider}}"
+  },
+  "setup_password": {
+    "title": "Protect $t(app.name)",
+    "description": "Set a password to control access to this wallet interface",
+    "label": "Password",
+    "confirm_label": "Confirm password",
+    "hint": "At least {{count}} characters",
+    "submit": "Continue",
+    "error": {
+      "mismatch": "Passwords do not match",
+      "weak": "Password is too short",
+      "already_configured": "A password is already set. Reload the page to sign in.",
+      "rate_limited": "Too many attempts. Wait a moment and try again.",
+      "error": "Something went wrong. Please try again."
+    }
   }
 }

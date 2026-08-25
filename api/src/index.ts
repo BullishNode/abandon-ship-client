@@ -11,7 +11,7 @@ import { Hono } from 'hono'
 import type { Context, Next } from 'hono'
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
 import { cors } from 'hono/cors'
-import { Authenticator } from './auth.js'
+import { Authenticator, isAcceptablePassword, MIN_PASSWORD_LENGTH } from './auth.js'
 import { isAllowedBarkdPath } from './barkd-proxy.js'
 import { buildChainSource } from './chain-source.js'
 
@@ -159,12 +159,52 @@ interface LoginBody {
   password?: unknown
 }
 
+async function issueSession(c: Context): Promise<void> {
+  setCookie(c, auth.cookieName, await auth.issueCookie(), {
+    httpOnly: true,
+    maxAge: auth.ttl,
+    path: '/',
+    sameSite: 'Strict',
+    secure: isSecureRequest(c)
+  })
+}
+
 app.get('/api/auth/status', async (c) => {
   if (!UI_AUTH) {
-    return c.json({ authRequired: false, authed: true })
+    return c.json({ authRequired: false, authed: true, configured: true })
   }
   const authed = await auth.verifyCookie(getCookie(c, auth.cookieName))
-  return c.json({ authRequired: true, authed })
+  return c.json({ authRequired: true, authed, configured: await auth.isConfigured() })
+})
+
+// Unauthenticated by necessity: with `UI_AUTH=true` and no password file there
+// is no credential to present yet. Trust-on-first-use — the endpoint answers
+// only in that window and 409s for good once a password is written.
+app.post('/api/auth/setup', async (c) => {
+  if (!UI_AUTH) {
+    return c.json({ error: 'not_found' }, 404)
+  }
+  if (c.req.header(CSRF_HEADER) !== CSRF_TOKEN) {
+    return c.json({ error: 'csrf' }, 403)
+  }
+  const key = clientKey(c)
+  if (auth.isLockedOut(key)) {
+    return c.json({ error: 'rate_limited' }, 429)
+  }
+  if (await auth.isConfigured()) {
+    return c.json({ error: 'auth_already_configured' }, 409)
+  }
+  const body = await c.req.json<LoginBody>().catch(() => null)
+  const password = typeof body?.password === 'string' ? body.password : ''
+  if (!isAcceptablePassword(password)) {
+    return c.json({ error: 'weak_password', minLength: MIN_PASSWORD_LENGTH }, 400)
+  }
+  if (!(await auth.setupPassword(password))) {
+    return c.json({ error: 'auth_already_configured' }, 409)
+  }
+  auth.registerSuccess(key)
+  await issueSession(c)
+  return c.json({ ok: true })
 })
 
 app.post('/api/login', async (c) => {
@@ -185,13 +225,7 @@ app.post('/api/login', async (c) => {
     return c.json({ error: 'invalid_credentials' }, 401)
   }
   auth.registerSuccess(key)
-  setCookie(c, auth.cookieName, await auth.issueCookie(), {
-    httpOnly: true,
-    maxAge: auth.ttl,
-    path: '/',
-    sameSite: 'Strict',
-    secure: isSecureRequest(c)
-  })
+  await issueSession(c)
   return c.json({ ok: true })
 })
 

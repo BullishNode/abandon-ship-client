@@ -116,10 +116,9 @@ function readStoredDeviceVault(): StoredDeviceVault | null {
 }
 
 // Probe that a non-extractable CryptoKey survives an IndexedDB round-trip in
-// this browser. Some private-browsing modes accept the write but drop or
-// reject the structured clone; auto-create must know BEFORE minting a wallet
-// whose seed the user has never seen, so a failed probe routes to the explicit
-// create flow instead.
+// this browser. Some private-browsing modes accept the write but drop or reject
+// the structured clone, which onboarding warns about before a password is
+// skipped.
 export async function isDeviceVaultSupported(): Promise<boolean> {
   try {
     const key = await generateDeviceKey()

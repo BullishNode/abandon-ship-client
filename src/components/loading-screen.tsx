@@ -5,7 +5,7 @@ interface LoadingScreenProps {
   text?: string
 }
 
-export function LoadingScreen({ text = 'Loading your wallet' }: LoadingScreenProps) {
+export function LoadingScreen({ text = 'Loading...' }: LoadingScreenProps) {
   return (
     <FullScreenLayout>
       <div className="flex flex-col items-center justify-center gap-4">

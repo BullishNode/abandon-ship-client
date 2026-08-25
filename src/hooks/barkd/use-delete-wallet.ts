@@ -23,8 +23,8 @@ export function useDeleteWallet(
     ...options,
     onSuccess: async (...args) => {
       // Full post-delete reset: invalidating existence alone would leave the
-      // infinite-staleTime autoCreate query cached as "done", so the root page
-      // would never create a wallet again after a delete.
+      // deleted wallet's balance/history cached, which the onboarding flow (and
+      // a freshly created wallet) would then read as its own.
       await resetWalletQueriesAfterDelete(queryClient)
       options?.onSuccess?.(...args)
     }

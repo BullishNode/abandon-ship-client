@@ -1,10 +1,12 @@
 export interface CreateWalletParams {
   mnemonic: string
   birthdayHeight?: number | null
+  restore?: boolean
 }
 
 export interface CreateWalletResult {
   fingerprint: string
+  scanIncomplete?: boolean
 }
 
 export interface WalletExists {

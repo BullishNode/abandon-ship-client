@@ -1,12 +1,12 @@
 export const walletKeys = {
   all: ['wallet'] as const,
   arkInfo: () => [...walletKeys.all, 'ark-info'] as const,
-  autoCreate: () => [...walletKeys.all, 'auto-create'] as const,
   balance: () => [...walletKeys.all, 'balance'] as const,
   exists: () => [...walletKeys.all, 'exists'] as const,
   mnemonic: () => [...walletKeys.all, 'mnemonic'] as const,
   nextRound: () => [...walletKeys.all, 'next-round'] as const,
   pendingRounds: () => [...walletKeys.all, 'pending-rounds'] as const,
+  silentUnlock: () => [...walletKeys.all, 'silent-unlock'] as const,
   transactions: () => [...walletKeys.all, 'transactions'] as const,
   vtxoEncoded: (id: string) => [...walletKeys.all, 'vtxos', id, 'encoded'] as const,
   vtxos: () => [...walletKeys.all, 'vtxos'] as const,

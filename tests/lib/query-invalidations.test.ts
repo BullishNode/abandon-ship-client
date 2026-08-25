@@ -104,7 +104,6 @@ describe('query invalidations', () => {
     it('removes wallet/exit caches and invalidates existence', async () => {
       await resetWalletQueriesAfterDelete(queryClient)
       expect(removedKeys()).toStrictEqual([
-        walletKeys.autoCreate(),
         walletKeys.balance(),
         walletKeys.transactions(),
         exitKeys.all

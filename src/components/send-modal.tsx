@@ -13,6 +13,7 @@ import {
   ModalTitle
 } from '@/components/modal'
 import { QRScanner } from '@/components/qr-scanner'
+import { slideTransition, slideVariants } from '@/components/step-slide'
 import { TagInput } from '@/components/tag-input'
 import { Button } from '@/components/ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
@@ -35,21 +36,6 @@ interface SendModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   initialStep?: 'scan' | 'send'
-}
-
-const slideVariants = {
-  center: {
-    opacity: 1,
-    x: 0
-  },
-  enter: (direction: number) => ({
-    opacity: 0,
-    x: direction > 0 ? '100%' : '-100%'
-  }),
-  exit: {
-    opacity: 0,
-    transition: { duration: 0.1 }
-  }
 }
 
 function getRouteLabel(route: SendRoute, t: (key: string) => string): string {
@@ -82,10 +68,7 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
               exit="exit"
               initial="enter"
               key="scan"
-              transition={{
-                opacity: { duration: 0.1 },
-                x: { damping: 30, stiffness: 300, type: 'spring' }
-              }}
+              transition={slideTransition}
               variants={slideVariants}
             >
               <ModalHeader>
@@ -116,10 +99,7 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
               exit="exit"
               initial="enter"
               key="send"
-              transition={{
-                opacity: { duration: 0.1 },
-                x: { damping: 30, stiffness: 300, type: 'spring' }
-              }}
+              transition={slideTransition}
               variants={slideVariants}
             >
               <ModalHeader>

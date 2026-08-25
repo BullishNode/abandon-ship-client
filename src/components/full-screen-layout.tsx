@@ -21,7 +21,7 @@ export function FullScreenLayout({ children }: FullScreenLayoutProps) {
           <img alt="Second Logo" className="h-8" src={logo} />
         </div>
       </header>
-      <main className="flex flex-1 items-center justify-center px-6">
+      <main className="flex w-full flex-1 items-center justify-center px-6">
         <div className="w-full max-w-lg">{children}</div>
       </main>
       <footer className="flex justify-center px-6 py-12">

@@ -50,6 +50,7 @@ import {
 } from '@/lib/backend/wasm/wallet-marker'
 import type { WasmWorkerApi } from '@/lib/backend/wasm/worker'
 import { config } from '@/config/runtime'
+import { useWalletStore } from '@/stores/wallet'
 import type { Backend } from '@/types/backend'
 import type { WalletNotification } from '@/types/domain/notification'
 import type { SendResult } from '@/types/domain/wallet'
@@ -124,16 +125,21 @@ function remote(): Comlink.Remote<WasmWorkerApi> {
   return remoteRef
 }
 
-async function openWithSeed(mnemonic: string, createIfNotExists: boolean): Promise<string> {
-  const fingerprint = await remote().open({
+async function openWithSeed(
+  mnemonic: string,
+  createIfNotExists: boolean,
+  restore = false
+): Promise<{ fingerprint: string; scanIncomplete: boolean }> {
+  const result = await remote().open({
     config: buildWasmConfig(),
     createIfNotExists,
     mnemonic,
     network: toWasmNetwork(config.network),
-    onchainDbName: onchainDbName()
+    onchainDbName: onchainDbName(),
+    restore
   })
   setWalletMarker()
-  return fingerprint
+  return result
 }
 
 // Wallet persistence check. IndexedDB enumeration is authoritative; the
@@ -195,12 +201,25 @@ export async function isWalletLocked(): Promise<boolean> {
   return await hasPersistedWallet()
 }
 
+let unlocking: Promise<unknown> | null = null
+
 // Reopen an existing wallet with a re-supplied seed. `createIfNotExists: false`
 // means a wrong seed (whose fingerprint has no stored wallet) rejects instead of
 // silently creating a fresh wallet. The session seed is only stored once the
 // open succeeds, so it can never disagree with the wallet that is actually open.
 export async function unlockWallet(mnemonic: string): Promise<void> {
-  await openWithSeed(mnemonic, false)
+  if (deletion !== null) {
+    throw new Error('Wallet is being deleted')
+  }
+  const pending = openWithSeed(mnemonic, false)
+  unlocking = pending
+  try {
+    await pending
+  } finally {
+    if (unlocking === pending) {
+      unlocking = null
+    }
+  }
   setSessionMnemonic(mnemonic)
 }
 
@@ -394,6 +413,24 @@ async function deleteWalletStorage(fingerprint: string | null): Promise<void> {
   }
 }
 
+export async function eraseLockedWallet(): Promise<void> {
+  if (unlocking !== null) {
+    try {
+      await unlocking
+    } catch {
+      // A failed unlock changes nothing about the erase.
+    }
+  }
+  const fingerprint = useWalletStore.getState().wallet?.fingerprint ?? null
+  const pending = deleteWalletStorage(fingerprint)
+  deletion = pending
+  try {
+    await pending
+  } finally {
+    deletion = null
+  }
+}
+
 export const wasmBackend: Backend = {
   bitcoinApi: {
     tip: async () => {
@@ -514,7 +551,7 @@ export const wasmBackend: Backend = {
       await ensureOpen()
       return toBalance(await remote().getBalance())
     },
-    createWallet: async ({ mnemonic }) => {
+    createWallet: async ({ mnemonic, restore }) => {
       // A delete in flight is dropping stores this create would immediately
       // recreate under the same onchain name — and would then have deleted out
       // from under it. Wait it out instead of racing it.
@@ -526,7 +563,7 @@ export const wasmBackend: Backend = {
           // creating on top of the leftovers is better than refusing to create.
         }
       }
-      const fingerprint = await openWithSeed(mnemonic, true)
+      const { fingerprint, scanIncomplete } = await openWithSeed(mnemonic, true, restore ?? false)
       setSessionMnemonic(mnemonic)
       // Vaults surviving from a previous wallet (e.g. IndexedDB cleared but
       // localStorage kept) hold the OLD mnemonic: the next reload would demand
@@ -534,16 +571,14 @@ export const wasmBackend: Backend = {
       clearVault()
       await clearDeviceVault()
       // Passwordless wallets auto-unlock on reload via the device vault.
-      // Failure is non-fatal here: explicit-create/import users hold their
-      // words and fall back to the mnemonic gate, and the auto-create flow
-      // verifies the vault readback itself before treating the wallet as safe.
       try {
         await saveDeviceVault(mnemonic)
       } catch {
-        // Reloads fall back to the interactive mnemonic gate.
+        // Non-fatal: the user came through create/import holding their words,
+        // so reloads fall back to the interactive mnemonic gate.
       }
       void requestPersistentStorage()
-      return { fingerprint }
+      return { fingerprint, scanIncomplete }
     },
     mnemonic: async () => {
       const seed = getSessionMnemonic() ?? (await remote().getMnemonic())
@@ -616,7 +651,8 @@ export const wasmBackend: Backend = {
       }
       const seed = getSessionMnemonic()
       if (seed !== null) {
-        return { fingerprint: await openWithSeed(seed, false) }
+        const { fingerprint } = await openWithSeed(seed, false)
+        return { fingerprint }
       }
       if (await hasPersistedWallet()) {
         throw new WalletLockedError()
