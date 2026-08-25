@@ -5,10 +5,9 @@ import { defineStepper } from '@stepperize/react'
 import { useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { z } from 'zod'
 import { SeedLayout } from '@/components/layout/seed-layout'
-import { config } from '@/config/runtime'
 import {
   StepsLayout,
   StepsLayoutContent,
@@ -17,10 +16,13 @@ import {
   StepsLayoutForm,
   StepsLayoutNav
 } from '@/components/layout/steps-layout'
+import { hasPasswordMismatch } from '@/components/new-password-fields'
+import { OnboardingPasswordStep } from '@/components/onboarding-password-step'
 import { SeedWord } from '@/components/seed-word'
 import { SeedWordButton } from '@/components/seed-word-button'
 import type { SeedWordStatus } from '@/components/seed-word-button'
 import { StepIndicator } from '@/components/step-indicator'
+import { StepSlide } from '@/components/step-slide'
 import { Button } from '@/components/ui/button'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -32,7 +34,9 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import { useCreateWallet } from '@/hooks/barkd/use-create-wallet'
+import { config } from '@/config/runtime'
+import { useOnboardingWallet } from '@/hooks/use-onboarding-wallet'
+import { supportsWalletPassword } from '@/lib/backend-features'
 import { NETWORKS } from '@/types/domain/network'
 import { shuffleArray } from '@/utils/shuffle-array'
 
@@ -52,37 +56,37 @@ const networkAndServerSchema = z.object({
 
 type WalletNameFormValues = z.infer<typeof walletNameSchema>
 
-const { useStepper, utils } = defineStepper(
+// The password step is filtered out in barkd builds, where the password is the
+// server-side UI credential set by the auth gate before onboarding starts.
+const { steps, useStepper } = defineStepper([
   { id: 'name', label: 'wallet.name.title', schema: walletNameSchema },
   {
     id: 'mnemonic',
     label: 'wallet.mnemonic.show.title',
     schema: z.object({})
   },
+  { id: 'password', label: 'wallet.password.title', schema: z.object({}) },
   {
     id: 'server',
     label: 'wallet.backend.title',
     schema: networkAndServerSchema
   }
-)
+])
 
 type MnemonicStage = 'show' | 'confirm'
 
+const WORD_COUNT = 12
+
 export default function CreateWalletPage() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const stepper = useStepper()
   const [name, setName] = useState('')
   const [mnemonic, setMnemonic] = useState('')
   const [mnemonicStage, setMnemonicStage] = useState<MnemonicStage>('show')
   const [isMnemonicConfirmed, setIsMnemonicConfirmed] = useState(false)
-  const { mutate: createWallet, isPending: creatingWallet } = useCreateWallet({
-    onSuccess: (data) => {
-      if (data) {
-        void navigate('/dashboard')
-      }
-    }
-  })
+  const [password, setPassword] = useState('')
+  const [passwordConfirm, setPasswordConfirm] = useState('')
+  const { mutate: createWallet, isPending: creatingWallet } = useOnboardingWallet()
 
   const form = useForm({
     defaultValues: {
@@ -93,6 +97,15 @@ export default function CreateWalletPage() {
     mode: 'onTouched',
     resolver: zodResolver(stepper.current.schema)
   })
+
+  function goToNextStep() {
+    setMnemonicStage('show')
+    if (stepper.current.id === 'mnemonic' && !supportsWalletPassword) {
+      void stepper.goTo('server')
+      return
+    }
+    void stepper.next()
+  }
 
   function onSubmit(values: z.infer<typeof stepper.current.schema>) {
     if (stepper.current.id === 'name' && 'name' in values) {
@@ -111,49 +124,80 @@ export default function CreateWalletPage() {
     }
 
     if (!stepper.isLast) {
-      setMnemonicStage('show')
-      return stepper.next()
+      goToNextStep()
+      return
     }
 
     if ('arkServer' in values && 'network' in values) {
-      createWallet({
-        createdAt: new Date(),
-        mnemonic,
-        name
-      })
+      createWallet({ mnemonic, name, password })
     }
   }
 
-  const currentIndex = utils.getIndex(stepper.current.id)
+  function onSkip() {
+    if (stepper.current.id === 'password') {
+      setPassword('')
+      setPasswordConfirm('')
+    }
+    goToNextStep()
+  }
+
+  const visibleSteps = steps.filter((step) => supportsWalletPassword || step.id !== 'password')
+  const currentIndex = visibleSteps.findIndex((step) => step.id === stepper.current.id)
 
   const isNameStepInvalid = stepper.current.id === 'name' && !form.formState.isValid
 
   const isMnemonicConfirmIncomplete =
     stepper.current.id === 'mnemonic' && mnemonicStage === 'confirm' && !isMnemonicConfirmed
 
+  const isPasswordIncomplete =
+    stepper.current.id === 'password' &&
+    (password.length === 0 || hasPasswordMismatch(password, passwordConfirm))
+
+  const isSkippable = isMnemonicConfirmIncomplete || stepper.current.id === 'password'
+
   return (
     <StepsLayout>
       <StepsLayoutNav>
-        {stepper.all.map((step, index) => (
+        {visibleSteps.map((step, index) => (
           <StepIndicator isActive={index <= currentIndex} key={step.id} label={t(step.label)} />
         ))}
       </StepsLayoutNav>
       <FormProvider {...form}>
         <StepsLayoutForm onSubmit={(e) => void form.handleSubmit(onSubmit)(e)}>
-          {stepper.switch({
-            mnemonic: () => (
-              <MnemonicComponent
-                mnemonic={mnemonic}
-                onConfirmedChange={setIsMnemonicConfirmed}
-                stage={mnemonicStage}
-              />
-            ),
-            name: () => <WalletNameComponent />,
-            server: () => <NetworkAndServersComponent />
-          })}
+          <StepSlide
+            stepKey={
+              stepper.current.id === 'mnemonic' ? `mnemonic-${mnemonicStage}` : stepper.current.id
+            }
+          >
+            {stepper.match({
+              mnemonic: () => (
+                <MnemonicComponent
+                  mnemonic={mnemonic}
+                  onConfirmedChange={setIsMnemonicConfirmed}
+                  stage={mnemonicStage}
+                />
+              ),
+              name: () => <WalletNameComponent />,
+              password: () => (
+                <OnboardingPasswordStep
+                  confirm={passwordConfirm}
+                  disabled={creatingWallet}
+                  onConfirmChange={setPasswordConfirm}
+                  onPasswordChange={setPassword}
+                  password={password}
+                />
+              ),
+              server: () => <NetworkAndServersComponent />
+            })}
+          </StepSlide>
           <StepsLayoutContentAction>
+            {isSkippable ? (
+              <Button onClick={onSkip} type="button" variant="outline">
+                {t('actions.skip')}
+              </Button>
+            ) : null}
             <Button
-              disabled={isNameStepInvalid || isMnemonicConfirmIncomplete}
+              disabled={isNameStepInvalid || isMnemonicConfirmIncomplete || isPasswordIncomplete}
               loading={creatingWallet}
               type="submit"
             >
@@ -201,7 +245,7 @@ function MnemonicComponent({ stage, mnemonic, onConfirmedChange }: MnemonicCompo
 
   const [selectedWords, setSelectedWords] = useState<string[]>([])
   const [status, setStatus] = useState<SeedWordStatus[]>(() =>
-    Array.from({ length: 12 }).map(() => 'idle')
+    Array.from({ length: WORD_COUNT }).map(() => 'idle')
   )
 
   function handleClick(word: string, index: number) {
@@ -239,7 +283,7 @@ function MnemonicComponent({ stage, mnemonic, onConfirmedChange }: MnemonicCompo
         return updated
       })
 
-      if (isValid && selectedWords.length === 12) {
+      if (isValid && selectedWords.length === WORD_COUNT) {
         onConfirmedChange(true)
       }
 
@@ -256,7 +300,7 @@ function MnemonicComponent({ stage, mnemonic, onConfirmedChange }: MnemonicCompo
       return updated
     })
 
-    if (isValid && currentPosition === 11) {
+    if (isValid && currentPosition === WORD_COUNT - 1) {
       onConfirmedChange(true)
     }
   }
@@ -281,7 +325,7 @@ function MnemonicComponent({ stage, mnemonic, onConfirmedChange }: MnemonicCompo
       description={t('wallet.mnemonic.confirm.description')}
       title={t('wallet.mnemonic.confirm.title')}
     >
-      <SeedLayout>
+      <SeedLayout className="grid-cols-2 gap-2 sm:grid-cols-4">
         {shuffledWords.map((word, index) => {
           const selectedIndex = selectedWords.indexOf(word)
           const isSelected = selectedIndex !== -1

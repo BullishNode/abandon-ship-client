@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { hasPasswordMismatch, NewPasswordFields } from '@/components/new-password-fields'
 
 export type WasmPasswordMode = 'set' | 'change' | 'remove'
 
@@ -68,7 +69,7 @@ export function WasmPasswordDialog({
   const needsNew = mode !== 'remove'
   const currentEmpty = needsCurrent && current.length === 0
   const nextEmpty = needsNew && next.length === 0
-  const mismatch = needsNew && confirm !== next
+  const mismatch = needsNew && hasPasswordMismatch(next, confirm)
   const disableSubmit = currentEmpty || nextEmpty || mismatch
 
   function handleClose(nextOpen: boolean) {
@@ -126,37 +127,17 @@ export function WasmPasswordDialog({
               </Field>
             ) : null}
             {needsNew ? (
-              <>
-                <Field>
-                  <FieldLabel htmlFor="wasm-new-password">
-                    {t('settings.password.dialog.new_label')}
-                  </FieldLabel>
-                  <Input
-                    autoComplete="new-password"
-                    disabled={isPending}
-                    id="wasm-new-password"
-                    onChange={(event) => setNext(event.target.value)}
-                    type="password"
-                    value={next}
-                  />
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="wasm-confirm-password">
-                    {t('settings.password.dialog.confirm_label')}
-                  </FieldLabel>
-                  <Input
-                    autoComplete="new-password"
-                    disabled={isPending}
-                    id="wasm-confirm-password"
-                    onChange={(event) => setConfirm(event.target.value)}
-                    type="password"
-                    value={confirm}
-                  />
-                  {confirm.length > 0 && mismatch ? (
-                    <FieldError>{t('settings.password.dialog.error_mismatch')}</FieldError>
-                  ) : null}
-                </Field>
-              </>
+              <NewPasswordFields
+                confirm={confirm}
+                confirmLabel={t('settings.password.dialog.confirm_label')}
+                disabled={isPending}
+                idPrefix="wasm"
+                mismatchError={t('settings.password.dialog.error_mismatch')}
+                newLabel={t('settings.password.dialog.new_label')}
+                next={next}
+                onConfirmChange={setConfirm}
+                onNextChange={setNext}
+              />
             ) : null}
           </div>
           <DialogFooter className="mt-6">

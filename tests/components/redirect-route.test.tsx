@@ -46,13 +46,25 @@ describe(RedirectRoute, () => {
     expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument()
   })
 
-  it('renders onboarding outlet at /create regardless of wallet state', async () => {
+  it('redirects to /dashboard at /create when a wallet already exists', async () => {
     vi.mocked(walletApi.walletExists).mockResolvedValue({ fingerprint: 'abc' })
+    renderAt('/create')
+    await waitFor(() => expect(screen.getByText('DASHBOARD')).toBeInTheDocument())
+  })
+
+  it('redirects to /dashboard at /import when a wallet already exists', async () => {
+    vi.mocked(walletApi.walletExists).mockResolvedValue({ fingerprint: 'abc' })
+    renderAt('/import')
+    await waitFor(() => expect(screen.getByText('DASHBOARD')).toBeInTheDocument())
+  })
+
+  it('renders the create flow when no wallet exists', async () => {
+    vi.mocked(walletApi.walletExists).mockResolvedValue({ fingerprint: '' })
     renderAt('/create')
     await expect(screen.findByText('CREATE')).resolves.toBeInTheDocument()
   })
 
-  it('renders onboarding outlet at /import regardless of wallet state', async () => {
+  it('renders the import flow when no wallet exists', async () => {
     vi.mocked(walletApi.walletExists).mockResolvedValue({ fingerprint: '' })
     renderAt('/import')
     await expect(screen.findByText('IMPORT')).resolves.toBeInTheDocument()

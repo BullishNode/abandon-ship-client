@@ -38,6 +38,12 @@ interface OpenArgs {
   config: Config
   onchainDbName: string
   createIfNotExists: boolean
+  restore: boolean
+}
+
+interface OpenResult {
+  fingerprint: string
+  scanIncomplete: boolean
 }
 
 // Vite resolves `@secondts/bark` to its `web` target (via the package's
@@ -71,7 +77,7 @@ async function ensureWasm(): Promise<void> {
 let wallet: Wallet | null = null
 let onchain: OnchainWallet | null = null
 let sessionMnemonic: string | null = null
-let openPromise: Promise<string> | null = null
+let openPromise: Promise<OpenResult> | null = null
 // The mnemonic behind the in-flight openPromise, so a concurrent open with a
 // different seed is rejected instead of silently receiving the wrong wallet.
 let openingMnemonic: string | null = null
@@ -205,7 +211,7 @@ async function drainNotifications(
   }
 }
 
-async function openWallet(args: OpenArgs): Promise<string> {
+async function openWallet(args: OpenArgs): Promise<OpenResult> {
   await ensureWasm()
   // Creating the OnchainWallet persists its IndexedDB before the wallet open
   // validates the mnemonic. If the open then fails on a first-time open, an
@@ -243,9 +249,19 @@ async function openWallet(args: OpenArgs): Promise<string> {
   wallet = opened
   onchain = oc
   sessionMnemonic = args.mnemonic
-  startSyncLoop()
   diagnostics.append('info', `wallet opened (${opened.fingerprint()})`)
-  return opened.fingerprint()
+  let scanIncomplete = false
+  if (args.restore) {
+    try {
+      await oc.initialScan()
+      diagnostics.append('info', 'initial onchain scan complete')
+    } catch (error) {
+      scanIncomplete = true
+      diagnostics.append('error', `initial onchain scan failed: ${describeError(error)}`)
+    }
+  }
+  startSyncLoop()
+  return { fingerprint: opened.fingerprint(), scanIncomplete }
 }
 
 const api = {
@@ -377,14 +393,14 @@ const api = {
     return await requireOnchain().utxos()
   },
 
-  async open(args: OpenArgs): Promise<string> {
+  async open(args: OpenArgs): Promise<OpenResult> {
     if (wallet !== null) {
       // Never silently answer for a different seed: the caller would end up
       // with a session mnemonic that does not control the open wallet's funds.
       if (args.mnemonic !== sessionMnemonic) {
         throw new Error('A different wallet is already open')
       }
-      return wallet.fingerprint()
+      return { fingerprint: wallet.fingerprint(), scanIncomplete: false }
     }
     // Collapse concurrent opens (many hooks call the backend on mount) so the
     // same IndexedDB wallet is never opened twice. The synchronous check-and-set

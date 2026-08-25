@@ -31,7 +31,6 @@ export async function invalidateWalletExistence(queryClient: QueryClient) {
 }
 
 export async function resetWalletQueriesAfterDelete(queryClient: QueryClient) {
-  queryClient.removeQueries({ queryKey: walletKeys.autoCreate() })
   queryClient.removeQueries({ queryKey: walletKeys.balance() })
   queryClient.removeQueries({ queryKey: walletKeys.transactions() })
   queryClient.removeQueries({ queryKey: exitKeys.all })

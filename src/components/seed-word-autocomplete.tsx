@@ -14,6 +14,7 @@ interface SeedWordAutocompleteProps {
   emptyMessage?: string
   placeholder?: string
   iconLeft: ReactNode
+  onPaste?: React.ClipboardEventHandler<HTMLInputElement>
 }
 
 export function SeedWordAutocomplete({
@@ -23,7 +24,8 @@ export function SeedWordAutocomplete({
   onSearchValueChange,
   items,
   emptyMessage = 'No matches',
-  iconLeft
+  iconLeft,
+  onPaste
 }: SeedWordAutocompleteProps) {
   const [open, setOpen] = useState(false)
   const [hasError, setHasError] = useState(false)
@@ -33,6 +35,12 @@ export function SeedWordAutocomplete({
   for (const item of items) {
     labels[item.value] = item.label
   }
+
+  const normalizedSearch = searchValue.toLowerCase()
+  const visibleItems =
+    normalizedSearch.length > 0
+      ? items.filter((item) => item.value.startsWith(normalizedSearch))
+      : []
 
   function reset() {
     onSelectedValueChange('')
@@ -119,7 +127,7 @@ export function SeedWordAutocomplete({
                 onValueChange={handleSearchValueChange}
                 value={searchValue}
               >
-                <InputGroupInput aria-invalid={hasError} />
+                <InputGroupInput aria-invalid={hasError} onPaste={onPaste} />
               </CommandPrimitive.Input>
             </InputGroup>
           </PopoverAnchor>
@@ -140,9 +148,9 @@ export function SeedWordAutocomplete({
             onOpenAutoFocus={(e) => e.preventDefault()}
           >
             <CommandList>
-              {items.length > 0 ? (
+              {visibleItems.length > 0 ? (
                 <CommandGroup>
-                  {items.map((option) => (
+                  {visibleItems.map((option) => (
                     <CommandItem
                       key={option.value}
                       onMouseDown={(e) => e.preventDefault()}

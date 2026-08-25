@@ -9,27 +9,34 @@ interface CreateWalletParams {
   mnemonic: string
   createdAt: Date
   birthdayHeight?: number
+  restore?: boolean
 }
 
-async function createWallet(params: CreateWalletParams) {
+interface CreateWalletOutcome {
+  created: boolean
+  scanIncomplete: boolean
+}
+
+async function createWallet(params: CreateWalletParams): Promise<CreateWalletOutcome> {
   const { setWallet } = useWalletStore.getState()
 
   const response = await walletApi.createWallet({
     birthdayHeight: params.birthdayHeight,
-    mnemonic: params.mnemonic
+    mnemonic: params.mnemonic,
+    restore: params.restore
   })
-  const { fingerprint } = response
+  const { fingerprint, scanIncomplete } = response
 
   if (!fingerprint) {
-    return false
+    return { created: false, scanIncomplete: false }
   }
 
   setWallet({ createdAt: params.createdAt.toISOString(), fingerprint, name: params.name })
-  return true
+  return { created: true, scanIncomplete: scanIncomplete ?? false }
 }
 
 export function useCreateWallet(
-  options?: Omit<UseMutationOptions<boolean, Error, CreateWalletParams>, 'mutationFn'>
+  options?: Omit<UseMutationOptions<CreateWalletOutcome, Error, CreateWalletParams>, 'mutationFn'>
 ) {
   const queryClient = useQueryClient()
 

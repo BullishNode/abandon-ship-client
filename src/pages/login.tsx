@@ -55,7 +55,7 @@ function BarkdLoginPage() {
 
   return (
     <FullScreenLayout>
-      <Card className="min-w-sm shadow-none ring-0">
+      <Card className="min-w-sm bg-transparent shadow-none ring-0">
         <CardHeader>
           <CardTitle className="text-center font-bold text-3xl">{t('login.title')}</CardTitle>
           <CardDescription className="text-center text-lg">
