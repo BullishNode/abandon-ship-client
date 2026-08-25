@@ -93,6 +93,29 @@ export function getSendRoute(destinationType: Destination['type']): SendRoute {
   return 'onchain-from-ark'
 }
 
+export interface SendRouteBalances {
+  arkSpendableSat: number
+  onchainSpendableSat: number
+}
+
+// An empty Ark wallet can't fund an on-chain send, so default to the on-chain
+// wallet when it is the only side holding funds. The user can still switch
+// sources afterwards.
+export function getDefaultSendRoute(
+  destinationType: Destination['type'],
+  balances: SendRouteBalances
+): SendRoute {
+  const route = getSendRoute(destinationType)
+  if (
+    route === 'onchain-from-ark' &&
+    balances.arkSpendableSat === 0 &&
+    balances.onchainSpendableSat > 0
+  ) {
+    return 'onchain-from-wallet'
+  }
+  return route
+}
+
 const DESTINATION_PRIORITY: Record<Destination['type'], number> = {
   'ark-address': 0,
   'bitcoin-address': 2,

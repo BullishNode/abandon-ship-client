@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { normalizeDestination } from './bitcoin'
 import {
   destinationMatchesWalletNetwork,
+  getDefaultSendRoute,
   getSelectableDestinations,
   getSendRoute,
   parsePaymentInput,
@@ -50,6 +51,33 @@ describe(getSendRoute, () => {
 
   it('returns onchain-from-ark for bitcoin-address', () => {
     expect(getSendRoute('bitcoin-address')).toBe('onchain-from-ark')
+  })
+})
+
+describe(getDefaultSendRoute, () => {
+  it('pays on-chain sends from the on-chain wallet when the ark wallet is empty', () => {
+    expect(
+      getDefaultSendRoute('bitcoin-address', { arkSpendableSat: 0, onchainSpendableSat: 5000 })
+    ).toBe('onchain-from-wallet')
+  })
+
+  it('keeps paying from ark while it holds any funds', () => {
+    expect(
+      getDefaultSendRoute('bitcoin-address', { arkSpendableSat: 1, onchainSpendableSat: 5000 })
+    ).toBe('onchain-from-ark')
+  })
+
+  it('keeps the ark default when both wallets are empty', () => {
+    expect(
+      getDefaultSendRoute('bitcoin-address', { arkSpendableSat: 0, onchainSpendableSat: 0 })
+    ).toBe('onchain-from-ark')
+  })
+
+  it('never reroutes ark or lightning destinations', () => {
+    const emptyArk = { arkSpendableSat: 0, onchainSpendableSat: 5000 }
+    expect(getDefaultSendRoute('ark-address', emptyArk)).toBe('ark')
+    expect(getDefaultSendRoute('bolt11', emptyArk)).toBe('lightning')
+    expect(getDefaultSendRoute('lnaddress', emptyArk)).toBe('lightning')
   })
 })
 

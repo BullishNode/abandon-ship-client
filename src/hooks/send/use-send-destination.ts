@@ -3,13 +3,15 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { config } from '@/config/runtime'
+import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
+import { useWalletBalance } from '@/hooks/barkd/use-wallet-balance'
 import { useBrantaVerification } from '@/hooks/branta/use-branta-verification'
 import { normalizeDestination } from '@/utils/bitcoin'
 import { canUseCamera } from '@/utils/camera'
 import type { SendRoute } from '@/utils/payment'
 import {
+  getDefaultSendRoute,
   getSelectableDestinations,
-  getSendRoute,
   parsePaymentInput,
   pickCheapestDestination,
   restrictPaymentToNetwork
@@ -24,6 +26,16 @@ interface UseSendDestinationOptions {
 
 export function useSendDestination({ open, initialStep = 'scan' }: UseSendDestinationOptions) {
   const { t } = useTranslation()
+
+  const { data: walletBalance } = useWalletBalance()
+  const { data: onchainBalance } = useOnchainBalance()
+  const routeBalances = {
+    arkSpendableSat: walletBalance?.spendableSats ?? 0,
+    onchainSpendableSat:
+      (onchainBalance?.trustedSpendableSats ?? 0) +
+      (onchainBalance?.trustedPendingSats ?? 0) +
+      (onchainBalance?.untrustedPendingSats ?? 0)
+  }
 
   const effectiveInitialStep: SendStep = canUseCamera() ? initialStep : 'send'
   const [step, setStep] = useState<SendStep>(effectiveInitialStep)
@@ -60,7 +72,7 @@ export function useSendDestination({ open, initialStep = 'scan' }: UseSendDestin
     const dest = normalizeDestination(rawDest)
     setDestination(dest.destination)
     setSelectedMethodType(dest.type)
-    setSendRoute(getSendRoute(dest.type))
+    setSendRoute(getDefaultSendRoute(dest.type, routeBalances))
   }
 
   // The raw input is what `useBrantaVerification` queries and what
