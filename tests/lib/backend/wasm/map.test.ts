@@ -288,7 +288,8 @@ function arkInfo(): WasmArkInfo {
     roundIntervalSecs: 60,
     serverPubkey: 'pubkey',
     vtxoExitDelta: 12,
-    vtxoExpiryDelta: 1008
+    vtxoExpiryDelta: 1008,
+    vtxoLifetime: 1008
   }
 }
 

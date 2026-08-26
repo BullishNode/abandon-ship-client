@@ -107,7 +107,7 @@ export function toArkInfo(dto: WasmArkInfo): ArkInfo {
     roundInterval: `${dto.roundIntervalSecs}s`,
     serverPubkey: dto.serverPubkey,
     vtxoExitDelta: dto.vtxoExitDelta,
-    vtxoExpiryDelta: dto.vtxoExpiryDelta
+    vtxoExpiryDelta: dto.vtxoLifetime
   }
 }
 

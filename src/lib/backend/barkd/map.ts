@@ -334,7 +334,7 @@ export function toArkInfo(dto: BarkdArkInfo): ArkInfo {
     roundInterval: dto.roundInterval,
     serverPubkey: dto.serverPubkey,
     vtxoExitDelta: dto.vtxoExitDelta,
-    vtxoExpiryDelta: dto.vtxoExpiryDelta
+    vtxoExpiryDelta: dto.vtxoLifetime ?? dto.vtxoExpiryDelta
   }
 }
 
