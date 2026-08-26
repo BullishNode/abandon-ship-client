@@ -54,7 +54,7 @@ describe('import wallet flow (WASM)', () => {
   })
 
   it('warns that recovery relies on the Ark server', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ delay: null })
     await goToMnemonicStep(user)
 
     expect(
@@ -63,7 +63,7 @@ describe('import wallet flow (WASM)', () => {
   })
 
   it('imports without a birthday height field and with the chosen password', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ delay: null })
     await goToMnemonicStep(user)
     await typePhrase(user)
     await waitFor(() => expect(continueButton()).toBeEnabled())

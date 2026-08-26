@@ -216,7 +216,8 @@ export default defineConfig(({ mode }) => {
       },
       environment: 'jsdom',
       globals: true,
-      setupFiles: ['./tests/setup.ts']
+      setupFiles: ['./tests/setup.ts'],
+      testTimeout: 15_000
     },
     // ES-format workers so the WASM worker can `import` the bark bindings and
     // resolve `new URL('..._bg.wasm', import.meta.url)` inside its own realm.

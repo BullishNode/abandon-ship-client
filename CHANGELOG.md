@@ -5,6 +5,34 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-08-26
+
+### Added
+
+- Onboarding flows for creating and importing a wallet.
+- Timeframe selector for the balance-over-time chart.
+- Wallet diagnostics in WASM mode are recorded and persisted.
+- Deploy config for Railway.
+
+### Changed
+
+- Updated `@secondts/bark` to 0.20.1 and `@secondts/barkd` to 0.6.2, and bumped the Docker images to bark 0.6.2.
+- Send defaults to the on-chain wallet when the Ark balance is empty.
+- Removed the incomplete-backup warning from the settings page.
+- Updated `branta-js`.
+
+### Fixed
+
+- Send rejects destinations that are not on the wallet network, instead of failing silently.
+- Board blocks submit until the fee estimate matches the input.
+- Offboard validates the address locally and gates submit on a current fee estimate.
+- Exit validates claim addresses before auto-claim spends to them.
+- WASM mode no longer triggers CSP violations, and `frame-ancestors` is enforced via header.
+
+### Security
+
+- The barkd proxy mnemonic blocklist was replaced with a route allowlist.
+
 ## [0.7.2] - 2026-08-11
 
 ### Added
