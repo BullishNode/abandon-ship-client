@@ -39,7 +39,7 @@ export default function SetupPasswordPage() {
 
   return (
     <FullScreenLayout>
-      <Card className="min-w-sm bg-transparent shadow-none ring-0">
+      <Card className="w-full bg-transparent shadow-none ring-0">
         <CardHeader>
           <CardTitle className="text-center font-bold text-3xl">
             {t('setup_password.title')}

@@ -170,7 +170,12 @@ export default function ImportWalletPage() {
     <StepsLayout>
       <StepsLayoutNav>
         {visibleSteps.map((step, index) => (
-          <StepIndicator isActive={index <= currentIndex} key={step.id} label={t(step.label)} />
+          <StepIndicator
+            isActive={index <= currentIndex}
+            key={step.id}
+            label={t(step.label)}
+            shortLabel={t([`${step.label}_short`, step.label])}
+          />
         ))}
       </StepsLayoutNav>
       <FormProvider {...form}>

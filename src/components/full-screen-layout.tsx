@@ -25,12 +25,12 @@ export function FullScreenLayout({ children }: FullScreenLayoutProps) {
         <div className="w-full max-w-lg">{children}</div>
       </main>
       <footer className="flex justify-center px-6 py-12">
-        <div className="flex w-full max-w-lg items-center">
-          <ul className="flex gap-4">
+        <div className="flex w-full max-w-lg items-center justify-center">
+          <ul className="flex flex-wrap justify-center gap-x-4 gap-y-2">
             {Object.entries(footerLinks).map(([key, { i18n, fallback, link }]) => (
               <li key={key}>
                 <a
-                  className="text-muted-foreground text-sm hover:text-foreground"
+                  className="whitespace-nowrap text-muted-foreground text-sm hover:text-foreground"
                   href={link}
                   rel="noopener noreferrer"
                   target="_blank"

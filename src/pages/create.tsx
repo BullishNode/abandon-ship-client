@@ -159,7 +159,12 @@ export default function CreateWalletPage() {
     <StepsLayout>
       <StepsLayoutNav>
         {visibleSteps.map((step, index) => (
-          <StepIndicator isActive={index <= currentIndex} key={step.id} label={t(step.label)} />
+          <StepIndicator
+            isActive={index <= currentIndex}
+            key={step.id}
+            label={t(step.label)}
+            shortLabel={t([`${step.label}_short`, step.label])}
+          />
         ))}
       </StepsLayoutNav>
       <FormProvider {...form}>
@@ -325,7 +330,7 @@ function MnemonicComponent({ stage, mnemonic, onConfirmedChange }: MnemonicCompo
       description={t('wallet.mnemonic.confirm.description')}
       title={t('wallet.mnemonic.confirm.title')}
     >
-      <SeedLayout className="grid-cols-2 gap-2 sm:grid-cols-4">
+      <SeedLayout className="gap-2">
         {shuffledWords.map((word, index) => {
           const selectedIndex = selectedWords.indexOf(word)
           const isSelected = selectedIndex !== -1

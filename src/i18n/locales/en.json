@@ -97,10 +97,12 @@
     },
     "backend": {
       "title": "Network and servers",
+      "title_short": "Network",
       "description": "Select a network and server to connect to"
     },
     "password": {
       "title": "Set a password",
+      "title_short": "Password",
       "description": "A password encrypts your seed phrase in this browser. You can skip it and set one later in Settings.",
       "label": "Password",
       "confirm_label": "Confirm password",
