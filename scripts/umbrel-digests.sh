@@ -11,7 +11,7 @@ if [ -f docker/checksums.env ]; then
   # shellcheck disable=SC1091
   set -a; source docker/checksums.env; set +a
 fi
-BARK_VERSION="${BARK_VERSION:-0.6.1}"
+BARK_VERSION="${BARK_VERSION:-0.6.2}"
 
 REFS=(
   "bark-web:${VERSION}"

@@ -68,7 +68,7 @@ describe('import wallet flow', () => {
   })
 
   it('keeps Continue disabled until all twelve words are filled', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ delay: null })
     await goToMnemonicStep(user)
 
     expect(continueButton()).toBeDisabled()
@@ -77,7 +77,7 @@ describe('import wallet flow', () => {
   })
 
   it('rejects a complete phrase with a bad checksum', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ delay: null })
     await goToMnemonicStep(user)
 
     await typePhrase(user, INVALID_CHECKSUM_PHRASE)
@@ -89,7 +89,7 @@ describe('import wallet flow', () => {
   })
 
   it('skips the password step in barkd builds', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ delay: null })
     await goToServerStep(user)
 
     expect(screen.getAllByRole('listitem')).toHaveLength(3)
@@ -97,7 +97,7 @@ describe('import wallet flow', () => {
   })
 
   it('imports with a blank birthday height under an esplora chain source', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ delay: null })
     await goToServerStep(user)
 
     expect(screen.getByLabelText('Birthday height (optional)')).toHaveValue('')
@@ -115,7 +115,7 @@ describe('import wallet flow', () => {
 
   it('requires the birthday height under a bitcoind chain source', async () => {
     setChainSource(BITCOIND)
-    const user = userEvent.setup()
+    const user = userEvent.setup({ delay: null })
     await goToServerStep(user)
 
     await user.click(continueButton())
