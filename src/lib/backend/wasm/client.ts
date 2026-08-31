@@ -605,13 +605,13 @@ export const wasmBackend: Backend = {
     refreshAll: async () => {
       await ensureOpen()
       const vtxoIds = await remote().refreshableVtxoIds()
-      await remote().refreshVtxos(vtxoIds)
-      return { id: 0, ongoing: true }
+      const round = await remote().refreshVtxos(vtxoIds)
+      return round === undefined ? null : toPendingRound(round)
     },
     refreshVtxos: async ({ vtxos }) => {
       await ensureOpen()
-      await remote().refreshVtxos(vtxos)
-      return { id: 0, ongoing: true }
+      const round = await remote().refreshVtxos(vtxos)
+      return round === undefined ? null : toPendingRound(round)
     },
     send: async ({ destination, amountSats, comment }) => {
       await ensureOpen()

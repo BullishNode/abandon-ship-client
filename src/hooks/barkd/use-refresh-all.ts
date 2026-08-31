@@ -4,7 +4,9 @@ import type { UseMutationOptions } from '@tanstack/react-query'
 import { walletApi } from '@/lib/barkd-client'
 import { invalidateRefreshState } from '@/lib/query-invalidations'
 
-export function useRefreshAll(options?: Omit<UseMutationOptions<PendingRound>, 'mutationFn'>) {
+export function useRefreshAll(
+  options?: Omit<UseMutationOptions<PendingRound | null>, 'mutationFn'>
+) {
   const queryClient = useQueryClient()
 
   return useMutation({

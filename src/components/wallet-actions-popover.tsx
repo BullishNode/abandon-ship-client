@@ -61,7 +61,13 @@ export function WalletActionsPopover() {
     onError: () => {
       toast.error(t('actions_menu.refresh_all.error'))
     },
-    onSuccess: () => {
+    onSuccess: (round) => {
+      // The wasm backend refreshes the near-expiry subset, which is empty when
+      // no VTXO is close to expiring: report the no-op instead of a fake start.
+      if (round === null) {
+        toast.info(t('actions_menu.refresh_all.nothing'))
+        return
+      }
       toast.success(t('actions_menu.refresh_all.started'))
     }
   })

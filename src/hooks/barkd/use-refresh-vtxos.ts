@@ -9,7 +9,7 @@ interface RefreshVtxosParams {
 }
 
 export function useRefreshVtxos(
-  options?: Omit<UseMutationOptions<PendingRound, Error, RefreshVtxosParams>, 'mutationFn'>
+  options?: Omit<UseMutationOptions<PendingRound | null, Error, RefreshVtxosParams>, 'mutationFn'>
 ) {
   const queryClient = useQueryClient()
 

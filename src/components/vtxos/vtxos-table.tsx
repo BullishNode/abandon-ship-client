@@ -95,7 +95,13 @@ export function VtxosTable() {
       const description = await backendErrorMessage(error)
       toast.error(t('vtxos.refresh.error'), { description })
     },
-    onSuccess: () => {
+    onSuccess: (round) => {
+      // A null round means the backend registered no participation, so nothing
+      // is refreshing — saying "Refresh started" would be a lie.
+      if (round === null) {
+        toast.info(t('vtxos.refresh.nothing'))
+        return
+      }
       toast.success(t('vtxos.refresh.success'))
       clearSelection()
     }
