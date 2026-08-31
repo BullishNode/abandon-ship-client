@@ -457,8 +457,8 @@ const api = {
     return await requireWallet().pendingRoundStates()
   },
 
-  async refreshVtxos(vtxoIds: string[]): Promise<void> {
-    await requireWallet().refreshVtxos(vtxoIds)
+  async refreshVtxos(vtxoIds: string[]): Promise<RoundState | undefined> {
+    return await requireWallet().refreshVtxosDelegated(vtxoIds)
   },
 
   async refreshableVtxoIds(): Promise<string[]> {

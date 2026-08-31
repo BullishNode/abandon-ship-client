@@ -28,6 +28,7 @@
       "in_progress": "Refreshing",
       "fee_estimate": "Estimated fee: {{fee}}",
       "started": "Refresh started. Your VTXOs will renew in the next round.",
+      "nothing": "Nothing to refresh. None of your VTXOs are close to expiring.",
       "error": "Could not start refresh. Please try again."
     }
   },
@@ -406,6 +407,7 @@
     },
     "refresh": {
       "success": "Refresh started",
+      "nothing": "Nothing to refresh",
       "error": "Refresh failed"
     },
     "detail": {

@@ -35,8 +35,11 @@ export interface WalletApiBackend {
   vtxoEncoded(id: string): Promise<string>
   nextRound(): Promise<NextRoundStart>
   pendingRounds(): Promise<PendingRound[]>
-  refreshAll(): Promise<PendingRound>
-  refreshVtxos(params: { vtxos: string[] }): Promise<PendingRound>
+  // `null` when nothing was submitted, so callers can tell a registered round
+  // apart from a no-op (the wasm backend refreshes a near-expiry subset, which
+  // can be empty). barkd always registers a participation and never returns null.
+  refreshAll(): Promise<PendingRound | null>
+  refreshVtxos(params: { vtxos: string[] }): Promise<PendingRound | null>
   send(params: SendParams): Promise<SendResult>
   sendOnchain(params: OnchainSendParams): Promise<OffboardResult>
   offboardVtxos(params: { vtxos: string[]; address?: string | null }): Promise<OffboardResult>
