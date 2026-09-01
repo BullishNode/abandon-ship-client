@@ -138,9 +138,10 @@ function getVtxoLockReasonKey(subsystem: Movement['subsystem']): string | null {
     return kind === 'send' ? 'sending_ark' : null
   }
   if (name === 'bark.round') {
-    if (kind === 'refresh') {
-      return 'refreshing'
-    }
+    // Refresh is deliberately absent: it is reported from the pending-round
+    // queries instead. Deriving it from this three-way join raced the movements
+    // list against the VTXO list and flickered Refreshing -> Locked -> Spendable
+    // whenever a round completed between the two refetches.
     if (kind === 'offboard' || kind === 'send_onchain') {
       return 'sending_onchain'
     }

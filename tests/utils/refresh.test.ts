@@ -6,10 +6,13 @@ import {
   getThresholdLabelParts,
   hoursToBlocks,
   isRoundInProgress,
-  resolveThresholdBlocks
+  mapRefreshPhases,
+  refreshingVtxosFromRounds,
+  resolveThresholdBlocks,
+  roundRefreshPhase
 } from '../../src/utils/refresh'
 import type { RefreshFees } from '@/types/domain/fees'
-import type { PendingRound } from '@/types/domain/round'
+import type { PendingRound, RoundStatus } from '@/types/domain/round'
 import type { Vtxo } from '@/types/domain/vtxo'
 
 const MAINNET_EXPIRY_DELTA = 4032
@@ -185,13 +188,88 @@ describe(getExpiringVtxoIds, () => {
   })
 })
 
+function makeWasmRound(ongoing: boolean): PendingRound {
+  return { id: 1, ongoing }
+}
+
+function makeBarkdRound(status: RoundStatus, inputs: string[] = []): PendingRound {
+  return makeRound({ participation: { inputs, outputs: [] }, status })
+}
+
 describe(isRoundInProgress, () => {
   it('is false when undefined or empty', () => {
     expect(isRoundInProgress()).toBeFalsy()
     expect(isRoundInProgress([])).toBeFalsy()
   })
 
-  it('is true when at least one round is pending', () => {
-    expect(isRoundInProgress([makeRound()])).toBeTruthy()
+  it('is true while a barkd round is still running', () => {
+    expect(isRoundInProgress([makeBarkdRound({ type: 'pending' })])).toBeTruthy()
+    expect(
+      isRoundInProgress([makeBarkdRound({ fundingTxid: 'tx', type: 'unconfirmed' })])
+    ).toBeTruthy()
+    expect(
+      isRoundInProgress([makeBarkdRound({ fundingTxid: 'tx', type: 'confirmed' })])
+    ).toBeTruthy()
+  })
+
+  it('is false for barkd rounds that already ended', () => {
+    expect(isRoundInProgress([makeBarkdRound({ error: 'boom', type: 'failed' })])).toBeFalsy()
+    expect(isRoundInProgress([makeBarkdRound({ type: 'canceled' })])).toBeFalsy()
+    expect(isRoundInProgress([makeRound()])).toBeFalsy()
+  })
+
+  it('is true for a wasm round whether or not it is ongoing', () => {
+    expect(isRoundInProgress([makeWasmRound(false)])).toBeTruthy()
+    expect(isRoundInProgress([makeWasmRound(true)])).toBeTruthy()
+  })
+})
+
+describe(roundRefreshPhase, () => {
+  it('maps each barkd status to a phase', () => {
+    expect(roundRefreshPhase(makeBarkdRound({ type: 'pending' }))).toBe('queued')
+    expect(roundRefreshPhase(makeBarkdRound({ fundingTxid: 'tx', type: 'unconfirmed' }))).toBe(
+      'refreshing'
+    )
+    expect(roundRefreshPhase(makeBarkdRound({ fundingTxid: 'tx', type: 'confirmed' }))).toBe(
+      'refreshing'
+    )
+  })
+
+  it('falls back to the wasm ongoing flag', () => {
+    expect(roundRefreshPhase(makeWasmRound(false))).toBe('queued')
+    expect(roundRefreshPhase(makeWasmRound(true))).toBe('refreshing')
+  })
+})
+
+describe(refreshingVtxosFromRounds, () => {
+  it('labels every input of an active round', () => {
+    expect(
+      refreshingVtxosFromRounds([makeBarkdRound({ type: 'pending' }, ['a:0', 'b:1'])])
+    ).toStrictEqual([
+      { id: 'a:0', phase: 'queued' },
+      { id: 'b:1', phase: 'queued' }
+    ])
+  })
+
+  it('drops inputs of rounds that already ended', () => {
+    expect(
+      refreshingVtxosFromRounds([makeBarkdRound({ error: 'boom', type: 'failed' }, ['a:0'])])
+    ).toStrictEqual([])
+  })
+
+  it('yields nothing for wasm rounds, which carry no participation', () => {
+    expect(refreshingVtxosFromRounds([makeWasmRound(true)])).toStrictEqual([])
+  })
+})
+
+describe(mapRefreshPhases, () => {
+  it('indexes phases by vtxo id', () => {
+    const phases = mapRefreshPhases([
+      { id: 'a:0', phase: 'queued' },
+      { id: 'b:1', phase: 'refreshing' }
+    ])
+    expect(phases.get('a:0')).toBe('queued')
+    expect(phases.get('b:1')).toBe('refreshing')
+    expect(phases.get('c:2')).toBeUndefined()
   })
 })

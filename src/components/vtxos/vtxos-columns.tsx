@@ -2,7 +2,9 @@ import type { ColumnDef } from '@tanstack/react-table'
 import type { TFunction } from 'i18next'
 import { Checkbox } from '@/components/ui/checkbox'
 import { VtxoExitBadge } from '@/components/vtxos/vtxo-exit-badge'
+import { VtxoRefreshBadge } from '@/components/vtxos/vtxo-refresh-badge'
 import { VtxoStatusBadge } from '@/components/vtxos/vtxo-status-badge'
+import type { RefreshPhase } from '@/types/domain/round'
 import type { Vtxo } from '@/types/domain/vtxo'
 import type { VtxoExitPhase, VtxoExitState } from '@/utils/vtxo'
 import { getExpiryTimeLabel, truncateVtxoId } from '@/utils/vtxo'
@@ -15,6 +17,7 @@ interface VtxoColumnsOptions {
   exitPhaseById: Map<string, VtxoExitPhase>
   exitStateById: Map<string, VtxoExitState>
   lockLabelById: Map<string, string>
+  refreshPhaseById: Map<string, RefreshPhase>
 }
 
 function getHeaderCheckedState(
@@ -34,7 +37,8 @@ export function getVtxoColumns({
   tipHeight,
   exitPhaseById,
   exitStateById,
-  lockLabelById
+  lockLabelById,
+  refreshPhaseById
 }: VtxoColumnsOptions): ColumnDef<Vtxo>[] {
   return [
     {
@@ -84,6 +88,10 @@ export function getVtxoColumns({
         const exitState = exitStateById.get(row.original.id)
         if (exitState !== undefined) {
           return <VtxoExitBadge phase={exitPhaseById.get(row.original.id)} state={exitState} />
+        }
+        const refreshPhase = refreshPhaseById.get(row.original.id)
+        if (refreshPhase !== undefined) {
+          return <VtxoRefreshBadge phase={refreshPhase} />
         }
         return (
           <VtxoStatusBadge

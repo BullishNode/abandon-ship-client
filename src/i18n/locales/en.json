@@ -28,7 +28,7 @@
       "in_progress": "Refreshing",
       "fee_estimate": "Estimated fee: {{fee}}",
       "started": "Refresh started. Your VTXOs will renew in the next round.",
-      "nothing": "Nothing to refresh. None of your VTXOs are close to expiring.",
+      "nothing": "Nothing to refresh. None of your VTXOs are spendable.",
       "error": "Could not start refresh. Please try again."
     }
   },
@@ -373,7 +373,6 @@
         "sending_onchain": "Sending: On-chain",
         "sending_lightning": "Sending: Lightning",
         "receiving_lightning": "Receiving: Lightning",
-        "refreshing": "Refreshing",
         "exiting": "Exiting"
       },
       "exiting": "Exiting: {{phase}}",
@@ -386,6 +385,10 @@
         "claim_in_progress": "Claiming",
         "vtxo_already_spent": "Canceled",
         "canceled": "Canceled"
+      },
+      "refresh": {
+        "queued": "Queued",
+        "refreshing": "Refreshing"
       }
     },
     "expiry": {

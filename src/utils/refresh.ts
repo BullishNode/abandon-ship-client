@@ -1,6 +1,6 @@
 import { PPM_DENOMINATOR } from '@/constants/btc'
 import type { PpmExpiryFeeEntry, RefreshFees } from '@/types/domain/fees'
-import type { PendingRound } from '@/types/domain/round'
+import type { PendingRound, RefreshingVtxo, RefreshPhase } from '@/types/domain/round'
 import type { Vtxo } from '@/types/domain/vtxo'
 
 const BLOCKS_PER_HOUR = 6
@@ -108,8 +108,49 @@ export function getExpiringVtxoIds(
   return expiring
 }
 
+// A round that failed, was canceled or errored while syncing is still returned
+// by barkd's `rounds` endpoint but is over: it must not gate the Refresh
+// buttons. The wasm backend supplies no status — it drops finished rounds from
+// `pendingRoundStates()` — so there, presence in the list is the signal.
+export function isRoundActive(round: PendingRound): boolean {
+  if (round.status === undefined) {
+    return true
+  }
+  const { type } = round.status
+  return type === 'pending' || type === 'unconfirmed' || type === 'confirmed'
+}
+
 export function isRoundInProgress(pendingRounds?: PendingRound[]): boolean {
-  return (pendingRounds?.length ?? 0) > 0
+  return (pendingRounds ?? []).some(isRoundActive)
+}
+
+// `queued` until the round starts, then `refreshing`. barkd reports this per
+// round; the wasm backend only knows whether *some* round is ongoing and cannot
+// attribute an input VTXO to a specific round, so it maps every pending input
+// with the same phase. Rounds run sequentially, so the two agree in practice.
+export function roundRefreshPhase(round: PendingRound): RefreshPhase {
+  if (round.status === undefined) {
+    return round.ongoing === true ? 'refreshing' : 'queued'
+  }
+  return round.status.type === 'pending' ? 'queued' : 'refreshing'
+}
+
+export function mapRefreshPhases(refreshing: RefreshingVtxo[]): Map<string, RefreshPhase> {
+  return new Map(refreshing.map((vtxo) => [vtxo.id, vtxo.phase]))
+}
+
+export function refreshingVtxosFromRounds(pendingRounds: PendingRound[]): RefreshingVtxo[] {
+  const refreshing: RefreshingVtxo[] = []
+  for (const round of pendingRounds) {
+    if (!isRoundActive(round)) {
+      continue
+    }
+    const phase = roundRefreshPhase(round)
+    for (const id of round.participation?.inputs ?? []) {
+      refreshing.push({ id, phase })
+    }
+  }
+  return refreshing
 }
 
 function refreshPpmForBlocksToExpiry(blocksToExpiry: number, table: PpmExpiryFeeEntry[]): number {
