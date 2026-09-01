@@ -5,11 +5,13 @@ import { CopyableValueRow, DetailRow } from '@/components/movement-detail-shared
 import { ClaimAddressRow } from '@/components/vtxos/claim-address-row'
 import { EditExitClaimAddressDialog } from '@/components/vtxos/edit-exit-claim-address-dialog'
 import { VtxoExitBadge } from '@/components/vtxos/vtxo-exit-badge'
+import { VtxoRefreshBadge } from '@/components/vtxos/vtxo-refresh-badge'
 import { VtxoStatusBadge } from '@/components/vtxos/vtxo-status-badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useVtxoEncoded } from '@/hooks/barkd/use-vtxo-encoded'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
+import type { RefreshPhase } from '@/types/domain/round'
 import type { Vtxo } from '@/types/domain/vtxo'
 import type { VtxoExitPhase, VtxoExitState } from '@/utils/vtxo'
 import {
@@ -30,6 +32,7 @@ interface VtxoDetailDialogProps {
   exitState?: VtxoExitState
   claimAddress?: string
   lockLabel?: string
+  refreshPhase?: RefreshPhase
 }
 
 export function VtxoDetailDialog({
@@ -42,7 +45,8 @@ export function VtxoDetailDialog({
   exitPhase,
   exitState,
   claimAddress,
-  lockLabel
+  lockLabel,
+  refreshPhase
 }: VtxoDetailDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -59,6 +63,7 @@ export function VtxoDetailDialog({
             formatFiat={formatFiat}
             formatSats={formatSats}
             lockLabel={lockLabel}
+            refreshPhase={refreshPhase}
             tipHeight={tipHeight}
             vtxo={vtxo}
           />
@@ -66,6 +71,30 @@ export function VtxoDetailDialog({
       </DialogContent>
     </Dialog>
   )
+}
+
+interface VtxoDetailBadgeProps {
+  status: Vtxo['state']['type']
+  exitPhase?: VtxoExitPhase
+  exitState?: VtxoExitState
+  lockLabel?: string
+  refreshPhase?: RefreshPhase
+}
+
+function VtxoDetailBadge({
+  status,
+  exitPhase,
+  exitState,
+  lockLabel,
+  refreshPhase
+}: VtxoDetailBadgeProps) {
+  if (exitState !== undefined) {
+    return <VtxoExitBadge phase={exitPhase} state={exitState} />
+  }
+  if (refreshPhase !== undefined) {
+    return <VtxoRefreshBadge phase={refreshPhase} />
+  }
+  return <VtxoStatusBadge label={lockLabel} status={status} />
 }
 
 interface VtxoDetailContentProps {
@@ -77,6 +106,7 @@ interface VtxoDetailContentProps {
   exitState?: VtxoExitState
   claimAddress?: string
   lockLabel?: string
+  refreshPhase?: RefreshPhase
 }
 
 function VtxoDetailContent({
@@ -87,7 +117,8 @@ function VtxoDetailContent({
   exitPhase,
   exitState,
   claimAddress,
-  lockLabel
+  lockLabel,
+  refreshPhase
 }: VtxoDetailContentProps) {
   const { t } = useTranslation()
   const { copy, isCopied } = useCopyToClipboard()
@@ -120,11 +151,13 @@ function VtxoDetailContent({
                 {formatFiat(vtxo.amountSats)}
               </span>
             </div>
-            {exitState === undefined ? (
-              <VtxoStatusBadge label={lockLabel} status={vtxo.state.type} />
-            ) : (
-              <VtxoExitBadge phase={exitPhase} state={exitState} />
-            )}
+            <VtxoDetailBadge
+              exitPhase={exitPhase}
+              exitState={exitState}
+              lockLabel={lockLabel}
+              refreshPhase={refreshPhase}
+              status={vtxo.state.type}
+            />
           </div>
           {vtxo.policyType === undefined ? null : (
             <DetailRow

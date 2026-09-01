@@ -32,3 +32,15 @@ export interface PendingRound {
 export interface NextRoundStart {
   startTime: string
 }
+
+// Where a VTXO sits in the refresh flow. `queued` means the round participation
+// is registered but the round has not started; `refreshing` means the round is
+// running. barkd locks its round inputs at registration, but a bark delegated
+// participation does not, so the phase — not VTXO state — is the signal that a
+// VTXO is already committed to a round.
+export type RefreshPhase = 'queued' | 'refreshing'
+
+export interface RefreshingVtxo {
+  id: string
+  phase: RefreshPhase
+}

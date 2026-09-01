@@ -28,6 +28,7 @@ import {
 } from '@/lib/backend/wasm/diagnostics-store'
 import { clearMovementMetadata, setMovementMetadata } from '@/lib/backend/wasm/metadata-store'
 import { classifyDestination } from '@/lib/backend/wasm/send-router'
+import type { RefreshPhase } from '@/types/domain/round'
 import type { SendKind } from '@/lib/backend/wasm/send-router'
 import {
   clearSessionMnemonic,
@@ -604,7 +605,14 @@ export const wasmBackend: Backend = {
     },
     refreshAll: async () => {
       await ensureOpen()
-      const vtxoIds = await remote().refreshableVtxoIds()
+      // barkd's `refreshAll` registers every spendable VTXO, and that is what
+      // the fee estimate in the actions menu prices. bark's own
+      // `getVtxosToRefresh()` is a near-expiry subset, so using it here made
+      // refresh-all a silent no-op whenever nothing was close to expiring.
+      const vtxoIds = await remote().spendableVtxoIds()
+      if (vtxoIds.length === 0) {
+        return null
+      }
       const round = await remote().refreshVtxos(vtxoIds)
       return round === undefined ? null : toPendingRound(round)
     },
@@ -612,6 +620,18 @@ export const wasmBackend: Backend = {
       await ensureOpen()
       const round = await remote().refreshVtxos(vtxos)
       return round === undefined ? null : toPendingRound(round)
+    },
+    refreshingVtxos: async () => {
+      await ensureOpen()
+      // A delegated participation does not lock its inputs in bark, so the
+      // per-VTXO signal has to come from the pending-round store rather than
+      // VTXO state or the refresh movement.
+      const [ids, rounds] = await Promise.all([
+        remote().pendingRoundInputVtxoIds(),
+        remote().pendingRoundStates()
+      ])
+      const phase: RefreshPhase = rounds.some((round) => round.ongoing) ? 'refreshing' : 'queued'
+      return ids.map((id) => ({ id, phase }))
     },
     send: async ({ destination, amountSats, comment }) => {
       await ensureOpen()

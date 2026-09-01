@@ -453,17 +453,21 @@ const api = {
     return await requireWallet().payLightningOffer({ amountSats, offer, wait: true })
   },
 
+  async pendingRoundInputVtxoIds(): Promise<string[]> {
+    const vtxos = await requireWallet().pendingRoundInputVtxos()
+    return vtxos.map((vtxo) => vtxo.id)
+  },
+
   async pendingRoundStates(): Promise<RoundState[]> {
     return await requireWallet().pendingRoundStates()
   },
 
+  // Delegated: the server carries the signed participation through the round,
+  // so no long-lived round-event stream has to stay open in the browser. The
+  // 20s `progressPendingRounds()` loop finishes it, and the participation is
+  // persisted, so it survives a reload.
   async refreshVtxos(vtxoIds: string[]): Promise<RoundState | undefined> {
     return await requireWallet().refreshVtxosDelegated(vtxoIds)
-  },
-
-  async refreshableVtxoIds(): Promise<string[]> {
-    const vtxos = await requireWallet().getVtxosToRefresh()
-    return vtxos.map((vtxo) => vtxo.id)
   },
 
   async sendArkoor(arkAddress: string, amountSats: number): Promise<void> {
@@ -477,6 +481,11 @@ const api = {
 
   async sendOnchainFromArk(address: string, amountSats: number): Promise<string> {
     return await requireWallet().sendOnchain(address, amountSats)
+  },
+
+  async spendableVtxoIds(): Promise<string[]> {
+    const vtxos = await requireWallet().spendableVtxos()
+    return vtxos.map((vtxo) => vtxo.id)
   },
 
   async startExitForEntireWallet(feeRateSatPerVb?: number): Promise<void> {

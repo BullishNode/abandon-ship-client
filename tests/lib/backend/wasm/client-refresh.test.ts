@@ -9,7 +9,7 @@ const noRound: RoundState | undefined = undefined
 const workerRemote = vi.hoisted(() => ({
   isOpen: vi.fn<() => Promise<boolean>>(),
   refreshVtxos: vi.fn<(vtxoIds: string[]) => Promise<RoundState | undefined>>(),
-  refreshableVtxoIds: vi.fn<() => Promise<string[]>>()
+  spendableVtxoIds: vi.fn<() => Promise<string[]>>()
 }))
 
 // The refresh path under test is pure client-side mapping, so Comlink hands
@@ -50,8 +50,8 @@ describe('wasm refresh', () => {
     await expect(wasmBackend.walletApi.refreshVtxos({ vtxos: [] })).resolves.toBeNull()
   })
 
-  it('submits the refreshable ids for refresh all', async () => {
-    workerRemote.refreshableVtxoIds.mockResolvedValue(['vtxo-c'])
+  it('submits every spendable id for refresh all', async () => {
+    workerRemote.spendableVtxoIds.mockResolvedValue(['vtxo-c'])
     workerRemote.refreshVtxos.mockResolvedValue({ id: 9, ongoing: true })
 
     const round = await wasmBackend.walletApi.refreshAll()
@@ -60,10 +60,10 @@ describe('wasm refresh', () => {
     expect(round).toStrictEqual({ id: 9, ongoing: true })
   })
 
-  it('reports refresh all as null when nothing is near expiry', async () => {
-    workerRemote.refreshableVtxoIds.mockResolvedValue([])
-    workerRemote.refreshVtxos.mockResolvedValue(noRound)
+  it('reports refresh all as null without a worker hop when nothing is spendable', async () => {
+    workerRemote.spendableVtxoIds.mockResolvedValue([])
 
     await expect(wasmBackend.walletApi.refreshAll()).resolves.toBeNull()
+    expect(workerRemote.refreshVtxos).not.toHaveBeenCalled()
   })
 })

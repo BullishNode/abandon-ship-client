@@ -43,6 +43,7 @@ export async function invalidateRefreshState(queryClient: QueryClient) {
     queryClient.invalidateQueries({ queryKey: walletKeys.vtxos() }),
     queryClient.invalidateQueries({ queryKey: walletKeys.vtxosAll() }),
     queryClient.invalidateQueries({ queryKey: walletKeys.pendingRounds() }),
+    queryClient.invalidateQueries({ queryKey: walletKeys.refreshingVtxos() }),
     queryClient.invalidateQueries({ queryKey: walletKeys.transactions() })
   ])
 }

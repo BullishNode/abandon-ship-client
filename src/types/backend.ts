@@ -6,7 +6,7 @@ import type { FeeEstimate, OnchainFeeRates } from '@/types/domain/fees'
 import type { Movement } from '@/types/domain/movement'
 import type { WalletNotification } from '@/types/domain/notification'
 import type { Utxo, WalletTx } from '@/types/domain/onchain'
-import type { NextRoundStart, PendingRound } from '@/types/domain/round'
+import type { NextRoundStart, PendingRound, RefreshingVtxo } from '@/types/domain/round'
 import type { Vtxo } from '@/types/domain/vtxo'
 import type {
   CreateWalletParams,
@@ -36,10 +36,11 @@ export interface WalletApiBackend {
   nextRound(): Promise<NextRoundStart>
   pendingRounds(): Promise<PendingRound[]>
   // `null` when nothing was submitted, so callers can tell a registered round
-  // apart from a no-op (the wasm backend refreshes a near-expiry subset, which
-  // can be empty). barkd always registers a participation and never returns null.
+  // apart from a no-op (an empty id list). barkd always registers a
+  // participation and never returns null.
   refreshAll(): Promise<PendingRound | null>
   refreshVtxos(params: { vtxos: string[] }): Promise<PendingRound | null>
+  refreshingVtxos(): Promise<RefreshingVtxo[]>
   send(params: SendParams): Promise<SendResult>
   sendOnchain(params: OnchainSendParams): Promise<OffboardResult>
   offboardVtxos(params: { vtxos: string[]; address?: string | null }): Promise<OffboardResult>

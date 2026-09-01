@@ -22,7 +22,9 @@ import { getVtxoColumns } from '@/components/vtxos/vtxos-columns'
 import { VTXOS_PAGE_SIZE } from '@/constants/vtxos'
 import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
 import { useExitStatus } from '@/hooks/barkd/use-exit-status'
+import { usePendingRounds } from '@/hooks/barkd/use-pending-rounds'
 import { useRefreshVtxos } from '@/hooks/barkd/use-refresh-vtxos'
+import { useRefreshingVtxos } from '@/hooks/barkd/use-refreshing-vtxos'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
 import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
 import { usePrivateAmount } from '@/hooks/use-private-amount'
@@ -30,6 +32,7 @@ import { backendErrorMessage } from '@/lib/error-message'
 import { useSettingsStore } from '@/stores/settings'
 import { useWalletStore } from '@/stores/wallet'
 import type { Vtxo } from '@/types/domain/vtxo'
+import { isRoundInProgress, mapRefreshPhases } from '@/utils/refresh'
 import {
   isSpendable,
   mapVtxoExitClaimHeights,
@@ -45,6 +48,8 @@ export function VtxosTable() {
   const { data: exitStatuses = [] } = useExitStatus()
   const { data: movements = [] } = useWalletTransactions()
   const { data: tip } = useBitcoinTip()
+  const { data: refreshingVtxos = [] } = useRefreshingVtxos()
+  const { data: pendingRounds } = usePendingRounds()
   const { sats: formatSats, fiat: formatFiat } = usePrivateAmount()
   const showExitedVtxos = useSettingsStore((state) => state.showExitedVtxos)
   const setShowExitedVtxos = useSettingsStore((state) => state.setShowExitedVtxos)
@@ -59,6 +64,7 @@ export function VtxosTable() {
   const exitClaimHeightById = mapVtxoExitClaimHeights(exitStatuses)
   const exitStateById = mapVtxoExitStates(vtxos, exitPhaseById)
   const lockLabelById = mapVtxoLockLabels(vtxos, movements, t)
+  const refreshPhaseById = mapRefreshPhases(refreshingVtxos)
 
   const filteredVtxos = vtxos.filter((vtxo) => {
     const exitState = exitStateById.get(vtxo.id)
@@ -134,6 +140,7 @@ export function VtxosTable() {
     formatFiat,
     formatSats,
     lockLabelById,
+    refreshPhaseById,
     t,
     tipHeight: tip
   })
@@ -192,6 +199,7 @@ export function VtxosTable() {
       <VtxoSelectionBar
         count={selectedVtxos.length}
         isBusy={isRefreshing}
+        isRefreshDisabled={isRefreshing || isRoundInProgress(pendingRounds)}
         onDeselect={clearSelection}
         onEmergencyExit={() => setExitOpen(true)}
         onOffboard={() => setOffboardOpen(true)}
@@ -218,6 +226,7 @@ export function VtxosTable() {
         formatSats={formatSats}
         lockLabel={detailVtxo ? lockLabelById.get(detailVtxo.id) : undefined}
         onOpenChange={handleDetailOpenChange}
+        refreshPhase={detailVtxo ? refreshPhaseById.get(detailVtxo.id) : undefined}
         open={detailOpen}
         tipHeight={tip}
         vtxo={detailVtxo}

@@ -6,6 +6,7 @@ export const walletKeys = {
   mnemonic: () => [...walletKeys.all, 'mnemonic'] as const,
   nextRound: () => [...walletKeys.all, 'next-round'] as const,
   pendingRounds: () => [...walletKeys.all, 'pending-rounds'] as const,
+  refreshingVtxos: () => [...walletKeys.all, 'refreshing-vtxos'] as const,
   silentUnlock: () => [...walletKeys.all, 'silent-unlock'] as const,
   transactions: () => [...walletKeys.all, 'transactions'] as const,
   vtxoEncoded: (id: string) => [...walletKeys.all, 'vtxos', id, 'encoded'] as const,

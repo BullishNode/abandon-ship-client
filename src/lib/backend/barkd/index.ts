@@ -28,6 +28,7 @@ import {
 import { subscribeNotifications } from '@/lib/backend/barkd/notifications'
 import { revealMnemonic } from '@/lib/backend/barkd/reveal-mnemonic'
 import type { Backend } from '@/types/backend'
+import { refreshingVtxosFromRounds } from '@/utils/refresh'
 
 const walletApi = new WalletApi(clientConfig)
 const boardsApi = new BoardsApi(clientConfig)
@@ -137,6 +138,10 @@ export const barkdBackend: Backend = {
     refreshAll: async () => toPendingRound(await walletApi.refreshAll()),
     refreshVtxos: async ({ vtxos }) =>
       toPendingRound(await walletApi.refreshVtxos({ refreshRequest: { vtxos } })),
+    refreshingVtxos: async () => {
+      const rounds = await walletApi.pendingRounds()
+      return refreshingVtxosFromRounds(rounds.map(toPendingRound))
+    },
     send: async ({ destination, amountSats, comment }) =>
       await walletApi.send({ sendRequest: { amountSat: amountSats, comment, destination } }),
     sendOnchain: async ({ destination, amountSats }) =>
