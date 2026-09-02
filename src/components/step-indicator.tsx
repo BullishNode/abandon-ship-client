@@ -1,5 +1,5 @@
-import { clsx } from 'clsx'
 import { m } from 'motion/react'
+import { clsx } from 'cn'
 
 interface StepIndicatorProps {
   isActive: boolean
