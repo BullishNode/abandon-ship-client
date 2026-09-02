@@ -16,6 +16,7 @@ import { getMovementMetadata } from '@/utils/metadata'
 import {
   getMovementCounterpartyDestination,
   getMovementDirection,
+  getMovementDisplayBalanceSats,
   getMovementFeeSat,
   getMovementRawJson,
   getMovementSource
@@ -110,7 +111,7 @@ function MovementDetailContent({
               discreetMode={discreetMode}
               formatFiat={formatFiat}
               formatSats={formatSats}
-              sats={movement.effectiveBalanceSats}
+              sats={getMovementDisplayBalanceSats(movement)}
               size="lg"
             />
             <div className="flex flex-col items-end gap-2">

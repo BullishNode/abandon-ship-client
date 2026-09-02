@@ -74,12 +74,16 @@ export function isExitSubsystem(name: string): boolean {
   return name === 'bark.exit'
 }
 
+export function isRoundSubsystem(subsystem: Movement['subsystem']): boolean {
+  return subsystem.name === 'bark.round'
+}
+
 export function isOffboardSubsystem(subsystem: Movement['subsystem']): boolean {
   if (subsystem.name === 'bark.offboard') {
     return true
   }
   return (
-    subsystem.name === 'bark.round' &&
+    isRoundSubsystem(subsystem) &&
     (subsystem.kind === 'offboard' || subsystem.kind === 'send_onchain')
   )
 }
@@ -90,6 +94,14 @@ export function isArkToOnchainTransfer(subsystem: Movement['subsystem']): boolea
 
 export function isBoardSubsystem(subsystem: Movement['subsystem']): boolean {
   return subsystem.name === 'bark.board'
+}
+
+export function isFailedRoundMovement(movement: Movement): boolean {
+  return movement.status === 'failed' && isRoundSubsystem(movement.subsystem)
+}
+
+export function getMovementDisplayBalanceSats(movement: Movement): number {
+  return isFailedRoundMovement(movement) ? 0 : movement.effectiveBalanceSats
 }
 
 function txidFromOutpoint(outpoint: string): string | null {
@@ -164,6 +176,9 @@ export function getMovementFeeSat(
   movement: Movement,
   transactions: WalletTx[] = []
 ): number | null {
+  if (isFailedRoundMovement(movement)) {
+    return 0
+  }
   if (isExitSubsystem(movement.subsystem.name)) {
     return movement.offchainFeeSats + sumExitCpfpFeeSat(transactions)
   }

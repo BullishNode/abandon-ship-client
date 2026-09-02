@@ -18,7 +18,7 @@ function getAmountColorClass(sats: number, discreetMode: boolean): string {
   if (discreetMode) {
     return 'text-foreground'
   }
-  return sats >= 0 ? 'text-green-500' : 'text-foreground'
+  return sats > 0 ? 'text-green-500' : 'text-foreground'
 }
 
 export function MovementAmountCell({
@@ -30,7 +30,7 @@ export function MovementAmountCell({
   align = 'end',
   pending = false
 }: MovementAmountCellProps) {
-  const sign = sats >= 0 ? '+' : ''
+  const sign = sats > 0 ? '+' : ''
   const colorClass = getAmountColorClass(sats, discreetMode)
   const alignClass = align === 'end' ? 'items-end' : 'items-start'
 

@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   getMovementCounterparty,
   getMovementDirection,
+  getMovementDisplayBalanceSats,
   getMovementFeeSat,
   getMovementSource,
   isArkToOnchainTransfer,
+  isFailedRoundMovement,
   isOffboardSubsystem,
   sumExitCpfpFeeSat
 } from '../../src/utils/movement'
@@ -23,6 +25,13 @@ function createWalletTx(overrides: Partial<WalletTx> = {}): WalletTx {
 }
 
 const EXIT_SUBSYSTEM = { kind: 'exit', name: 'bark.exit' } as const
+const REFRESH_SUBSYSTEM = { kind: 'refresh', name: 'bark.round' } as const
+const FAILED_REFRESH = {
+  effectiveBalanceSats: -1,
+  offchainFeeSats: 1,
+  status: 'failed',
+  subsystem: REFRESH_SUBSYSTEM
+} as const
 
 describe(getMovementDirection, () => {
   it('returns incoming for positive balance', () => {
@@ -246,6 +255,24 @@ describe(getMovementFeeSat, () => {
     const movement = createMovement({ offchainFeeSats: 0, subsystem: EXIT_SUBSYSTEM })
     expect(getMovementFeeSat(movement, [])).toBe(0)
   })
+
+  it('returns zero for a failed round, ignoring the recorded intended fee', () => {
+    expect(getMovementFeeSat(createMovement(FAILED_REFRESH))).toBe(0)
+  })
+
+  it('keeps the recorded fee for a failed non-round movement', () => {
+    const movement = createMovement({
+      offchainFeeSats: 7,
+      status: 'failed',
+      subsystem: { kind: 'pay', name: 'bark.lightning' }
+    })
+    expect(getMovementFeeSat(movement)).toBe(7)
+  })
+
+  it('keeps the recorded fee for a successful round', () => {
+    const movement = createMovement({ ...FAILED_REFRESH, status: 'successful' })
+    expect(getMovementFeeSat(movement)).toBe(1)
+  })
 })
 
 describe(sumExitCpfpFeeSat, () => {
@@ -275,5 +302,52 @@ describe(sumExitCpfpFeeSat, () => {
 
   it('returns zero for an empty list', () => {
     expect(sumExitCpfpFeeSat([])).toBe(0)
+  })
+})
+
+describe(isFailedRoundMovement, () => {
+  it('matches a failed bark.round movement of any kind', () => {
+    expect(isFailedRoundMovement(createMovement(FAILED_REFRESH))).toBeTruthy()
+    expect(
+      isFailedRoundMovement(
+        createMovement({ status: 'failed', subsystem: { kind: 'offboard', name: 'bark.round' } })
+      )
+    ).toBeTruthy()
+  })
+
+  it('does not match pending, successful or canceled rounds', () => {
+    for (const status of ['pending', 'successful', 'canceled'] as const) {
+      expect(isFailedRoundMovement(createMovement({ ...FAILED_REFRESH, status }))).toBeFalsy()
+    }
+  })
+
+  it('does not match failed movements from other subsystems', () => {
+    const movement = createMovement({
+      status: 'failed',
+      subsystem: { kind: 'pay', name: 'bark.lightning' }
+    })
+    expect(isFailedRoundMovement(movement)).toBeFalsy()
+  })
+})
+
+describe(getMovementDisplayBalanceSats, () => {
+  it('returns zero for a failed round instead of the recorded -fee', () => {
+    expect(getMovementDisplayBalanceSats(createMovement(FAILED_REFRESH))).toBe(0)
+  })
+
+  it('returns the effective balance for every other movement', () => {
+    expect(getMovementDisplayBalanceSats(createMovement({ effectiveBalanceSats: -1 }))).toBe(-1)
+    expect(
+      getMovementDisplayBalanceSats(createMovement({ ...FAILED_REFRESH, status: 'successful' }))
+    ).toBe(-1)
+    expect(
+      getMovementDisplayBalanceSats(
+        createMovement({
+          effectiveBalanceSats: -1500,
+          status: 'failed',
+          subsystem: { kind: 'pay', name: 'bark.lightning' }
+        })
+      )
+    ).toBe(-1500)
   })
 })

@@ -5,6 +5,7 @@ import { MovementLabelCell } from '@/components/movement-label-cell'
 import { MovementSourceBadge } from '@/components/movement-source-badge'
 import { MovementStatusBadge } from '@/components/movement-status-badge'
 import { OnchainLabelCell } from '@/components/onchain-label-cell'
+import { getMovementDisplayBalanceSats } from '@/utils/movement'
 import { getFeedRowSource } from '@/utils/movements-feed'
 import type { MovementsFeedRow } from '@/utils/movements-feed'
 
@@ -64,7 +65,9 @@ export function getMovementColumns({
       cell: ({ row }) => {
         const entry = row.original
         const sats =
-          entry.kind === 'movement' ? entry.movement.effectiveBalanceSats : entry.amountSat
+          entry.kind === 'movement'
+            ? getMovementDisplayBalanceSats(entry.movement)
+            : entry.amountSat
         const pending = entry.kind === 'onchain' && entry.isOptimistic === true
         return (
           <MovementAmountCell
