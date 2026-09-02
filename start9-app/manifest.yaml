@@ -4,9 +4,9 @@ version: 0.2.6
 release-notes: |
   Added dark mode.
 license: mit
-wrapper-repo: https://gitlab.com/ark-bitcoin/labs/bark-web
+wrapper-repo: https://gitlab.com/ark-bitcoin/bark-web
 upstream-repo: https://gitlab.com/ark-bitcoin/bark
-support-site: https://gitlab.com/ark-bitcoin/labs/bark-web/-/issues
+support-site: https://gitlab.com/ark-bitcoin/bark-web/-/issues
 marketing-site: https://second.tech
 build:
   - make

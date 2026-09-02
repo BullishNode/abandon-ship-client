@@ -421,18 +421,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - UI flickers on modal transitions.
 - Multi-row display for long content.
 
-[0.2.6]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.2.6
-[0.2.5]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.2.5
-[0.2.4]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.2.4
-[0.2.3]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.2.3
-[0.2.2]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.2.2
-[0.2.1]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.2.1
-[0.2.0]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.2.0
-[0.1.8]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.1.8
-[0.1.7]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.1.7
-[0.1.6]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.1.6
-[0.1.5]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.1.5
-[0.1.4]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.1.4
-[0.1.3]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.1.3
-[0.1.2]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.1.2
-[0.1.1]: https://gitlab.com/ark-bitcoin/labs/bark-web/-/tags/v0.1.1
+[0.2.6]: https://gitlab.com/ark-bitcoin/bark-web/-/tags/v0.2.6
+[0.2.5]: https://gitlab.com/ark-bitcoin/bark-web/-/tags/v0.2.5
+[0.2.4]: https://gitlab.com/ark-bitcoin/bark-web/-/tags/v0.2.4
+[0.2.3]: https://gitlab.com/ark-bitcoin/bark-web/-/tags/v0.2.3
+[0.2.2]: https://gitlab.com/ark-bitcoin/bark-web/-/tags/v0.2.2
+[0.2.1]: https://gitlab.com/ark-bitcoin/bark-web/-/tags/v0.2.1
+[0.2.0]: https://gitlab.com/ark-bitcoin/bark-web/-/tags/v0.2.0
+[0.1.8]: https://gitlab.com/ark-bitcoin/bark-web/-/tags/v0.1.8
+[0.1.7]: https://gitlab.com/ark-bitcoin/bark-web/-/tags/v0.1.7
+[0.1.6]: https://gitlab.com/ark-bitcoin/bark-web/-/tags/v0.1.6
+[0.1.5]: https://gitlab.com/ark-bitcoin/bark-web/-/tags/v0.1.5
+[0.1.4]: https://gitlab.com/ark-bitcoin/bark-web/-/tags/v0.1.4
+[0.1.3]: https://gitlab.com/ark-bitcoin/bark-web/-/tags/v0.1.3
+[0.1.2]: https://gitlab.com/ark-bitcoin/bark-web/-/tags/v0.1.2
+[0.1.1]: https://gitlab.com/ark-bitcoin/bark-web/-/tags/v0.1.1
