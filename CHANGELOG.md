@@ -5,6 +5,22 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - 2026-09-02
+
+### Changed
+
+- Release artifacts are built through the Nix flake (`nix build .#dist`) instead of a plain `npm run build` in CI.
+- Repository links and the release CI project-URL rule updated to the new GitLab location (`ark-bitcoin/bark-web`).
+
+### Fixed
+
+- Refreshes in WASM mode are submitted as delegated round participations.
+- Refresh submits all spendable VTXOs, and the VTXOs table reports real round phases (queued vs refreshing) instead of inferring them.
+- Finished rounds (failed, canceled, or errored) no longer block the Refresh buttons.
+- Mobile: drawer header and footer stay pinned while only the body scrolls.
+- Mobile: drawers avoid the on-screen keyboard, and the QR scanner shows a loading overlay while the camera starts.
+- Mobile: onboarding flow is responsive on small screens.
+
 ## [0.8.0] - 2026-08-26
 
 ### Added
