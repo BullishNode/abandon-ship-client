@@ -26,13 +26,15 @@
           default = dist;
           # The built web distribution (`npm run build`), for consumers that
           # embed or serve the static app — e.g. barkd embeds this via its
-          # bark-web flake input. Keep npmDepsHash in sync with
-          # package-lock.json: `prefetch-npm-deps package-lock.json`.
+          # bark-web flake input. Dependencies are fetched via importNpmLock,
+          # which reads the integrity hashes from package-lock.json directly,
+          # so there is no npmDepsHash to keep in sync.
           dist = pkgs.buildNpmPackage {
             pname = "bark-web-dist";
             version = (builtins.fromJSON (builtins.readFile ./package.json)).version;
             src = ./.;
-            npmDepsHash = "sha256-DiS8CctxZKmVL9Tso7ZuKC9qcnuO6p6mUBTW3nsSmvQ=";
+            npmDeps = pkgs.importNpmLock { npmRoot = ./.; };
+            npmConfigHook = pkgs.importNpmLock.npmConfigHook;
             nodejs = pkgs.nodejs_22;
             installPhase = ''
               runHook preInstall
