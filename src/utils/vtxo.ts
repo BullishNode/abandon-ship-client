@@ -64,18 +64,37 @@ export function mapVtxoExitClaimHeights(exits: ExitTransactionStatus[]): Map<str
   return heights
 }
 
+// Display order: live VTXOs first (by expiry), then exited (most recently
+// claimed first), then spent (highest expiry first, roughly most recent).
+const DISPLAY_RANK_LIVE = 0
+const DISPLAY_RANK_EXITED = 1
+const DISPLAY_RANK_SPENT = 2
+
+function displayRank(vtxo: Vtxo, exitStateById: Map<string, VtxoExitState>): number {
+  if (exitStateById.get(vtxo.id) === 'exited') {
+    return DISPLAY_RANK_EXITED
+  }
+  if (vtxo.state.type === 'spent') {
+    return DISPLAY_RANK_SPENT
+  }
+  return DISPLAY_RANK_LIVE
+}
+
 export function sortVtxosForDisplay(
   vtxos: Vtxo[],
   exitStateById: Map<string, VtxoExitState>,
   exitClaimHeightById: Map<string, number>
 ): Vtxo[] {
   return [...vtxos].toSorted((a, b) => {
-    const aExited = exitStateById.get(a.id) === 'exited'
-    const bExited = exitStateById.get(b.id) === 'exited'
-    if (aExited !== bExited) {
-      return Number(aExited) - Number(bExited)
+    const aRank = displayRank(a, exitStateById)
+    const bRank = displayRank(b, exitStateById)
+    if (aRank !== bRank) {
+      return aRank - bRank
     }
-    if (aExited && bExited) {
+    if (aRank === DISPLAY_RANK_SPENT) {
+      return b.expiryHeight - a.expiryHeight
+    }
+    if (aRank === DISPLAY_RANK_EXITED) {
       const aHeight = exitClaimHeightById.get(a.id) ?? 0
       const bHeight = exitClaimHeightById.get(b.id) ?? 0
       return bHeight - aHeight
