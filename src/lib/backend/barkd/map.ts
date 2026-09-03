@@ -1,6 +1,7 @@
 import type {
   ArkInfo as BarkdArkInfo,
   Balance as BarkdBalance,
+  EmergencyExitFeeEstimateResponse,
   ExitState as BarkdExitState,
   ExitTransactionPackage as BarkdExitPackage,
   ExitTransactionStatus as BarkdExitStatus,
@@ -35,7 +36,13 @@ import type {
   ExitTxOrigin,
   ExitTxStatus
 } from '@/types/domain/exit'
-import type { FeeEstimate, FeeSchedule, OnchainFeeRates, RefreshFees } from '@/types/domain/fees'
+import type {
+  EmergencyExitFeeEstimate,
+  FeeEstimate,
+  FeeSchedule,
+  OnchainFeeRates,
+  RefreshFees
+} from '@/types/domain/fees'
 import type { Movement, MovementDestination } from '@/types/domain/movement'
 import type { WalletNotification } from '@/types/domain/notification'
 import type { Utxo, WalletTx } from '@/types/domain/onchain'
@@ -276,6 +283,19 @@ export function toFeeEstimate(dto: FeeEstimateResponse): FeeEstimate {
     grossAmountSats: dto.grossAmountSat,
     netAmountSats: dto.netAmountSat,
     vtxosSpent: dto.vtxosSpent
+  }
+}
+
+export function toEmergencyExitFeeEstimate(
+  dto: EmergencyExitFeeEstimateResponse
+): EmergencyExitFeeEstimate {
+  return {
+    claimFeeSats: dto.claimFeeSat,
+    exitBroadcastFeeSats: dto.exitBroadcastFeeSat,
+    feeRateSatPerVb: dto.feeRateSatPerVb,
+    fundable: dto.fundable,
+    totalFeeSats: dto.totalFeeSat,
+    txsToBroadcast: dto.txsToBroadcast
   }
 }
 

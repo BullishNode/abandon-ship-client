@@ -1,6 +1,7 @@
 import type {
   ArkInfo as WasmArkInfo,
   Balance as WasmBalance,
+  EmergencyExitFeeEstimate as WasmEmergencyExitFeeEstimate,
   ExitState as WasmExitState,
   ExitTx as WasmExitTx,
   ExitTxOrigin as WasmExitTxOrigin,
@@ -30,7 +31,12 @@ import type {
   ExitTxOrigin,
   ExitTxStatus
 } from '@/types/domain/exit'
-import type { FeeEstimate, FeeSchedule, OnchainFeeRates } from '@/types/domain/fees'
+import type {
+  EmergencyExitFeeEstimate,
+  FeeEstimate,
+  FeeSchedule,
+  OnchainFeeRates
+} from '@/types/domain/fees'
 import { PAYMENT_TYPES } from '@/types/domain/movement'
 import type { Movement, MovementDestination, MovementStatus } from '@/types/domain/movement'
 import type { WalletNotification } from '@/types/domain/notification'
@@ -235,6 +241,19 @@ const MS_THRESHOLD = 1e12
 export function toNextRoundStart(startTime: number): NextRoundStart {
   const ms = startTime > MS_THRESHOLD ? startTime : startTime * MS_PER_SECOND
   return { startTime: new Date(ms).toISOString() }
+}
+
+export function toEmergencyExitFeeEstimate(
+  dto: WasmEmergencyExitFeeEstimate
+): EmergencyExitFeeEstimate {
+  return {
+    claimFeeSats: dto.claimFeeSats,
+    exitBroadcastFeeSats: dto.exitBroadcastFeeSats,
+    feeRateSatPerVb: dto.feeRateSatPerVb,
+    fundable: dto.fundable,
+    totalFeeSats: dto.totalFeeSats,
+    txsToBroadcast: dto.txsToBroadcast
+  }
 }
 
 export function toFeeEstimate(dto: WasmFeeEstimate): FeeEstimate {

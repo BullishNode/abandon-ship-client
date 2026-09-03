@@ -18,6 +18,7 @@ export interface EmergencyExitFeeEstimate {
   onchainSat: number
   feeRateSatPerVb: number
   vtxoCount: number
+  fundable: boolean
 }
 
 interface EmergencyExitStartDialogProps {
@@ -59,10 +60,7 @@ export function EmergencyExitStartDialog({
   const isAddressInvalid = !isAddressEmpty && !isValidOnchainAddress(trimmedAddress, config.network)
 
   const showEstimate = mode === 'start' && feeEstimate !== undefined
-  const hasInsufficientFunds =
-    showEstimate &&
-    feeEstimate !== undefined &&
-    feeEstimate.onchainSat < feeEstimate.estimatedFeeSat
+  const hasInsufficientFunds = showEstimate && feeEstimate !== undefined && !feeEstimate.fundable
   const disableSubmit = isAddressEmpty || isAddressInvalid || hasInsufficientFunds
 
   function handleClose(nextOpen: boolean) {

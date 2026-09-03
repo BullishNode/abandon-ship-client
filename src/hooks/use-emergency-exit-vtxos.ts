@@ -1,28 +1,29 @@
 import { useState } from 'react'
+import { config } from '@/config/runtime'
+import { useEmergencyExitFee } from '@/hooks/barkd/use-emergency-exit-fee'
 import { useOnchainAddress } from '@/hooks/barkd/use-onchain-address'
 import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
-import { useOnchainFeeRates } from '@/hooks/barkd/use-onchain-fee-rates'
 import { useStartEmergencyExitVtxos } from '@/hooks/barkd/use-start-emergency-exit-vtxos'
 import { useWalletStore } from '@/stores/wallet'
 import type { EmergencyExitFeeEstimate } from '@/components/emergency-exit-start-dialog'
 import type { Vtxo } from '@/types/domain/vtxo'
-import { estimateEmergencyExitFeeSat } from '@/utils/exit-progress'
+import { isValidOnchainAddress } from '@/utils/bitcoin'
 
 interface UseEmergencyExitVtxosOptions {
   onStarted: () => void
   isExitingAll: boolean
+  isOpen: boolean
 }
 
 export function useEmergencyExitVtxos(
   vtxos: Vtxo[],
-  { onStarted, isExitingAll }: UseEmergencyExitVtxosOptions
+  { onStarted, isExitingAll, isOpen }: UseEmergencyExitVtxosOptions
 ) {
   const [address, setAddress] = useState('')
   const setExitClaimAddresses = useWalletStore((state) => state.setExitClaimAddresses)
   const setIsEmergencyExitAllInProgress = useWalletStore(
     (state) => state.setIsEmergencyExitAllInProgress
   )
-  const { data: feeRates } = useOnchainFeeRates()
   const { data: onchainBalance } = useOnchainBalance()
   const { mutate: fetchOnchainAddress, isPending: isFetchingWalletAddress } = useOnchainAddress()
   const {
@@ -31,18 +32,22 @@ export function useEmergencyExitVtxos(
     error: startError
   } = useStartEmergencyExitVtxos({ onSuccess: onStarted })
 
-  const feeRateSatPerVb = feeRates?.regularSatPerVb ?? 0
-  const onchainSat = onchainBalance?.trustedSpendableSats ?? 0
+  const vtxoIds = vtxos.map((vtxo) => vtxo.id)
+  const trimmedAddress = address.trim()
+  const destination = isValidOnchainAddress(trimmedAddress, config.network)
+    ? trimmedAddress
+    : undefined
+  const { data: estimate } = useEmergencyExitFee(vtxoIds, destination, { enabled: isOpen })
 
-  const feeEstimate: EmergencyExitFeeEstimate | undefined =
-    vtxos.length > 0 && feeRateSatPerVb > 0
-      ? {
-          estimatedFeeSat: estimateEmergencyExitFeeSat(vtxos, feeRateSatPerVb),
-          feeRateSatPerVb,
-          onchainSat,
-          vtxoCount: vtxos.length
-        }
-      : undefined
+  const feeEstimate: EmergencyExitFeeEstimate | undefined = estimate
+    ? {
+        estimatedFeeSat: estimate.totalFeeSats,
+        feeRateSatPerVb: estimate.feeRateSatPerVb,
+        fundable: estimate.fundable,
+        onchainSat: onchainBalance?.trustedSpendableSats ?? 0,
+        vtxoCount: vtxos.length
+      }
+    : undefined
 
   function handleUseWalletAddress() {
     fetchOnchainAddress(undefined, {
@@ -53,7 +58,6 @@ export function useEmergencyExitVtxos(
   }
 
   function handleSubmit(submittedAddress: string) {
-    const vtxoIds = vtxos.map((vtxo) => vtxo.id)
     setExitClaimAddresses(vtxoIds, submittedAddress)
     if (isExitingAll) {
       setIsEmergencyExitAllInProgress(true)

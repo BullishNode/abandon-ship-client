@@ -5,6 +5,18 @@ export interface FeeEstimate {
   vtxosSpent: string[]
 }
 
+export interface EmergencyExitFeeEstimate {
+  /** Paid now from confirmed on-chain funds to CPFP every unconfirmed exit tx. */
+  exitBroadcastFeeSats: number
+  /** Deducted later from the exited amount when the outputs are drained. */
+  claimFeeSats: number
+  totalFeeSats: number
+  feeRateSatPerVb: number
+  txsToBroadcast: number
+  /** `false` when confirmed on-chain funds run out midway through the CPFP walk. */
+  fundable: boolean
+}
+
 export interface OnchainFeeRates {
   fastSatPerVb: number
   regularSatPerVb: number
