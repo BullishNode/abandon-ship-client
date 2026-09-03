@@ -2,7 +2,7 @@ import type { ArkInfo } from '@/types/domain/ark'
 import type { Balance, OnchainBalance } from '@/types/domain/balance'
 import type { PendingBoard } from '@/types/domain/board'
 import type { ExitClaimResult, ExitStartResult, ExitTransactionStatus } from '@/types/domain/exit'
-import type { FeeEstimate, OnchainFeeRates } from '@/types/domain/fees'
+import type { EmergencyExitFeeEstimate, FeeEstimate, OnchainFeeRates } from '@/types/domain/fees'
 import type { Movement } from '@/types/domain/movement'
 import type { WalletNotification } from '@/types/domain/notification'
 import type { Utxo, WalletTx } from '@/types/domain/onchain'
@@ -13,6 +13,7 @@ import type {
   CreateWalletResult,
   DeleteWalletParams,
   DeleteWalletResult,
+  EmergencyExitFeeParams,
   ExitClaimVtxosParams,
   ExitStartVtxosParams,
   LightningInvoice,
@@ -84,6 +85,7 @@ export interface ExitsApiBackend {
   exitStartAll(): Promise<ExitStartResult>
   exitStartVtxos(params: ExitStartVtxosParams): Promise<ExitStartResult>
   exitClaimVtxos(params: ExitClaimVtxosParams): Promise<ExitClaimResult>
+  emergencyExitFee(params: EmergencyExitFeeParams): Promise<EmergencyExitFeeEstimate>
 }
 
 export interface BitcoinApiBackend {

@@ -20,13 +20,14 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { externalLinks } from '@/config/links'
+import { config } from '@/config/runtime'
 import { WALLET_NAME_MAX_LENGTH } from '@/constants/wallet'
 import { changeThemeWithTransition } from '@/lib/theme-transition'
 import { useArkInfo } from '@/hooks/barkd/use-ark-info'
+import { useEmergencyExitFee } from '@/hooks/barkd/use-emergency-exit-fee'
 import { useExitStatus } from '@/hooks/barkd/use-exit-status'
 import { useOnchainAddress } from '@/hooks/barkd/use-onchain-address'
 import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
-import { useOnchainFeeRates } from '@/hooks/barkd/use-onchain-fee-rates'
 import { useResetWallet } from '@/hooks/barkd/use-reset-wallet'
 import { useStartEmergencyExit } from '@/hooks/barkd/use-start-emergency-exit'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
@@ -37,7 +38,6 @@ import type { BitcoinUnit } from '@/types/bitcoin'
 import type { FiatCurrency, PriceProviderId } from '@/types/price-providers'
 import type { Theme } from '@/types/theme'
 import {
-  estimateEmergencyExitFeeSat,
   hasUnaddressedClaimable,
   resolvePrimaryClaimAddress,
   summarizeExits,
@@ -45,6 +45,7 @@ import {
 } from '@/utils/exit-progress'
 import { downloadDebugLog } from '@/utils/logs'
 import { downloadWalletExport } from '@/utils/wallet-export'
+import { isValidOnchainAddress } from '@/utils/bitcoin'
 import type { RefreshThresholdOption } from '@/utils/refresh'
 import {
   getRefreshThresholdOptions,
@@ -176,7 +177,6 @@ export default function SettingsPage() {
   const { data: exitStatuses } = useExitStatus()
   const { data: onchainBalance } = useOnchainBalance()
   const { data: vtxos } = useVtxos()
-  const { data: feeRates } = useOnchainFeeRates()
   const { data: arkInfo } = useArkInfo()
   const thresholdOptions = getRefreshThresholdOptions(
     arkInfo?.vtxoExpiryDelta,
@@ -199,8 +199,6 @@ export default function SettingsPage() {
     return `${time} · ${fee}`
   }
   const summary = summarizeExits(exitStatuses ?? [])
-  const feeRateSatPerVb = feeRates?.regularSatPerVb ?? 0
-  const estimatedFeeSat = estimateEmergencyExitFeeSat(vtxos ?? [], feeRateSatPerVb)
 
   const { mutate: resetWallet, isPending: isDeleting } = useResetWallet({
     onSuccess: () => {
@@ -231,15 +229,22 @@ export default function SettingsPage() {
 
   const disableStartButton = isEmergencyExitAllInProgress || isStartingExit || hasNoVtxos
 
-  const feeEstimate =
-    vtxos && vtxos.length > 0 && feeRateSatPerVb > 0
-      ? {
-          estimatedFeeSat,
-          feeRateSatPerVb,
-          onchainSat: onchainSpendable,
-          vtxoCount: vtxos.length
-        }
-      : undefined
+  const trimmedExitAddress = draftExitAddress.trim()
+  const exitFeeDestination = isValidOnchainAddress(trimmedExitAddress, config.network)
+    ? trimmedExitAddress
+    : undefined
+  const { data: exitFeeEstimate } = useEmergencyExitFee(allVtxoIds, exitFeeDestination, {
+    enabled: isExitDialogOpen && exitDialogMode === 'start'
+  })
+  const feeEstimate = exitFeeEstimate
+    ? {
+        estimatedFeeSat: exitFeeEstimate.totalFeeSats,
+        feeRateSatPerVb: exitFeeEstimate.feeRateSatPerVb,
+        fundable: exitFeeEstimate.fundable,
+        onchainSat: onchainSpendable,
+        vtxoCount: allVtxoIds.length
+      }
+    : undefined
 
   function commitWalletName() {
     const trimmed = walletName.trim()

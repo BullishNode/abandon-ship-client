@@ -13,6 +13,7 @@ import { clientConfig } from '@/lib/backend/barkd/client-config'
 import {
   toArkInfo,
   toBalance,
+  toEmergencyExitFeeEstimate,
   toExitStatus,
   toFeeEstimate,
   toMovement,
@@ -52,6 +53,14 @@ export const barkdBackend: Backend = {
       toPendingBoard(await boardsApi.boardAmount({ boardRequest: { amountSat: amountSats } }))
   },
   exitsApi: {
+    emergencyExitFee: async ({ vtxos, feeRateSatPerVb, destination }) =>
+      toEmergencyExitFeeEstimate(
+        await exitsApi.emergencyExitFee({
+          destination,
+          feeRateSatPerVb,
+          vtxoIds: vtxos.length > 0 ? vtxos.join(',') : undefined
+        })
+      ),
     exitClaimVtxos: async ({ destination, vtxos, feeRate }) =>
       await exitsApi.exitClaimVtxos({
         exitClaimVtxosRequest: { destination, feeRate, vtxos }

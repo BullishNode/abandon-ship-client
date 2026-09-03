@@ -4,6 +4,7 @@ import type {
   ArkInfo,
   Balance,
   Config,
+  EmergencyExitFeeEstimate,
   ExitState,
   ExitVtxo,
   FeeEstimate,
@@ -290,6 +291,14 @@ const api = {
 
   async estimateBoardFee(amountSats: number): Promise<FeeEstimate> {
     return await requireWallet().estimateBoardFee(amountSats)
+  },
+
+  async estimateEmergencyExitFee(
+    vtxoIds: string[],
+    feeRateSatPerVb?: number,
+    destination?: string
+  ): Promise<EmergencyExitFeeEstimate> {
+    return await requireWallet().estimateEmergencyExitFee(vtxoIds, feeRateSatPerVb, destination)
   },
 
   async estimateLightningSendFee(amountSats: number): Promise<FeeEstimate> {

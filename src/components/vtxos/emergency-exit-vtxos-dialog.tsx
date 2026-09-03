@@ -23,6 +23,7 @@ export function EmergencyExitVtxosDialog({
   const [prevOpen, setPrevOpen] = useState(open)
   const flow = useEmergencyExitVtxos(vtxos, {
     isExitingAll,
+    isOpen: open,
     onStarted: () => {
       onStarted()
       onOpenChange(false)

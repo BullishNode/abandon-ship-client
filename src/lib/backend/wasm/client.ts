@@ -7,6 +7,7 @@ import { buildWasmConfig, onchainDbName, toWasmNetwork } from '@/lib/backend/was
 import {
   toArkInfo,
   toBalance,
+  toEmergencyExitFeeEstimate,
   toExitStatus,
   toFeeEstimate,
   toMovement,
@@ -450,6 +451,12 @@ export const wasmBackend: Backend = {
     }
   },
   exitsApi: {
+    emergencyExitFee: async ({ vtxos, feeRateSatPerVb, destination }) => {
+      await ensureOpen()
+      return toEmergencyExitFeeEstimate(
+        await remote().estimateEmergencyExitFee(vtxos, feeRateSatPerVb, destination)
+      )
+    },
     exitClaimVtxos: async ({ destination, vtxos, feeRate }) => {
       await ensureOpen()
       const txid = await remote().claimExits(vtxos, destination, feeRate ?? undefined)

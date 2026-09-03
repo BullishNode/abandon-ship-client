@@ -61,6 +61,13 @@ export interface ExitStartVtxosParams {
   vtxos: string[]
 }
 
+export interface EmergencyExitFeeParams {
+  /** Empty list prices the whole wallet. */
+  vtxos: string[]
+  feeRateSatPerVb?: number
+  destination?: string
+}
+
 export interface ExitClaimVtxosParams {
   destination: string
   vtxos: string[]

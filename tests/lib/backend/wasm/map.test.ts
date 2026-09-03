@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type {
   ArkInfo as WasmArkInfo,
+  EmergencyExitFeeEstimate as WasmEmergencyExitFeeEstimate,
   ExitState as WasmExitState,
   FeeSchedule as WasmFeeSchedule,
   Movement as WasmMovement,
@@ -11,6 +12,7 @@ import type {
 } from '@secondts/bark'
 import {
   toArkInfo,
+  toEmergencyExitFeeEstimate,
   toExitStatus,
   toMovement,
   toOnchainFeeRates,
@@ -393,5 +395,38 @@ describe(toOnchainFeeRates, () => {
     expect(
       toOnchainFeeRates({ fastSatPerKwu: 1000, regularSatPerKwu: 3000, slowSatPerKwu: 2000 })
     ).toStrictEqual({ fastSatPerVb: 4, regularSatPerVb: 4, slowSatPerVb: 4 })
+  })
+})
+
+describe(toEmergencyExitFeeEstimate, () => {
+  it('maps every field and preserves fundable: false', () => {
+    const dto: WasmEmergencyExitFeeEstimate = {
+      claimFeeSats: 150,
+      exitBroadcastFeeSats: 2400,
+      feeRateSatPerVb: 12,
+      fundable: false,
+      totalFeeSats: 2550,
+      txsToBroadcast: 3
+    }
+    expect(toEmergencyExitFeeEstimate(dto)).toStrictEqual({
+      claimFeeSats: 150,
+      exitBroadcastFeeSats: 2400,
+      feeRateSatPerVb: 12,
+      fundable: false,
+      totalFeeSats: 2550,
+      txsToBroadcast: 3
+    })
+  })
+
+  it('preserves fundable: true', () => {
+    const dto: WasmEmergencyExitFeeEstimate = {
+      claimFeeSats: 0,
+      exitBroadcastFeeSats: 0,
+      feeRateSatPerVb: 1,
+      fundable: true,
+      totalFeeSats: 0,
+      txsToBroadcast: 0
+    }
+    expect(toEmergencyExitFeeEstimate(dto).fundable).toBeTruthy()
   })
 })
