@@ -398,7 +398,8 @@
       "label": "Filter"
     },
     "options": {
-      "show_exited": "Show exited VTXOs"
+      "show_exited": "Show exited VTXOs",
+      "show_spent": "Show spent VTXOs"
     },
     "selection": {
       "count_one": "{{count}} selected",

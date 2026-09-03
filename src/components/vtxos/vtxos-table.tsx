@@ -53,6 +53,8 @@ export function VtxosTable() {
   const { sats: formatSats, fiat: formatFiat } = usePrivateAmount()
   const showExitedVtxos = useSettingsStore((state) => state.showExitedVtxos)
   const setShowExitedVtxos = useSettingsStore((state) => state.setShowExitedVtxos)
+  const showSpentVtxos = useSettingsStore((state) => state.showSpentVtxos)
+  const setShowSpentVtxos = useSettingsStore((state) => state.setShowSpentVtxos)
   const exitClaimAddresses = useWalletStore((state) => state.exitClaimAddresses)
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
   const [offboardOpen, setOffboardOpen] = useState(false)
@@ -74,7 +76,10 @@ export function VtxosTable() {
     if (exitState === 'exiting') {
       return true
     }
-    return vtxo.state.type !== 'spent'
+    if (vtxo.state.type === 'spent') {
+      return showSpentVtxos
+    }
+    return true
   })
   const visibleVtxos = sortVtxosForDisplay(filteredVtxos, exitStateById, exitClaimHeightById)
 
@@ -167,6 +172,13 @@ export function VtxosTable() {
               onSelect={(event) => event.preventDefault()}
             >
               {t('vtxos.options.show_exited')}
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={showSpentVtxos}
+              onCheckedChange={(checked) => setShowSpentVtxos(checked)}
+              onSelect={(event) => event.preventDefault()}
+            >
+              {t('vtxos.options.show_spent')}
             </DropdownMenuCheckboxItem>
           </DropdownMenuContent>
         </DropdownMenu>
