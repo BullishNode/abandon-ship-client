@@ -47,7 +47,7 @@ async function login(app: Hono, password: string) {
 // Windows/NTFS has no POSIX permission triplet: node reports 0666 even after an
 // explicit chmod(0o600), so the mode bits are only assertable on the POSIX hosts
 // the images actually run on.
-const itPosix = it.skipIf(false)
+const SKIP_MODE_BITS = process.platform === 'win32'
 
 describe('POST /api/auth/setup', () => {
   afterEach(async () => {
@@ -116,7 +116,7 @@ describe('POST /api/auth/setup', () => {
     expect(record).not.toContain('longenough')
   })
 
-  itPosix('writes the verifier file with mode 0600', async () => {
+  it.skipIf(SKIP_MODE_BITS)('writes the verifier file with mode 0600', async () => {
     const dir = await walletDir()
     const app = await loadApp(dir, true)
 
