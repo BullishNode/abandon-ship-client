@@ -7,6 +7,11 @@ import { Authenticator, isAcceptablePassword, MIN_PASSWORD_LENGTH } from '../../
 
 const VERIFIER_RECORD_PATTERN = /^v1\$[0-9a-f]{32}\$[0-9a-f]{64}$/u
 
+// Windows/NTFS has no POSIX permission triplet: node reports 0666 even after an
+// explicit chmod(0o600), so the mode bits are only assertable on the POSIX hosts
+// the images actually run on.
+const itPosix = it.skipIf(false)
+
 const dirs: string[] = []
 
 async function authenticator() {
@@ -42,7 +47,7 @@ describe('Authenticator.setupPassword', () => {
     }
   })
 
-  it('writes a hashed verifier file with mode 0600 and no leftover temp file', async () => {
+  it('writes a hashed verifier file with no leftover temp file', async () => {
     const { auth, dir, passwordFile } = await authenticator()
 
     await expect(auth.setupPassword('longenough')).resolves.toBeTruthy()
@@ -50,10 +55,17 @@ describe('Authenticator.setupPassword', () => {
     const record = await readFile(passwordFile, 'utf-8')
     expect(record).toMatch(VERIFIER_RECORD_PATTERN)
     expect(record).not.toContain('longenough')
+    await expect(readdir(dir)).resolves.toStrictEqual(['ui_password'])
+  })
+
+  itPosix('writes the verifier file with mode 0600', async () => {
+    const { auth, passwordFile } = await authenticator()
+
+    await expect(auth.setupPassword('longenough')).resolves.toBeTruthy()
+
     const stats = await stat(passwordFile)
     // `% 0o1000` keeps the permission bits without a bitwise mask.
     expect(stats.mode % 0o1000).toBe(0o600)
-    await expect(readdir(dir)).resolves.toStrictEqual(['ui_password'])
   })
 
   it('makes the authenticator configured and the password verifiable', async () => {

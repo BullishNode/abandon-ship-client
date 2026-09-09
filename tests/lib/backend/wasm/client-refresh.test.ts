@@ -36,7 +36,11 @@ describe('wasm refresh', () => {
   })
 
   it('returns the submitted round for an explicit selection', async () => {
-    workerRemote.refreshVtxos.mockResolvedValue({ id: 7, ongoing: false })
+    workerRemote.refreshVtxos.mockResolvedValue({
+      id: 7,
+      ongoing: false,
+      state: 'awaiting-confirmations'
+    })
 
     const round = await wasmBackend.walletApi.refreshVtxos({ vtxos: ['vtxo-a', 'vtxo-b'] })
 
@@ -52,7 +56,7 @@ describe('wasm refresh', () => {
 
   it('submits every spendable id for refresh all', async () => {
     workerRemote.spendableVtxoIds.mockResolvedValue(['vtxo-c'])
-    workerRemote.refreshVtxos.mockResolvedValue({ id: 9, ongoing: true })
+    workerRemote.refreshVtxos.mockResolvedValue({ id: 9, ongoing: true, state: 'ongoing' })
 
     const round = await wasmBackend.walletApi.refreshAll()
 

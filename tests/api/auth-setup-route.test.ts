@@ -44,6 +44,11 @@ async function login(app: Hono, password: string) {
   })
 }
 
+// Windows/NTFS has no POSIX permission triplet: node reports 0666 even after an
+// explicit chmod(0o600), so the mode bits are only assertable on the POSIX hosts
+// the images actually run on.
+const itPosix = it.skipIf(false)
+
 describe('POST /api/auth/setup', () => {
   afterEach(async () => {
     vi.unstubAllEnvs()
@@ -97,7 +102,7 @@ describe('POST /api/auth/setup', () => {
     expect(res.status).toBe(400)
   })
 
-  it('writes a hashed verifier file 0600 and issues a session cookie', async () => {
+  it('writes a hashed verifier file and issues a session cookie', async () => {
     const dir = await walletDir()
     const app = await loadApp(dir, true)
 
@@ -106,11 +111,18 @@ describe('POST /api/auth/setup', () => {
     expect(res.status).toBe(200)
     await expect(res.json()).resolves.toStrictEqual({ ok: true })
     expect(res.headers.get('set-cookie')).toMatch(/^bark_session=/u)
-    const passwordFile = join(dir, 'ui_password')
-    const record = await readFile(passwordFile, 'utf-8')
+    const record = await readFile(join(dir, 'ui_password'), 'utf-8')
     expect(record).toMatch(VERIFIER_RECORD_PATTERN)
     expect(record).not.toContain('longenough')
-    const stats = await stat(passwordFile)
+  })
+
+  itPosix('writes the verifier file with mode 0600', async () => {
+    const dir = await walletDir()
+    const app = await loadApp(dir, true)
+
+    await setup(app, { password: 'longenough' })
+
+    const stats = await stat(join(dir, 'ui_password'))
     // `% 0o1000` keeps the permission bits without a bitwise mask.
     expect(stats.mode % 0o1000).toBe(0o600)
   })
