@@ -483,6 +483,19 @@
       "label": "Discreet mode",
       "description": "Hide balance and transaction amounts"
     },
+    "branta": {
+      "label": "Branta verification",
+      "options": {
+        "strict": "Strict privacy",
+        "loose": "Loose privacy",
+        "off": "Off"
+      },
+      "descriptions": {
+        "strict": "Verifies merchants with encrypted lookups only. The destination never leaves your device, but merchants that registered plain-text destinations will not show as verified.",
+        "loose": "Falls back to plain-text lookups so more merchants show as verified. The destination is sent to Branta.",
+        "off": "Never contacts Branta. No merchant verification is shown."
+      }
+    },
     "auto_refresh": {
       "threshold": {
         "label": "Auto-refresh threshold",

@@ -35,6 +35,7 @@ import { useWalletMnemonic } from '@/hooks/use-wallet-mnemonic'
 import { useSettingsStore } from '@/stores/settings'
 import { useWalletStore } from '@/stores/wallet'
 import type { BitcoinUnit } from '@/types/bitcoin'
+import { BRANTA_MODES } from '@/types/branta'
 import type { FiatCurrency, PriceProviderId } from '@/types/price-providers'
 import type { Theme } from '@/types/theme'
 import {
@@ -97,6 +98,8 @@ export default function SettingsPage() {
     setFiatCurrency,
     discreetMode,
     setDiscreetMode,
+    brantaMode,
+    setBrantaMode,
     autoRefreshThresholdBlocks,
     setAutoRefreshThresholdBlocks,
     refreshOnReceive,
@@ -112,6 +115,8 @@ export default function SettingsPage() {
       state.setFiatCurrency,
       state.discreetMode,
       state.setDiscreetMode,
+      state.brantaMode,
+      state.setBrantaMode,
       state.autoRefreshThresholdBlocks,
       state.setAutoRefreshThresholdBlocks,
       state.refreshOnReceive,
@@ -398,6 +403,22 @@ export default function SettingsPage() {
           </SelectContent>
         </Select>
         <FieldDescription>{t('settings.fiat_currency.description')}</FieldDescription>
+      </Field>
+      <Field>
+        <FieldLabel htmlFor="branta-mode">{t('settings.branta.label')}</FieldLabel>
+        <Select onValueChange={setBrantaMode} value={brantaMode}>
+          <SelectTrigger id="branta-mode">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {BRANTA_MODES.map((mode) => (
+              <SelectItem key={mode} value={mode}>
+                {t(`settings.branta.options.${mode}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <FieldDescription>{t(`settings.branta.descriptions.${brantaMode}`)}</FieldDescription>
       </Field>
       <Field orientation="horizontal">
         <FieldContent>

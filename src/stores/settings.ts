@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import type { AmountEntryMode, BitcoinUnit } from '@/types/bitcoin'
+import type { BrantaMode } from '@/types/branta'
 import type { FiatCurrency, PriceProviderId } from '@/types/price-providers'
 import type { Theme } from '@/types/theme'
 
@@ -15,6 +16,8 @@ interface SettingsStore {
   setBitcoinUnit: (unit: BitcoinUnit) => void
   amountEntryMode: AmountEntryMode
   setAmountEntryMode: (mode: AmountEntryMode) => void
+  brantaMode: BrantaMode
+  setBrantaMode: (mode: BrantaMode) => void
   discreetMode: boolean
   setDiscreetMode: (value: boolean) => void
   toggleDiscreetMode: () => void
@@ -38,6 +41,7 @@ export const useSettingsStore = create<SettingsStore>()(
       amountEntryMode: 'bitcoin',
       autoRefreshThresholdBlocks: 0,
       bitcoinUnit: 'sats',
+      brantaMode: 'strict',
       discreetMode: false,
       fiatCurrency: 'usd',
       hideExitFeeMovements: true,
@@ -52,6 +56,9 @@ export const useSettingsStore = create<SettingsStore>()(
       },
       setBitcoinUnit: (bitcoinUnit) => {
         set({ bitcoinUnit })
+      },
+      setBrantaMode: (brantaMode) => {
+        set({ brantaMode })
       },
       setDiscreetMode: (discreetMode) => {
         set({ discreetMode })

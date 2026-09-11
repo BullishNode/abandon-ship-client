@@ -1,3 +1,5 @@
+import type { BrantaMode } from '@/types/branta'
+
 export const walletKeys = {
   all: ['wallet'] as const,
   arkInfo: () => [...walletKeys.all, 'ark-info'] as const,
@@ -47,7 +49,8 @@ export const bitcoinKeys = {
 
 export const brantaKeys = {
   all: ['branta'] as const,
-  verification: (qrCode: string | undefined) => [...brantaKeys.all, 'verification', qrCode] as const
+  verification: (qrCode: string | undefined, mode: BrantaMode) =>
+    [...brantaKeys.all, 'verification', mode, qrCode] as const
 }
 
 export const exitKeys = {
