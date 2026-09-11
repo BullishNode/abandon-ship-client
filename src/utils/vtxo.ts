@@ -123,7 +123,12 @@ export function truncateVtxoId(id: string): string {
   return `${truncateMiddleChars(txid)}:${vout}`
 }
 
-export function getExpiryTimeLabel(expiryHeight: number, t: TFunction, tipHeight?: number): string {
+export function getExpiryTimeLabel(
+  expiryHeight: number,
+  t: TFunction,
+  locale: string,
+  tipHeight?: number
+): string {
   if (tipHeight === undefined) {
     return ''
   }
@@ -132,7 +137,7 @@ export function getExpiryTimeLabel(expiryHeight: number, t: TFunction, tipHeight
     return t('vtxos.expiry.expired')
   }
   const expiryDate = new Date(Date.now() + remaining * AVERAGE_BLOCK_INTERVAL_MS)
-  return formatRelativeTime(expiryDate).replace(/\d/u, (digit) => `~${digit}`)
+  return formatRelativeTime(expiryDate, locale).replace(/\d/u, (digit) => `~${digit}`)
 }
 
 export function getVtxoRawJson(vtxo: Vtxo): string {

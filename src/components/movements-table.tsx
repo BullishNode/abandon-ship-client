@@ -36,6 +36,7 @@ import { useOnchainTransactions } from '@/hooks/barkd/use-onchain-transactions'
 import { useOnchainUtxos } from '@/hooks/barkd/use-onchain-utxos'
 import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
 import { config } from '@/config/runtime'
+import { useLocale } from '@/hooks/use-locale'
 import { usePrivateAmount } from '@/hooks/use-private-amount'
 import { useOnchainFirstSeen } from '@/stores/metadata'
 import { usePendingOffboards } from '@/stores/pending-offboards'
@@ -58,7 +59,8 @@ function toMovementsTab(value: string): MovementsTab {
 }
 
 export function MovementsTable() {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const locale = useLocale()
   const { data: movements = [], isPending: movementsPending } = useWalletTransactions()
   const { data: utxos = [], isPending: utxosPending } = useOnchainUtxos()
   const { data: transactions = [], isPending: transactionsPending } = useOnchainTransactions()
@@ -109,11 +111,11 @@ export function MovementsTable() {
       : (movements.find((movement) => movement.id === selectedMovementId) ?? null)
 
   function formatDate(date: Date): string {
-    return formatRelativeTime(date, i18n.language)
+    return formatRelativeTime(date, locale)
   }
 
   function formatDateAbsolute(date: Date): string {
-    return formatAbsoluteDateTime(date, i18n.language)
+    return formatAbsoluteDateTime(date, locale)
   }
 
   function handleRowClick(row: MovementsFeedRow) {

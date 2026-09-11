@@ -11,6 +11,7 @@ import { getExpiryTimeLabel, truncateVtxoId } from '@/utils/vtxo'
 
 interface VtxoColumnsOptions {
   t: TFunction
+  locale: string
   formatSats: (sats: number) => string
   formatFiat: (sats: number) => string
   tipHeight?: number
@@ -32,6 +33,7 @@ function getHeaderCheckedState(
 
 export function getVtxoColumns({
   t,
+  locale,
   formatSats,
   formatFiat,
   tipHeight,
@@ -76,7 +78,7 @@ export function getVtxoColumns({
         <div className="flex flex-col leading-tight">
           <span className="tabular-nums">{row.original.expiryHeight}</span>
           <span className="text-muted-foreground text-xs">
-            {getExpiryTimeLabel(row.original.expiryHeight, t, tipHeight)}
+            {getExpiryTimeLabel(row.original.expiryHeight, t, locale, tipHeight)}
           </span>
         </div>
       ),
