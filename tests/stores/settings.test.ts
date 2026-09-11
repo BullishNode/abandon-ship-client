@@ -5,6 +5,7 @@ function resetStore() {
   useSettingsStore.setState({
     amountEntryMode: 'bitcoin',
     bitcoinUnit: 'sats',
+    brantaMode: 'strict',
     discreetMode: false,
     fiatCurrency: 'usd',
     hideRefreshMovements: true,
@@ -40,6 +41,11 @@ describe('settings store setters', () => {
   it('updates hideRefreshMovements', () => {
     useSettingsStore.getState().setHideRefreshMovements(false)
     expect(useSettingsStore.getState().hideRefreshMovements).toBeFalsy()
+  })
+
+  it('updates brantaMode', () => {
+    useSettingsStore.getState().setBrantaMode('loose')
+    expect(useSettingsStore.getState().brantaMode).toBe('loose')
   })
 
   it('updates discreetMode', () => {
