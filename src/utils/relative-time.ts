@@ -17,6 +17,7 @@ const divisions: { amount: number; divisor: number; unit: Intl.RelativeTimeForma
 ]
 
 const relativeFormatters = new Map<string | undefined, Intl.RelativeTimeFormat>()
+const shortRelativeFormatters = new Map<string | undefined, Intl.RelativeTimeFormat>()
 const dateTimeFormatters = new Map<string | undefined, Intl.DateTimeFormat>()
 
 function getRelativeFormatter(locale?: string): Intl.RelativeTimeFormat {
@@ -26,6 +27,16 @@ function getRelativeFormatter(locale?: string): Intl.RelativeTimeFormat {
   }
   const formatter = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' })
   relativeFormatters.set(locale, formatter)
+  return formatter
+}
+
+function getShortRelativeFormatter(locale?: string): Intl.RelativeTimeFormat {
+  const cached = shortRelativeFormatters.get(locale)
+  if (cached) {
+    return cached
+  }
+  const formatter = new Intl.RelativeTimeFormat(locale, { numeric: 'always', style: 'short' })
+  shortRelativeFormatters.set(locale, formatter)
   return formatter
 }
 
@@ -53,6 +64,15 @@ export function formatRelativeTime(date: Date, locale?: string): string {
   }
 
   return formatter.format(Math.round(elapsed / YEAR), 'year')
+}
+
+/** Abbreviated countdown label, e.g. `in 5 min`, always signed. */
+export function formatShortRelativeTime(
+  value: number,
+  unit: Intl.RelativeTimeFormatUnit,
+  locale?: string
+): string {
+  return getShortRelativeFormatter(locale).format(value, unit)
 }
 
 export function formatAbsoluteDateTime(date: Date, locale?: string): string {

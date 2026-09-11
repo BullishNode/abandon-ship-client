@@ -27,6 +27,7 @@ import { useRefreshVtxos } from '@/hooks/barkd/use-refresh-vtxos'
 import { useRefreshingVtxos } from '@/hooks/barkd/use-refreshing-vtxos'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
 import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
+import { useLocale } from '@/hooks/use-locale'
 import { usePrivateAmount } from '@/hooks/use-private-amount'
 import { backendErrorMessage } from '@/lib/error-message'
 import { useSettingsStore } from '@/stores/settings'
@@ -44,6 +45,7 @@ import {
 
 export function VtxosTable() {
   const { t } = useTranslation()
+  const locale = useLocale()
   const { data: vtxos = [], isPending } = useVtxos({ all: true })
   const { data: exitStatuses = [] } = useExitStatus()
   const { data: movements = [] } = useWalletTransactions()
@@ -144,6 +146,7 @@ export function VtxosTable() {
     exitStateById,
     formatFiat,
     formatSats,
+    locale,
     lockLabelById,
     refreshPhaseById,
     t,

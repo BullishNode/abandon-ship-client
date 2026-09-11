@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useVtxoEncoded } from '@/hooks/barkd/use-vtxo-encoded'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
+import { useLocale } from '@/hooks/use-locale'
 import type { RefreshPhase } from '@/types/domain/round'
 import type { Vtxo } from '@/types/domain/vtxo'
 import type { VtxoExitPhase, VtxoExitState } from '@/utils/vtxo'
@@ -121,6 +122,7 @@ function VtxoDetailContent({
   refreshPhase
 }: VtxoDetailContentProps) {
   const { t } = useTranslation()
+  const locale = useLocale()
   const { copy, isCopied } = useCopyToClipboard()
   const { copy: copyHex, isCopied: isHexCopied } = useCopyToClipboard()
   const { data: encodedVtxo } = useVtxoEncoded(vtxo.id)
@@ -128,7 +130,7 @@ function VtxoDetailContent({
   const hasClaimAddress = claimAddress !== undefined && claimAddress.length > 0
   const canEditClaimAddress =
     exitPhase !== undefined && isClaimAddressEditable(exitPhase, hasClaimAddress)
-  const expiryTime = getExpiryTimeLabel(vtxo.expiryHeight, t, tipHeight)
+  const expiryTime = getExpiryTimeLabel(vtxo.expiryHeight, t, locale, tipHeight)
   const expiryValue =
     expiryTime === '' ? String(vtxo.expiryHeight) : `${vtxo.expiryHeight} · ${expiryTime}`
   const lockedActionId = vtxo.state.type === 'locked' ? vtxo.state.actionId : undefined

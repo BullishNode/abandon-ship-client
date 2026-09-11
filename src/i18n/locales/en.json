@@ -652,6 +652,9 @@
       "all_time": "All time",
       "empty": "No balance history yet",
       "empty_description": "Your balance over time will appear once you start using the wallet."
+    },
+    "round": {
+      "starting": "Starting..."
     }
   },
   "errors": {
