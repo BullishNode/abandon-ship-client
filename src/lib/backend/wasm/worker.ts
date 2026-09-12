@@ -27,6 +27,7 @@ import init, { extractTxFromPsbt, OnchainWallet, Wallet } from '@secondts/bark/w
 import { instrumentApi } from '@/lib/backend/wasm/diagnostics-instrument'
 import { createDiagnosticsLog, describeError } from '@/lib/backend/wasm/diagnostics-log'
 import { deleteDatabase, hasDatabase } from '@/lib/backend/wasm/idb'
+import { collectPendingRoundInputVtxoIds } from '@/lib/backend/wasm/round-inputs'
 
 // The Wallet + OnchainWallet handles are non-serializable WASM objects, so they
 // can never cross `postMessage`. They live here, in the worker, and the main
@@ -463,8 +464,12 @@ const api = {
   },
 
   async pendingRoundInputVtxoIds(): Promise<string[]> {
-    const vtxos = await requireWallet().pendingRoundInputVtxos()
-    return vtxos.map((vtxo) => vtxo.id)
+    const w = requireWallet()
+    const [vtxos, movements] = await Promise.all([w.pendingRoundInputVtxos(), w.history()])
+    return collectPendingRoundInputVtxoIds(
+      vtxos.map((vtxo) => vtxo.id),
+      movements
+    )
   },
 
   async pendingRoundStates(): Promise<RoundState[]> {

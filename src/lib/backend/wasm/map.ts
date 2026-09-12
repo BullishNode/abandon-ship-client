@@ -14,6 +14,7 @@ import type {
   OnchainBalance as WasmOnchainBalance,
   OnchainUtxo as WasmOnchainUtxo,
   PendingBoard as WasmPendingBoard,
+  RoundFlowKind as WasmRoundFlowKind,
   RoundState as WasmRoundState,
   Vtxo as WasmVtxo,
   VtxoState as WasmVtxoState,
@@ -41,7 +42,7 @@ import { PAYMENT_TYPES } from '@/types/domain/movement'
 import type { Movement, MovementDestination, MovementStatus } from '@/types/domain/movement'
 import type { WalletNotification } from '@/types/domain/notification'
 import type { Utxo, WalletTx } from '@/types/domain/onchain'
-import type { NextRoundStart, PendingRound } from '@/types/domain/round'
+import type { NextRoundStart, PendingRound, RoundStatus } from '@/types/domain/round'
 import type { Vtxo, VtxoState } from '@/types/domain/vtxo'
 
 export function toBalance(dto: WasmBalance): Balance {
@@ -224,8 +225,35 @@ export function toMovement(dto: WasmMovement): Movement {
   }
 }
 
+// A delegated participation reports `delegated-pending` until the server
+// issues the round and `awaiting-confirmations` once its forfeits are done; it
+// never reports `ongoing`, which only fires for interactive rounds.
+function toRoundStatus(state: WasmRoundFlowKind): RoundStatus {
+  switch (state) {
+    case 'delegated-pending':
+    case 'pending': {
+      return { type: 'pending' }
+    }
+    case 'ongoing': {
+      return { type: 'ongoing' }
+    }
+    case 'awaiting-confirmations': {
+      return { type: 'unconfirmed' }
+    }
+    case 'failed': {
+      return { error: 'Round failed', type: 'failed' }
+    }
+    case 'canceled': {
+      return { type: 'canceled' }
+    }
+    default: {
+      return { type: 'pending' }
+    }
+  }
+}
+
 export function toPendingRound(dto: WasmRoundState): PendingRound {
-  return { id: dto.id, ongoing: dto.ongoing }
+  return { id: dto.id, status: toRoundStatus(dto.state) }
 }
 
 export function toPendingBoard(dto: WasmPendingBoard): PendingBoard {

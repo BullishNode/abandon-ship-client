@@ -1,14 +1,14 @@
 import { useEffect, useRef } from 'react'
 import { useArkInfo } from '@/hooks/barkd/use-ark-info'
 import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
-import { usePendingRounds } from '@/hooks/barkd/use-pending-rounds'
 import { useRefreshVtxos } from '@/hooks/barkd/use-refresh-vtxos'
+import { useRefreshingVtxos } from '@/hooks/barkd/use-refreshing-vtxos'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
 import { useSettingsStore } from '@/stores/settings'
 import {
   getExpiringVtxoIds,
   getRefreshThresholdOptions,
-  isRoundInProgress,
+  mapRefreshPhases,
   resolveThresholdBlocks
 } from '@/utils/refresh'
 
@@ -19,22 +19,30 @@ export function useAutoRefresh(): void {
   const { data: vtxos } = useVtxos()
   const { data: tip } = useBitcoinTip()
   const { data: arkInfo } = useArkInfo()
-  const { data: pendingRounds } = usePendingRounds()
+  const { data: refreshingVtxos = [] } = useRefreshingVtxos()
   const { mutate: refreshVtxos, isPending: isRefreshing } = useRefreshVtxos()
   const lastAttemptRef = useRef<{ ids: string; attemptedAt: number }>({ attemptedAt: 0, ids: '' })
 
   const tipHeight = tip
   const vtxoExpiryDelta = arkInfo?.vtxoExpiryDelta
   const refreshFees = arkInfo?.fees.refresh
-  const roundInProgress = isRoundInProgress(pendingRounds)
   const thresholdOptions = getRefreshThresholdOptions(vtxoExpiryDelta, refreshFees)
   const thresholdBlocks = resolveThresholdBlocks(autoRefreshThresholdBlocks, thresholdOptions)
 
   useEffect(() => {
-    if (roundInProgress || isRefreshing) {
+    if (isRefreshing) {
       return
     }
-    const expiringIds = getExpiringVtxoIds(vtxos ?? [], tipHeight, thresholdBlocks, vtxoExpiryDelta)
+    // Skipped rather than blocking the whole wallet, so one VTXO sitting in a
+    // round does not stall auto-refresh for the rest.
+    const inRoundIds = new Set(mapRefreshPhases(refreshingVtxos).keys())
+    const expiringIds = getExpiringVtxoIds(
+      vtxos ?? [],
+      tipHeight,
+      thresholdBlocks,
+      vtxoExpiryDelta,
+      inRoundIds
+    )
     if (expiringIds.length === 0) {
       return
     }
@@ -51,7 +59,7 @@ export function useAutoRefresh(): void {
     vtxos,
     tipHeight,
     vtxoExpiryDelta,
-    roundInProgress,
+    refreshingVtxos,
     isRefreshing,
     refreshVtxos
   ])

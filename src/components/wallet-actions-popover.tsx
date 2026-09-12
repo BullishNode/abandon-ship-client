@@ -7,12 +7,12 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useArkInfo } from '@/hooks/barkd/use-ark-info'
 import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
-import { usePendingRounds } from '@/hooks/barkd/use-pending-rounds'
 import { useRefreshAll } from '@/hooks/barkd/use-refresh-all'
+import { useRefreshingVtxos } from '@/hooks/barkd/use-refreshing-vtxos'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
 import { useModalsStore } from '@/stores/modals'
-import { estimateRefreshAllFeeSat, isRoundInProgress } from '@/utils/refresh'
+import { estimateRefreshAllFeeSat, getRefreshableVtxos, mapRefreshPhases } from '@/utils/refresh'
 
 interface WalletActionRowProps {
   description: string
@@ -54,7 +54,7 @@ export function WalletActionsPopover() {
   const [open, setOpen] = useState(false)
   const openBoard = useModalsStore((state) => state.openBoard)
   const { data: vtxos } = useVtxos()
-  const { data: pendingRounds } = usePendingRounds()
+  const { data: refreshingVtxos = [] } = useRefreshingVtxos()
   const { data: arkInfo } = useArkInfo()
   const { data: tip } = useBitcoinTip()
   const { mutate: refreshAll, isPending: isRefreshing } = useRefreshAll({
@@ -72,10 +72,9 @@ export function WalletActionsPopover() {
     }
   })
   const minBoardAmountSat = arkInfo?.minBoardAmountSats
-  const isRoundActive = isRoundInProgress(pendingRounds)
-  const hasNoVtxos = (vtxos?.length ?? 0) === 0
-  const isRefreshBusy = isRoundActive || isRefreshing
-  const refreshFeeSat = estimateRefreshAllFeeSat(vtxos, tip, arkInfo?.fees.refresh)
+  const inRoundIds = new Set(mapRefreshPhases(refreshingVtxos).keys())
+  const hasNoRefreshableVtxos = getRefreshableVtxos(vtxos ?? [], inRoundIds).length === 0
+  const refreshFeeSat = estimateRefreshAllFeeSat(vtxos, tip, arkInfo?.fees.refresh, inRoundIds)
 
   function handleBoard() {
     setOpen(false)
@@ -113,11 +112,11 @@ export function WalletActionsPopover() {
               ? undefined
               : t('actions_menu.refresh_all.fee_estimate', { fee: formatBitcoin(refreshFeeSat) })
           }
-          disabled={hasNoVtxos || isRefreshBusy}
-          icon={<ArrowsClockwiseIcon className={isRefreshBusy ? 'animate-spin' : undefined} />}
+          disabled={hasNoRefreshableVtxos || isRefreshing}
+          icon={<ArrowsClockwiseIcon className={isRefreshing ? 'animate-spin' : undefined} />}
           onClick={handleRefreshAll}
           title={
-            isRefreshBusy
+            isRefreshing
               ? t('actions_menu.refresh_all.in_progress')
               : t('actions_menu.refresh_all.title')
           }

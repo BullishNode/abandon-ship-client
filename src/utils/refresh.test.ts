@@ -56,4 +56,17 @@ describe(estimateRefreshAllFeeSat, () => {
     const vtxos = [makeVtxo(100_000, 600), makeVtxo(100_000, 2000, 'spent')]
     expect(estimateRefreshAllFeeSat(vtxos, 100, refreshFees)).toBe(130)
   })
+
+  it('ignores spendable vtxos that already sit in a round', () => {
+    const inRound = makeVtxo(100_000, 2000)
+    const vtxos = [makeVtxo(100_000, 600), inRound]
+    expect(estimateRefreshAllFeeSat(vtxos, 100, refreshFees, new Set([inRound.id]))).toBe(130)
+  })
+
+  it('returns undefined when every spendable vtxo already sits in a round', () => {
+    const inRound = makeVtxo(100_000, 600)
+    expect(
+      estimateRefreshAllFeeSat([inRound], 100, refreshFees, new Set([inRound.id]))
+    ).toBeUndefined()
+  })
 })

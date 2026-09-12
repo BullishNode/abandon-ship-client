@@ -30,6 +30,7 @@ import {
 import { clearMovementMetadata, setMovementMetadata } from '@/lib/backend/wasm/metadata-store'
 import { classifyDestination } from '@/lib/backend/wasm/send-router'
 import type { RefreshPhase } from '@/types/domain/round'
+import { isRoundActive, roundRefreshPhase } from '@/utils/refresh'
 import type { SendKind } from '@/lib/backend/wasm/send-router'
 import {
   clearSessionMnemonic,
@@ -616,7 +617,13 @@ export const wasmBackend: Backend = {
       // the fee estimate in the actions menu prices. bark's own
       // `getVtxosToRefresh()` is a near-expiry subset, so using it here made
       // refresh-all a silent no-op whenever nothing was close to expiring.
-      const vtxoIds = await remote().spendableVtxoIds()
+      // A queued round's inputs still read as spendable, so drop them here.
+      const [spendableIds, inRoundIds] = await Promise.all([
+        remote().spendableVtxoIds(),
+        remote().pendingRoundInputVtxoIds()
+      ])
+      const inRound = new Set(inRoundIds)
+      const vtxoIds = spendableIds.filter((id) => !inRound.has(id))
       if (vtxoIds.length === 0) {
         return null
       }
@@ -630,14 +637,19 @@ export const wasmBackend: Backend = {
     },
     refreshingVtxos: async () => {
       await ensureOpen()
-      // A delegated participation does not lock its inputs in bark, so the
-      // per-VTXO signal has to come from the pending-round store rather than
-      // VTXO state or the refresh movement.
+      // bark cannot attribute an input to a specific round, so every pending
+      // input shares one phase.
       const [ids, rounds] = await Promise.all([
         remote().pendingRoundInputVtxoIds(),
         remote().pendingRoundStates()
       ])
-      const phase: RefreshPhase = rounds.some((round) => round.ongoing) ? 'refreshing' : 'queued'
+      // A failed or canceled round is over and must not push the phase to
+      // `refreshing`, the same guard `refreshingVtxosFromRounds` applies for
+      // barkd. bark drops those rows within a sync, so this is a narrow window.
+      const isAnyRefreshing = rounds
+        .map(toPendingRound)
+        .some((round) => isRoundActive(round) && roundRefreshPhase(round) === 'refreshing')
+      const phase: RefreshPhase = isAnyRefreshing ? 'refreshing' : 'queued'
       return ids.map((id) => ({ id, phase }))
     },
     send: async ({ destination, amountSats, comment }) => {
