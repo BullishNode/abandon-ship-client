@@ -6,6 +6,7 @@ import type {
   FeeSchedule as WasmFeeSchedule,
   Movement as WasmMovement,
   OnchainUtxo as WasmOnchainUtxo,
+  RoundFlowKind as WasmRoundFlowKind,
   Vtxo as WasmVtxo,
   VtxoState as WasmVtxoState,
   WalletTransaction as WasmWalletTransaction
@@ -16,6 +17,7 @@ import {
   toExitStatus,
   toMovement,
   toOnchainFeeRates,
+  toPendingRound,
   toUtxos,
   toVtxo,
   toWalletTx
@@ -428,5 +430,29 @@ describe(toEmergencyExitFeeEstimate, () => {
       txsToBroadcast: 0
     }
     expect(toEmergencyExitFeeEstimate(dto).fundable).toBeTruthy()
+  })
+})
+
+describe(toPendingRound, () => {
+  function roundWithState(state: WasmRoundFlowKind) {
+    return toPendingRound({ id: 4, ongoing: state === 'pending' || state === 'ongoing', state })
+  }
+
+  it('maps both pending flavours to pending', () => {
+    expect(roundWithState('delegated-pending')).toStrictEqual({
+      id: 4,
+      status: { type: 'pending' }
+    })
+    expect(roundWithState('pending')).toStrictEqual({ id: 4, status: { type: 'pending' } })
+  })
+
+  it('maps the interactive phases', () => {
+    expect(roundWithState('ongoing').status).toStrictEqual({ type: 'ongoing' })
+    expect(roundWithState('awaiting-confirmations').status).toStrictEqual({ type: 'unconfirmed' })
+  })
+
+  it('maps the terminal phases', () => {
+    expect(roundWithState('failed').status.type).toBe('failed')
+    expect(roundWithState('canceled').status).toStrictEqual({ type: 'canceled' })
   })
 })

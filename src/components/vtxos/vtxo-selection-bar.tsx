@@ -12,7 +12,6 @@ interface VtxoSelectionBarProps {
   onEmergencyExit: () => void
   onDeselect: () => void
   isBusy?: boolean
-  isRefreshDisabled?: boolean
 }
 
 export function VtxoSelectionBar({
@@ -21,8 +20,7 @@ export function VtxoSelectionBar({
   onOffboard,
   onEmergencyExit,
   onDeselect,
-  isBusy,
-  isRefreshDisabled
+  isBusy
 }: VtxoSelectionBarProps) {
   const { t } = useTranslation()
   const divider = (
@@ -49,7 +47,7 @@ export function VtxoSelectionBar({
             <Button
               aria-label={t('vtxos.selection.refresh')}
               className="group"
-              disabled={isBusy === true || isRefreshDisabled === true}
+              disabled={isBusy}
               onClick={onRefresh}
               size="sm"
               type="button"

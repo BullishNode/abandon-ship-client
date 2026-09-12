@@ -186,10 +186,20 @@ describe(getExpiringVtxoIds, () => {
     const aged = [makeVtxo({ expiryHeight: 1000 + 72, id: 'aged:0' })]
     expect(getExpiringVtxoIds(aged, 1000, 999, SIGNET_EXPIRY_DELTA)).toStrictEqual(['aged:0'])
   })
+
+  it('skips spendable vtxos that already sit in a round', () => {
+    const vtxos = [
+      makeVtxo({ expiryHeight: 1100, id: 'queued:0' }),
+      makeVtxo({ expiryHeight: 1100, id: 'free:0' })
+    ]
+    expect(
+      getExpiringVtxoIds(vtxos, 1000, 287, MAINNET_EXPIRY_DELTA, new Set(['queued:0']))
+    ).toStrictEqual(['free:0'])
+  })
 })
 
-function makeWasmRound(ongoing: boolean): PendingRound {
-  return { id: 1, ongoing }
+function makeWasmRound(status: RoundStatus): PendingRound {
+  return { id: 1, status }
 }
 
 function makeBarkdRound(status: RoundStatus, inputs: string[] = []): PendingRound {
@@ -218,26 +228,25 @@ describe(isRoundInProgress, () => {
     expect(isRoundInProgress([makeRound()])).toBeFalsy()
   })
 
-  it('is true for a wasm round whether or not it is ongoing', () => {
-    expect(isRoundInProgress([makeWasmRound(false)])).toBeTruthy()
-    expect(isRoundInProgress([makeWasmRound(true)])).toBeTruthy()
+  it('follows the mapped state of a wasm round', () => {
+    expect(isRoundInProgress([makeWasmRound({ type: 'pending' })])).toBeTruthy()
+    expect(isRoundInProgress([makeWasmRound({ type: 'ongoing' })])).toBeTruthy()
+    expect(isRoundInProgress([makeWasmRound({ type: 'unconfirmed' })])).toBeTruthy()
+    expect(isRoundInProgress([makeWasmRound({ error: 'boom', type: 'failed' })])).toBeFalsy()
+    expect(isRoundInProgress([makeWasmRound({ type: 'canceled' })])).toBeFalsy()
   })
 })
 
 describe(roundRefreshPhase, () => {
-  it('maps each barkd status to a phase', () => {
+  it('is queued only while the round is pending', () => {
     expect(roundRefreshPhase(makeBarkdRound({ type: 'pending' }))).toBe('queued')
+    expect(roundRefreshPhase(makeWasmRound({ type: 'ongoing' }))).toBe('refreshing')
     expect(roundRefreshPhase(makeBarkdRound({ fundingTxid: 'tx', type: 'unconfirmed' }))).toBe(
       'refreshing'
     )
     expect(roundRefreshPhase(makeBarkdRound({ fundingTxid: 'tx', type: 'confirmed' }))).toBe(
       'refreshing'
     )
-  })
-
-  it('falls back to the wasm ongoing flag', () => {
-    expect(roundRefreshPhase(makeWasmRound(false))).toBe('queued')
-    expect(roundRefreshPhase(makeWasmRound(true))).toBe('refreshing')
   })
 })
 
@@ -258,7 +267,7 @@ describe(refreshingVtxosFromRounds, () => {
   })
 
   it('yields nothing for wasm rounds, which carry no participation', () => {
-    expect(refreshingVtxosFromRounds([makeWasmRound(true)])).toStrictEqual([])
+    expect(refreshingVtxosFromRounds([makeWasmRound({ type: 'ongoing' })])).toStrictEqual([])
   })
 })
 

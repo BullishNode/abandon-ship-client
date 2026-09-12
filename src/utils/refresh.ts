@@ -88,20 +88,33 @@ export function resolveThresholdBlocks(
   return match?.blocks ?? options[0]?.blocks ?? 0
 }
 
+const NO_IDS: ReadonlySet<string> = new Set()
+
+// The state check covers barkd, which locks round inputs at registration. The
+// wasm backend leaves a delegated participation's inputs spendable until the
+// server issues the round, so those have to be excluded by id as well.
+export function isRefreshable(vtxo: Vtxo, inRoundIds: ReadonlySet<string>): boolean {
+  return vtxo.state.type === 'spendable' && !inRoundIds.has(vtxo.id)
+}
+
+export function getRefreshableVtxos(vtxos: Vtxo[], inRoundIds: ReadonlySet<string>): Vtxo[] {
+  return vtxos.filter((vtxo) => isRefreshable(vtxo, inRoundIds))
+}
+
 export function getExpiringVtxoIds(
   vtxos: Vtxo[],
   tipHeight: number | undefined,
   thresholdBlocks: number,
-  vtxoExpiryDelta?: number
+  vtxoExpiryDelta?: number,
+  inRoundIds: ReadonlySet<string> = NO_IDS
 ): string[] {
   if (tipHeight === undefined || vtxoExpiryDelta === undefined) {
     return []
   }
   const clampedThreshold = Math.min(thresholdBlocks, getLoopSafeMaxBlocks(vtxoExpiryDelta))
   const expiring: string[] = []
-  for (const vtxo of vtxos) {
-    const isSpendable = vtxo.state.type === 'spendable'
-    if (isSpendable && vtxo.expiryHeight - tipHeight <= clampedThreshold) {
+  for (const vtxo of getRefreshableVtxos(vtxos, inRoundIds)) {
+    if (vtxo.expiryHeight - tipHeight <= clampedThreshold) {
       expiring.push(vtxo.id)
     }
   }
@@ -109,29 +122,18 @@ export function getExpiringVtxoIds(
 }
 
 // A round that failed, was canceled or errored while syncing is still returned
-// by barkd's `rounds` endpoint but is over: it must not gate the Refresh
-// buttons. The wasm backend supplies no status — it drops finished rounds from
-// `pendingRoundStates()` — so there, presence in the list is the signal.
+// by barkd's `rounds` endpoint but is over: it must not count as in progress.
 export function isRoundActive(round: PendingRound): boolean {
-  if (round.status === undefined) {
-    return true
-  }
   const { type } = round.status
-  return type === 'pending' || type === 'unconfirmed' || type === 'confirmed'
+  return type === 'pending' || type === 'ongoing' || type === 'unconfirmed' || type === 'confirmed'
 }
 
 export function isRoundInProgress(pendingRounds?: PendingRound[]): boolean {
   return (pendingRounds ?? []).some(isRoundActive)
 }
 
-// `queued` until the round starts, then `refreshing`. barkd reports this per
-// round; the wasm backend only knows whether *some* round is ongoing and cannot
-// attribute an input VTXO to a specific round, so it maps every pending input
-// with the same phase. Rounds run sequentially, so the two agree in practice.
+// `queued` until the round starts, then `refreshing`.
 export function roundRefreshPhase(round: PendingRound): RefreshPhase {
-  if (round.status === undefined) {
-    return round.ongoing === true ? 'refreshing' : 'queued'
-  }
   return round.status.type === 'pending' ? 'queued' : 'refreshing'
 }
 
@@ -161,12 +163,13 @@ function refreshPpmForBlocksToExpiry(blocksToExpiry: number, table: PpmExpiryFee
 export function estimateRefreshAllFeeSat(
   vtxos?: Vtxo[],
   tipHeight?: number,
-  refreshFees?: RefreshFees
+  refreshFees?: RefreshFees,
+  inRoundIds: ReadonlySet<string> = NO_IDS
 ): number | undefined {
   if (vtxos === undefined || tipHeight === undefined || refreshFees === undefined) {
     return undefined
   }
-  const spendable = vtxos.filter((vtxo) => vtxo.state.type === 'spendable')
+  const spendable = getRefreshableVtxos(vtxos, inRoundIds)
   if (spendable.length === 0) {
     return undefined
   }

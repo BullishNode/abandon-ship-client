@@ -22,7 +22,6 @@ import { getVtxoColumns } from '@/components/vtxos/vtxos-columns'
 import { VTXOS_PAGE_SIZE } from '@/constants/vtxos'
 import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
 import { useExitStatus } from '@/hooks/barkd/use-exit-status'
-import { usePendingRounds } from '@/hooks/barkd/use-pending-rounds'
 import { useRefreshVtxos } from '@/hooks/barkd/use-refresh-vtxos'
 import { useRefreshingVtxos } from '@/hooks/barkd/use-refreshing-vtxos'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
@@ -33,7 +32,7 @@ import { backendErrorMessage } from '@/lib/error-message'
 import { useSettingsStore } from '@/stores/settings'
 import { useWalletStore } from '@/stores/wallet'
 import type { Vtxo } from '@/types/domain/vtxo'
-import { isRoundInProgress, mapRefreshPhases } from '@/utils/refresh'
+import { mapRefreshPhases } from '@/utils/refresh'
 import {
   isSpendable,
   mapVtxoExitClaimHeights,
@@ -51,7 +50,6 @@ export function VtxosTable() {
   const { data: movements = [] } = useWalletTransactions()
   const { data: tip } = useBitcoinTip()
   const { data: refreshingVtxos = [] } = useRefreshingVtxos()
-  const { data: pendingRounds } = usePendingRounds()
   const { sats: formatSats, fiat: formatFiat } = usePrivateAmount()
   const showExitedVtxos = useSettingsStore((state) => state.showExitedVtxos)
   const setShowExitedVtxos = useSettingsStore((state) => state.setShowExitedVtxos)
@@ -85,8 +83,10 @@ export function VtxosTable() {
   })
   const visibleVtxos = sortVtxosForDisplay(filteredVtxos, exitStateById, exitClaimHeightById)
 
+  // A VTXO already committed to a round stays `spendable` in bark, so the
+  // refresh phase is what keeps it out of a second refresh, offboard or exit.
   function isSelectable(vtxo: Vtxo): boolean {
-    return isSpendable(vtxo) && !exitStateById.has(vtxo.id)
+    return isSpendable(vtxo) && !exitStateById.has(vtxo.id) && !refreshPhaseById.has(vtxo.id)
   }
 
   const selectedVtxos = visibleVtxos.filter((vtxo) => rowSelection[vtxo.id] && isSelectable(vtxo))
@@ -214,7 +214,6 @@ export function VtxosTable() {
       <VtxoSelectionBar
         count={selectedVtxos.length}
         isBusy={isRefreshing}
-        isRefreshDisabled={isRefreshing || isRoundInProgress(pendingRounds)}
         onDeselect={clearSelection}
         onEmergencyExit={() => setExitOpen(true)}
         onOffboard={() => setOffboardOpen(true)}
