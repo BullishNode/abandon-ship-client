@@ -25,8 +25,24 @@ describe('AuthGate', () => {
       authRequired: true,
       authed: false,
       deviceUnlockFailed: false,
-      passwordConfigured: true
+      passwordConfigured: true,
+      tokenRejected: false,
+      tokenRequired: false
     })
+  })
+
+  it('asks for the barkd token before anything else when one is required', () => {
+    useAuthStore.setState({ authRequired: false, authed: true, tokenRequired: true })
+    renderGate()
+    expect(screen.getByText('Connect to barkd')).toBeInTheDocument()
+    expect(screen.queryByText('APP')).not.toBeInTheDocument()
+  })
+
+  it('prefers the token prompt over the password gate', () => {
+    useAuthStore.setState({ tokenRequired: true })
+    renderGate()
+    expect(screen.getByText('Connect to barkd')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Unlock' })).not.toBeInTheDocument()
   })
 
   it('renders the app when no auth is required', () => {

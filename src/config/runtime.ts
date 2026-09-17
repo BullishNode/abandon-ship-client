@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { AuthTokenRequiredError } from '@/lib/backend/barkd/auth-token'
+import { authedFetch } from '@/lib/backend/barkd/authed-fetch'
 import type { ChainSource } from '@/types/domain/chain-source'
 import { NETWORKS } from '@/types/domain/network'
 import type { Network } from '@/types/domain/network'
@@ -90,9 +92,15 @@ function loadWasmConfig(): RuntimeConfig {
   return parsed
 }
 
-// barkd build: the Hono proxy serves runtime config from the daemon.
+const UNAUTHORIZED = 401
+
+// An embedded barkd guards this route with the bearer, so a 401 means the
+// user still has to supply a token, not a transient failure.
 async function loadBarkdConfig(): Promise<RuntimeConfig> {
-  const response = await fetch('/api/config')
+  const response = await authedFetch('/api/config')
+  if (response.status === UNAUTHORIZED) {
+    throw new AuthTokenRequiredError()
+  }
   if (!response.ok) {
     throw new Error(`Failed to load /api/config: ${response.status}`)
   }

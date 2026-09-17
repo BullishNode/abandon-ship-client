@@ -659,5 +659,23 @@
       "rate_limited": "Too many attempts. Wait a moment and try again.",
       "error": "Something went wrong. Please try again."
     }
+  },
+  "auth_token": {
+    "title": "Connect to barkd",
+    "description": "This barkd protects its API with an auth token. Paste it below to connect this browser. It is kept on this device only.",
+    "rejected": "The saved token was rejected by barkd. It may have been regenerated. Enter the current one.",
+    "label": "Auth token",
+    "submit": "Connect",
+    "where": {
+      "title": "Where to find it",
+      "log": "barkd prints a ready-to-open link when it starts. Opening that link connects automatically.",
+      "cli": "Run this in a terminal on the machine running barkd:",
+      "file": "Or copy the contents of this file in barkd's data directory:"
+    },
+    "error": {
+      "format": "That does not look like a barkd auth token.",
+      "invalid": "barkd rejected this token. Check for copy-paste mistakes, or print the current one with the command below.",
+      "error": "Could not reach barkd. Check that it is running and try again."
+    }
   }
 }

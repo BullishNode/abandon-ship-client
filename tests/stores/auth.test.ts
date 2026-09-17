@@ -20,4 +20,11 @@ describe(useAuthStore, () => {
     useAuthStore.getState().setStatus({ authRequired: true, authed: true })
     expect(useAuthStore.getState().deviceUnlockFailed).toBeFalsy()
   })
+
+  it('records whether a required token was a rejected one', () => {
+    useAuthStore.getState().requireToken(true)
+    expect(useAuthStore.getState()).toMatchObject({ tokenRejected: true, tokenRequired: true })
+    useAuthStore.getState().requireToken(false)
+    expect(useAuthStore.getState()).toMatchObject({ tokenRejected: false, tokenRequired: true })
+  })
 })

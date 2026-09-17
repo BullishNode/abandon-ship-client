@@ -1,4 +1,5 @@
 import { config } from '@/config/runtime'
+import { authedFetch } from '@/lib/backend/barkd/authed-fetch'
 import { downloadBlob } from '@/utils/download'
 
 const EXPORT_ENDPOINT = '/api/export-db'
@@ -10,7 +11,7 @@ function fallbackSqliteFilename(): string {
 }
 
 async function downloadBarkdExport(): Promise<void> {
-  const response = await fetch(EXPORT_ENDPOINT)
+  const response = await authedFetch(EXPORT_ENDPOINT)
   if (!response.ok) {
     throw new Error(`Failed to export wallet database: ${response.status}`)
   }
