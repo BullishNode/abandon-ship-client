@@ -14,3 +14,9 @@ export type LoginResult = { ok: true } | { ok: false; reason: LoginFailureReason
 export type SetupPasswordFailureReason = 'weak' | 'already_configured' | 'rate_limited' | 'error'
 
 export type SetupPasswordResult = { ok: true } | { ok: false; reason: SetupPasswordFailureReason }
+
+export type ConnectAuthTokenFailureReason = 'invalid' | 'error'
+
+export type ConnectAuthTokenResult =
+  | { ok: true }
+  | { ok: false; reason: ConnectAuthTokenFailureReason }

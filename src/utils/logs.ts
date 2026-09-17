@@ -1,3 +1,4 @@
+import { authedFetch } from '@/lib/backend/barkd/authed-fetch'
 import { downloadBlob } from '@/utils/download'
 
 const LOGS_ENDPOINT = '/api/logs'
@@ -12,7 +13,7 @@ export async function downloadDebugLog(): Promise<void> {
     downloadBlob(new Blob([text], { type: 'text/plain' }), WASM_LOGS_DOWNLOAD_NAME)
     return
   }
-  const response = await fetch(LOGS_ENDPOINT)
+  const response = await authedFetch(LOGS_ENDPOINT)
   if (!response.ok) {
     throw new Error(`Failed to download logs: ${response.status}`)
   }

@@ -10,8 +10,10 @@ import { ErrorBoundary } from './components/error-boundary'
 import { FullScreenLayout } from './components/full-screen-layout'
 import { LoadingScreen } from './components/loading-screen'
 import { initConfig } from './config/runtime'
+import { AuthTokenRequiredError, captureAuthTokenFromUrl } from './lib/backend/barkd/auth-token'
 import { fetchAuthStatus } from './lib/auth-api'
 import { queryClient } from './lib/query-client'
+import AuthTokenPage from './pages/auth-token'
 import { useAuthStore } from './stores/auth'
 import type { AuthStatus } from './types/auth'
 
@@ -56,6 +58,9 @@ async function initConfigWithRetry(): Promise<void> {
       await initConfig()
       return
     } catch (error: unknown) {
+      if (error instanceof AuthTokenRequiredError) {
+        throw error
+      }
       lastError = error
     }
   }
@@ -111,6 +116,11 @@ async function resolveInitialAuthStatus(): Promise<AuthStatus> {
 
 async function bootstrap(reactRoot: Root): Promise<void> {
   reactRoot.render(<LoadingScreen />)
+  // Before the first request: the link barkd prints at startup carries the
+  // bearer in the URL fragment.
+  if (__BACKEND__ !== 'wasm') {
+    captureAuthTokenFromUrl()
+  }
   try {
     await initConfigWithRetry()
 
@@ -132,6 +142,16 @@ async function bootstrap(reactRoot: Root): Promise<void> {
   } catch (error: unknown) {
     console.error('Failed to bootstrap app', error)
     if (reloadingForFreshAssets) {
+      return
+    }
+    if (error instanceof AuthTokenRequiredError) {
+      reactRoot.render(
+        <StrictMode>
+          <QueryClientProvider client={queryClient}>
+            <AuthTokenPage />
+          </QueryClientProvider>
+        </StrictMode>
+      )
       return
     }
     const message = error instanceof Error ? error.message : 'Unknown error during startup.'

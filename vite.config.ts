@@ -11,7 +11,9 @@ import { buildChainSource } from './api/src/chain-source.ts'
 const DEFAULT_API_TARGET = 'http://localhost:4001'
 const DEFAULT_BARKD_TARGET = 'http://localhost:4000'
 const BARKD_PREFIX = /^\/api\/barkd/u
-const WS_PREFIX = /^\/barkd-ws/u
+// Vite treats a key starting with `^` as a RegExp and uses the first matching
+// key, so this entry must precede the generic `/api` one.
+const WS_ROUTE = String.raw`^/api/barkd/api/v1/notifications/ws(\?|$)`
 
 type Env = Record<string, string | undefined>
 
@@ -63,11 +65,6 @@ function byobProxy(env: Env): Record<string, ProxyOptions> {
         })
       },
       rewrite: (path) => path.replace(BARKD_PREFIX, ''),
-      target: barkdTarget
-    },
-    '/barkd-ws': {
-      changeOrigin: true,
-      rewrite: (path) => path.replace(WS_PREFIX, ''),
       target: barkdTarget,
       ws: true
     }
@@ -78,15 +75,15 @@ function defaultProxy(): Record<string, ProxyOptions> {
   const apiTarget = process.env.VITE_DEV_API_TARGET ?? DEFAULT_API_TARGET
   const barkdTarget = process.env.VITE_DEV_BARKD_TARGET ?? DEFAULT_BARKD_TARGET
   return {
+    [WS_ROUTE]: {
+      changeOrigin: true,
+      rewrite: (path) => path.replace(BARKD_PREFIX, ''),
+      target: barkdTarget,
+      ws: true
+    },
     '/api': {
       changeOrigin: true,
       target: apiTarget
-    },
-    '/barkd-ws': {
-      changeOrigin: true,
-      rewrite: (path) => path.replace(WS_PREFIX, ''),
-      target: barkdTarget,
-      ws: true
     }
   }
 }

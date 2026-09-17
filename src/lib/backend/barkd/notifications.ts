@@ -15,10 +15,12 @@ const listeners = new Set<Listener>()
 
 let socket: ReconnectingWebSocket | null = null
 
+// nginx and the vite dev proxy route this exact path straight to barkd (the
+// Hono api cannot upgrade WebSockets); the ticket is the only credential needed.
 async function urlProvider(): Promise<string> {
   const ticket = await notificationsApi.websocketTicket()
   const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  return `${proto}//${window.location.host}/barkd-ws/api/v1/notifications/ws?ticket=${encodeURIComponent(ticket)}`
+  return `${proto}//${window.location.host}/api/barkd/api/v1/notifications/ws?ticket=${encodeURIComponent(ticket)}`
 }
 
 function handleMessage(event: MessageEvent): void {

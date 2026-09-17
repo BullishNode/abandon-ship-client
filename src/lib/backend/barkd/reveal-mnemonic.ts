@@ -1,3 +1,5 @@
+import { authedFetch } from '@/lib/backend/barkd/authed-fetch'
+
 // `X-Requested-With` satisfies the CSRF check when UI auth is enabled;
 // same-origin credentials carry the session cookie.
 const REVEAL_MNEMONIC_PATH = '/api/reveal-mnemonic'
@@ -7,8 +9,7 @@ interface RevealMnemonicResponse {
 }
 
 export async function revealMnemonic(): Promise<string> {
-  const response = await fetch(REVEAL_MNEMONIC_PATH, {
-    credentials: 'same-origin',
+  const response = await authedFetch(REVEAL_MNEMONIC_PATH, {
     headers: { 'X-Requested-With': 'bark' },
     method: 'POST'
   })

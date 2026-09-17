@@ -1,5 +1,5 @@
 # WASM mode: static SPA only. The wallet runs in the browser and talks to the
-# ark server + esplora directly — no /api or /barkd-ws proxies here.
+# ark server + esplora directly — no /api proxies here.
 server {
   listen ${PORT};
   server_name _;
