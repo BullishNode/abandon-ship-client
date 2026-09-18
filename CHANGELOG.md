@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-09-18
+
+### Added
+
+- Branta verification privacy setting.
+- Spent VTXOs are listed in the VTXOs table.
+
+### Changed
+
+- Updated `@secondts/bark` to 0.24.0, `@secondts/barkd` to 0.7.2, and the bark Docker images to 0.7.1.
+- The barkd auth token is stored client-side instead of injected into `index.html`.
+- Refresh is gated per VTXO instead of per wallet.
+- Emergency exit uses bark's fee estimate instead of a local heuristic.
+- Relative times are formatted with the app locale instead of the browser's.
+
+### Fixed
+
+- Failed round movements show zero amount and fee.
+
 ## [0.8.1] - 2026-09-02
 
 ### Changed
