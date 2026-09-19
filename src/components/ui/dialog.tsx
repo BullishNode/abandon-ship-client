@@ -57,7 +57,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "bg-background data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 border-foreground/15 flex flex-col max-w-[calc(100%-2rem)] max-h-[85dvh] overflow-hidden gap-6 rounded-xl p-6 text-sm border duration-100 sm:max-w-md fixed top-1/2 left-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2",
+          "outline-hidden bg-background data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 border-foreground/15 flex flex-col max-w-[calc(100%-2rem)] max-h-[85dvh] overflow-hidden gap-6 rounded-xl p-6 text-sm border duration-100 sm:max-w-md fixed top-1/2 left-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2",
           className
         )}
         {...props}
@@ -102,7 +102,7 @@ function DialogBody({
       )}
       <div
         className={cn(
-          "no-scrollbar -mx-1 -my-1 min-h-0 flex-auto overflow-y-auto px-1 py-1",
+          "no-scrollbar -mx-1 -my-1 min-h-0 flex-auto overflow-y-auto px-1 py-1 outline-hidden",
           className
         )}
         onScroll={update}
