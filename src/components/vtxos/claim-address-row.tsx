@@ -28,7 +28,7 @@ export function ClaimAddressRow({ label, emptyLabel, address, onEdit }: ClaimAdd
   if (address === undefined || address.length === 0) {
     return (
       <div className="flex items-center justify-between gap-3">
-        <span className="text-muted-foreground">{label}</span>
+        <span className="select-none text-muted-foreground">{label}</span>
         <div className="flex items-center gap-2">
           <span className="font-mono text-muted-foreground text-xs italic">{emptyLabel}</span>
           {editButton}

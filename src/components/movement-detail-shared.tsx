@@ -17,7 +17,7 @@ interface DetailRowProps {
 export function DetailRow({ label, value, tooltip }: DetailRowProps) {
   return (
     <div className="flex items-start justify-between gap-3">
-      <span className="flex items-center gap-1 text-muted-foreground">
+      <span className="flex select-none items-center gap-1 text-muted-foreground">
         {label}
         {tooltip === undefined ? null : (
           <Tooltip>
@@ -49,7 +49,7 @@ export function CopyableValueRow({ label, value, displayValue, action }: Copyabl
   const { copy, isCopied } = useCopyToClipboard()
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-muted-foreground">{label}</span>
+      <span className="select-none text-muted-foreground">{label}</span>
       <div className="flex max-w-[70%] items-center gap-2">
         <span className="break-all font-mono text-xs">{displayValue ?? value}</span>
         {action}
