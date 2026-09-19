@@ -8,7 +8,13 @@ import { VtxoExitBadge } from '@/components/vtxos/vtxo-exit-badge'
 import { VtxoRefreshBadge } from '@/components/vtxos/vtxo-refresh-badge'
 import { VtxoStatusBadge } from '@/components/vtxos/vtxo-status-badge'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
 import { useVtxoEncoded } from '@/hooks/barkd/use-vtxo-encoded'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { useLocale } from '@/hooks/use-locale'
@@ -142,7 +148,7 @@ function VtxoDetailContent({
       <DialogHeader>
         <DialogTitle>{t('vtxos.detail.title')}</DialogTitle>
       </DialogHeader>
-      <div className="flex flex-col gap-5 overflow-y-auto">
+      <DialogBody className="flex flex-col gap-5">
         <div className="flex flex-col divide-y divide-border *:py-3 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0">
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col leading-tight">
@@ -232,7 +238,7 @@ function VtxoDetailContent({
             {isHexCopied ? t('vtxos.detail.copied') : t('vtxos.detail.copy_raw_hex')}
           </Button>
         </div>
-      </div>
+      </DialogBody>
       {canEditClaimAddress ? (
         <EditExitClaimAddressDialog
           onOpenChange={setIsEditAddressOpen}
