@@ -2,6 +2,7 @@ import * as React from "react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
+import { useScrollOverflow } from "@/hooks/use-scroll-overflow"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "@phosphor-icons/react"
 
@@ -56,7 +57,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "bg-background data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 border-foreground/15 flex flex-col max-w-[calc(100%-2rem)] max-h-[85vh] overflow-hidden gap-6 rounded-xl p-6 text-sm border duration-100 sm:max-w-md fixed top-1/2 left-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2",
+          "bg-background data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 border-foreground/15 flex flex-col max-w-[calc(100%-2rem)] max-h-[85dvh] overflow-hidden gap-6 rounded-xl p-6 text-sm border duration-100 sm:max-w-md fixed top-1/2 left-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2",
           className
         )}
         {...props}
@@ -83,6 +84,37 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
       className={cn("gap-2 flex flex-col", className)}
       {...props}
     />
+  )
+}
+
+function DialogBody({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"div">) {
+  const bodyRef = React.useRef<HTMLDivElement>(null)
+  const { canScrollUp, canScrollDown, update } = useScrollOverflow(bodyRef)
+
+  return (
+    <div className="relative flex min-h-0 flex-1 flex-col" data-slot="dialog-body">
+      {canScrollUp && (
+        <div className="pointer-events-none absolute -top-1.5 -left-1 -right-1 z-10 h-6 bg-linear-to-b from-background to-transparent" />
+      )}
+      <div
+        className={cn(
+          "no-scrollbar -mx-1 -my-1 min-h-0 flex-auto overflow-y-auto px-1 py-1",
+          className
+        )}
+        onScroll={update}
+        ref={bodyRef}
+        {...props}
+      >
+        {children}
+      </div>
+      {canScrollDown && (
+        <div className="pointer-events-none absolute -bottom-1.5 -left-1 -right-1 z-10 h-6 bg-linear-to-t from-background to-transparent" />
+      )}
+    </div>
   )
 }
 
@@ -141,6 +173,7 @@ function DialogDescription({
 
 export {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogDescription,

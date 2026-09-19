@@ -6,7 +6,13 @@ import { MovementSourceBadge } from '@/components/movement-source-badge'
 import { MovementStatusBadge } from '@/components/movement-status-badge'
 import { TagInput } from '@/components/tag-input'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { useUpdateMovementMetadata } from '@/hooks/barkd/use-update-movement-metadata'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
@@ -103,7 +109,7 @@ function MovementDetailContent({
       <DialogHeader>
         <DialogTitle>{t('movements.detail.title')}</DialogTitle>
       </DialogHeader>
-      <div className="flex flex-col gap-5">
+      <DialogBody className="flex flex-col gap-5">
         <div className="flex flex-col divide-y divide-border *:py-3 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0">
           <div className="flex items-start justify-between gap-3">
             <MovementAmountCell
@@ -176,7 +182,7 @@ function MovementDetailContent({
           {isCopied ? <CheckIcon /> : <CopyIcon />}
           {isCopied ? t('movements.detail.copied') : t('movements.detail.copy_raw_json')}
         </Button>
-      </div>
+      </DialogBody>
     </>
   )
 }
