@@ -1,9 +1,13 @@
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CheckCircleIcon, InfoIcon, WarningIcon, XCircleIcon, SpinnerIcon } from "@phosphor-icons/react"
+import { useResolvedTheme } from "@/hooks/use-resolved-theme"
 
 const Toaster = ({ ...props }: ToasterProps) => {
+  const theme = useResolvedTheme()
+
   return (
     <Sonner
+      theme={theme}
       position="top-center"
       className="toaster group"
       icons={{
