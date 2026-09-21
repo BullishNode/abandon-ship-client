@@ -72,10 +72,10 @@ export function normalizeBitcoinAddress(address: string): string {
 
 export function normalizeDestination(destination: Destination): Destination {
   if (destination.type === 'bitcoin-address') {
-    return { ...destination, destination: normalizeBitcoinAddress(destination.destination) }
+    return { ...destination, value: normalizeBitcoinAddress(destination.value) }
   }
   if (LOWERCASE_DESTINATION_TYPES.has(destination.type)) {
-    return { ...destination, destination: destination.destination.toLowerCase() }
+    return { ...destination, value: destination.value.toLowerCase() }
   }
   return destination
 }

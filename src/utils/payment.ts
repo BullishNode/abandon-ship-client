@@ -67,13 +67,13 @@ export function destinationMatchesWalletNetwork(
   walletNetwork: Network
 ): boolean {
   if (destination.type === 'bitcoin-address') {
-    return isValidOnchainAddress(destination.destination, walletNetwork)
+    return isValidOnchainAddress(destination.value, walletNetwork)
   }
   if (destination.type === 'ark-address') {
-    return walletAccepts(arkNetwork(destination.destination), walletNetwork)
+    return walletAccepts(arkNetwork(destination.value), walletNetwork)
   }
   if (destination.type === 'bolt11') {
-    return walletAccepts(bolt11Network(destination.destination), walletNetwork)
+    return walletAccepts(bolt11Network(destination.value), walletNetwork)
   }
   return true
 }

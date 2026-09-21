@@ -17,11 +17,11 @@ vi.mock(import('bitcoin-decoder'), () => ({
   decode: vi.fn<typeof decode>()
 }))
 
-function makeDestination(type: Destination['type'], destination: string): Destination {
+function makeDestination(type: Destination['type'], value: string): Destination {
   if (type === 'bitcoin-address') {
-    return { addressType: 'p2wpkh', destination, protocol: 'on-chain', type }
+    return { addressType: 'p2wpkh', protocol: 'on-chain', type, value }
   }
-  return { destination, protocol: 'lightning', type } as Destination
+  return { protocol: 'lightning', type, value } as Destination
 }
 
 const arkDest = makeDestination('ark-address', 'ark1abc')
@@ -380,12 +380,12 @@ describe(getSelectableDestinations, () => {
 
   it('lowercases ark and lightning destinations so they match the stored selection', () => {
     const [first] = getSelectableDestinations([upperArk])
-    expect(first.destination).toBe('ark1abc')
+    expect(first.value).toBe('ark1abc')
   })
 
   it('lowercases bech32 bitcoin addresses', () => {
     const [first] = getSelectableDestinations([upperBtc])
-    expect(first.destination).toBe('bc1qabc')
+    expect(first.value).toBe('bc1qabc')
   })
 
   it('keeps priority order (ark before lightning before on-chain)', () => {
@@ -397,8 +397,8 @@ describe(getSelectableDestinations, () => {
     const destinations = [upperBtc, upperArk, upperBolt11]
     const selectable = getSelectableDestinations(destinations)
     const picked = pickCheapestDestination(destinations)
-    const selectedValue = normalizeDestination(picked).destination
-    expect(selectable.some((d) => d.destination === selectedValue)).toBeTruthy()
+    const selectedValue = normalizeDestination(picked).value
+    expect(selectable.some((d) => d.value === selectedValue)).toBeTruthy()
   })
 
   it('does not mutate the input array', () => {

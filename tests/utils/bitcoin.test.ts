@@ -101,76 +101,74 @@ describe('bitcoin utils', () => {
     it('lowercases an uppercase bitcoin segwit address', () => {
       const dest: Destination = {
         addressType: 'p2wpkh',
-        destination: 'BC1QAR0SRRR7XFKVY5L643LYDNW9RE59GTZZWF5MDQ',
         protocol: 'on-chain',
-        type: 'bitcoin-address'
+        type: 'bitcoin-address',
+        value: 'BC1QAR0SRRR7XFKVY5L643LYDNW9RE59GTZZWF5MDQ'
       }
-      expect(normalizeDestination(dest).destination).toBe(
-        'bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq'
-      )
+      expect(normalizeDestination(dest).value).toBe('bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq')
     })
 
     it('preserves case of a base58 legacy bitcoin address', () => {
       const dest: Destination = {
         addressType: 'p2pkh',
-        destination: '1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2',
         protocol: 'on-chain',
-        type: 'bitcoin-address'
+        type: 'bitcoin-address',
+        value: '1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2'
       }
-      expect(normalizeDestination(dest).destination).toBe('1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2')
+      expect(normalizeDestination(dest).value).toBe('1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2')
     })
 
     it('lowercases an uppercase ark address', () => {
       const dest: Destination = {
-        destination: 'ARK1ABCDEF',
         protocol: 'ark',
-        type: 'ark-address'
+        type: 'ark-address',
+        value: 'ARK1ABCDEF'
       }
-      expect(normalizeDestination(dest).destination).toBe('ark1abcdef')
+      expect(normalizeDestination(dest).value).toBe('ark1abcdef')
     })
 
     it('lowercases an uppercase bolt11 invoice', () => {
       const dest: Destination = {
-        destination: 'LNBC1ABCDEF',
         protocol: 'lightning',
-        type: 'bolt11'
+        type: 'bolt11',
+        value: 'LNBC1ABCDEF'
       }
-      expect(normalizeDestination(dest).destination).toBe('lnbc1abcdef')
+      expect(normalizeDestination(dest).value).toBe('lnbc1abcdef')
     })
 
     it('lowercases an uppercase bolt12 offer', () => {
       const dest: Destination = {
-        destination: 'LNO1ABCDEF',
         protocol: 'lightning',
-        type: 'bolt12'
+        type: 'bolt12',
+        value: 'LNO1ABCDEF'
       }
-      expect(normalizeDestination(dest).destination).toBe('lno1abcdef')
+      expect(normalizeDestination(dest).value).toBe('lno1abcdef')
     })
 
     it('lowercases a lightning address', () => {
       const dest: Destination = {
-        destination: 'Satoshi@Example.com',
         protocol: 'lightning',
-        type: 'lnaddress'
+        type: 'lnaddress',
+        value: 'Satoshi@Example.com'
       }
-      expect(normalizeDestination(dest).destination).toBe('satoshi@example.com')
+      expect(normalizeDestination(dest).value).toBe('satoshi@example.com')
     })
 
     it('preserves case of an lnurl', () => {
       const dest: Destination = {
-        destination: 'LNURL1ABCDEF',
         protocol: 'lightning',
-        type: 'lnurl'
+        type: 'lnurl',
+        value: 'LNURL1ABCDEF'
       }
-      expect(normalizeDestination(dest).destination).toBe('LNURL1ABCDEF')
+      expect(normalizeDestination(dest).value).toBe('LNURL1ABCDEF')
     })
 
     it('keeps other destination fields intact', () => {
       const dest: Destination = {
         addressType: 'p2wpkh',
-        destination: 'BC1QAR0SRRR7XFKVY5L643LYDNW9RE59GTZZWF5MDQ',
         protocol: 'on-chain',
-        type: 'bitcoin-address'
+        type: 'bitcoin-address',
+        value: 'BC1QAR0SRRR7XFKVY5L643LYDNW9RE59GTZZWF5MDQ'
       }
       const result = normalizeDestination(dest)
       expect(result.type).toBe('bitcoin-address')

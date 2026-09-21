@@ -70,7 +70,7 @@ export function useSendDestination({ open, initialStep = 'scan' }: UseSendDestin
 
   function applyDestination(rawDest: Destination) {
     const dest = normalizeDestination(rawDest)
-    setDestination(dest.destination)
+    setDestination(dest.value)
     setSelectedMethodType(dest.type)
     setSendRoute(getDefaultSendRoute(dest.type, routeBalances))
   }
@@ -152,7 +152,7 @@ export function useSendDestination({ open, initialStep = 'scan' }: UseSendDestin
     }
     if (parsed?.valid === true && parsed.kind === 'payment') {
       const isKnownDestination = parsed.destinations.some(
-        (d) => normalizeDestination(d).destination === trimmed
+        (d) => normalizeDestination(d).value === trimmed
       )
       if (isKnownDestination) {
         return

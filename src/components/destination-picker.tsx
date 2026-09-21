@@ -86,8 +86,8 @@ export function DestinationPicker({
         <DestinationBadge
           amountSat={amountSat}
           destination={dest}
-          isSelected={dest.destination === selectedDestination}
-          key={`${dest.type}-${dest.destination}`}
+          isSelected={dest.value === selectedDestination}
+          key={`${dest.type}-${dest.value}`}
           onSelect={() => onSelect(dest)}
         />
       ))}

@@ -59,41 +59,41 @@ async function rejectNetworkAccess() {
 
 const ONCHAIN_DEST: Destination = {
   addressType: 'p2wpkh',
-  destination: 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx',
   protocol: 'on-chain',
-  type: 'bitcoin-address'
+  type: 'bitcoin-address',
+  value: 'tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx'
 }
 
 const MAINNET_ONCHAIN_DEST: Destination = {
   addressType: 'p2wpkh',
-  destination: 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4',
   protocol: 'on-chain',
-  type: 'bitcoin-address'
+  type: 'bitcoin-address',
+  value: 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4'
 }
 
 const REGTEST_ONCHAIN_DEST: Destination = {
   addressType: 'p2wpkh',
-  destination: 'bcrt1qw508d6qejxtdg4y5r3zarvary0c5xw7kygt080',
   protocol: 'on-chain',
-  type: 'bitcoin-address'
+  type: 'bitcoin-address',
+  value: 'bcrt1qw508d6qejxtdg4y5r3zarvary0c5xw7kygt080'
 }
 
 const LNADDRESS_DEST: Destination = {
-  destination: 'carlos@second.tech',
   protocol: 'lightning',
-  type: 'lnaddress'
+  type: 'lnaddress',
+  value: 'carlos@second.tech'
 }
 
 const OFFER_DEST: Destination = {
-  destination: 'lno1pqqnyzsmx5cx6umpwssx6atvw35j6ut4v9h9g',
   protocol: 'lightning',
-  type: 'bolt12'
+  type: 'bolt12',
+  value: 'lno1pqqnyzsmx5cx6umpwssx6atvw35j6ut4v9h9g'
 }
 
 const MAINNET_INVOICE_DEST: Destination = {
-  destination: 'lnbc500u1p3invoice',
   protocol: 'lightning',
-  type: 'bolt11'
+  type: 'bolt11',
+  value: 'lnbc500u1p3invoice'
 }
 
 function makePayment(
@@ -103,7 +103,7 @@ function makePayment(
   return {
     destination: destinations[0],
     destinations,
-    input: destinations[0].destination,
+    input: destinations[0].value,
     kind: 'payment',
     network,
     valid: true
@@ -174,9 +174,9 @@ describe(useSendFlow, () => {
 
     act(() => {
       result.current.applyDestination({
-        destination: INVOICE,
         protocol: 'lightning',
-        type: 'bolt11'
+        type: 'bolt11',
+        value: INVOICE
       })
       result.current.setAmountSat(SEND_AMOUNT_SATS)
     })
@@ -235,7 +235,7 @@ describe(useSendFlow, () => {
     const { result } = renderSendFlow(queryClient)
 
     await act(async () => {
-      await result.current.verifyDestination(MAINNET_ONCHAIN_DEST.destination)
+      await result.current.verifyDestination(MAINNET_ONCHAIN_DEST.value)
     })
 
     expect(toastErrorSpy).toHaveBeenCalledWith('The destination is for a different network')
@@ -247,7 +247,7 @@ describe(useSendFlow, () => {
     const { result } = renderSendFlow(queryClient)
 
     await act(async () => {
-      await result.current.goToSend(ONCHAIN_DEST.destination)
+      await result.current.goToSend(ONCHAIN_DEST.value)
     })
 
     expect(result.current.selectedMethodType).toBe('bitcoin-address')
@@ -259,7 +259,7 @@ describe(useSendFlow, () => {
     const { result } = renderSendFlow(queryClient)
 
     await act(async () => {
-      await result.current.goToSend(MAINNET_ONCHAIN_DEST.destination)
+      await result.current.goToSend(MAINNET_ONCHAIN_DEST.value)
     })
 
     expect(toastErrorSpy).toHaveBeenCalledWith('The destination is for a different network')
@@ -273,7 +273,7 @@ describe(useSendFlow, () => {
     const { result } = renderSendFlow(queryClient)
 
     await act(async () => {
-      await result.current.goToSend(REGTEST_ONCHAIN_DEST.destination)
+      await result.current.goToSend(REGTEST_ONCHAIN_DEST.value)
     })
 
     expect(toastErrorSpy).toHaveBeenCalledWith('The destination is for a different network')
@@ -307,7 +307,7 @@ describe(useSendFlow, () => {
 
     expect(toastErrorSpy).not.toHaveBeenCalled()
     expect(result.current.chooserDestinations).toStrictEqual([LNADDRESS_DEST])
-    expect(result.current.destination).toBe(LNADDRESS_DEST.destination)
+    expect(result.current.destination).toBe(LNADDRESS_DEST.value)
     expect(result.current.selectedMethodType).toBe('lnaddress')
   })
 
@@ -316,7 +316,7 @@ describe(useSendFlow, () => {
     const { result } = renderSendFlow(queryClient)
 
     await act(async () => {
-      await result.current.goToSend(OFFER_DEST.destination)
+      await result.current.goToSend(OFFER_DEST.value)
     })
 
     expect(toastErrorSpy).not.toHaveBeenCalled()
@@ -344,13 +344,13 @@ describe(useSendFlow, () => {
     const { result } = renderSendFlow(queryClient)
 
     await act(async () => {
-      await result.current.goToSend(MAINNET_ONCHAIN_DEST.destination)
+      await result.current.goToSend(MAINNET_ONCHAIN_DEST.value)
     })
     act(() => {
-      result.current.changeDestination(MAINNET_ONCHAIN_DEST.destination)
+      result.current.changeDestination(MAINNET_ONCHAIN_DEST.value)
     })
     await act(async () => {
-      await result.current.verifyDestination(MAINNET_ONCHAIN_DEST.destination)
+      await result.current.verifyDestination(MAINNET_ONCHAIN_DEST.value)
     })
 
     expect(toastErrorSpy).toHaveBeenCalledTimes(2)
@@ -363,7 +363,7 @@ describe(useSendFlow, () => {
     const { result } = renderSendFlow(queryClient)
 
     await act(async () => {
-      await result.current.goToSend(ONCHAIN_DEST.destination)
+      await result.current.goToSend(ONCHAIN_DEST.value)
     })
     act(() => {
       result.current.setAmountSat(SEND_AMOUNT_SATS)
@@ -372,7 +372,7 @@ describe(useSendFlow, () => {
 
     vi.mocked(decode).mockResolvedValue(makePayment('mainnet', [MAINNET_ONCHAIN_DEST]))
     await act(async () => {
-      await result.current.goToSend(MAINNET_ONCHAIN_DEST.destination)
+      await result.current.goToSend(MAINNET_ONCHAIN_DEST.value)
     })
 
     expect(toastErrorSpy).toHaveBeenCalledWith('The destination is for a different network')
@@ -385,10 +385,10 @@ describe(useSendFlow, () => {
     const { result } = renderSendFlow(queryClient)
 
     await act(async () => {
-      await result.current.goToSend(ONCHAIN_DEST.destination)
+      await result.current.goToSend(ONCHAIN_DEST.value)
     })
     await act(async () => {
-      await result.current.goToSend(MAINNET_ONCHAIN_DEST.destination)
+      await result.current.goToSend(MAINNET_ONCHAIN_DEST.value)
     })
 
     expect(result.current.isFetchingBranta).toBeFalsy()

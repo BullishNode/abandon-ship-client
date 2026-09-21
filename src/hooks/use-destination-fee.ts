@@ -23,7 +23,7 @@ export function useDestinationFee(
   )
   const { data: onchainFee, isFetching: isFetchingOnchain } = useSendOnchainFee(
     isOnchain ? amountSat : undefined,
-    isOnchain ? destination.destination : undefined
+    isOnchain ? destination.value : undefined
   )
 
   if (destination.type === 'ark-address') {
