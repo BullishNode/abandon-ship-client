@@ -24,6 +24,7 @@ import type {
   WalletTransaction
 } from '@secondts/bark'
 import init, { extractTxFromPsbt, OnchainWallet, Wallet } from '@secondts/bark/web'
+import { createClaimWatcher } from '@/lib/backend/wasm/claim-watcher'
 import { instrumentApi } from '@/lib/backend/wasm/diagnostics-instrument'
 import { createDiagnosticsLog, describeError } from '@/lib/backend/wasm/diagnostics-log'
 import { deleteDatabase, hasDatabase } from '@/lib/backend/wasm/idb'
@@ -98,6 +99,35 @@ let notificationHolder: NotificationHolder | null = null
 const SYNC_INTERVAL_MS = 20_000
 let syncTimer: ReturnType<typeof setTimeout> | null = null
 
+function requireWallet(): Wallet {
+  if (wallet === null) {
+    throw new Error('Wallet is not open')
+  }
+  return wallet
+}
+
+function requireOnchain(): OnchainWallet {
+  if (onchain === null) {
+    throw new Error('Onchain wallet is not open')
+  }
+  return onchain
+}
+
+// `sync()` claims lightning receives one state step per pass; the watcher
+// re-drives them every 4s while any are pending. bark holds a per-action lock,
+// so overlapping with an in-flight sync is harmless.
+const claimWatcher = createClaimWatcher({
+  claimAll: async () => {
+    await requireWallet().tryClaimAllLightningReceives({ wait: false })
+  },
+  log: diagnostics.append,
+  maxDelayMs: SYNC_INTERVAL_MS,
+  pendingCount: async () => {
+    const pending = await requireWallet().pendingLightningReceives()
+    return pending.length
+  }
+})
+
 async function runSync(): Promise<void> {
   if (wallet === null) {
     return
@@ -106,6 +136,10 @@ async function runSync(): Promise<void> {
   await wallet.progressPendingRounds()
   if (onchain !== null) {
     await wallet.progressExits({})
+  }
+  // start() resets the backoff, so only wake an idle watcher here.
+  if (!claimWatcher.isRunning()) {
+    claimWatcher.start()
   }
 }
 
@@ -138,20 +172,6 @@ function startSyncLoop(): void {
   if (syncTimer === null) {
     scheduleSync()
   }
-}
-
-function requireWallet(): Wallet {
-  if (wallet === null) {
-    throw new Error('Wallet is not open')
-  }
-  return wallet
-}
-
-function requireOnchain(): OnchainWallet {
-  if (onchain === null) {
-    throw new Error('Onchain wallet is not open')
-  }
-  return onchain
 }
 
 const NOTIFICATION_RETRY_DELAY_MS = 3000
@@ -263,6 +283,7 @@ async function openWallet(args: OpenArgs): Promise<OpenResult> {
     }
   }
   startSyncLoop()
+  claimWatcher.start()
   return { fingerprint: opened.fingerprint(), scanIncomplete }
 }
 
@@ -315,7 +336,9 @@ const api = {
   },
 
   async generateInvoice(amountSats: number, description?: string): Promise<LightningInvoice> {
-    return await requireWallet().bolt11Invoice({ amountSats, description })
+    const invoice = await requireWallet().bolt11Invoice({ amountSats, description })
+    claimWatcher.start()
+    return invoice
   },
 
   async getArkInfo(): Promise<ArkInfo> {
