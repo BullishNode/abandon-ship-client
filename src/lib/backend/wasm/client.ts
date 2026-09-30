@@ -56,7 +56,7 @@ import { config } from '@/config/runtime'
 import { useWalletStore } from '@/stores/wallet'
 import type { Backend } from '@/types/backend'
 import type { WalletNotification } from '@/types/domain/notification'
-import type { SendResult } from '@/types/domain/wallet'
+import type { CreateWalletResult, SendResult } from '@/types/domain/wallet'
 
 // Thrown when a wallet exists in IndexedDB but the session seed is not in memory
 // (e.g. after a page reload). The auth gate catches this to prompt for the seed.
@@ -160,6 +160,23 @@ async function hasPersistedWallet(): Promise<boolean> {
 // waits for the teardown instead of opening a new wallet on the same
 // (network-derived) onchain store name while it is being dropped.
 let deletion: Promise<unknown> | null = null
+
+// The in-flight wallet create. An import's open runs the seed-recovery and
+// onchain scans for minutes, with the onchain store already persisted but the
+// seed not yet in session, so walletExists() would read it as a locked wallet.
+let creation: Promise<unknown> | null = null
+
+async function openNewWallet(mnemonic: string, restore: boolean): Promise<CreateWalletResult> {
+  const pending = openWithSeed(mnemonic, true, restore)
+  creation = pending
+  try {
+    return await pending
+  } finally {
+    if (creation === pending) {
+      creation = null
+    }
+  }
+}
 
 // Ensure the worker has an open wallet before a read/write. On reload the worker
 // is empty; if the session seed is present we reopen, otherwise the wallet is
@@ -572,7 +589,7 @@ export const wasmBackend: Backend = {
           // creating on top of the leftovers is better than refusing to create.
         }
       }
-      const { fingerprint, scanIncomplete } = await openWithSeed(mnemonic, true, restore ?? false)
+      const { fingerprint, scanIncomplete } = await openNewWallet(mnemonic, restore ?? false)
       setSessionMnemonic(mnemonic)
       // Vaults surviving from a previous wallet (e.g. IndexedDB cleared but
       // localStorage kept) hold the OLD mnemonic: the next reload would demand
@@ -682,7 +699,8 @@ export const wasmBackend: Backend = {
       }
     },
     walletExists: async () => {
-      if (deletion !== null) {
+      // Like barkd, which only reports a wallet once its create has returned.
+      if (deletion !== null || creation !== null) {
         return { fingerprint: undefined }
       }
       if (await remote().isOpen()) {
@@ -693,7 +711,8 @@ export const wasmBackend: Backend = {
         const { fingerprint } = await openWithSeed(seed, false)
         return { fingerprint }
       }
-      if (await hasPersistedWallet()) {
+      // Re-checked: a create that began during the awaits above may own the store.
+      if ((await hasPersistedWallet()) && creation === null) {
         throw new WalletLockedError()
       }
       return { fingerprint: undefined }
