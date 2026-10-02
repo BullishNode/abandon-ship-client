@@ -12,6 +12,12 @@ interface WalletStore {
   wallet: WalletInfo | null
   exitClaimAddresses: Record<string, string>
   isEmergencyExitAllInProgress: boolean
+  // Expired coins the server reports spent (paid out), with their amounts,
+  // until their payout is swept. Bark marks them spent and forgets them, so the
+  // amount is kept here for the "Paying out" line.
+  payingOutVtxos: Record<string, number>
+  addPayingOutVtxos: (amounts: Record<string, number>) => void
+  removePayingOutVtxos: (vtxoIds: string[]) => void
   setWallet: (wallet: WalletInfo) => void
   updateWalletName: (name: string) => void
   setExitClaimAddresses: (vtxoIds: string[], address: string) => void
@@ -23,6 +29,9 @@ interface WalletStore {
 export const useWalletStore = create<WalletStore>()(
   persist(
     (set) => ({
+      addPayingOutVtxos: (amounts) => {
+        set((state) => ({ payingOutVtxos: { ...state.payingOutVtxos, ...amounts } }))
+      },
       clearExitClaimAddresses: (vtxoIds) => {
         const removed = new Set(vtxoIds)
         set((state) => ({
@@ -32,10 +41,24 @@ export const useWalletStore = create<WalletStore>()(
         }))
       },
       clearWallet: () => {
-        set({ exitClaimAddresses: {}, isEmergencyExitAllInProgress: false, wallet: null })
+        set({
+          exitClaimAddresses: {},
+          isEmergencyExitAllInProgress: false,
+          payingOutVtxos: {},
+          wallet: null
+        })
       },
       exitClaimAddresses: {},
       isEmergencyExitAllInProgress: false,
+      payingOutVtxos: {},
+      removePayingOutVtxos: (vtxoIds) => {
+        const removed = new Set(vtxoIds)
+        set((state) => ({
+          payingOutVtxos: Object.fromEntries(
+            Object.entries(state.payingOutVtxos).filter(([id]) => !removed.has(id))
+          )
+        }))
+      },
       setExitClaimAddresses: (vtxoIds, address) => {
         const trimmed = address.trim()
         const target = new Set(vtxoIds)

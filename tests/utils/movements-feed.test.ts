@@ -395,6 +395,12 @@ describe(getFeedRowSource, () => {
 })
 
 describe(filterFeedByTab, () => {
+  it('includes expiry payout rows under the onchain tab', () => {
+    const payout = createMovement({ subsystem: { kind: 'expiry-payout', name: 'bark' } })
+    const feed = buildMovementsFeed([payout])
+    expect(filterFeedByTab(feed, 'onchain')).toHaveLength(1)
+  })
+
   it('includes refresh rows under the ark tab', () => {
     const ark = createMovement({ id: 1, subsystem: { kind: 'arkoor', name: 'bark.ark' } })
     const refresh = createMovement({ id: 2, subsystem: { kind: 'refresh', name: 'bark.round' } })

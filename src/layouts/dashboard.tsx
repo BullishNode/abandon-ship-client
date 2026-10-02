@@ -4,6 +4,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 import { AppSidebar } from '@/components/app-sidebar'
 import { BoardModal } from '@/components/board-modal'
+import { ExpiryPayoutNote } from '@/components/expiry-payout-note'
 import { ReceiveModal } from '@/components/receive-modal'
 import { RefreshFailureNote } from '@/components/refresh-failure-note'
 import { SendModal } from '@/components/send-modal'
@@ -103,6 +104,7 @@ export default function DashboardLayout() {
           </ul>
         </header>
         <main className="flex-1 p-6">
+          <ExpiryPayoutNote />
           <RefreshFailureNote />
           <Outlet />
         </main>

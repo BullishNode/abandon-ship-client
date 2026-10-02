@@ -1,0 +1,59 @@
+import { Configuration, ResponseError } from '@secondts/barkd'
+import { describe, expect, it, vi } from 'vitest'
+import { ExpiryPayoutsApi } from '@/lib/backend/barkd/expiry-payouts'
+
+function apiReturning(response: Response) {
+  const fetchApi = vi.fn<typeof fetch>().mockResolvedValue(response)
+  const api = new ExpiryPayoutsApi(new Configuration({ basePath: '/api/barkd', fetchApi }))
+  return { api, fetchApi }
+}
+
+function sentBody(fetchApi: ReturnType<typeof vi.fn<typeof fetch>>): unknown {
+  const body = fetchApi.mock.calls[0]?.[1]?.body
+  return typeof body === 'string' ? JSON.parse(body) : undefined
+}
+
+describe(ExpiryPayoutsApi, () => {
+  it('posts the ids to adopt-server-status and maps the states', async () => {
+    const { api, fetchApi } = apiReturning(
+      Response.json([
+        { state: 'spent', vtxo_id: 'a:0' },
+        { state: 'something-new', vtxo_id: 'b:0' }
+      ])
+    )
+    const statuses = await api.adoptServerVtxoStatus(['a:0', 'b:0'])
+    expect(fetchApi.mock.calls[0]?.[0]).toBe('/api/barkd/api/v1/wallet/vtxos/adopt-server-status')
+    expect(sentBody(fetchApi)).toStrictEqual({ vtxo_ids: ['a:0', 'b:0'] })
+    expect(statuses).toStrictEqual([
+      { state: 'spent', vtxoId: 'a:0' },
+      { state: 'other', vtxoId: 'b:0' }
+    ])
+  })
+
+  it('sends an empty body when no ids are given', async () => {
+    const { api, fetchApi } = apiReturning(Response.json([]))
+    await api.findExpiryPayouts()
+    expect(sentBody(fetchApi)).toStrictEqual({})
+  })
+
+  it('maps expiry payouts', async () => {
+    const { api } = apiReturning(
+      Response.json([{ amount_sat: 9500, confirmations: 2, txid: 't', vout: 1, vtxo_id: 'a:0' }])
+    )
+    await expect(api.findExpiryPayouts(['a:0'])).resolves.toStrictEqual([
+      { amountSats: 9500, confirmations: 2, txid: 't', vout: 1, vtxoId: 'a:0' }
+    ])
+  })
+
+  it('posts the fee rate to the sweep route and maps the result', async () => {
+    const { api, fetchApi } = apiReturning(Response.json({ swept_sat: 9300, txid: 's' }))
+    await expect(api.sweepExpiryPayouts(3)).resolves.toStrictEqual({ sweptSats: 9300, txid: 's' })
+    expect(fetchApi.mock.calls[0]?.[0]).toBe('/api/barkd/api/v1/onchain/sweep-expiry-payouts')
+    expect(sentBody(fetchApi)).toStrictEqual({ fee_rate_sat_vb: 3 })
+  })
+
+  it('throws a ResponseError when barkd lacks the route', async () => {
+    const { api } = apiReturning(new Response('not found', { status: 404 }))
+    await expect(api.adoptServerVtxoStatus()).rejects.toBeInstanceOf(ResponseError)
+  })
+})

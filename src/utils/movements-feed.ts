@@ -223,7 +223,11 @@ export function filterFeedByTab(feed: MovementsFeedRow[], tab: MovementsTab): Mo
     const source = getFeedRowSource(row)
     if (tab === 'onchain') {
       return (
-        source === 'onchain' || source === 'board' || source === 'exit' || source === 'exit_fee'
+        source === 'onchain' ||
+        source === 'board' ||
+        source === 'exit' ||
+        source === 'exit_fee' ||
+        source === 'expiry_payout'
       )
     }
     if (tab === 'ark') {

@@ -61,6 +61,7 @@ describe(getBalanceTotals, () => {
       offchainSat: 0,
       onchainPendingSat: 0,
       onchainSat: 0,
+      payingOutSat: 0,
       pendingArkoorSendSat: 0,
       pendingBoardSat: 0,
       pendingExitSat: 0,
@@ -80,6 +81,7 @@ describe(getBalanceTotals, () => {
       offchainSat: 0,
       onchainPendingSat: 200,
       onchainSat: 1000,
+      payingOutSat: 0,
       pendingArkoorSendSat: 0,
       pendingBoardSat: 0,
       pendingExitSat: 0,
@@ -110,6 +112,7 @@ describe(getBalanceTotals, () => {
       offchainSat: 5000,
       onchainPendingSat: 100,
       onchainSat: 1000,
+      payingOutSat: 0,
       pendingArkoorSendSat: 70,
       pendingBoardSat: 10,
       pendingExitSat: 400,
@@ -118,6 +121,12 @@ describe(getBalanceTotals, () => {
       pendingOffboardSat: 80,
       totalSat: 5000 + 10 + 20 + 30 + 50 + 400 + 1000 + 100 + 60 + 70 + 80
     })
+  })
+
+  it('counts expired coins paying out on-chain in the total', () => {
+    const totals = getBalanceTotals(makeBalance({ spendableSats: 100 }), undefined, [], [], 900)
+    expect(totals.payingOutSat).toBe(900)
+    expect(totals.totalSat).toBe(1000)
   })
 
   it('treats undefined pendingExitSat as zero', () => {

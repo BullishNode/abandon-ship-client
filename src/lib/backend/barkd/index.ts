@@ -11,6 +11,7 @@ import {
 } from '@secondts/barkd'
 import { config } from '@/config/runtime'
 import { clientConfig } from '@/lib/backend/barkd/client-config'
+import { ExpiryPayoutsApi } from '@/lib/backend/barkd/expiry-payouts'
 import {
   toArkInfo,
   toBalance,
@@ -40,6 +41,7 @@ const feesApi = new FeesApi(clientConfig)
 const lightningApi = new LightningApi(clientConfig)
 const exitsApi = new ExitsApi(clientConfig)
 const bitcoinApi = new BitcoinApi(clientConfig)
+const expiryPayoutsApi = new ExpiryPayoutsApi(clientConfig)
 
 export const barkdBackend: Backend = {
   bitcoinApi: {
@@ -118,13 +120,17 @@ export const barkdBackend: Backend = {
     onchainUtxos: async () => {
       const utxos = await onchainApi.onchainUtxos()
       return utxos.map(toUtxo)
-    }
+    },
+    sweepExpiryPayouts: async (params) =>
+      await expiryPayoutsApi.sweepExpiryPayouts(params?.feeRateSatPerVb)
   },
   walletApi: {
     address: async () => {
       const response = await walletApi.address()
       return response.address
     },
+    adoptServerVtxoStatus: async (params) =>
+      await expiryPayoutsApi.adoptServerVtxoStatus(params?.vtxos),
     arkInfo: async () => toArkInfo(await walletApi.arkInfo()),
     balance: async () => {
       const response = await walletApi.balanceRaw()
@@ -141,6 +147,7 @@ export const barkdBackend: Backend = {
           network: config.network
         }
       }),
+    findExpiryPayouts: async (params) => await expiryPayoutsApi.findExpiryPayouts(params?.vtxos),
     mnemonic: async () => await revealMnemonic(),
     nextRound: async () => toNextRoundStart(await walletApi.nextRound()),
     offboardVtxos: async ({ vtxos, address }) =>
