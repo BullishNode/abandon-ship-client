@@ -3,7 +3,6 @@ import {
   getExpiringVtxoIds,
   getLoopSafeMaxBlocks,
   getRefreshThresholdOptions,
-  getRefusedIdsFromRounds,
   getThresholdLabelParts,
   hoursToBlocks,
   isRoundInProgress,
@@ -294,16 +293,5 @@ describe(parseUnusableInputIds, () => {
   it('returns nothing for any other error', () => {
     expect(parseUnusableInputIds('connection refused')).toStrictEqual([])
     expect(parseUnusableInputIds()).toStrictEqual([])
-  })
-})
-
-describe(getRefusedIdsFromRounds, () => {
-  it('collects refused ids from failed rounds only', () => {
-    const rounds: PendingRound[] = [
-      { id: 1, status: { error: 'unusable inputs: [aa:0]', type: 'failed' } },
-      { id: 2, status: { error: 'unusable inputs: [bb:0]', type: 'sync-error' } },
-      { id: 3, status: { type: 'pending' } }
-    ]
-    expect(getRefusedIdsFromRounds(rounds)).toStrictEqual(['aa:0'])
   })
 })

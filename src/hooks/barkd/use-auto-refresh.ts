@@ -7,12 +7,11 @@ import { useRefreshVtxos } from '@/hooks/barkd/use-refresh-vtxos'
 import { useRefreshingVtxos } from '@/hooks/barkd/use-refreshing-vtxos'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
 import { backendErrorMessage } from '@/lib/error-message'
-import { useRefreshFailuresStore } from '@/stores/refresh-failures'
+import { getRefusedVtxoIds, useRefreshFailuresStore } from '@/stores/refresh-failures'
 import { useSettingsStore } from '@/stores/settings'
 import {
   getExpiringVtxoIds,
   getRefreshThresholdOptions,
-  getRefusedIdsFromRounds,
   mapRefreshPhases,
   parseUnusableInputIds,
   resolveThresholdBlocks
@@ -28,11 +27,11 @@ export function useAutoRefresh(): void {
   const { data: refreshingVtxos = [] } = useRefreshingVtxos()
   const { data: pendingRounds } = usePendingRounds()
   const { isChecked: isExpiryChecked, excludedIds: paidOutIds } = useExpiredVtxos()
-  const refusedVtxoIds = useRefreshFailuresStore((state) => state.refusedVtxoIds)
+  const refusedAtHeight = useRefreshFailuresStore((state) => state.refusedAtHeight)
   const addRefusedVtxoIds = useRefreshFailuresStore((state) => state.addRefusedVtxoIds)
   const { mutate: refreshVtxos, isPending: isRefreshing } = useRefreshVtxos({
     onError: async (error) => {
-      addRefusedVtxoIds(parseUnusableInputIds(await backendErrorMessage(error)))
+      addRefusedVtxoIds(parseUnusableInputIds(await backendErrorMessage(error)), tip)
     }
   })
   const lastAttemptRef = useRef<{ ids: string; attemptedAt: number }>({ attemptedAt: 0, ids: '' })
@@ -43,11 +42,22 @@ export function useAutoRefresh(): void {
   const thresholdOptions = getRefreshThresholdOptions(vtxoExpiryDelta, refreshFees)
   const thresholdBlocks = resolveThresholdBlocks(autoRefreshThresholdBlocks, thresholdOptions)
 
+  const seenFailedRounds = useRef(new Set<number>())
+
   // The server refuses a coin when the round starts, after the refresh call
   // returned, so refused ids come from the failed rounds (ours or the daemon's).
   useEffect(() => {
-    addRefusedVtxoIds(getRefusedIdsFromRounds(pendingRounds ?? []))
-  }, [pendingRounds, addRefusedVtxoIds])
+    if (tip === undefined) {
+      return
+    }
+    for (const round of pendingRounds ?? []) {
+      if (round.status.type !== 'failed' || seenFailedRounds.current.has(round.id)) {
+        continue
+      }
+      seenFailedRounds.current.add(round.id)
+      addRefusedVtxoIds(parseUnusableInputIds(round.status.error), tip)
+    }
+  }, [pendingRounds, tip, addRefusedVtxoIds])
 
   useEffect(() => {
     // Expired coins are checked against the server first, so a coin it already
@@ -60,7 +70,7 @@ export function useAutoRefresh(): void {
     // would fail the whole batch, so it is skipped too.
     const excludedIds = new Set([
       ...mapRefreshPhases(refreshingVtxos).keys(),
-      ...refusedVtxoIds,
+      ...getRefusedVtxoIds(useRefreshFailuresStore.getState().refusedAtHeight, tipHeight),
       ...paidOutIds
     ])
     const expiringIds = getExpiringVtxoIds(
@@ -73,7 +83,7 @@ export function useAutoRefresh(): void {
     if (expiringIds.length === 0) {
       return
     }
-    const idsKey = expiringIds.join(',')
+    const idsKey = `${tipHeight}:${expiringIds.join(',')}`
     const now = Date.now()
     const last = lastAttemptRef.current
     if (last.ids === idsKey && now - last.attemptedAt < AUTO_REFRESH_THROTTLE_MS) {
@@ -87,7 +97,7 @@ export function useAutoRefresh(): void {
     tipHeight,
     vtxoExpiryDelta,
     refreshingVtxos,
-    refusedVtxoIds,
+    refusedAtHeight,
     paidOutIds,
     isExpiryChecked,
     isRefreshing,
