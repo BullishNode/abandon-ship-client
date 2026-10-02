@@ -1,0 +1,159 @@
+2026-10-02 client verification
+Code tip: 07d4f6c (session2/client; not published yet)
+
+Full client suite after functional changes
+
+> bark-web@0.9.0 test
+> vitest run --maxWorkers=2 --testTimeout=45000
+
+
+ RUN  v4.1.5 /home/francis/abandon-ship-client-session2
+
+(node:3616867) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:3623772) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  111 passed (111)
+      Tests  1070 passed (1070)
+   Start at  12:33:55
+   Duration  87.47s (transform 9.79s, setup 23.93s, import 39.90s, tests 49.63s, environment 43.18s)
+
+
+Final touched-file lint and type checks
+
+> bark-web@0.9.0 check
+> ultracite check --type-aware --type-check src/components/expiry-payout-note.tsx src/components/refresh-failure-note.tsx src/components/wallet-actions-popover.tsx src/hooks/barkd/use-auto-refresh.ts src/hooks/barkd/use-expired-vtxos.ts src/hooks/barkd/use-tracked-refresh.ts src/i18n/locales/en.json src/lib/backend/barkd/expiry-payouts.ts src/lib/backend/wasm/client.ts src/lib/backend/wasm/worker.ts src/stores/refresh-failures.ts src/types/domain/expiry-payout.ts src/utils/refresh.ts tests/hooks/use-auto-refresh.test.tsx tests/hooks/use-expired-vtxos.test.tsx tests/lib/backend/barkd/expiry-payouts.test.ts tests/utils/refresh.test.ts tests/utils/expiry-payout.test.ts
+
+Checking formatting...
+
+All matched files use the correct format.
+Finished in 171ms on 18 files using 14 threads.
+Found 0 warnings and 0 errors.
+Finished in 640ms on 17 files with 492 rules using 14 threads.
+
+Affected tests after final formatting/async mock cleanup
+
+> bark-web@0.9.0 test
+> vitest run --maxWorkers=2 --testTimeout=45000 tests/hooks/use-auto-refresh.test.tsx tests/hooks/use-expired-vtxos.test.tsx tests/lib/backend/wasm tests/utils/expiry-payout.test.ts
+
+
+ RUN  v4.1.5 /home/francis/abandon-ship-client-session2
+
+
+ Test Files  18 passed (18)
+      Tests  179 passed (179)
+   Start at  12:36:57
+   Duration  7.50s (transform 1.57s, setup 3.25s, import 1.70s, tests 2.01s, environment 5.62s)
+
+
+Cycle-4 duplicate-output test, unchanged helper
+
+> bark-web@0.9.0 test
+> vitest run --maxWorkers=2 tests/utils/expiry-payout.test.ts
+
+
+ RUN  v4.1.5 /home/francis/abandon-ship-client-session2
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  10:20:15
+   Duration  1.33s (transform 441ms, setup 624ms, import 42ms, tests 5ms, environment 473ms)
+
+
+Cycle-4 deliberately broken summation (expected failure)
+
+> bark-web@0.9.0 test
+> vitest run --maxWorkers=2 tests/utils/expiry-payout.test.ts
+
+
+ RUN  v4.1.5 /home/francis/abandon-ship-client-session2
+
+ ❯ tests/utils/expiry-payout.test.ts (1 test | 1 failed) 14ms
+     × counts an output listed for two coins of one key once 10ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/utils/expiry-payout.test.ts > sumPayoutSats > counts an output listed for two coins of one key once
+AssertionError: expected 120000 to be 70000 // Object.is equality
+
+- Expected
++ Received
+
+- 70000
++ 120000
+
+ ❯ tests/utils/expiry-payout.test.ts:13:36
+     11|       { amountSats: 20_000, txid: TXID, vout: 1, vtxoId: 'coin-c' }
+     12|     ]
+     13|     expect(sumPayoutSats(payouts)).toBe(70_000)
+       |                                    ^
+     14|   })
+     15| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  10:21:04
+   Duration  1.25s (transform 473ms, setup 628ms, import 38ms, tests 14ms, environment 415ms)
+
+
+J1 unchanged implementation (expected failure)
+
+> bark-web@0.9.0 test
+> vitest run --maxWorkers=2 --testTimeout=45000 tests/hooks/use-expired-vtxos.test.tsx
+
+
+ RUN  v4.1.5 /home/francis/abandon-ship-client-session2
+
+ ❯ tests/hooks/use-expired-vtxos.test.tsx (8 tests | 2 failed) 627ms
+     × finds a later mempool payout after an empty lookup at the same height 97ms
+     × finds a later mempool payout after an failed lookup at the same height 88ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/hooks/use-expired-vtxos.test.tsx > useExpiredVtxos > finds a later mempool payout after an empty lookup at the same height
+ FAIL  tests/hooks/use-expired-vtxos.test.tsx > useExpiredVtxos > finds a later mempool payout after an failed lookup at the same height
+AssertionError: expected +0 to be 9500 // Object.is equality
+
+- Expected
++ Received
+
+- 9500
++ 0
+
+ ❯ tests/hooks/use-expired-vtxos.test.tsx:170:41
+    168|     findSpy.mockResolvedValue([PAYOUT])
+    169|     await act(async () => { await vi.advanceTimersByTimeAsync(30_000) …
+    170|     expect(result.current.payingOutSat).toBe(9500)
+       |                                         ^
+    171|     expect(result.current.payouts).toHaveLength(1)
+    172|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  10:23:01
+   Duration  3.00s (transform 991ms, setup 747ms, import 795ms, tests 627ms, environment 613ms)
+
+
+J1 with same-height polling
+
+> bark-web@0.9.0 test
+> vitest run --maxWorkers=2 --testTimeout=45000 tests/hooks/use-expired-vtxos.test.tsx
+
+
+ RUN  v4.1.5 /home/francis/abandon-ship-client-session2
+
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  10:24:43
+   Duration  2.33s (transform 635ms, setup 436ms, import 574ms, tests 615ms, environment 551ms)
+
+
