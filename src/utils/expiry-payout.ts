@@ -6,9 +6,5 @@ export function sumPayoutSats(payouts: ExpiryPayout[]): number {
   const amountByOutpoint = new Map(
     payouts.map((payout) => [`${payout.txid}:${payout.vout}`, payout.amountSats])
   )
-  let total = 0
-  for (const amount of amountByOutpoint.values()) {
-    total += amount
-  }
-  return total
+  return [...amountByOutpoint.values()].reduce((total, amount) => total + amount, 0)
 }
