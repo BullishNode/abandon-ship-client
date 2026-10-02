@@ -5,6 +5,9 @@ export const walletKeys = {
   arkInfo: () => [...walletKeys.all, 'ark-info'] as const,
   balance: () => [...walletKeys.all, 'balance'] as const,
   exists: () => [...walletKeys.all, 'exists'] as const,
+  expiredVtxos: (tip: number | undefined, vtxoIds: string[]) =>
+    [...walletKeys.expiredVtxosAll(), tip, vtxoIds] as const,
+  expiredVtxosAll: () => [...walletKeys.all, 'expired-vtxos'] as const,
   mnemonic: () => [...walletKeys.all, 'mnemonic'] as const,
   nextRound: () => [...walletKeys.all, 'next-round'] as const,
   pendingRounds: () => [...walletKeys.all, 'pending-rounds'] as const,

@@ -44,6 +44,12 @@ export function BalanceCard({
       tooltip: t('dashboard.balance.renewing_tooltip')
     },
     {
+      amount: totals.payingOutSat,
+      key: 'paying_out',
+      label: t('dashboard.balance.paying_out'),
+      tooltip: t('dashboard.balance.paying_out_tooltip')
+    },
+    {
       amount: totals.onchainSat,
       key: 'onchain',
       label: t('dashboard.balance.onchain')
@@ -92,6 +98,7 @@ export function BalanceCard({
 
   const onlyOffchain =
     totals.needsRefreshSat === 0 &&
+    totals.payingOutSat === 0 &&
     totals.pendingArkoorSendSat === 0 &&
     totals.pendingOffboardSat === 0 &&
     totals.onchainSat === 0 &&

@@ -99,6 +99,11 @@ describe(getMovementCounterparty, () => {
 })
 
 describe(getMovementSource, () => {
+  it('labels an expiry payout sweep', () => {
+    const movement = createMovement({ subsystem: { kind: 'expiry-payout', name: 'bark.onchain' } })
+    expect(getMovementSource(movement)).toBe('expiry_payout')
+  })
+
   it('returns ark when a destination has type ark', () => {
     const movement = createMovement({
       sentTo: [{ amountSats: 1, paymentType: 'ark', value: 'ark1abc' }]

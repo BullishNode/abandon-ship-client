@@ -6,7 +6,7 @@ import { VtxoRefreshBadge } from '@/components/vtxos/vtxo-refresh-badge'
 import { VtxoStatusBadge } from '@/components/vtxos/vtxo-status-badge'
 import type { RefreshPhase } from '@/types/domain/round'
 import type { Vtxo } from '@/types/domain/vtxo'
-import type { VtxoExitPhase, VtxoExitState } from '@/utils/vtxo'
+import type { VtxoExitPhase, VtxoExitState, VtxoPayoutState } from '@/utils/vtxo'
 import { getExpiryTimeLabel, getVtxoStatus, truncateVtxoId } from '@/utils/vtxo'
 
 interface VtxoColumnsOptions {
@@ -19,6 +19,7 @@ interface VtxoColumnsOptions {
   exitStateById: Map<string, VtxoExitState>
   lockLabelById: Map<string, string>
   refreshPhaseById: Map<string, RefreshPhase>
+  payoutState: VtxoPayoutState
 }
 
 function getHeaderCheckedState(
@@ -40,7 +41,8 @@ export function getVtxoColumns({
   exitPhaseById,
   exitStateById,
   lockLabelById,
-  refreshPhaseById
+  refreshPhaseById,
+  payoutState
 }: VtxoColumnsOptions): ColumnDef<Vtxo>[] {
   return [
     {
@@ -98,7 +100,7 @@ export function getVtxoColumns({
         return (
           <VtxoStatusBadge
             label={lockLabelById.get(row.original.id)}
-            status={getVtxoStatus(row.original, tipHeight)}
+            status={getVtxoStatus(row.original, tipHeight, payoutState)}
           />
         )
       },

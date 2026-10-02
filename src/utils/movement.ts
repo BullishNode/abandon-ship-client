@@ -10,6 +10,7 @@ export type MovementSource =
   | 'exit'
   | 'exit_fee'
   | 'refresh'
+  | 'expiry_payout'
   | 'unknown'
 
 export function getMovementDirection(movement: Movement): 'incoming' | 'outgoing' {
@@ -138,6 +139,10 @@ export function getMovementSource(movement: Movement): MovementSource {
   }
   if (movement.subsystem.kind === 'refresh') {
     return 'refresh'
+  }
+  // Recorded by the sweep of an expired coin the server paid out on-chain.
+  if (movement.subsystem.kind === 'expiry-payout') {
+    return 'expiry_payout'
   }
   const destinations = [...movement.sentTo, ...movement.receivedOn]
   for (const destination of destinations) {

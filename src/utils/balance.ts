@@ -36,6 +36,7 @@ export interface BalanceTotals {
   needsRefreshSat: number
   pendingArkoorSendSat: number
   pendingOffboardSat: number
+  payingOutSat: number
   totalSat: number
 }
 
@@ -54,7 +55,9 @@ export function getBalanceTotals(
   balance?: Balance,
   onchainBalance?: OnchainBalance,
   transactions: WalletTx[] = [],
-  utxos: Utxo[] = []
+  utxos: Utxo[] = [],
+  // Expired coins the server paid out, on their way to the on-chain balance.
+  payingOutSat = 0
 ): BalanceTotals {
   const onchainSat = onchainBalance?.trustedSpendableSats ?? 0
   const untrustedPendingSat = onchainBalance?.untrustedPendingSats ?? 0
@@ -84,7 +87,8 @@ export function getBalanceTotals(
     pendingExitSat +
     needsRefreshSat +
     pendingArkoorSendSat +
-    pendingOffboardSat
+    pendingOffboardSat +
+    payingOutSat
   return {
     claimableLightningReceiveSat,
     exitChangePendingSat,
@@ -92,6 +96,7 @@ export function getBalanceTotals(
     offchainSat,
     onchainPendingSat,
     onchainSat,
+    payingOutSat,
     pendingArkoorSendSat,
     pendingBoardSat,
     pendingExitSat,

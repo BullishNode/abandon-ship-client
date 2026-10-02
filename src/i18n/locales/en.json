@@ -333,7 +333,8 @@
       "board": "On-chain: Board",
       "exit": "On-chain: Exit",
       "exit_fee": "On-chain: Exit fee",
-      "refresh": "Ark: Refresh"
+      "refresh": "Ark: Refresh",
+      "expiry_payout": "Expired coin paid out on-chain"
     },
     "detail": {
       "title": "Transaction details",
@@ -391,7 +392,9 @@
         "queued": "Queued",
         "refreshing": "Refreshing"
       },
-      "renewing": "Renewing"
+      "renewing": "Renewing",
+      "paying_out": "Paying out",
+      "paid_out": "Paid out"
     },
     "expiry": {
       "expired": "Expired"
@@ -437,7 +440,8 @@
       "no_claim_address": "No address set",
       "copy_raw_json": "Copy raw JSON",
       "copy_raw_hex": "Copy raw hex",
-      "copied": "Copied"
+      "copied": "Copied",
+      "payout": "Payout"
     },
     "offboard": {
       "title_one": "Offboard VTXO",
@@ -643,6 +647,8 @@
       "offchain": "Off-chain",
       "renewing": "Renewing",
       "renewing_tooltip": "Expired coins. They renew automatically the next time your wallet is online. No action needed.",
+      "paying_out": "Paying out",
+      "paying_out_tooltip": "Expired coins the Ark server is paying to you on-chain because they were not renewed in time.",
       "onchain": "On-chain",
       "onchain_pending": "Pending on-chain",
       "onchain_pending_change": "Pending change",
@@ -705,6 +711,16 @@
       "format": "That does not look like a barkd auth token.",
       "invalid": "barkd rejected this token. Check for copy-paste mistakes, or print the current one with the command below.",
       "error": "Could not reach barkd. Check that it is running and try again."
+    }
+  },
+  "expiry_payout": {
+    "title_one": "{{amount}} from {{count}} expired coin was paid out on-chain",
+    "title_other": "{{amount}} from {{count}} expired coins was paid out on-chain",
+    "description": "These coins expired before they were renewed, so the Ark server sent them on-chain. Move them to your on-chain balance to spend them.",
+    "sweep": {
+      "button": "Move to on-chain balance",
+      "success": "{{amount}} moved to your on-chain balance",
+      "error": "Could not move the payout"
     }
   }
 }

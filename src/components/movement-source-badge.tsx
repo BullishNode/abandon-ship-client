@@ -11,6 +11,7 @@ const SOURCE_ICON: Record<Exclude<MovementSource, 'unknown'>, ComponentType> = {
   board: CircleOnchainIcon,
   exit: CircleOnchainIcon,
   exit_fee: CircleOnchainIcon,
+  expiry_payout: CircleOnchainIcon,
   lightning: CircleLightningIcon,
   onchain: CircleOnchainIcon,
   refresh: CircleArkIcon

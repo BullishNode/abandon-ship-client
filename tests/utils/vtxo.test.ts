@@ -177,6 +177,17 @@ describe(getVtxoStatus, () => {
     expect(getVtxoStatus(makeVtxo('a', 101), 100)).toBe('spendable')
   })
 
+  it('shows a coin the server paid out as paying out, then paid out', () => {
+    const coin = makeVtxo('a', 100, { type: 'spent' })
+    const payout = { amountSats: 900, confirmations: 0, txid: 't', vout: 0, vtxoId: 'a' }
+    expect(getVtxoStatus(coin, 200, { payingOutIds: new Set(['a']), payoutById: new Map() })).toBe(
+      'paying_out'
+    )
+    expect(
+      getVtxoStatus(coin, 200, { payingOutIds: new Set(), payoutById: new Map([['a', payout]]) })
+    ).toBe('paid_out')
+  })
+
   it('keeps the state when the tip is unknown or the coin is not spendable', () => {
     expect(getVtxoStatus(makeVtxo('a', 100))).toBe('spendable')
     expect(getVtxoStatus(makeVtxo('a', 100, { type: 'spent' }), 200)).toBe('spent')
