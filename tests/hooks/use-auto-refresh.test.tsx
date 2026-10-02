@@ -85,7 +85,7 @@ describe(useAutoRefresh, () => {
 
   it('leaves out a coin the server already paid out', async () => {
     findSpy.mockResolvedValue([
-      { amountSats: 900, confirmations: 1, txid: 't', vout: 0, vtxoId: 'bad:0' }
+      { amountSats: 900, txid: 't', vout: 0, vtxoId: 'bad:0' }
     ])
     renderHook(() => useAutoRefresh(), { wrapper: makeWrapper(queryClient) })
 
