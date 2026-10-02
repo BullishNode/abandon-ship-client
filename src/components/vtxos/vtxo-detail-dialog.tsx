@@ -20,7 +20,7 @@ import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { useLocale } from '@/hooks/use-locale'
 import type { RefreshPhase } from '@/types/domain/round'
 import type { Vtxo } from '@/types/domain/vtxo'
-import type { VtxoExitPhase, VtxoExitState, VtxoStatus } from '@/utils/vtxo'
+import type { VtxoExitPhase, VtxoExitState, VtxoPayoutState, VtxoStatus } from '@/utils/vtxo'
 import {
   getExpiryTimeLabel,
   getVtxoRawJson,
@@ -41,6 +41,7 @@ interface VtxoDetailDialogProps {
   claimAddress?: string
   lockLabel?: string
   refreshPhase?: RefreshPhase
+  payoutState?: VtxoPayoutState
 }
 
 export function VtxoDetailDialog({
@@ -54,7 +55,8 @@ export function VtxoDetailDialog({
   exitState,
   claimAddress,
   lockLabel,
-  refreshPhase
+  refreshPhase,
+  payoutState
 }: VtxoDetailDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -71,6 +73,7 @@ export function VtxoDetailDialog({
             formatFiat={formatFiat}
             formatSats={formatSats}
             lockLabel={lockLabel}
+            payoutState={payoutState}
             refreshPhase={refreshPhase}
             tipHeight={tipHeight}
             vtxo={vtxo}
@@ -115,6 +118,7 @@ interface VtxoDetailContentProps {
   claimAddress?: string
   lockLabel?: string
   refreshPhase?: RefreshPhase
+  payoutState?: VtxoPayoutState
 }
 
 function VtxoDetailContent({
@@ -126,7 +130,8 @@ function VtxoDetailContent({
   exitState,
   claimAddress,
   lockLabel,
-  refreshPhase
+  refreshPhase,
+  payoutState
 }: VtxoDetailContentProps) {
   const { t } = useTranslation()
   const locale = useLocale()
@@ -141,6 +146,7 @@ function VtxoDetailContent({
   const expiryValue =
     expiryTime === '' ? String(vtxo.expiryHeight) : `${vtxo.expiryHeight} · ${expiryTime}`
   const lockedActionId = vtxo.state.type === 'locked' ? vtxo.state.actionId : undefined
+  const payout = payoutState?.payoutById.get(vtxo.id)
   const exitDepthValue =
     vtxo.exitDepth === undefined || vtxo.exitDepth === null ? '—' : String(vtxo.exitDepth)
 
@@ -165,7 +171,7 @@ function VtxoDetailContent({
               exitState={exitState}
               lockLabel={lockLabel}
               refreshPhase={refreshPhase}
-              status={getVtxoStatus(vtxo, tipHeight)}
+              status={getVtxoStatus(vtxo, tipHeight, payoutState)}
             />
           </div>
           {vtxo.policyType === undefined ? null : (
@@ -206,6 +212,13 @@ function VtxoDetailContent({
               emptyLabel={t('vtxos.detail.no_claim_address')}
               label={t('vtxos.detail.claim_address')}
               onEdit={canEditClaimAddress ? () => setIsEditAddressOpen(true) : undefined}
+            />
+          )}
+          {payout === undefined ? null : (
+            <CopyableValueRow
+              displayValue={truncateVtxoId(`${payout.txid}:${payout.vout}`)}
+              label={t('vtxos.detail.payout')}
+              value={`${payout.txid}:${payout.vout}`}
             />
           )}
           {lockedActionId === undefined ? null : (

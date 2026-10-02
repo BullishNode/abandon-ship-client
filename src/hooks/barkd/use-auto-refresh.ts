@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useArkInfo } from '@/hooks/barkd/use-ark-info'
 import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
+import { useExpiredVtxos } from '@/hooks/barkd/use-expired-vtxos'
 import { usePendingRounds } from '@/hooks/barkd/use-pending-rounds'
 import { useRefreshVtxos } from '@/hooks/barkd/use-refresh-vtxos'
 import { useRefreshingVtxos } from '@/hooks/barkd/use-refreshing-vtxos'
@@ -26,6 +27,7 @@ export function useAutoRefresh(): void {
   const { data: arkInfo } = useArkInfo()
   const { data: refreshingVtxos = [] } = useRefreshingVtxos()
   const { data: pendingRounds } = usePendingRounds()
+  const { isChecked: isExpiryChecked, excludedIds: paidOutIds } = useExpiredVtxos()
   const refusedVtxoIds = useRefreshFailuresStore((state) => state.refusedVtxoIds)
   const addRefusedVtxoIds = useRefreshFailuresStore((state) => state.addRefusedVtxoIds)
   const { mutate: refreshVtxos, isPending: isRefreshing } = useRefreshVtxos({
@@ -48,13 +50,19 @@ export function useAutoRefresh(): void {
   }, [pendingRounds, addRefusedVtxoIds])
 
   useEffect(() => {
-    if (isRefreshing) {
+    // Expired coins are checked against the server first, so a coin it already
+    // paid out never lands in a batch (one would fail all the others).
+    if (isRefreshing || !isExpiryChecked) {
       return
     }
     // Skipped rather than blocking the whole wallet, so one VTXO sitting in a
     // round does not stall auto-refresh for the rest. A coin the server refused
     // would fail the whole batch, so it is skipped too.
-    const excludedIds = new Set([...mapRefreshPhases(refreshingVtxos).keys(), ...refusedVtxoIds])
+    const excludedIds = new Set([
+      ...mapRefreshPhases(refreshingVtxos).keys(),
+      ...refusedVtxoIds,
+      ...paidOutIds
+    ])
     const expiringIds = getExpiringVtxoIds(
       vtxos ?? [],
       tipHeight,
@@ -80,6 +88,8 @@ export function useAutoRefresh(): void {
     vtxoExpiryDelta,
     refreshingVtxos,
     refusedVtxoIds,
+    paidOutIds,
+    isExpiryChecked,
     isRefreshing,
     refreshVtxos
   ])

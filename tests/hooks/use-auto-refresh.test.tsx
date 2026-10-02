@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAutoRefresh } from '../../src/hooks/barkd/use-auto-refresh'
 import { bitcoinApi, walletApi } from '../../src/lib/barkd-client'
 import { useRefreshFailuresStore } from '../../src/stores/refresh-failures'
+import { useWalletStore } from '../../src/stores/wallet'
 import { ARK_INFO } from '../fixtures/ark-info'
 import type { Vtxo } from '@/types/domain/vtxo'
 
@@ -24,6 +25,8 @@ describe(useAutoRefresh, () => {
   let queryClient: QueryClient
   const refreshSpy = vi.spyOn(walletApi, 'refreshVtxos')
   const pendingRoundsSpy = vi.spyOn(walletApi, 'pendingRounds')
+  const adoptSpy = vi.spyOn(walletApi, 'adoptServerVtxoStatus')
+  const findSpy = vi.spyOn(walletApi, 'findExpiryPayouts')
 
   beforeEach(() => {
     queryClient = new QueryClient({
@@ -36,7 +39,12 @@ describe(useAutoRefresh, () => {
     pendingRoundsSpy.mockResolvedValue([])
     refreshSpy.mockReset()
     refreshSpy.mockResolvedValue(null)
+    adoptSpy.mockReset()
+    adoptSpy.mockResolvedValue([])
+    findSpy.mockReset()
+    findSpy.mockResolvedValue([])
     useRefreshFailuresStore.setState({ refusedVtxoIds: [] })
+    useWalletStore.getState().clearWallet()
   })
 
   afterEach(() => {
@@ -62,5 +70,28 @@ describe(useAutoRefresh, () => {
     await waitFor(() => {
       expect(useRefreshFailuresStore.getState().refusedVtxoIds).toStrictEqual(['bad:0'])
     })
+  })
+
+  it('waits for the expired-coin check before refreshing', async () => {
+    // oxlint-disable-next-line promise/avoid-new
+    findSpy.mockReturnValue(new Promise(() => {}))
+    renderHook(() => useAutoRefresh(), { wrapper: makeWrapper(queryClient) })
+
+    await waitFor(() => {
+      expect(findSpy).toHaveBeenCalledWith()
+    })
+    expect(refreshSpy).not.toHaveBeenCalled()
+  })
+
+  it('leaves out a coin the server already paid out', async () => {
+    findSpy.mockResolvedValue([
+      { amountSats: 900, confirmations: 1, txid: 't', vout: 0, vtxoId: 'bad:0' }
+    ])
+    renderHook(() => useAutoRefresh(), { wrapper: makeWrapper(queryClient) })
+
+    await waitFor(() => {
+      expect(refreshSpy).toHaveBeenCalledWith({ vtxos: ['good:0'] })
+    })
+    expect(refreshSpy).toHaveBeenCalledOnce()
   })
 })
