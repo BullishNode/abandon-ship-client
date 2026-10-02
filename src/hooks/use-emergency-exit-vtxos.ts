@@ -4,6 +4,7 @@ import { useEmergencyExitFee } from '@/hooks/barkd/use-emergency-exit-fee'
 import { useOnchainAddress } from '@/hooks/barkd/use-onchain-address'
 import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
 import { useStartEmergencyExitVtxos } from '@/hooks/barkd/use-start-emergency-exit-vtxos'
+import { backendErrorMessage } from '@/lib/error-message'
 import { useWalletStore } from '@/stores/wallet'
 import type { EmergencyExitFeeEstimate } from '@/components/emergency-exit-start-dialog'
 import type { Vtxo } from '@/types/domain/vtxo'
@@ -20,17 +21,18 @@ export function useEmergencyExitVtxos(
   { onStarted, isExitingAll, isOpen }: UseEmergencyExitVtxosOptions
 ) {
   const [address, setAddress] = useState('')
+  const [errorMessage, setErrorMessage] = useState<string>()
   const setExitClaimAddresses = useWalletStore((state) => state.setExitClaimAddresses)
   const setIsEmergencyExitAllInProgress = useWalletStore(
     (state) => state.setIsEmergencyExitAllInProgress
   )
   const { data: onchainBalance } = useOnchainBalance()
   const { mutate: fetchOnchainAddress, isPending: isFetchingWalletAddress } = useOnchainAddress()
-  const {
-    mutate: startEmergencyExit,
-    isPending: isStarting,
-    error: startError
-  } = useStartEmergencyExitVtxos({ onSuccess: onStarted })
+  const { mutate: startEmergencyExit, isPending: isStarting } = useStartEmergencyExitVtxos({
+    onError: async (error) => {
+      setErrorMessage((await backendErrorMessage(error)) ?? error.message)
+    }
+  })
 
   const vtxoIds = vtxos.map((vtxo) => vtxo.id)
   const trimmedAddress = address.trim()
@@ -58,16 +60,21 @@ export function useEmergencyExitVtxos(
   }
 
   function handleSubmit(submittedAddress: string) {
-    setExitClaimAddresses(vtxoIds, submittedAddress)
-    if (isExitingAll) {
-      setIsEmergencyExitAllInProgress(true)
-    }
-    startEmergencyExit(vtxoIds)
+    setErrorMessage(undefined)
+    startEmergencyExit(vtxoIds, {
+      onSuccess: () => {
+        setExitClaimAddresses(vtxoIds, submittedAddress)
+        if (isExitingAll) {
+          setIsEmergencyExitAllInProgress(true)
+        }
+        onStarted()
+      }
+    })
   }
 
   return {
     address,
-    errorMessage: startError?.message,
+    errorMessage,
     feeEstimate,
     handleSubmit,
     handleUseWalletAddress,
