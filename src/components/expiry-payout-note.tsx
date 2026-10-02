@@ -7,14 +7,13 @@ import { useExpiredVtxos } from '@/hooks/barkd/use-expired-vtxos'
 import { useSweepExpiryPayouts } from '@/hooks/barkd/use-sweep-expiry-payouts'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
 import { backendErrorMessage } from '@/lib/error-message'
-import { sumPayoutSats } from '@/utils/expiry-payout'
 
 // Expired coins the server paid out on-chain sit at their own keys, outside the
 // on-chain wallet, until they are swept into it.
 export function ExpiryPayoutNote() {
   const { t } = useTranslation()
   const formatBitcoin = useFormatBitcoin()
-  const { payouts } = useExpiredVtxos()
+  const { payouts, payingOutSat } = useExpiredVtxos()
   const { mutate: sweep, isPending } = useSweepExpiryPayouts({
     onError: async (error) => {
       const description = await backendErrorMessage(error)
@@ -27,18 +26,19 @@ export function ExpiryPayoutNote() {
   if (payouts.length === 0) {
     return null
   }
-  const amountSats = sumPayoutSats(payouts)
   return (
     <Alert className="mb-6">
       <CoinsIcon />
       <AlertTitle>
-        {t('expiry_payout.title', { amount: formatBitcoin(amountSats), count: payouts.length })}
+        {t('expiry_payout.title', { amount: formatBitcoin(payingOutSat), count: payouts.length })}
       </AlertTitle>
       <AlertDescription>
         <p>{t('expiry_payout.description')}</p>
         <Button
           loading={isPending}
-          onClick={() => sweep({ vtxoIds: payouts.map((payout) => payout.vtxoId) })}
+          onClick={() => {
+            sweep()
+          }}
           size="sm"
           variant="outline"
         >
