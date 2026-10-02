@@ -27,9 +27,10 @@
       "description": "Refresh all of your VTXOs in the next round.",
       "in_progress": "Refreshing",
       "fee_estimate": "Estimated fee: {{fee}}",
-      "started": "Refresh started. Your VTXOs will renew in the next round.",
-      "nothing": "Nothing to refresh. None of your VTXOs are spendable.",
-      "error": "Could not start refresh. Please try again."
+      "started": "Refresh queued. Your coins will renew in the next round…",
+      "nothing": "Nothing to refresh right now.",
+      "error": "Refresh failed",
+      "done": "All coins refreshed"
     }
   },
   "board": {
@@ -411,9 +412,11 @@
       "deselect": "Deselect"
     },
     "refresh": {
-      "success": "Refresh started",
-      "nothing": "Nothing to refresh",
-      "error": "Refresh failed"
+      "success": "Coins refreshed",
+      "nothing": "Nothing to refresh right now.",
+      "error": "Refresh failed",
+      "waiting": "Refresh queued. Waiting for the next round…",
+      "still_pending": "Still waiting for a round. The refresh stays queued."
     },
     "detail": {
       "title": "VTXO details",
@@ -459,6 +462,11 @@
       "description": "Emergency exits can take time. Your wallet will broadcast multiple on-chain transactions in consecutive order, and each transaction has its own timelock delay.",
       "confirm": "Start emergency exit",
       "success": "Emergency exit started"
+    },
+    "refresh_failure": {
+      "title_one": "{{count}} coin could not be renewed",
+      "title_other": "{{count}} coins could not be renewed",
+      "description": "The Ark server refused them, so they are left out of automatic refreshes. If a coin expired a while ago, it is being paid to your on-chain balance instead."
     }
   },
   "settings": {

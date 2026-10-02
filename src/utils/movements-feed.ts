@@ -237,9 +237,12 @@ export function buildMovementsFeed(
   movements: Movement[],
   options: BuildFeedOptions = {}
 ): MovementsFeedRow[] {
+  // A failed refresh stays visible: it is the only trace of a refused coin.
   const visibleMovements =
     options.hideRefresh === true
-      ? movements.filter((movement) => movement.subsystem.kind !== 'refresh')
+      ? movements.filter(
+          (movement) => movement.subsystem.kind !== 'refresh' || movement.status === 'failed'
+        )
       : movements
   const movementEntries: MovementsFeedRow[] = visibleMovements.map((movement) => ({
     kind: 'movement',
