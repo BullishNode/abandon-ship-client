@@ -174,6 +174,17 @@ describe(buildMovementsFeed, () => {
     expect(result).toMatchObject([{ kind: 'movement', movement: { id: 2 } }])
   })
 
+  it('keeps failed refresh movements when hideRefresh is set', () => {
+    const failed = createMovement({
+      id: 1,
+      status: 'failed',
+      subsystem: { kind: 'refresh', name: 'bark.round' }
+    })
+    const done = createMovement({ id: 2, subsystem: { kind: 'refresh', name: 'bark.round' } })
+    const result = buildMovementsFeed([failed, done], { hideRefresh: true })
+    expect(result).toMatchObject([{ kind: 'movement', movement: { id: 1 } }])
+  })
+
   it('hides cpfp exit-fee onchain txs when hideExitFee is set', () => {
     const rawTx = buildRawTx([], [{ programHex: REGTEST_PROGRAM_A, valueSat: 1000 }])
     const txid = deriveTxid(rawTx)

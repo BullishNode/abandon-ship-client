@@ -2,16 +2,16 @@ import { ArrowsClockwiseIcon, BoatIcon, DotsThreeIcon } from '@phosphor-icons/re
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useArkInfo } from '@/hooks/barkd/use-ark-info'
 import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
-import { useRefreshAll } from '@/hooks/barkd/use-refresh-all'
 import { useRefreshingVtxos } from '@/hooks/barkd/use-refreshing-vtxos'
+import { useTrackedRefresh } from '@/hooks/barkd/use-tracked-refresh'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
 import { useModalsStore } from '@/stores/modals'
+import { useRefreshFailuresStore } from '@/stores/refresh-failures'
 import { estimateRefreshAllFeeSat, getRefreshableVtxos, mapRefreshPhases } from '@/utils/refresh'
 
 interface WalletActionRowProps {
@@ -57,24 +57,20 @@ export function WalletActionsPopover() {
   const { data: refreshingVtxos = [] } = useRefreshingVtxos()
   const { data: arkInfo } = useArkInfo()
   const { data: tip } = useBitcoinTip()
-  const { mutate: refreshAll, isPending: isRefreshing } = useRefreshAll({
-    onError: () => {
-      toast.error(t('actions_menu.refresh_all.error'))
-    },
-    onSuccess: (round) => {
-      // Refresh-all submits every spendable VTXO, so a null round means there
-      // were none: report the no-op instead of a fake start.
-      if (round === null) {
-        toast.info(t('actions_menu.refresh_all.nothing'))
-        return
-      }
-      toast.success(t('actions_menu.refresh_all.started'))
-    }
+  const refusedVtxoIds = useRefreshFailuresStore((state) => state.refusedVtxoIds)
+  const { refresh, isPending: isRefreshing } = useTrackedRefresh({
+    done: t('actions_menu.refresh_all.done'),
+    failed: t('actions_menu.refresh_all.error'),
+    nothing: t('actions_menu.refresh_all.nothing'),
+    stillPending: t('vtxos.refresh.still_pending'),
+    waiting: t('actions_menu.refresh_all.started')
   })
   const minBoardAmountSat = arkInfo?.minBoardAmountSats
-  const inRoundIds = new Set(mapRefreshPhases(refreshingVtxos).keys())
-  const hasNoRefreshableVtxos = getRefreshableVtxos(vtxos ?? [], inRoundIds).length === 0
-  const refreshFeeSat = estimateRefreshAllFeeSat(vtxos, tip, arkInfo?.fees.refresh, inRoundIds)
+  // Coins the server refused are left out: one of them fails the whole batch.
+  const excludedIds = new Set([...mapRefreshPhases(refreshingVtxos).keys(), ...refusedVtxoIds])
+  const refreshableIds = getRefreshableVtxos(vtxos ?? [], excludedIds).map((vtxo) => vtxo.id)
+  const hasNoRefreshableVtxos = refreshableIds.length === 0
+  const refreshFeeSat = estimateRefreshAllFeeSat(vtxos, tip, arkInfo?.fees.refresh, excludedIds)
 
   function handleBoard() {
     setOpen(false)
@@ -83,7 +79,7 @@ export function WalletActionsPopover() {
 
   function handleRefreshAll() {
     setOpen(false)
-    refreshAll()
+    refresh(refreshableIds)
   }
 
   return (
