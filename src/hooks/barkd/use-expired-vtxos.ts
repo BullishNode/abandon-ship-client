@@ -46,19 +46,11 @@ async function checkExpiredVtxos(
       const statuses = await walletApi.adoptServerVtxoStatus({
         vtxos: expired.map((vtxo) => vtxo.id)
       })
-      const spentIds = new Set(
-        statuses.filter((status) => status.state === 'spent').map((status) => status.vtxoId)
-      )
-      if (spentIds.size > 0) {
-        useWalletStore
-          .getState()
-          .addPayingOutVtxos(
-            Object.fromEntries(
-              expired
-                .filter((vtxo) => spentIds.has(vtxo.id))
-                .map((vtxo) => [vtxo.id, vtxo.amountSats])
-            )
-          )
+      const spentIds = statuses
+        .filter((status) => status.state === 'spent')
+        .map((status) => status.vtxoId)
+      if (spentIds.length > 0) {
+        useWalletStore.getState().addPayingOutIds(spentIds)
         await invalidateMovementState(queryClient)
       }
     } catch {
@@ -69,7 +61,7 @@ async function checkExpiredVtxos(
     const payouts = await walletApi.findExpiryPayouts()
     // From here on the payout itself is the record; a stored id would come
     // back as "paying out" once the payout is swept, from any client.
-    useWalletStore.getState().removePayingOutVtxos(payouts.map((payout) => payout.vtxoId))
+    useWalletStore.getState().removePayingOutIds(payouts.map((payout) => payout.vtxoId))
     return payouts
   } catch {
     return NO_PAYOUTS
@@ -80,7 +72,7 @@ export function useExpiredVtxos(): ExpiredVtxos {
   const queryClient = useQueryClient()
   const { data: tip } = useBitcoinTip()
   const { data: vtxos } = useVtxos()
-  const payingOutVtxos = useWalletStore((state) => state.payingOutVtxos)
+  const storedPayingOutIds = useWalletStore((state) => state.payingOutIds)
 
   const expired = tip === undefined ? [] : getExpiredVtxos(vtxos ?? [], tip)
   const { data: payouts } = useQuery({
@@ -95,13 +87,12 @@ export function useExpiredVtxos(): ExpiredVtxos {
 
   const payoutList = payouts ?? NO_PAYOUTS
   const payoutById = new Map(payoutList.map((payout) => [payout.vtxoId, payout]))
-  const payingOutIds = new Set(Object.keys(payingOutVtxos).filter((id) => !payoutById.has(id)))
-  const payingOutSat = sumPayoutSats(payoutList)
+  const payingOutIds = new Set(storedPayingOutIds.filter((id) => !payoutById.has(id)))
   return {
     excludedIds: new Set([...payingOutIds, ...payoutById.keys()]),
     isChecked: payouts !== undefined,
     payingOutIds,
-    payingOutSat,
+    payingOutSat: sumPayoutSats(payoutList),
     payoutById,
     payouts: payoutList
   }

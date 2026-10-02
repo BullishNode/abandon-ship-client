@@ -91,11 +91,11 @@ describe(useExpiredVtxos, () => {
     })
     expect(result.current.payingOutSat).toBe(0)
     expect(result.current.excludedIds.has('old:0')).toBeTruthy()
-    expect(useWalletStore.getState().payingOutVtxos).toStrictEqual({ 'old:0': 10_000 })
+    expect(useWalletStore.getState().payingOutIds).toStrictEqual(['old:0'])
   })
 
   it('moves a coin to paid out once its payout is on-chain', async () => {
-    useWalletStore.getState().addPayingOutVtxos({ 'old:0': 10_000 })
+    useWalletStore.getState().addPayingOutIds(['old:0'])
     adoptSpy.mockResolvedValue([])
     findSpy.mockResolvedValue([PAYOUT])
     const result = render()
@@ -106,11 +106,11 @@ describe(useExpiredVtxos, () => {
     expect(result.current.payingOutIds.size).toBe(0)
     expect(result.current.payingOutSat).toBe(9500)
     expect(result.current.excludedIds.has('old:0')).toBeTruthy()
-    expect(useWalletStore.getState().payingOutVtxos).toStrictEqual({})
+    expect(useWalletStore.getState().payingOutIds).toStrictEqual([])
   })
 
   it('does not bring a coin back as paying out after its payout was swept elsewhere', async () => {
-    useWalletStore.getState().addPayingOutVtxos({ 'old:0': 10_000 })
+    useWalletStore.getState().addPayingOutIds(['old:0'])
     adoptSpy.mockResolvedValue([])
     findSpy.mockResolvedValueOnce([PAYOUT]).mockResolvedValue([])
     const first = renderHook(() => useExpiredVtxos(), { wrapper: makeWrapper(queryClient) })
