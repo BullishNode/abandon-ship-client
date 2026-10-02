@@ -35,7 +35,7 @@ describe(ExpiryPayoutsApi, () => {
       Response.json([{ amount_sat: 9500, confirmations: 2, txid: 't', vout: 1, vtxo_id: 'a:0' }])
     )
     await expect(api.findExpiryPayouts()).resolves.toStrictEqual([
-      { amountSats: 9500, confirmations: 2, txid: 't', vout: 1, vtxoId: 'a:0' }
+      { amountSats: 9500, txid: 't', vout: 1, vtxoId: 'a:0' }
     ])
     expect(sentBody(fetchApi)).toStrictEqual({})
   })
