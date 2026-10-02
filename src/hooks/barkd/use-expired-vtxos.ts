@@ -86,6 +86,7 @@ export function useExpiredVtxos(): ExpiredVtxos {
       tip,
       expired.map((vtxo) => vtxo.id)
     ),
+    refetchInterval: 30_000,
     staleTime: Number.POSITIVE_INFINITY
   })
 

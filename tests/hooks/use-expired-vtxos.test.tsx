@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { renderHook, waitFor } from '@testing-library/react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useExpiredVtxos } from '../../src/hooks/barkd/use-expired-vtxos'
@@ -151,4 +151,28 @@ describe(useExpiredVtxos, () => {
     expect(result.current.payouts).toHaveLength(1)
   })
 
+  it.each(['empty', 'failed'])(
+    'finds a later mempool payout after an %s lookup at the same height',
+    async (first) => {
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      adoptSpy.mockResolvedValue([])
+      if (first === 'failed') {
+        findSpy.mockRejectedValueOnce(new Error('temporarily unavailable')).mockResolvedValue([])
+      } else {
+        findSpy.mockResolvedValue([])
+      }
+      const result = render()
+      await waitFor(() => {
+        expect(result.current.isChecked).toBeTruthy()
+      })
+      expect(result.current.payingOutSat).toBe(0)
+
+      findSpy.mockResolvedValue([PAYOUT])
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_000)
+      })
+      expect(result.current.payingOutSat).toBe(9500)
+      expect(result.current.payouts).toHaveLength(1)
+    }
+  )
 })
