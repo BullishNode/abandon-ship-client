@@ -22,6 +22,7 @@ import { Switch } from '@/components/ui/switch'
 import { externalLinks } from '@/config/links'
 import { config } from '@/config/runtime'
 import { WALLET_NAME_MAX_LENGTH } from '@/constants/wallet'
+import { backendErrorMessage } from '@/lib/error-message'
 import { changeThemeWithTransition } from '@/lib/theme-transition'
 import { useArkInfo } from '@/hooks/barkd/use-ark-info'
 import { useEmergencyExitFee } from '@/hooks/barkd/use-emergency-exit-fee'
@@ -150,6 +151,7 @@ export default function SettingsPage() {
   const [claimAddressDismissed, setClaimAddressDismissed] = useState(false)
   const [isDownloadingLogs, setDownloadingLogs] = useState(false)
   const [isExportingDb, setExportingDb] = useState(false)
+  const [startExitErrorMessage, setStartExitErrorMessage] = useState<string>()
 
   async function handleDownloadLogs() {
     setDownloadingLogs(true)
@@ -212,13 +214,9 @@ export default function SettingsPage() {
     }
   })
   const { mutate: fetchOnchainAddress, isPending: isFetchingWalletAddress } = useOnchainAddress()
-  const {
-    mutate: startEmergencyExit,
-    isPending: isStartingExit,
-    error: startExitError
-  } = useStartEmergencyExit({
-    onSuccess: () => {
-      setExitDialogOpen(false)
+  const { mutate: startEmergencyExit, isPending: isStartingExit } = useStartEmergencyExit({
+    onError: async (error) => {
+      setStartExitErrorMessage((await backendErrorMessage(error)) ?? error.message)
     }
   })
   const onchainSpendable = onchainBalance?.trustedSpendableSats ?? 0
@@ -282,9 +280,16 @@ export default function SettingsPage() {
   function handleSubmitExitAddress(address: string) {
     setClaimAddressDismissed(false)
     if (exitDialogMode === 'start') {
-      setExitClaimAddresses(allVtxoIds, address)
-      setIsEmergencyExitAllInProgress(true)
-      startEmergencyExit()
+      setStartExitErrorMessage(undefined)
+      // Only once barkd has started the exit: a failed start must not leave the
+      // button stuck on "Exit in progress" or keep a claim address for nothing.
+      startEmergencyExit(undefined, {
+        onSuccess: () => {
+          setExitClaimAddresses(allVtxoIds, address)
+          setIsEmergencyExitAllInProgress(true)
+          setExitDialogOpen(false)
+        }
+      })
       return
     }
     setExitClaimAddresses(exitingVtxoIds, address)
@@ -584,7 +589,7 @@ export default function SettingsPage() {
       </section>
       <EmergencyExitStartDialog
         address={draftExitAddress}
-        errorMessage={startExitError?.message}
+        errorMessage={startExitErrorMessage}
         feeEstimate={feeEstimate}
         isFetchingWalletAddress={isFetchingWalletAddress}
         isSubmitting={isStartingExit}
