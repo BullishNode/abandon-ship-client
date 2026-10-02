@@ -12,12 +12,11 @@ interface WalletStore {
   wallet: WalletInfo | null
   exitClaimAddresses: Record<string, string>
   isEmergencyExitAllInProgress: boolean
-  // Expired coins the server reports spent (paid out), with their amounts,
-  // until their payout is swept. Bark marks them spent and forgets them, so the
-  // amount is kept here for the "Paying out" line.
-  payingOutVtxos: Record<string, number>
-  addPayingOutVtxos: (amounts: Record<string, number>) => void
-  removePayingOutVtxos: (vtxoIds: string[]) => void
+  // Expired coins the server reports spent, until their payout is found
+  // on-chain: shown as "Paying out" in this browser.
+  payingOutIds: string[]
+  addPayingOutIds: (vtxoIds: string[]) => void
+  removePayingOutIds: (vtxoIds: string[]) => void
   setWallet: (wallet: WalletInfo) => void
   updateWalletName: (name: string) => void
   setExitClaimAddresses: (vtxoIds: string[], address: string) => void
@@ -29,8 +28,8 @@ interface WalletStore {
 export const useWalletStore = create<WalletStore>()(
   persist(
     (set) => ({
-      addPayingOutVtxos: (amounts) => {
-        set((state) => ({ payingOutVtxos: { ...state.payingOutVtxos, ...amounts } }))
+      addPayingOutIds: (vtxoIds) => {
+        set((state) => ({ payingOutIds: [...new Set([...state.payingOutIds, ...vtxoIds])] }))
       },
       clearExitClaimAddresses: (vtxoIds) => {
         const removed = new Set(vtxoIds)
@@ -44,20 +43,15 @@ export const useWalletStore = create<WalletStore>()(
         set({
           exitClaimAddresses: {},
           isEmergencyExitAllInProgress: false,
-          payingOutVtxos: {},
+          payingOutIds: [],
           wallet: null
         })
       },
       exitClaimAddresses: {},
       isEmergencyExitAllInProgress: false,
-      payingOutVtxos: {},
-      removePayingOutVtxos: (vtxoIds) => {
-        const removed = new Set(vtxoIds)
-        set((state) => ({
-          payingOutVtxos: Object.fromEntries(
-            Object.entries(state.payingOutVtxos).filter(([id]) => !removed.has(id))
-          )
-        }))
+      payingOutIds: [],
+      removePayingOutIds: (vtxoIds) => {
+        set((state) => ({ payingOutIds: state.payingOutIds.filter((id) => !vtxoIds.includes(id)) }))
       },
       setExitClaimAddresses: (vtxoIds, address) => {
         const trimmed = address.trim()
