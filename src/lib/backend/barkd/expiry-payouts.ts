@@ -5,7 +5,6 @@ import type {
   ExpiryPayoutSweep,
   ServerVtxoStatus
 } from '@/types/domain/expiry-payout'
-import { toServerVtxoState } from '@/utils/expiry-payout'
 
 // Bull's expired-coin routes are not in any @secondts/barkd release, so they
 // are called through the generated client's base class: same base path, auth
@@ -25,7 +24,7 @@ const expiryPayoutSweepSchema = z.object({ swept_sat: z.number(), txid: z.string
 
 export function toServerVtxoStatus(json: unknown): ServerVtxoStatus {
   const dto = serverVtxoStatusSchema.parse(json)
-  return { state: toServerVtxoState(dto.state), vtxoId: dto.vtxo_id }
+  return { state: dto.state, vtxoId: dto.vtxo_id }
 }
 
 export function toExpiryPayout(json: unknown): ExpiryPayout {
@@ -56,22 +55,20 @@ export class ExpiryPayoutsApi extends BaseAPI {
     return json
   }
 
-  async adoptServerVtxoStatus(vtxoIds?: string[]): Promise<ServerVtxoStatus[]> {
+  async adoptServerVtxoStatus(vtxoIds: string[]): Promise<ServerVtxoStatus[]> {
     const json = await this.post('/api/v1/wallet/vtxos/adopt-server-status', {
       vtxo_ids: vtxoIds
     })
     return z.array(z.unknown()).parse(json).map(toServerVtxoStatus)
   }
 
-  async findExpiryPayouts(vtxoIds?: string[]): Promise<ExpiryPayout[]> {
-    const json = await this.post('/api/v1/wallet/vtxos/expiry-payouts', { vtxo_ids: vtxoIds })
+  async findExpiryPayouts(): Promise<ExpiryPayout[]> {
+    const json = await this.post('/api/v1/wallet/vtxos/expiry-payouts', {})
     return z.array(z.unknown()).parse(json).map(toExpiryPayout)
   }
 
-  async sweepExpiryPayouts(feeRateSatPerVb?: number): Promise<ExpiryPayoutSweep> {
-    const json = await this.post('/api/v1/onchain/sweep-expiry-payouts', {
-      fee_rate_sat_vb: feeRateSatPerVb
-    })
+  async sweepExpiryPayouts(): Promise<ExpiryPayoutSweep> {
+    const json = await this.post('/api/v1/onchain/sweep-expiry-payouts', {})
     return toExpiryPayoutSweep(json)
   }
 }
