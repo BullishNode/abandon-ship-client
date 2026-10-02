@@ -1,14 +1,19 @@
 import { useEffect, useRef } from 'react'
 import { useArkInfo } from '@/hooks/barkd/use-ark-info'
 import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
+import { usePendingRounds } from '@/hooks/barkd/use-pending-rounds'
 import { useRefreshVtxos } from '@/hooks/barkd/use-refresh-vtxos'
 import { useRefreshingVtxos } from '@/hooks/barkd/use-refreshing-vtxos'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
+import { backendErrorMessage } from '@/lib/error-message'
+import { useRefreshFailuresStore } from '@/stores/refresh-failures'
 import { useSettingsStore } from '@/stores/settings'
 import {
   getExpiringVtxoIds,
   getRefreshThresholdOptions,
+  getRefusedIdsFromRounds,
   mapRefreshPhases,
+  parseUnusableInputIds,
   resolveThresholdBlocks
 } from '@/utils/refresh'
 
@@ -20,7 +25,14 @@ export function useAutoRefresh(): void {
   const { data: tip } = useBitcoinTip()
   const { data: arkInfo } = useArkInfo()
   const { data: refreshingVtxos = [] } = useRefreshingVtxos()
-  const { mutate: refreshVtxos, isPending: isRefreshing } = useRefreshVtxos()
+  const { data: pendingRounds } = usePendingRounds()
+  const refusedVtxoIds = useRefreshFailuresStore((state) => state.refusedVtxoIds)
+  const addRefusedVtxoIds = useRefreshFailuresStore((state) => state.addRefusedVtxoIds)
+  const { mutate: refreshVtxos, isPending: isRefreshing } = useRefreshVtxos({
+    onError: async (error) => {
+      addRefusedVtxoIds(parseUnusableInputIds(await backendErrorMessage(error)))
+    }
+  })
   const lastAttemptRef = useRef<{ ids: string; attemptedAt: number }>({ attemptedAt: 0, ids: '' })
 
   const tipHeight = tip
@@ -29,19 +41,26 @@ export function useAutoRefresh(): void {
   const thresholdOptions = getRefreshThresholdOptions(vtxoExpiryDelta, refreshFees)
   const thresholdBlocks = resolveThresholdBlocks(autoRefreshThresholdBlocks, thresholdOptions)
 
+  // The server refuses a coin when the round starts, after the refresh call
+  // returned, so refused ids come from the failed rounds (ours or the daemon's).
+  useEffect(() => {
+    addRefusedVtxoIds(getRefusedIdsFromRounds(pendingRounds ?? []))
+  }, [pendingRounds, addRefusedVtxoIds])
+
   useEffect(() => {
     if (isRefreshing) {
       return
     }
     // Skipped rather than blocking the whole wallet, so one VTXO sitting in a
-    // round does not stall auto-refresh for the rest.
-    const inRoundIds = new Set(mapRefreshPhases(refreshingVtxos).keys())
+    // round does not stall auto-refresh for the rest. A coin the server refused
+    // would fail the whole batch, so it is skipped too.
+    const excludedIds = new Set([...mapRefreshPhases(refreshingVtxos).keys(), ...refusedVtxoIds])
     const expiringIds = getExpiringVtxoIds(
       vtxos ?? [],
       tipHeight,
       thresholdBlocks,
       vtxoExpiryDelta,
-      inRoundIds
+      excludedIds
     )
     if (expiringIds.length === 0) {
       return
@@ -60,6 +79,7 @@ export function useAutoRefresh(): void {
     tipHeight,
     vtxoExpiryDelta,
     refreshingVtxos,
+    refusedVtxoIds,
     isRefreshing,
     refreshVtxos
   ])

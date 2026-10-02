@@ -5,6 +5,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { AppSidebar } from '@/components/app-sidebar'
 import { BoardModal } from '@/components/board-modal'
 import { ReceiveModal } from '@/components/receive-modal'
+import { RefreshFailureNote } from '@/components/refresh-failure-note'
 import { SendModal } from '@/components/send-modal'
 import { WalletActionsPopover } from '@/components/wallet-actions-popover'
 import { Button } from '@/components/ui/button'
@@ -102,6 +103,7 @@ export default function DashboardLayout() {
           </ul>
         </header>
         <main className="flex-1 p-6">
+          <RefreshFailureNote />
           <Outlet />
         </main>
         <ReceiveModal onOpenChange={setReceiveOpen} open={receiveOpen} />
