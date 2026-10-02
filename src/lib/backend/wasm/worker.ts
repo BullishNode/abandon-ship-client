@@ -127,9 +127,9 @@ interface WasmExpiryPayoutSweep {
 }
 
 interface ExpiryPayoutBindings {
-  adoptServerVtxoStatus(vtxoIds?: string[]): Promise<WasmServerVtxoStatus[]>
-  findExpiryPayouts(vtxoIds?: string[]): Promise<WasmExpiryPayout[]>
-  sweepExpiryPayouts(feeRateSatPerVb?: number): Promise<WasmExpiryPayoutSweep>
+  adoptServerVtxoStatus(vtxoIds: string[]): Promise<WasmServerVtxoStatus[]>
+  findExpiryPayouts(): Promise<WasmExpiryPayout[]>
+  sweepExpiryPayouts(feeRateSatPerVb: number): Promise<WasmExpiryPayoutSweep>
 }
 
 function hasExpiryPayoutBindings(value: object): value is ExpiryPayoutBindings {
@@ -330,7 +330,7 @@ async function openWallet(args: OpenArgs): Promise<OpenResult> {
 }
 
 const api = {
-  async adoptServerVtxoStatus(vtxoIds?: string[]): Promise<WasmServerVtxoStatus[]> {
+  async adoptServerVtxoStatus(vtxoIds: string[]): Promise<WasmServerVtxoStatus[]> {
     return await requireExpiryPayoutBindings().adoptServerVtxoStatus(vtxoIds)
   },
 
@@ -381,8 +381,8 @@ const api = {
     return await requireWallet().estimateSendOnchainFee(address, amountSats)
   },
 
-  async findExpiryPayouts(vtxoIds?: string[]): Promise<WasmExpiryPayout[]> {
-    return await requireExpiryPayoutBindings().findExpiryPayouts(vtxoIds)
+  async findExpiryPayouts(): Promise<WasmExpiryPayout[]> {
+    return await requireExpiryPayoutBindings().findExpiryPayouts()
   },
 
   async generateInvoice(amountSats: number, description?: string): Promise<LightningInvoice> {
@@ -598,7 +598,7 @@ const api = {
     void drainNotifications(holder, notificationGeneration, callback)
   },
 
-  async sweepExpiryPayouts(feeRateSatPerVb?: number): Promise<WasmExpiryPayoutSweep> {
+  async sweepExpiryPayouts(feeRateSatPerVb: number): Promise<WasmExpiryPayoutSweep> {
     return await requireExpiryPayoutBindings().sweepExpiryPayouts(feeRateSatPerVb)
   },
 

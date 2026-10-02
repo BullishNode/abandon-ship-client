@@ -57,7 +57,6 @@ import { useWalletStore } from '@/stores/wallet'
 import type { Backend } from '@/types/backend'
 import type { WalletNotification } from '@/types/domain/notification'
 import type { CreateWalletResult, SendResult } from '@/types/domain/wallet'
-import { toServerVtxoState } from '@/utils/expiry-payout'
 
 // Thrown when a wallet exists in IndexedDB but the session seed is not in memory
 // (e.g. after a page reload). The auth gate catches this to prompt for the seed.
@@ -564,11 +563,9 @@ export const wasmBackend: Backend = {
       await ensureOpen()
       return toUtxos(await remote().onchainUtxos())
     },
-    sweepExpiryPayouts: async (params) => {
+    sweepExpiryPayouts: async () => {
       await ensureOpen()
-      const feeRate =
-        params?.feeRateSatPerVb ??
-        toOnchainFeeRates(await remote().onchainFeeRates()).regularSatPerVb
+      const feeRate = toOnchainFeeRates(await remote().onchainFeeRates()).regularSatPerVb
       // The binding takes whole sat/vB.
       const { txid, sweptSat } = await remote().sweepExpiryPayouts(Math.ceil(feeRate))
       return { sweptSats: sweptSat, txid }
@@ -579,10 +576,9 @@ export const wasmBackend: Backend = {
       await ensureOpen()
       return await remote().getReceiveAddress()
     },
-    adoptServerVtxoStatus: async (params) => {
+    adoptServerVtxoStatus: async ({ vtxos }) => {
       await ensureOpen()
-      const statuses = await remote().adoptServerVtxoStatus(params?.vtxos)
-      return statuses.map(({ vtxoId, state }) => ({ state: toServerVtxoState(state), vtxoId }))
+      return await remote().adoptServerVtxoStatus(vtxos)
     },
     arkInfo: async () => {
       await ensureOpen()
@@ -621,9 +617,9 @@ export const wasmBackend: Backend = {
       void requestPersistentStorage()
       return { fingerprint, scanIncomplete }
     },
-    findExpiryPayouts: async (params) => {
+    findExpiryPayouts: async () => {
       await ensureOpen()
-      const payouts = await remote().findExpiryPayouts(params?.vtxos)
+      const payouts = await remote().findExpiryPayouts()
       return payouts.map(({ amountSat, ...payout }) => ({ ...payout, amountSats: amountSat }))
     },
     mnemonic: async () => {

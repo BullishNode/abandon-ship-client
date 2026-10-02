@@ -1,11 +1,9 @@
 // An expired coin the Ark server paid out on-chain to BIP86 tr(coin key)
 // instead of refreshing it.
 
-export type ServerVtxoState = 'spent' | 'spendable' | 'unregistered' | 'other'
-
 export interface ServerVtxoStatus {
   vtxoId: string
-  state: ServerVtxoState
+  state: string
 }
 
 // An unspent on-chain output paying a coin's key: what a sweep spends.
