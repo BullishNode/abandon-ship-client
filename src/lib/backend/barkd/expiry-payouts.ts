@@ -16,7 +16,7 @@ const expiryPayoutSchema = z.object({
   amount_sat: z.number(),
   txid: z.string(),
   vout: z.number(),
-  vtxo_id: z.string()
+  vtxo_id: z.string().nullable()
 })
 
 const expiryPayoutSweepSchema = z.object({ swept_sat: z.number(), txid: z.string() })
