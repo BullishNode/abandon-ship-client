@@ -117,13 +117,13 @@ interface WasmExpiryPayout {
   vtxoId: string
   txid: string
   vout: number
-  amountSats: number
+  amountSat: number
   confirmations: number
 }
 
 interface WasmExpiryPayoutSweep {
   txid: string
-  sweptSats: number
+  sweptSat: number
 }
 
 interface ExpiryPayoutBindings {
