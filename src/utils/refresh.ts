@@ -199,9 +199,3 @@ export function parseUnusableInputIds(message?: string): string[] {
     .map((id) => id.trim())
     .filter((id) => id.length > 0)
 }
-
-export function getRefusedIdsFromRounds(rounds: PendingRound[]): string[] {
-  return rounds.flatMap((round) =>
-    round.status.type === 'failed' ? parseUnusableInputIds(round.status.error) : []
-  )
-}

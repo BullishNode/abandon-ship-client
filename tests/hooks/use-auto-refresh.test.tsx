@@ -1,10 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { renderHook, waitFor } from '@testing-library/react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAutoRefresh } from '../../src/hooks/barkd/use-auto-refresh'
 import { bitcoinApi, walletApi } from '../../src/lib/barkd-client'
 import { useRefreshFailuresStore } from '../../src/stores/refresh-failures'
+import { bitcoinKeys, walletKeys } from '../../src/lib/query-keys'
 import { useWalletStore } from '../../src/stores/wallet'
 import { ARK_INFO } from '../fixtures/ark-info'
 import type { Vtxo } from '@/types/domain/vtxo'
@@ -43,7 +44,7 @@ describe(useAutoRefresh, () => {
     adoptSpy.mockResolvedValue([])
     findSpy.mockReset()
     findSpy.mockResolvedValue([])
-    useRefreshFailuresStore.setState({ refusedVtxoIds: [] })
+    useRefreshFailuresStore.setState({ refusedAtHeight: {} })
     useWalletStore.getState().clearWallet()
   })
 
@@ -60,7 +61,7 @@ describe(useAutoRefresh, () => {
     await waitFor(() => {
       expect(refreshSpy).toHaveBeenLastCalledWith({ vtxos: ['good:0'] })
     })
-    expect(useRefreshFailuresStore.getState().refusedVtxoIds).toStrictEqual(['bad:0'])
+    expect(useRefreshFailuresStore.getState().refusedAtHeight).toStrictEqual({ 'bad:0': TIP })
   })
 
   it('remembers the ids a rejected refresh call names', async () => {
@@ -68,7 +69,7 @@ describe(useAutoRefresh, () => {
     renderHook(() => useAutoRefresh(), { wrapper: makeWrapper(queryClient) })
 
     await waitFor(() => {
-      expect(useRefreshFailuresStore.getState().refusedVtxoIds).toStrictEqual(['bad:0'])
+      expect(useRefreshFailuresStore.getState().refusedAtHeight).toStrictEqual({ 'bad:0': TIP })
     })
   })
 
@@ -84,14 +85,60 @@ describe(useAutoRefresh, () => {
   })
 
   it('leaves out a coin the server already paid out', async () => {
-    findSpy.mockResolvedValue([
-      { amountSats: 900, txid: 't', vout: 0, vtxoId: 'bad:0' }
-    ])
+    findSpy.mockResolvedValue([{ amountSats: 900, txid: 't', vout: 0, vtxoId: 'bad:0' }])
     renderHook(() => useAutoRefresh(), { wrapper: makeWrapper(queryClient) })
 
     await waitFor(() => {
       expect(refreshSpy).toHaveBeenCalledWith({ vtxos: ['good:0'] })
     })
     expect(refreshSpy).toHaveBeenCalledOnce()
+  })
+  it('retries at a new height even when an old failed round is still returned', async () => {
+    const failed = { id: 1, status: { error: 'unusable inputs: [bad:0]', type: 'failed' as const } }
+    pendingRoundsSpy.mockResolvedValue([failed])
+    renderHook(() => useAutoRefresh(), { wrapper: makeWrapper(queryClient) })
+    await waitFor(() => {
+      expect(refreshSpy).toHaveBeenLastCalledWith({ vtxos: ['good:0'] })
+    })
+
+    // A refetch can also add unrelated rounds; the old failure is not new evidence.
+    act(() => {
+      queryClient.setQueryData(walletKeys.pendingRounds(), [
+        failed,
+        { id: 2, status: { type: 'canceled' } }
+      ])
+      queryClient.setQueryData(bitcoinKeys.tip(), TIP + 1)
+    })
+    await waitFor(() => {
+      expect(refreshSpy).toHaveBeenLastCalledWith({ vtxos: ['good:0', 'bad:0'] })
+    })
+  })
+
+  it('ages refusals per coin so a new refusal does not extend an older one', async () => {
+    // oxlint-disable-next-line require-await
+    refreshSpy.mockImplementation(async ({ vtxos }) => {
+      if (vtxos.includes('bad:0')) {
+        throw new Error('unusable inputs: [bad:0]')
+      }
+      return null
+    })
+    renderHook(() => useAutoRefresh(), { wrapper: makeWrapper(queryClient) })
+    await waitFor(() => {
+      expect(refreshSpy).toHaveBeenLastCalledWith({ vtxos: ['good:0'] })
+    })
+
+    // oxlint-disable-next-line require-await
+    refreshSpy.mockImplementation(async ({ vtxos }) => {
+      if (vtxos.includes('good:0')) {
+        throw new Error('unusable inputs: [good:0]')
+      }
+      return null
+    })
+    act(() => {
+      queryClient.setQueryData(bitcoinKeys.tip(), TIP + 1)
+    })
+    await waitFor(() => {
+      expect(refreshSpy).toHaveBeenLastCalledWith({ vtxos: ['bad:0'] })
+    })
   })
 })
