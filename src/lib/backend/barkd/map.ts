@@ -49,13 +49,26 @@ import type { Utxo, WalletTx } from '@/types/domain/onchain'
 import type { NextRoundStart, PendingRound, RoundStatus } from '@/types/domain/round'
 import type { Vtxo, VtxoState } from '@/types/domain/vtxo'
 
-export function toBalance(dto: BarkdBalance): Balance {
+// barkd master reports fields the 0.7.2 client model drops, so they are read
+// from the raw JSON. An older barkd omits them and they read as 0.
+function rawSat(json: unknown, key: string): number {
+  if (typeof json !== 'object' || json === null || !(key in json)) {
+    return 0
+  }
+  const value: unknown = Reflect.get(json, key)
+  return typeof value === 'number' ? value : 0
+}
+
+export function toBalance(dto: BarkdBalance, json?: unknown): Balance {
   return {
     claimableLightningReceiveSats: dto.claimableLightningReceiveSat,
+    needsRefreshSats: rawSat(json, 'needs_refresh_sat'),
+    pendingArkoorSendSats: rawSat(json, 'pending_arkoor_send_sat'),
     pendingBoardSats: dto.pendingBoardSat,
     pendingExitSats: dto.pendingExitSat,
     pendingInRoundSats: dto.pendingInRoundSat,
     pendingLightningSendSats: dto.pendingLightningSendSat,
+    pendingOffboardSats: rawSat(json, 'pending_offboard_sat'),
     spendableSats: dto.spendableSat
   }
 }
@@ -293,7 +306,9 @@ export function toEmergencyExitFeeEstimate(
     claimFeeSats: dto.claimFeeSat,
     exitBroadcastFeeSats: dto.exitBroadcastFeeSat,
     feeRateSatPerVb: dto.feeRateSatPerVb,
-    fundable: dto.fundable,
+    // barkd master no longer sends `fundable`; undefined lets the caller
+    // compare the fee against the on-chain balance instead.
+    fundable: typeof dto.fundable === 'boolean' ? dto.fundable : undefined,
     totalFeeSats: dto.totalFeeSat,
     txsToBroadcast: dto.txsToBroadcast
   }

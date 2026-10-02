@@ -20,10 +20,11 @@ import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { useLocale } from '@/hooks/use-locale'
 import type { RefreshPhase } from '@/types/domain/round'
 import type { Vtxo } from '@/types/domain/vtxo'
-import type { VtxoExitPhase, VtxoExitState } from '@/utils/vtxo'
+import type { VtxoExitPhase, VtxoExitState, VtxoStatus } from '@/utils/vtxo'
 import {
   getExpiryTimeLabel,
   getVtxoRawJson,
+  getVtxoStatus,
   isClaimAddressEditable,
   truncateVtxoId
 } from '@/utils/vtxo'
@@ -81,7 +82,7 @@ export function VtxoDetailDialog({
 }
 
 interface VtxoDetailBadgeProps {
-  status: Vtxo['state']['type']
+  status: VtxoStatus
   exitPhase?: VtxoExitPhase
   exitState?: VtxoExitState
   lockLabel?: string
@@ -164,7 +165,7 @@ function VtxoDetailContent({
               exitState={exitState}
               lockLabel={lockLabel}
               refreshPhase={refreshPhase}
-              status={vtxo.state.type}
+              status={getVtxoStatus(vtxo, tipHeight)}
             />
           </div>
           {vtxo.policyType === undefined ? null : (
