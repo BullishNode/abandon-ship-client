@@ -389,7 +389,8 @@
       "refresh": {
         "queued": "Queued",
         "refreshing": "Refreshing"
-      }
+      },
+      "renewing": "Renewing"
     },
     "expiry": {
       "expired": "Expired"
@@ -632,12 +633,16 @@
   "dashboard": {
     "balance": {
       "offchain": "Off-chain",
+      "renewing": "Renewing",
+      "renewing_tooltip": "Expired coins. They renew automatically the next time your wallet is online. No action needed.",
       "onchain": "On-chain",
       "onchain_pending": "Pending on-chain",
       "onchain_pending_change": "Pending change",
       "pending_board": "Pending board",
       "pending_in_round": "Pending in round",
       "pending_lightning_send": "Pending Lightning send",
+      "pending_arkoor_send": "Pending Ark send",
+      "pending_offboard": "Pending offboard",
       "pending_exit": "Pending exit",
       "show_amounts": "Show amounts",
       "hide_amounts": "Hide amounts"

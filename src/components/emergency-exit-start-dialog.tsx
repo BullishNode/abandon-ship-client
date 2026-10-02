@@ -18,7 +18,13 @@ export interface EmergencyExitFeeEstimate {
   onchainSat: number
   feeRateSatPerVb: number
   vtxoCount: number
-  fundable: boolean
+  fundable?: boolean
+}
+
+// Without a `fundable` flag from the backend, fall back to comparing the fee
+// with the on-chain balance.
+export function isExitFundable(estimate: EmergencyExitFeeEstimate): boolean {
+  return estimate.fundable ?? estimate.onchainSat >= estimate.estimatedFeeSat
 }
 
 interface EmergencyExitStartDialogProps {
@@ -60,7 +66,8 @@ export function EmergencyExitStartDialog({
   const isAddressInvalid = !isAddressEmpty && !isValidOnchainAddress(trimmedAddress, config.network)
 
   const showEstimate = mode === 'start' && feeEstimate !== undefined
-  const hasInsufficientFunds = showEstimate && feeEstimate !== undefined && !feeEstimate.fundable
+  const hasInsufficientFunds =
+    showEstimate && feeEstimate !== undefined && !isExitFundable(feeEstimate)
   const disableSubmit = isAddressEmpty || isAddressInvalid || hasInsufficientFunds
 
   function handleClose(nextOpen: boolean) {

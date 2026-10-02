@@ -13,8 +13,11 @@ export interface EmergencyExitFeeEstimate {
   totalFeeSats: number
   feeRateSatPerVb: number
   txsToBroadcast: number
-  /** `false` when confirmed on-chain funds run out midway through the CPFP walk. */
-  fundable: boolean
+  /**
+   * `false` when confirmed on-chain funds run out midway through the CPFP walk.
+   * Undefined when barkd does not report it (master dropped the field).
+   */
+  fundable?: boolean
 }
 
 export interface OnchainFeeRates {
