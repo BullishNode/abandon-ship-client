@@ -470,7 +470,7 @@
     "refresh_failure": {
       "title_one": "{{count}} coin could not be renewed",
       "title_other": "{{count}} coins could not be renewed",
-      "description": "The Ark server refused them, so they are left out of automatic refreshes. If a coin expired a while ago, it is being paid to your on-chain balance instead."
+      "description": "The Ark server refused these coins. Automatic refresh will retry after a new block."
     }
   },
   "settings": {

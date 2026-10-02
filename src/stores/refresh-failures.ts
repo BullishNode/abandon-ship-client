@@ -1,18 +1,30 @@
 import { create } from 'zustand'
 
-// Coins the Ark server refused in a refresh. Kept for the session only: a ban
-// lapses, and a reload retries them once.
 interface RefreshFailuresStore {
-  refusedVtxoIds: string[]
-  addRefusedVtxoIds: (ids: string[]) => void
+  refusedAtHeight: Record<string, number>
+  addRefusedVtxoIds: (ids: string[], height: number | undefined) => void
+}
+
+export function getRefusedVtxoIds(refusals: Record<string, number>, tip?: number): string[] {
+  return Object.keys(refusals).filter((id) => tip === undefined || refusals[id] >= tip)
 }
 
 export const useRefreshFailuresStore = create<RefreshFailuresStore>((set) => ({
-  addRefusedVtxoIds: (ids) => {
+  addRefusedVtxoIds: (ids, height) => {
+    if (height === undefined || ids.length === 0) {
+      return
+    }
     set((state) => {
-      const added = ids.filter((id) => !state.refusedVtxoIds.includes(id))
-      return added.length === 0 ? state : { refusedVtxoIds: [...state.refusedVtxoIds, ...added] }
+      if (ids.every((id) => state.refusedAtHeight[id] === height)) {
+        return state
+      }
+      return {
+        refusedAtHeight: {
+          ...state.refusedAtHeight,
+          ...Object.fromEntries(ids.map((id) => [id, height]))
+        }
+      }
     })
   },
-  refusedVtxoIds: []
+  refusedAtHeight: {}
 }))

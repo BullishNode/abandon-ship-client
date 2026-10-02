@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useRefreshVtxos } from '@/hooks/barkd/use-refresh-vtxos'
 import { backendErrorMessage } from '@/lib/error-message'
+import { bitcoinKeys } from '@/lib/query-keys'
 import { invalidateRefreshState } from '@/lib/query-invalidations'
 import { waitForRoundResult } from '@/lib/round-result'
 import { useRefreshFailuresStore } from '@/stores/refresh-failures'
@@ -23,7 +24,10 @@ export function useTrackedRefresh(messages: TrackedRefreshMessages, onStarted?: 
   const addRefusedVtxoIds = useRefreshFailuresStore((state) => state.addRefusedVtxoIds)
 
   async function reportFailure(error: string | undefined, toastId?: string | number) {
-    addRefusedVtxoIds(parseUnusableInputIds(error))
+    addRefusedVtxoIds(
+      parseUnusableInputIds(error),
+      queryClient.getQueryData<number>(bitcoinKeys.tip())
+    )
     toast.error(messages.failed, { description: error, id: toastId })
     await invalidateRefreshState(queryClient)
   }
