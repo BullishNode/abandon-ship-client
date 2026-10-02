@@ -179,7 +179,7 @@ describe(getVtxoStatus, () => {
 
   it('shows a coin the server paid out as paying out, then paid out', () => {
     const coin = makeVtxo('a', 100, { type: 'spent' })
-    const payout = { amountSats: 900, confirmations: 0, txid: 't', vout: 0, vtxoId: 'a' }
+    const payout = { amountSats: 900, txid: 't', vout: 0, vtxoId: 'a' }
     expect(getVtxoStatus(coin, 200, { payingOutIds: new Set(['a']), payoutById: new Map() })).toBe(
       'paying_out'
     )

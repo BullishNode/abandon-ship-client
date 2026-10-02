@@ -118,7 +118,6 @@ interface WasmExpiryPayout {
   txid: string
   vout: number
   amountSat: number
-  confirmations: number
 }
 
 interface WasmExpiryPayoutSweep {

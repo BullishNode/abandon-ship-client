@@ -12,7 +12,6 @@ export interface ExpiryPayout {
   txid: string
   vout: number
   amountSats: number
-  confirmations: number
 }
 
 export interface ExpiryPayoutSweep {
