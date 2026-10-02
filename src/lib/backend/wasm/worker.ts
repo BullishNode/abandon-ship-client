@@ -106,47 +106,6 @@ function requireWallet(): Wallet {
   return wallet
 }
 
-// Expired-coin calls: added to bark-ffi after 0.24.0, so they are found
-// at runtime until bark-web pins a release that has them.
-interface WasmServerVtxoStatus {
-  vtxoId: string
-  state: string
-}
-
-interface WasmExpiryPayout {
-  vtxoId: string
-  txid: string
-  vout: number
-  amountSat: number
-}
-
-interface WasmExpiryPayoutSweep {
-  txid: string
-  sweptSat: number
-}
-
-interface ExpiryPayoutBindings {
-  adoptServerVtxoStatus(vtxoIds: string[]): Promise<WasmServerVtxoStatus[]>
-  findExpiryPayouts(): Promise<WasmExpiryPayout[]>
-  sweepExpiryPayouts(feeRateSatPerVb: number): Promise<WasmExpiryPayoutSweep>
-}
-
-function hasExpiryPayoutBindings(value: object): value is ExpiryPayoutBindings {
-  return (
-    'adoptServerVtxoStatus' in value &&
-    'findExpiryPayouts' in value &&
-    'sweepExpiryPayouts' in value
-  )
-}
-
-function requireExpiryPayoutBindings(): ExpiryPayoutBindings {
-  const w = requireWallet()
-  if (!hasExpiryPayoutBindings(w)) {
-    throw new Error('This bark build cannot look up expired-coin payouts')
-  }
-  return w
-}
-
 function requireOnchain(): OnchainWallet {
   if (onchain === null) {
     throw new Error('Onchain wallet is not open')
@@ -329,10 +288,6 @@ async function openWallet(args: OpenArgs): Promise<OpenResult> {
 }
 
 const api = {
-  async adoptServerVtxoStatus(vtxoIds: string[]): Promise<WasmServerVtxoStatus[]> {
-    return await requireExpiryPayoutBindings().adoptServerVtxoStatus(vtxoIds)
-  },
-
   async boardAll(): Promise<PendingBoard> {
     return await requireWallet().boardAll()
   },
@@ -378,10 +333,6 @@ const api = {
 
   async estimateSendOnchainFee(address: string, amountSats: number): Promise<FeeEstimate> {
     return await requireWallet().estimateSendOnchainFee(address, amountSats)
-  },
-
-  async findExpiryPayouts(): Promise<WasmExpiryPayout[]> {
-    return await requireExpiryPayoutBindings().findExpiryPayouts()
   },
 
   async generateInvoice(amountSats: number, description?: string): Promise<LightningInvoice> {
@@ -595,10 +546,6 @@ const api = {
     notificationHolder = holder
     notificationGeneration += 1
     void drainNotifications(holder, notificationGeneration, callback)
-  },
-
-  async sweepExpiryPayouts(feeRateSatPerVb: number): Promise<WasmExpiryPayoutSweep> {
-    return await requireExpiryPayoutBindings().sweepExpiryPayouts(feeRateSatPerVb)
   },
 
   async tipHeight(): Promise<number> {
