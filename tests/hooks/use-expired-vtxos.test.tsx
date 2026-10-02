@@ -25,7 +25,6 @@ const FRESH: Vtxo = {
 
 const PAYOUT: ExpiryPayout = {
   amountSats: 9500,
-  confirmations: 1,
   txid: 'payout-tx',
   vout: 0,
   vtxoId: 'old:0'
