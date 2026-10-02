@@ -19,7 +19,9 @@ export interface ExpiredVtxos {
   // Payout seen on-chain, not swept yet.
   payoutById: Map<string, ExpiryPayout>
   payouts: ExpiryPayout[]
-  // Paying-out coins plus unswept payouts: money on its way to the on-chain balance.
+  // Unswept payouts found on-chain. A coin the server reports spent is not
+  // counted before its payout is seen: "spent" can also mean it was refreshed
+  // or sent from another device.
   payingOutSat: number
   // Coins that must never be refreshed again.
   excludedIds: Set<string>
@@ -64,7 +66,11 @@ async function checkExpiredVtxos(
     }
   }
   try {
-    return await walletApi.findExpiryPayouts()
+    const payouts = await walletApi.findExpiryPayouts()
+    // From here on the payout itself is the record; a stored id would come
+    // back as "paying out" once the payout is swept, from any client.
+    useWalletStore.getState().removePayingOutVtxos(payouts.map((payout) => payout.vtxoId))
+    return payouts
   } catch {
     return NO_PAYOUTS
   }
@@ -90,11 +96,7 @@ export function useExpiredVtxos(): ExpiredVtxos {
   const payoutList = payouts ?? NO_PAYOUTS
   const payoutById = new Map(payoutList.map((payout) => [payout.vtxoId, payout]))
   const payingOutIds = new Set(Object.keys(payingOutVtxos).filter((id) => !payoutById.has(id)))
-  let payingOutSat = 0
-  for (const id of payingOutIds) {
-    payingOutSat += payingOutVtxos[id] ?? 0
-  }
-  payingOutSat += sumPayoutSats(payoutList)
+  const payingOutSat = sumPayoutSats(payoutList)
   return {
     excludedIds: new Set([...payingOutIds, ...payoutById.keys()]),
     isChecked: payouts !== undefined,

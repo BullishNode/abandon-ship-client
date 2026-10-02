@@ -89,7 +89,7 @@ describe(useExpiredVtxos, () => {
     await waitFor(() => {
       expect(result.current.payingOutIds.has('old:0')).toBeTruthy()
     })
-    expect(result.current.payingOutSat).toBe(10_000)
+    expect(result.current.payingOutSat).toBe(0)
     expect(result.current.excludedIds.has('old:0')).toBeTruthy()
     expect(useWalletStore.getState().payingOutVtxos).toStrictEqual({ 'old:0': 10_000 })
   })
@@ -106,6 +106,26 @@ describe(useExpiredVtxos, () => {
     expect(result.current.payingOutIds.size).toBe(0)
     expect(result.current.payingOutSat).toBe(9500)
     expect(result.current.excludedIds.has('old:0')).toBeTruthy()
+    expect(useWalletStore.getState().payingOutVtxos).toStrictEqual({})
+  })
+
+  it('does not bring a coin back as paying out after its payout was swept elsewhere', async () => {
+    useWalletStore.getState().addPayingOutVtxos({ 'old:0': 10_000 })
+    adoptSpy.mockResolvedValue([])
+    findSpy.mockResolvedValueOnce([PAYOUT]).mockResolvedValue([])
+    const first = renderHook(() => useExpiredVtxos(), { wrapper: makeWrapper(queryClient) })
+    await waitFor(() => {
+      expect(first.result.current.payoutById.has('old:0')).toBeTruthy()
+    })
+    first.unmount()
+    queryClient.clear()
+
+    const result = render()
+    await waitFor(() => {
+      expect(result.current.isChecked).toBeTruthy()
+    })
+    expect(result.current.payingOutIds.size).toBe(0)
+    expect(result.current.payingOutSat).toBe(0)
   })
 
   it('still finishes the check when the backend lacks the calls', async () => {
