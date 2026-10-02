@@ -8,7 +8,8 @@ export interface ServerVtxoStatus {
 
 // An unspent on-chain output paying a coin's key: what a sweep spends.
 export interface ExpiryPayout {
-  vtxoId: string
+  // A shared key may not identify which historical coin was paid.
+  vtxoId: string | null
   txid: string
   vout: number
   amountSats: number
