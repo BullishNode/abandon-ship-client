@@ -714,8 +714,7 @@
     }
   },
   "expiry_payout": {
-    "title_one": "{{amount}} from {{count}} expired coin was paid out on-chain",
-    "title_other": "{{amount}} from {{count}} expired coins was paid out on-chain",
+    "title": "{{amount}} paid out on-chain",
     "description": "These coins expired before they were renewed, so the Ark server sent them on-chain. Move them to your on-chain balance to spend them.",
     "sweep": {
       "button": "Move to on-chain balance",

@@ -61,7 +61,11 @@ async function checkExpiredVtxos(
     const payouts = await walletApi.findExpiryPayouts()
     // From here on the payout itself is the record; a stored id would come
     // back as "paying out" once the payout is swept, from any client.
-    useWalletStore.getState().removePayingOutIds(payouts.map((payout) => payout.vtxoId))
+    useWalletStore
+      .getState()
+      .removePayingOutIds(
+        payouts.flatMap((payout) => (payout.vtxoId === null ? [] : [payout.vtxoId]))
+      )
     return payouts
   } catch {
     return NO_PAYOUTS
@@ -86,7 +90,11 @@ export function useExpiredVtxos(): ExpiredVtxos {
   })
 
   const payoutList = payouts ?? NO_PAYOUTS
-  const payoutById = new Map(payoutList.map((payout) => [payout.vtxoId, payout]))
+  const payoutById = new Map(
+    payoutList.flatMap((payout) =>
+      payout.vtxoId === null ? [] : [[payout.vtxoId, payout] as const]
+    )
+  )
   const payingOutIds = new Set(storedPayingOutIds.filter((id) => !payoutById.has(id)))
   return {
     excludedIds: new Set([...payingOutIds, ...payoutById.keys()]),

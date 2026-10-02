@@ -47,6 +47,15 @@ describe(ExpiryPayoutsApi, () => {
     expect(sentBody(fetchApi)).toStrictEqual({})
   })
 
+  it('preserves an ambiguous coin association as null', async () => {
+    const { api } = apiReturning(
+      Response.json([{ amount_sat: 9500, txid: 't', vout: 1, vtxo_id: null }])
+    )
+    await expect(api.findExpiryPayouts()).resolves.toStrictEqual([
+      { amountSats: 9500, txid: 't', vout: 1, vtxoId: null }
+    ])
+  })
+
   it('throws a ResponseError when barkd lacks the route', async () => {
     const { api } = apiReturning(new Response('not found', { status: 404 }))
     await expect(api.adoptServerVtxoStatus([])).rejects.toBeInstanceOf(ResponseError)

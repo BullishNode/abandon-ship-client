@@ -29,9 +29,7 @@ export function ExpiryPayoutNote() {
   return (
     <Alert className="mb-6">
       <CoinsIcon />
-      <AlertTitle>
-        {t('expiry_payout.title', { amount: formatBitcoin(payingOutSat), count: payouts.length })}
-      </AlertTitle>
+      <AlertTitle>{t('expiry_payout.title', { amount: formatBitcoin(payingOutSat) })}</AlertTitle>
       <AlertDescription>
         <p>{t('expiry_payout.description')}</p>
         <Button
