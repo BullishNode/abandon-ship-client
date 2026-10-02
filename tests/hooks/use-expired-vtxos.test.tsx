@@ -1,0 +1,121 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { renderHook, waitFor } from '@testing-library/react'
+import type { ReactNode } from 'react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { useExpiredVtxos } from '../../src/hooks/barkd/use-expired-vtxos'
+import { bitcoinApi, walletApi } from '../../src/lib/barkd-client'
+import { useWalletStore } from '../../src/stores/wallet'
+import type { ExpiryPayout } from '@/types/domain/expiry-payout'
+import type { Vtxo } from '@/types/domain/vtxo'
+
+const TIP = 1000
+
+const EXPIRED: Vtxo = {
+  amountSats: 10_000,
+  expiryHeight: 990,
+  id: 'old:0',
+  state: { type: 'spendable' }
+}
+const FRESH: Vtxo = {
+  amountSats: 5000,
+  expiryHeight: 2000,
+  id: 'new:0',
+  state: { type: 'spendable' }
+}
+
+const PAYOUT: ExpiryPayout = {
+  amountSats: 9500,
+  confirmations: 1,
+  txid: 'payout-tx',
+  vout: 0,
+  vtxoId: 'old:0'
+}
+
+function makeWrapper(queryClient: QueryClient) {
+  return ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  )
+}
+
+describe(useExpiredVtxos, () => {
+  let queryClient: QueryClient
+  const adoptSpy = vi.spyOn(walletApi, 'adoptServerVtxoStatus')
+  const findSpy = vi.spyOn(walletApi, 'findExpiryPayouts')
+
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: { mutations: { retry: false }, queries: { retry: false } }
+    })
+    vi.spyOn(bitcoinApi, 'tip').mockResolvedValue(TIP)
+    vi.spyOn(walletApi, 'vtxos').mockResolvedValue([EXPIRED, FRESH])
+    vi.spyOn(walletApi, 'balance').mockResolvedValue({
+      claimableLightningReceiveSats: 0,
+      pendingBoardSats: 0,
+      pendingInRoundSats: 0,
+      pendingLightningSendSats: 0,
+      spendableSats: 0
+    })
+    adoptSpy.mockReset()
+    findSpy.mockReset()
+    useWalletStore.getState().clearWallet()
+  })
+
+  afterEach(() => {
+    queryClient.clear()
+  })
+
+  function render() {
+    return renderHook(() => useExpiredVtxos(), { wrapper: makeWrapper(queryClient) }).result
+  }
+
+  it('asks the server about expired coins only', async () => {
+    adoptSpy.mockResolvedValue([{ state: 'spendable', vtxoId: 'old:0' }])
+    findSpy.mockResolvedValue([])
+    const result = render()
+
+    await waitFor(() => {
+      expect(result.current.isChecked).toBeTruthy()
+    })
+    expect(adoptSpy).toHaveBeenCalledWith({ vtxos: ['old:0'] })
+    expect(result.current.excludedIds.size).toBe(0)
+    expect(result.current.payingOutSat).toBe(0)
+  })
+
+  it('shows a coin the server reports spent as paying out', async () => {
+    adoptSpy.mockResolvedValue([{ state: 'spent', vtxoId: 'old:0' }])
+    findSpy.mockResolvedValue([])
+    const result = render()
+
+    await waitFor(() => {
+      expect(result.current.payingOutIds.has('old:0')).toBeTruthy()
+    })
+    expect(result.current.payingOutSat).toBe(10_000)
+    expect(result.current.excludedIds.has('old:0')).toBeTruthy()
+    expect(useWalletStore.getState().payingOutVtxos).toStrictEqual({ 'old:0': 10_000 })
+  })
+
+  it('moves a coin to paid out once its payout is on-chain', async () => {
+    useWalletStore.getState().addPayingOutVtxos({ 'old:0': 10_000 })
+    adoptSpy.mockResolvedValue([])
+    findSpy.mockResolvedValue([PAYOUT])
+    const result = render()
+
+    await waitFor(() => {
+      expect(result.current.payoutById.get('old:0')).toStrictEqual(PAYOUT)
+    })
+    expect(result.current.payingOutIds.size).toBe(0)
+    expect(result.current.payingOutSat).toBe(9500)
+    expect(result.current.excludedIds.has('old:0')).toBeTruthy()
+  })
+
+  it('still finishes the check when the backend lacks the calls', async () => {
+    adoptSpy.mockRejectedValue(new Error('not found'))
+    findSpy.mockRejectedValue(new Error('not found'))
+    const result = render()
+
+    await waitFor(() => {
+      expect(result.current.isChecked).toBeTruthy()
+    })
+    expect(result.current.excludedIds.size).toBe(0)
+  })
+})
