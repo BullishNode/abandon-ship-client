@@ -118,4 +118,15 @@ describe(useExpiredVtxos, () => {
     })
     expect(result.current.excludedIds.size).toBe(0)
   })
+
+  it('counts a payout output shared by two coins once', async () => {
+    adoptSpy.mockResolvedValue([])
+    findSpy.mockResolvedValue([PAYOUT, { ...PAYOUT, vtxoId: 'new:0' }])
+    const result = render()
+
+    await waitFor(() => {
+      expect(result.current.payoutById.size).toBe(2)
+    })
+    expect(result.current.payingOutSat).toBe(9500)
+  })
 })

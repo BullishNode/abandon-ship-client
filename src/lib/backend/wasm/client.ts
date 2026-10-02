@@ -569,7 +569,9 @@ export const wasmBackend: Backend = {
       const feeRate =
         params?.feeRateSatPerVb ??
         toOnchainFeeRates(await remote().onchainFeeRates()).regularSatPerVb
-      return await remote().sweepExpiryPayouts(feeRate)
+      // The binding takes whole sat/vB.
+      const { txid, sweptSat } = await remote().sweepExpiryPayouts(Math.ceil(feeRate))
+      return { sweptSats: sweptSat, txid }
     }
   },
   walletApi: {
@@ -621,7 +623,8 @@ export const wasmBackend: Backend = {
     },
     findExpiryPayouts: async (params) => {
       await ensureOpen()
-      return await remote().findExpiryPayouts(params?.vtxos)
+      const payouts = await remote().findExpiryPayouts(params?.vtxos)
+      return payouts.map(({ amountSat, ...payout }) => ({ ...payout, amountSats: amountSat }))
     },
     mnemonic: async () => {
       const seed = getSessionMnemonic() ?? (await remote().getMnemonic())

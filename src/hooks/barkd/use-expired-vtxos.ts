@@ -6,6 +6,7 @@ import { walletApi } from '@/lib/barkd-client'
 import { invalidateMovementState } from '@/lib/query-invalidations'
 import { walletKeys } from '@/lib/query-keys'
 import { useWalletStore } from '@/stores/wallet'
+import { sumPayoutSats } from '@/utils/expiry-payout'
 import type { ExpiryPayout } from '@/types/domain/expiry-payout'
 import type { Vtxo } from '@/types/domain/vtxo'
 
@@ -93,9 +94,7 @@ export function useExpiredVtxos(): ExpiredVtxos {
   for (const id of payingOutIds) {
     payingOutSat += payingOutVtxos[id] ?? 0
   }
-  for (const payout of payoutList) {
-    payingOutSat += payout.amountSats
-  }
+  payingOutSat += sumPayoutSats(payoutList)
   return {
     excludedIds: new Set([...payingOutIds, ...payoutById.keys()]),
     isChecked: payouts !== undefined,

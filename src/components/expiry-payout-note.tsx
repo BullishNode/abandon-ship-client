@@ -7,6 +7,7 @@ import { useExpiredVtxos } from '@/hooks/barkd/use-expired-vtxos'
 import { useSweepExpiryPayouts } from '@/hooks/barkd/use-sweep-expiry-payouts'
 import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
 import { backendErrorMessage } from '@/lib/error-message'
+import { sumPayoutSats } from '@/utils/expiry-payout'
 
 // Expired coins the server paid out on-chain sit at their own keys, outside the
 // on-chain wallet, until they are swept into it.
@@ -26,7 +27,7 @@ export function ExpiryPayoutNote() {
   if (payouts.length === 0) {
     return null
   }
-  const amountSats = payouts.reduce((total, payout) => total + payout.amountSats, 0)
+  const amountSats = sumPayoutSats(payouts)
   return (
     <Alert className="mb-6">
       <CoinsIcon />
