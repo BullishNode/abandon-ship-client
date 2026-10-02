@@ -7,7 +7,7 @@ import type { ExitStateType } from '@/utils/exit-progress'
 import { formatRelativeTime } from '@/utils/relative-time'
 import { truncateMiddleChars } from '@/utils/truncate-middle'
 
-export type VtxoStatus = Vtxo['state']['type']
+export type VtxoStatus = Vtxo['state']['type'] | 'renewing'
 
 export type VtxoExitPhase = ExitStateType
 
@@ -109,6 +109,19 @@ export function isSpendable(vtxo: Vtxo): boolean {
 
 export function getSpendableVtxos(vtxos: Vtxo[]): Vtxo[] {
   return vtxos.filter(isSpendable)
+}
+
+// An expired coin stays `spendable` in bark, but it cannot be sent until it is
+// refreshed, so it is shown as renewing.
+export function getVtxoStatus(vtxo: Vtxo, tipHeight?: number): VtxoStatus {
+  if (
+    vtxo.state.type === 'spendable' &&
+    tipHeight !== undefined &&
+    vtxo.expiryHeight <= tipHeight
+  ) {
+    return 'renewing'
+  }
+  return vtxo.state.type
 }
 
 export function sumVtxoAmount(vtxos: Vtxo[]): number {
