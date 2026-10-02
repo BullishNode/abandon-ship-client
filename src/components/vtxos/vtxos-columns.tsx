@@ -7,7 +7,7 @@ import { VtxoStatusBadge } from '@/components/vtxos/vtxo-status-badge'
 import type { RefreshPhase } from '@/types/domain/round'
 import type { Vtxo } from '@/types/domain/vtxo'
 import type { VtxoExitPhase, VtxoExitState } from '@/utils/vtxo'
-import { getExpiryTimeLabel, truncateVtxoId } from '@/utils/vtxo'
+import { getExpiryTimeLabel, getVtxoStatus, truncateVtxoId } from '@/utils/vtxo'
 
 interface VtxoColumnsOptions {
   t: TFunction
@@ -98,7 +98,7 @@ export function getVtxoColumns({
         return (
           <VtxoStatusBadge
             label={lockLabelById.get(row.original.id)}
-            status={row.original.state.type}
+            status={getVtxoStatus(row.original, tipHeight)}
           />
         )
       },

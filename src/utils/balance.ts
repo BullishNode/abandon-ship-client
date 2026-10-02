@@ -33,6 +33,9 @@ export interface BalanceTotals {
   pendingLightningSendSat: number
   claimableLightningReceiveSat: number
   pendingExitSat: number
+  needsRefreshSat: number
+  pendingArkoorSendSat: number
+  pendingOffboardSat: number
   totalSat: number
 }
 
@@ -66,6 +69,9 @@ export function getBalanceTotals(
   const pendingLightningSendSat = balance?.pendingLightningSendSats ?? 0
   const claimableLightningReceiveSat = balance?.claimableLightningReceiveSats ?? 0
   const pendingExitSat = balance?.pendingExitSats ?? 0
+  const needsRefreshSat = balance?.needsRefreshSats ?? 0
+  const pendingArkoorSendSat = balance?.pendingArkoorSendSats ?? 0
+  const pendingOffboardSat = balance?.pendingOffboardSats ?? 0
   const totalSat =
     offchainSat +
     onchainSat +
@@ -75,17 +81,23 @@ export function getBalanceTotals(
     pendingInRoundSat +
     pendingLightningSendSat +
     claimableLightningReceiveSat +
-    pendingExitSat
+    pendingExitSat +
+    needsRefreshSat +
+    pendingArkoorSendSat +
+    pendingOffboardSat
   return {
     claimableLightningReceiveSat,
     exitChangePendingSat,
+    needsRefreshSat,
     offchainSat,
     onchainPendingSat,
     onchainSat,
+    pendingArkoorSendSat,
     pendingBoardSat,
     pendingExitSat,
     pendingInRoundSat,
     pendingLightningSendSat,
+    pendingOffboardSat,
     totalSat
   }
 }

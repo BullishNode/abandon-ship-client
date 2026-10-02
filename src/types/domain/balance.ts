@@ -8,6 +8,12 @@ export interface Balance {
   pendingBoardSats: number
   pendingLightningSendSats: number
   claimableLightningReceiveSats: number
+  // Optional: only barkd master reports these (the WASM bindings do not yet).
+  // `needsRefreshSats` holds expired coins, which master moves out of
+  // `spendableSats` until they are refreshed.
+  needsRefreshSats?: number
+  pendingArkoorSendSats?: number
+  pendingOffboardSats?: number
 }
 
 export interface OnchainBalance {

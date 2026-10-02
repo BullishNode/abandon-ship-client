@@ -2,6 +2,7 @@ import i18next from 'i18next'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   getExpiryTimeLabel,
+  getVtxoStatus,
   mapVtxoExitClaimHeights,
   mapVtxoExitPhases,
   mapVtxoExitStates,
@@ -164,5 +165,20 @@ describe(mapVtxoExitClaimHeights, () => {
     const heights = mapVtxoExitClaimHeights([makeClaimedExit('a', 123), makeSpendableExit('b')])
     expect(heights.get('a')).toBe(123)
     expect(heights.has('b')).toBeFalsy()
+  })
+})
+
+describe(getVtxoStatus, () => {
+  it('shows an expired spendable coin as renewing', () => {
+    expect(getVtxoStatus(makeVtxo('a', 100), 100)).toBe('renewing')
+  })
+
+  it('keeps an unexpired coin spendable', () => {
+    expect(getVtxoStatus(makeVtxo('a', 101), 100)).toBe('spendable')
+  })
+
+  it('keeps the state when the tip is unknown or the coin is not spendable', () => {
+    expect(getVtxoStatus(makeVtxo('a', 100))).toBe('spendable')
+    expect(getVtxoStatus(makeVtxo('a', 100, { type: 'spent' }), 200)).toBe('spent')
   })
 })

@@ -1,4 +1,5 @@
 import {
+  BalanceFromJSON,
   BitcoinApi,
   BoardsApi,
   ExitsApi,
@@ -125,7 +126,11 @@ export const barkdBackend: Backend = {
       return response.address
     },
     arkInfo: async () => toArkInfo(await walletApi.arkInfo()),
-    balance: async () => toBalance(await walletApi.balance()),
+    balance: async () => {
+      const response = await walletApi.balanceRaw()
+      const json: unknown = await response.raw.json()
+      return toBalance(BalanceFromJSON(json), json)
+    },
     createWallet: async ({ mnemonic, birthdayHeight }) =>
       await walletApi.createWallet({
         createWalletRequest: {

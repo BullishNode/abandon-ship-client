@@ -19,6 +19,7 @@ interface BreakdownRow {
   key: string
   label: string
   amount: number
+  tooltip?: string
 }
 
 export function BalanceCard({
@@ -35,6 +36,12 @@ export function BalanceCard({
       amount: totals.offchainSat,
       key: 'offchain',
       label: t('dashboard.balance.offchain')
+    },
+    {
+      amount: totals.needsRefreshSat,
+      key: 'renewing',
+      label: t('dashboard.balance.renewing'),
+      tooltip: t('dashboard.balance.renewing_tooltip')
     },
     {
       amount: totals.onchainSat,
@@ -67,6 +74,16 @@ export function BalanceCard({
       label: t('dashboard.balance.pending_lightning_send')
     },
     {
+      amount: totals.pendingArkoorSendSat,
+      key: 'pending_arkoor_send',
+      label: t('dashboard.balance.pending_arkoor_send')
+    },
+    {
+      amount: totals.pendingOffboardSat,
+      key: 'pending_offboard',
+      label: t('dashboard.balance.pending_offboard')
+    },
+    {
       amount: totals.pendingExitSat,
       key: 'pending_exit',
       label: t('dashboard.balance.pending_exit')
@@ -74,6 +91,9 @@ export function BalanceCard({
   ].filter((row) => row.amount > 0)
 
   const onlyOffchain =
+    totals.needsRefreshSat === 0 &&
+    totals.pendingArkoorSendSat === 0 &&
+    totals.pendingOffboardSat === 0 &&
     totals.onchainSat === 0 &&
     totals.onchainPendingSat === 0 &&
     totals.exitChangePendingSat === 0 &&
@@ -146,7 +166,9 @@ export function BalanceCard({
                       transition={{ duration: 0.2, ease: 'easeOut' }}
                     >
                       <div className="flex flex-row items-center justify-between gap-4 py-1 font-medium lg:flex-col lg:items-start lg:justify-start lg:gap-1 lg:py-0">
-                        <span className="text-muted-foreground">{row.label}</span>
+                        <span className="text-muted-foreground" title={row.tooltip}>
+                          {row.label}
+                        </span>
                         <span className="text-base">{formatSats(row.amount)}</span>
                       </div>
                     </m.div>

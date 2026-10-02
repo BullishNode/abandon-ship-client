@@ -57,13 +57,16 @@ describe(getBalanceTotals, () => {
     expect(getBalanceTotals()).toStrictEqual({
       claimableLightningReceiveSat: 0,
       exitChangePendingSat: 0,
+      needsRefreshSat: 0,
       offchainSat: 0,
       onchainPendingSat: 0,
       onchainSat: 0,
+      pendingArkoorSendSat: 0,
       pendingBoardSat: 0,
       pendingExitSat: 0,
       pendingInRoundSat: 0,
       pendingLightningSendSat: 0,
+      pendingOffboardSat: 0,
       totalSat: 0
     })
   })
@@ -73,13 +76,16 @@ describe(getBalanceTotals, () => {
     expect(getBalanceTotals(undefined, onchain)).toStrictEqual({
       claimableLightningReceiveSat: 0,
       exitChangePendingSat: 0,
+      needsRefreshSat: 0,
       offchainSat: 0,
       onchainPendingSat: 200,
       onchainSat: 1000,
+      pendingArkoorSendSat: 0,
       pendingBoardSat: 0,
       pendingExitSat: 0,
       pendingInRoundSat: 0,
       pendingLightningSendSat: 0,
+      pendingOffboardSat: 0,
       totalSat: 1200
     })
   })
@@ -87,24 +93,30 @@ describe(getBalanceTotals, () => {
   it('keeps each pending bucket separate and sums everything into totalSat', () => {
     const balance = makeBalance({
       claimableLightningReceiveSats: 50,
+      needsRefreshSats: 60,
+      pendingArkoorSendSats: 70,
       pendingBoardSats: 10,
       pendingExitSats: 400,
       pendingInRoundSats: 20,
       pendingLightningSendSats: 30,
+      pendingOffboardSats: 80,
       spendableSats: 5000
     })
     const onchain = makeOnchainBalance({ trustedSpendableSats: 1000, untrustedPendingSats: 100 })
     expect(getBalanceTotals(balance, onchain)).toStrictEqual({
       claimableLightningReceiveSat: 50,
       exitChangePendingSat: 0,
+      needsRefreshSat: 60,
       offchainSat: 5000,
       onchainPendingSat: 100,
       onchainSat: 1000,
+      pendingArkoorSendSat: 70,
       pendingBoardSat: 10,
       pendingExitSat: 400,
       pendingInRoundSat: 20,
       pendingLightningSendSat: 30,
-      totalSat: 5000 + 10 + 20 + 30 + 50 + 400 + 1000 + 100
+      pendingOffboardSat: 80,
+      totalSat: 5000 + 10 + 20 + 30 + 50 + 400 + 1000 + 100 + 60 + 70 + 80
     })
   })
 
