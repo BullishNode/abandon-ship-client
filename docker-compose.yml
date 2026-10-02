@@ -4,7 +4,9 @@ services:
       context: .
       dockerfile: docker/bark-web.dev.Dockerfile
     ports:
-      - '5173:5173'
+      # Loopback only: the dev proxy injects barkd's bearer token, so anyone
+      # who reaches this port can spend and read the mnemonic.
+      - '127.0.0.1:5173:5173'
     volumes:
       - .:/app
       - /app/node_modules
