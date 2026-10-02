@@ -3,10 +3,12 @@ import {
   getExpiringVtxoIds,
   getLoopSafeMaxBlocks,
   getRefreshThresholdOptions,
+  getRefusedIdsFromRounds,
   getThresholdLabelParts,
   hoursToBlocks,
   isRoundInProgress,
   mapRefreshPhases,
+  parseUnusableInputIds,
   refreshingVtxosFromRounds,
   resolveThresholdBlocks,
   roundRefreshPhase
@@ -280,5 +282,28 @@ describe(mapRefreshPhases, () => {
     expect(phases.get('a:0')).toBe('queued')
     expect(phases.get('b:1')).toBe('refreshing')
     expect(phases.get('c:2')).toBeUndefined()
+  })
+})
+
+describe(parseUnusableInputIds, () => {
+  it('reads the ids from the server refusal', () => {
+    const message = 'round failed: input vtxo(s) not spendable: unusable inputs: [aa:0,bb:1]'
+    expect(parseUnusableInputIds(message)).toStrictEqual(['aa:0', 'bb:1'])
+  })
+
+  it('returns nothing for any other error', () => {
+    expect(parseUnusableInputIds('connection refused')).toStrictEqual([])
+    expect(parseUnusableInputIds()).toStrictEqual([])
+  })
+})
+
+describe(getRefusedIdsFromRounds, () => {
+  it('collects refused ids from failed rounds only', () => {
+    const rounds: PendingRound[] = [
+      { id: 1, status: { error: 'unusable inputs: [aa:0]', type: 'failed' } },
+      { id: 2, status: { error: 'unusable inputs: [bb:0]', type: 'sync-error' } },
+      { id: 3, status: { type: 'pending' } }
+    ]
+    expect(getRefusedIdsFromRounds(rounds)).toStrictEqual(['aa:0'])
   })
 })

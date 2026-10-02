@@ -22,13 +22,12 @@ import { getVtxoColumns } from '@/components/vtxos/vtxos-columns'
 import { VTXOS_PAGE_SIZE } from '@/constants/vtxos'
 import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
 import { useExitStatus } from '@/hooks/barkd/use-exit-status'
-import { useRefreshVtxos } from '@/hooks/barkd/use-refresh-vtxos'
 import { useRefreshingVtxos } from '@/hooks/barkd/use-refreshing-vtxos'
+import { useTrackedRefresh } from '@/hooks/barkd/use-tracked-refresh'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
 import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
 import { useLocale } from '@/hooks/use-locale'
 import { usePrivateAmount } from '@/hooks/use-private-amount'
-import { backendErrorMessage } from '@/lib/error-message'
 import { useSettingsStore } from '@/stores/settings'
 import { useWalletStore } from '@/stores/wallet'
 import type { Vtxo } from '@/types/domain/vtxo'
@@ -103,25 +102,19 @@ export function VtxosTable() {
     setRowSelection({})
   }
 
-  const { mutate: refresh, isPending: isRefreshing } = useRefreshVtxos({
-    onError: async (error) => {
-      const description = await backendErrorMessage(error)
-      toast.error(t('vtxos.refresh.error'), { description })
+  const { refresh, isPending: isRefreshing } = useTrackedRefresh(
+    {
+      done: t('vtxos.refresh.success'),
+      failed: t('vtxos.refresh.error'),
+      nothing: t('vtxos.refresh.nothing'),
+      stillPending: t('vtxos.refresh.still_pending'),
+      waiting: t('vtxos.refresh.waiting')
     },
-    onSuccess: (round) => {
-      // A null round means the backend registered no participation, so nothing
-      // is refreshing — saying "Refresh started" would be a lie.
-      if (round === null) {
-        toast.info(t('vtxos.refresh.nothing'))
-        return
-      }
-      toast.success(t('vtxos.refresh.success'))
-      clearSelection()
-    }
-  })
+    clearSelection
+  )
 
   function handleRefresh() {
-    refresh({ vtxos: selectedIds })
+    refresh(selectedIds)
   }
 
   function handleExitStarted() {

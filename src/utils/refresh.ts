@@ -183,3 +183,25 @@ export function estimateRefreshAllFeeSat(
   }
   return feeSat
 }
+
+const UNUSABLE_INPUTS_PATTERN = /unusable inputs: \[([^\]]*)\]/u
+
+// The Ark server refuses a spent (paid-out) or banned coin with
+// "unusable inputs: [id,id]". One such coin fails the whole batch, so callers
+// leave these ids out of the next one.
+export function parseUnusableInputIds(message?: string): string[] {
+  const match = message === undefined ? null : UNUSABLE_INPUTS_PATTERN.exec(message)
+  if (match === null) {
+    return []
+  }
+  return match[1]
+    .split(',')
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0)
+}
+
+export function getRefusedIdsFromRounds(rounds: PendingRound[]): string[] {
+  return rounds.flatMap((round) =>
+    round.status.type === 'failed' ? parseUnusableInputIds(round.status.error) : []
+  )
+}
