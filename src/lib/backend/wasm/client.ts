@@ -58,6 +58,11 @@ import type { Backend } from '@/types/backend'
 import type { WalletNotification } from '@/types/domain/notification'
 import type { CreateWalletResult, SendResult } from '@/types/domain/wallet'
 
+// oxlint-disable-next-line require-await
+async function expiryPayoutsUnavailable(): Promise<never> {
+  throw new Error('Expiry payouts require the barkd backend')
+}
+
 // Thrown when a wallet exists in IndexedDB but the session seed is not in memory
 // (e.g. after a page reload). The auth gate catches this to prompt for the seed.
 export class WalletLockedError extends Error {
@@ -563,23 +568,14 @@ export const wasmBackend: Backend = {
       await ensureOpen()
       return toUtxos(await remote().onchainUtxos())
     },
-    sweepExpiryPayouts: async () => {
-      await ensureOpen()
-      const feeRate = toOnchainFeeRates(await remote().onchainFeeRates()).regularSatPerVb
-      // The binding takes whole sat/vB.
-      const { txid, sweptSat } = await remote().sweepExpiryPayouts(Math.ceil(feeRate))
-      return { sweptSats: sweptSat, txid }
-    }
+    sweepExpiryPayouts: expiryPayoutsUnavailable
   },
   walletApi: {
     address: async () => {
       await ensureOpen()
       return await remote().getReceiveAddress()
     },
-    adoptServerVtxoStatus: async ({ vtxos }) => {
-      await ensureOpen()
-      return await remote().adoptServerVtxoStatus(vtxos)
-    },
+    adoptServerVtxoStatus: expiryPayoutsUnavailable,
     arkInfo: async () => {
       await ensureOpen()
       return toArkInfo(await remote().getArkInfo())
@@ -617,11 +613,7 @@ export const wasmBackend: Backend = {
       void requestPersistentStorage()
       return { fingerprint, scanIncomplete }
     },
-    findExpiryPayouts: async () => {
-      await ensureOpen()
-      const payouts = await remote().findExpiryPayouts()
-      return payouts.map(({ amountSat, ...payout }) => ({ ...payout, amountSats: amountSat }))
-    },
+    findExpiryPayouts: expiryPayoutsUnavailable,
     mnemonic: async () => {
       const seed = getSessionMnemonic() ?? (await remote().getMnemonic())
       if (seed === null) {
