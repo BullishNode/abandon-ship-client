@@ -53,10 +53,10 @@ export interface WalletApiBackend {
   createWallet(params: CreateWalletParams): Promise<CreateWalletResult>
   walletExists(): Promise<WalletExists>
   walletDelete(params: DeleteWalletParams): Promise<DeleteWalletResult>
-  // Expired-coin payouts. Without ids they cover all the wallet's expired
-  // coins. A coin the server reports spent is marked spent locally.
-  adoptServerVtxoStatus(params?: { vtxos?: string[] }): Promise<ServerVtxoStatus[]>
-  findExpiryPayouts(params?: { vtxos?: string[] }): Promise<ExpiryPayout[]>
+  // A coin the server reports spent is marked spent locally.
+  adoptServerVtxoStatus(params: { vtxos: string[] }): Promise<ServerVtxoStatus[]>
+  // Unswept payouts of all the wallet's expired coins.
+  findExpiryPayouts(): Promise<ExpiryPayout[]>
 }
 
 export interface OnchainApiBackend {
@@ -66,7 +66,7 @@ export interface OnchainApiBackend {
   onchainTransactions(): Promise<WalletTx[]>
   onchainUtxos(): Promise<Utxo[]>
   // Spends every expiry payout into the on-chain wallet.
-  sweepExpiryPayouts(params?: { feeRateSatPerVb?: number }): Promise<ExpiryPayoutSweep>
+  sweepExpiryPayouts(): Promise<ExpiryPayoutSweep>
 }
 
 export interface HistoryApiBackend {

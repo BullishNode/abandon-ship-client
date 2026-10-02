@@ -14,7 +14,7 @@ function sentBody(fetchApi: ReturnType<typeof vi.fn<typeof fetch>>): unknown {
 }
 
 describe(ExpiryPayoutsApi, () => {
-  it('posts the ids to adopt-server-status and maps the states', async () => {
+  it('posts the ids to adopt-server-status', async () => {
     const { api, fetchApi } = apiReturning(
       Response.json([
         { state: 'spent', vtxo_id: 'a:0' },
@@ -26,34 +26,29 @@ describe(ExpiryPayoutsApi, () => {
     expect(sentBody(fetchApi)).toStrictEqual({ vtxo_ids: ['a:0', 'b:0'] })
     expect(statuses).toStrictEqual([
       { state: 'spent', vtxoId: 'a:0' },
-      { state: 'other', vtxoId: 'b:0' }
+      { state: 'something-new', vtxoId: 'b:0' }
     ])
-  })
-
-  it('sends an empty body when no ids are given', async () => {
-    const { api, fetchApi } = apiReturning(Response.json([]))
-    await api.findExpiryPayouts()
-    expect(sentBody(fetchApi)).toStrictEqual({})
   })
 
   it('maps expiry payouts', async () => {
-    const { api } = apiReturning(
+    const { api, fetchApi } = apiReturning(
       Response.json([{ amount_sat: 9500, confirmations: 2, txid: 't', vout: 1, vtxo_id: 'a:0' }])
     )
-    await expect(api.findExpiryPayouts(['a:0'])).resolves.toStrictEqual([
+    await expect(api.findExpiryPayouts()).resolves.toStrictEqual([
       { amountSats: 9500, confirmations: 2, txid: 't', vout: 1, vtxoId: 'a:0' }
     ])
+    expect(sentBody(fetchApi)).toStrictEqual({})
   })
 
-  it('posts the fee rate to the sweep route and maps the result', async () => {
+  it('posts to the sweep route and maps the result', async () => {
     const { api, fetchApi } = apiReturning(Response.json({ swept_sat: 9300, txid: 's' }))
-    await expect(api.sweepExpiryPayouts(3)).resolves.toStrictEqual({ sweptSats: 9300, txid: 's' })
+    await expect(api.sweepExpiryPayouts()).resolves.toStrictEqual({ sweptSats: 9300, txid: 's' })
     expect(fetchApi.mock.calls[0]?.[0]).toBe('/api/barkd/api/v1/onchain/sweep-expiry-payouts')
-    expect(sentBody(fetchApi)).toStrictEqual({ fee_rate_sat_vb: 3 })
+    expect(sentBody(fetchApi)).toStrictEqual({})
   })
 
   it('throws a ResponseError when barkd lacks the route', async () => {
     const { api } = apiReturning(new Response('not found', { status: 404 }))
-    await expect(api.adoptServerVtxoStatus()).rejects.toBeInstanceOf(ResponseError)
+    await expect(api.adoptServerVtxoStatus([])).rejects.toBeInstanceOf(ResponseError)
   })
 })
