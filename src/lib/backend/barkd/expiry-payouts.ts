@@ -6,7 +6,7 @@ import type {
   ServerVtxoStatus
 } from '@/types/domain/expiry-payout'
 
-// Bull's expired-coin routes are not in any @secondts/barkd release, so they
+// The expired-coin routes are not in any @secondts/barkd release, so they
 // are called through the generated client's base class: same base path, auth
 // middleware and ResponseError on a non-2xx status.
 

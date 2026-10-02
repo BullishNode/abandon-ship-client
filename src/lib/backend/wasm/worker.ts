@@ -106,7 +106,7 @@ function requireWallet(): Wallet {
   return wallet
 }
 
-// Bull's expired-coin calls: added to bark-ffi after 0.24.0, so they are found
+// Expired-coin calls: added to bark-ffi after 0.24.0, so they are found
 // at runtime until bark-web pins a release that has them.
 interface WasmServerVtxoStatus {
   vtxoId: string
