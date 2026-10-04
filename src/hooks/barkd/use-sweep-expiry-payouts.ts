@@ -14,6 +14,10 @@ export function useSweepExpiryPayouts(
     mutationFn: async () => await onchainApi.sweepExpiryPayouts(),
     ...options,
     onSuccess: async (...args) => {
+      // The sweep spent the payout outputs. Clear them before balance refetches,
+      // including when the next payout lookup fails, so they cannot count twice.
+      await queryClient.cancelQueries({ queryKey: walletKeys.expiryPayouts() })
+      queryClient.setQueryData(walletKeys.expiryPayouts(), [])
       await Promise.all([
         invalidateMovementState(queryClient),
         queryClient.invalidateQueries({ queryKey: walletKeys.expiredVtxosAll() })
