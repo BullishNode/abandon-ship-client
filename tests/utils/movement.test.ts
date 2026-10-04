@@ -232,6 +232,17 @@ describe(isArkToOnchainTransfer, () => {
 })
 
 describe(getMovementFeeSat, () => {
+  it('shows the network fee paid to move an expiry payout into the onchain wallet', () => {
+    const movement = createMovement({
+      effectiveBalanceSats: -98_926,
+      metadata: { swept_sat: 98_500 },
+      offchainFeeSats: 0,
+      subsystem: { kind: 'expiry-payout', name: 'bark.expiry_payout' }
+    })
+    expect(getMovementFeeSat(movement)).toBe(426)
+    expect(getMovementFeeSat({ ...movement, metadata: undefined })).toBeNull()
+  })
+
   it('returns the offchainFeeSat when present', () => {
     expect(getMovementFeeSat(createMovement({ offchainFeeSats: 250 }))).toBe(250)
   })
