@@ -1,0 +1,39 @@
+2026-10-04 payout UX verification
+Client: c94488f and 68503ed (production source unchanged after this run).
+Bark: 3ab4298662ff8e9ec2c2622fcf886e8cd59c9818, local release image.
+Network: regtest, isolated abandon-session2 stack; original volumes preserved.
+
+npm test -- --maxWorkers=2 --testTimeout=45000: 1077 PASS / 0 FAIL,
+112 files, exit 0, 190.15 seconds.
+Touched-file npm run check (15 files): PASS, zero warnings/errors.
+npm run build: PASS; existing large-chunk/plugin-timing warnings.
+
+Before/after regressions:
+- Last-known payout after same-height/new-height lookup errors: before 8 PASS /
+  2 FAIL; after both retain 9500 sat, with explicit stale status/retry action.
+- Receipt fee: before 1 expected FAIL (0 instead of 426); after 426 sat.
+- Successful sweep followed by lookup failure clears the spent-output cache.
+- Wallet removal clears the prior wallet's payout cache.
+- Privacy mode hides payout amounts; pending transfer disables resubmission.
+
+Real Chromium, production build, actual barkd/Core requests:
+- Receive 99520 sat in Ark; stop wallet through expiry; sidecar pays 98926 sat.
+- Payout: b58d7a55628a25c036feeca12f39ed2542d686dc9b41ab94dd92e866877bf088:1.
+- Temporary lookup HTTP 503 retains the last checked balance and offers retry.
+- Temporary sweep HTTP 503 preserves the payout; retry succeeds.
+- Button submits sweep 94498ffd681849e0a83b5ba0514716fb194ec5b0bb52d5e6ade4711188e62289.
+- Core verifies that exact input, 98500-sat output, 426-sat fee, 6 confirmations.
+- Total before/after transfer: 998246 / 997820 sat; no double counting.
+- Receipt now shows 426-sat fee; mobile activity amounts fit the viewport.
+- Payout banner and chart honor privacy mode.
+- Fresh backend seed restore: 997820 sat; no remaining expiry payout.
+- Separate fresh wallet imported through the actual client form (seed paste and
+  birthday height): 997820 sat; no duplicate payout; zero browser exceptions.
+- Browser asset/API transport used Playwright route.fetch to the same local
+  backend to avoid host Docker network-change errors; no synthetic balances.
+
+Raw logs, scripts and screenshots are retained locally under
+bark-integration-2026-10-01/session2-continuation/ux/.
+Wallet data and seed are excluded from this report and Git.
+This validates these client changes; it is not a server full-suite or mainnet
+readiness claim. Server baseline currently has 23 PASS / 1 harness FAIL.
