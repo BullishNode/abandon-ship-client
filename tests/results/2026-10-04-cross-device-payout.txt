@@ -1,0 +1,29 @@
+Cross-device payout balance regression — 2026-10-04
+Client base: 2544580; Bark: 3ab429866; native FFI: 7c2cc20.
+
+Before: hook suite 11 PASS / 1 FAIL. After: affected tests 16 PASS / 0 FAIL.
+Full client: 1078 PASS / 0 FAIL, 112 files, exit 0, 225.55s.
+Touched-file lint/typecheck: PASS, zero warnings/errors. Production build: PASS
+(existing large-chunk/plugin warnings).
+
+Real Chromium mobile dashboard + generated native Python wallet, same seed:
+1. Browser discovers a directly funded 10000-sat payout-script output.
+2. Inject HTTP 503 only for the browser's payout lookup; keep cached amount.
+3. Native restored wallet spends that exact output, returning 9445 sat to its
+   ordinary on-chain wallet. Mine one block and await the browser backend balance.
+4. Original browser polls on-chain history while payout lookup remains unavailable.
+
+Before fix: expected 1045039 sat, displayed 1055039 sat (10000 double counted).
+Payout: af4d5ad6c8b23a60132be8b52a6ea8150b2da5bb58a2095820e12a92e4d13aa7:0
+Sweep: 3bcd9f996a978eca40245a5e48234f7bf470bc5f0125426abfdeea3244d61072
+After fix: expected and displayed 1054484 sat. PASS, exit 0.
+Payout: 952615adc0a0bd58493947fae386bb599131ff015556e7e510d9f40183ad06d9:0
+Sweep: 87c6dc8005949e0ac4f38df901db7ae6b3b4bd6de316d7ae65bd36e88ada90c3
+
+The client excludes cached outputs spent by exact inputs in the wallet's current
+on-chain snapshot. It retains unspent siblings and the raw successful query cache.
+Existing outage tests still retain payouts with no observed spend. No new RPC.
+This directly funded fixture tests discovery/accounting, not another sidecar payout.
+An initial fixture attempt waited on an unrevealed destination address and failed
+setup before its balance assertion; the completed runs use a known destination.
+Local evidence: session2-continuation/ux/other-device-*. Wallet/seed data excluded.

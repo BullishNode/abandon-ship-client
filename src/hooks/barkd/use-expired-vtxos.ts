@@ -1,12 +1,14 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { QueryClient } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
+import { useOnchainTransactions } from '@/hooks/barkd/use-onchain-transactions'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
 import { walletApi } from '@/lib/barkd-client'
 import { invalidateMovementState } from '@/lib/query-invalidations'
 import { walletKeys } from '@/lib/query-keys'
 import { useWalletStore } from '@/stores/wallet'
-import { sumPayoutSats } from '@/utils/expiry-payout'
+import { sumPayoutSats, unspentPayouts } from '@/utils/expiry-payout'
 import type { ExpiryPayout } from '@/types/domain/expiry-payout'
 import type { Vtxo } from '@/types/domain/vtxo'
 
@@ -80,6 +82,7 @@ export function useExpiredVtxos(): ExpiredVtxos {
   const queryClient = useQueryClient()
   const { data: tip } = useBitcoinTip()
   const { data: vtxos } = useVtxos()
+  const { data: transactions } = useOnchainTransactions()
   const storedPayingOutIds = useWalletStore((state) => state.payingOutIds)
 
   const expired = tip === undefined ? [] : getExpiredVtxos(vtxos ?? [], tip)
@@ -110,7 +113,10 @@ export function useExpiredVtxos(): ExpiredVtxos {
     staleTime: 30_000
   })
 
-  const payoutList = payouts ?? NO_PAYOUTS
+  const payoutList = useMemo(
+    () => unspentPayouts(payouts ?? NO_PAYOUTS, transactions ?? []),
+    [payouts, transactions]
+  )
   const payoutById = new Map(
     payoutList.flatMap((payout) =>
       payout.vtxoId === null ? [] : [[payout.vtxoId, payout] as const]
