@@ -37,3 +37,15 @@ bark-integration-2026-10-01/session2-continuation/ux/.
 Wallet data and seed are excluded from this report and Git.
 This validates these client changes; it is not a server full-suite or mainnet
 readiness claim. Server baseline currently has 23 PASS / 1 harness FAIL.
+
+Same-height live follow-up (J1): PASS, zero browser exceptions.
+At unchanged block 56248: an empty lookup preceded a direct-funded 10000-sat
+output at the earlier genuine payout script. Browser polling found it once,
+then the button spent the exact outpoint and the next lookup returned empty.
+Payout: 0e177df8aace129c47e68a11fa93ea06a31244defaa2c528d76fd42f6ef6382b:0.
+Sweep: f290e66966b0c4f232c1964baca35ed584a1c5fd3cb027c1c0042959d4431d41.
+Received 9443 sat after a 557-sat fee; total 1007263 → 1016706 sat.
+This isolates discovery/spending; it is not another sidecar settlement.
+The first harness attempt used GET for a POST route and failed with HTTP 405
+after successful UI discovery. Corrected the harness, spent its fixture output,
+and reran the complete empty → found → spent check successfully.
