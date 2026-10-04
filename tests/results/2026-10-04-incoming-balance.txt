@@ -1,0 +1,13 @@
+2026-10-04 incoming Lightning balance display
+
+Before: browser assertion FAIL. A display fixture with 12345 claimable
+Lightning sat and all other balances zero showed the total without any
+balance breakdown row.
+After: browser assertion PASS; Incoming Lightning identifies the counted amount.
+The fixture injects balance API responses. No Lightning payment was performed.
+
+npm run check (two touched files): PASS, zero warnings/errors.
+npm run build: PASS, existing chunk/plugin warnings.
+Full client suite: 1077 PASS / 0 FAIL, 112 files, exit 0, 226.01 seconds.
+
+Raw logs/screenshots: local session2-continuation/ux/incoming-*.
