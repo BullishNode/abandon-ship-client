@@ -5,15 +5,15 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { useExpiredVtxos } from '@/hooks/barkd/use-expired-vtxos'
 import { useSweepExpiryPayouts } from '@/hooks/barkd/use-sweep-expiry-payouts'
-import { useFormatBitcoin } from '@/hooks/use-format-bitcoin'
+import { usePrivateAmount } from '@/hooks/use-private-amount'
 import { backendErrorMessage } from '@/lib/error-message'
 
 // Expired coins the server paid out on-chain sit at their own keys, outside the
 // on-chain wallet, until they are swept into it.
 export function ExpiryPayoutNote() {
   const { t } = useTranslation()
-  const formatBitcoin = useFormatBitcoin()
-  const { payouts, payingOutSat } = useExpiredVtxos()
+  const { sats: formatBitcoin } = usePrivateAmount()
+  const { payouts, payingOutSat, isPayoutError, refreshPayouts } = useExpiredVtxos()
   const { mutate: sweep, isPending } = useSweepExpiryPayouts({
     onError: async (error) => {
       const description = await backendErrorMessage(error)
@@ -27,21 +27,32 @@ export function ExpiryPayoutNote() {
     return null
   }
   return (
-    <Alert className="mb-6">
+    <Alert className="mb-6" role="status">
       <CoinsIcon />
       <AlertTitle>{t('expiry_payout.title', { amount: formatBitcoin(payingOutSat) })}</AlertTitle>
       <AlertDescription>
         <p>{t('expiry_payout.description')}</p>
-        <Button
-          loading={isPending}
-          onClick={() => {
-            sweep()
-          }}
-          size="sm"
-          variant="outline"
-        >
-          {t('expiry_payout.sweep.button')}
-        </Button>
+        {isPayoutError ? (
+          <>
+            <p>{t('expiry_payout.stale')}</p>
+            <Button onClick={refreshPayouts} size="sm" variant="outline">
+              {t('expiry_payout.retry')}
+            </Button>
+          </>
+        ) : (
+          <Button
+            aria-label={t(isPending ? 'expiry_payout.sweep.pending' : 'expiry_payout.sweep.button')}
+            aria-busy={isPending}
+            loading={isPending}
+            onClick={() => {
+              sweep()
+            }}
+            size="sm"
+            variant="outline"
+          >
+            {t('expiry_payout.sweep.button')}
+          </Button>
+        )}
       </AlertDescription>
     </Alert>
   )

@@ -187,6 +187,14 @@ export function getMovementFeeSat(
   if (isExitSubsystem(movement.subsystem.name)) {
     return movement.offchainFeeSats + sumExitCpfpFeeSat(transactions)
   }
+  if (movement.subsystem.kind === 'expiry-payout') {
+    const swept = movement.metadata?.swept_sat
+    if (typeof swept !== 'number' || !Number.isSafeInteger(swept) || swept < 0) {
+      return null
+    }
+    const fee = -movement.effectiveBalanceSats - swept
+    return fee >= 0 ? fee : null
+  }
   if (typeof movement.offchainFeeSats === 'number') {
     return movement.offchainFeeSats
   }

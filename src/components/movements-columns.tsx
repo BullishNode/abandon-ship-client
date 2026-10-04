@@ -28,10 +28,18 @@ export function getMovementColumns({
     {
       cell: ({ row }) => {
         const entry = row.original
-        if (entry.kind === 'movement') {
-          return formatDate(new Date(entry.movement.createdAt))
-        }
-        return formatDate(new Date(entry.approximateTimestampMs))
+        const date =
+          entry.kind === 'movement' ? entry.movement.createdAt : entry.approximateTimestampMs
+        const status = entry.kind === 'movement' ? entry.movement.status : entry.status
+        return (
+          <div className="flex flex-col gap-1.5 whitespace-normal">
+            <div className="flex flex-wrap gap-1 sm:hidden [&_[data-slot=badge]]:max-w-full [&_[data-slot=badge]]:whitespace-normal">
+              <MovementSourceBadge source={getFeedRowSource(entry)} />
+              <MovementStatusBadge status={status} />
+            </div>
+            <span>{formatDate(new Date(date))}</span>
+          </div>
+        )
       },
       header: t('movements.columns.date'),
       id: 'date'

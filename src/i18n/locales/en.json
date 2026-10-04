@@ -334,7 +334,7 @@
       "exit": "On-chain: Exit",
       "exit_fee": "On-chain: Exit fee",
       "refresh": "Ark: Refresh",
-      "expiry_payout": "Expired coin paid out on-chain"
+      "expiry_payout": "Payout transfer"
     },
     "detail": {
       "title": "Transaction details",
@@ -646,9 +646,9 @@
     "balance": {
       "offchain": "Off-chain",
       "renewing": "Renewing",
-      "renewing_tooltip": "Expired coins. They renew automatically the next time your wallet is online. No action needed.",
-      "paying_out": "Paying out",
-      "paying_out_tooltip": "Expired coins the Ark server is paying to you on-chain because they were not renewed in time.",
+      "renewing_tooltip": "Expired coins need to renew before you can spend them in Ark. Your wallet tries automatically while online.",
+      "paying_out": "On-chain payout",
+      "paying_out_tooltip": "Payouts already included in your total. Move them to your on-chain balance to spend them from this app.",
       "onchain": "On-chain",
       "onchain_pending": "Pending on-chain",
       "onchain_pending_change": "Pending change",
@@ -715,9 +715,12 @@
   },
   "expiry_payout": {
     "title": "{{amount}} paid out on-chain",
-    "description": "These coins expired before they were renewed, so the Ark server sent them on-chain. Move them to your on-chain balance to spend them.",
+    "description": "Your expired Ark funds were paid on-chain. Move the payout into your on-chain balance to spend it from this app. A Bitcoin network fee is deducted from the payout.",
+    "stale": "Could not update the payout status. This is the last checked amount.",
+    "retry": "Check again",
     "sweep": {
       "button": "Move to on-chain balance",
+      "pending": "Moving payout…",
       "success": "{{amount}} moved to your on-chain balance",
       "error": "Could not move the payout"
     }

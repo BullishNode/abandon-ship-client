@@ -243,7 +243,7 @@ export function MovementsTable() {
           </DropdownMenu>
         </div>
         <Card className="py-0">
-          <CardContent className="px-0 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6 [&_th:first-child]:pl-6 [&_th:last-child]:pr-6">
+          <CardContent className="px-0 [&_td:first-child]:pl-6 [&_td:last-child]:pr-6 [&_th:first-child]:pl-6 [&_th:last-child]:pr-6 max-sm:[&_table]:table-fixed max-sm:[&_td]:whitespace-normal max-sm:[&_td:nth-child(2)]:hidden max-sm:[&_th:nth-child(2)]:hidden max-sm:[&_td:nth-child(3)]:hidden max-sm:[&_th:nth-child(3)]:hidden max-sm:[&_td:nth-child(4)]:hidden max-sm:[&_th:nth-child(4)]:hidden">
             {feedContent}
           </CardContent>
         </Card>
