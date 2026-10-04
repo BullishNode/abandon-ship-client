@@ -1,12 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook, waitFor } from '@testing-library/react'
+import { Transaction } from 'bitcoinjs-lib'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useExpiredVtxos } from '../../src/hooks/barkd/use-expired-vtxos'
 import { useSweepExpiryPayouts } from '../../src/hooks/barkd/use-sweep-expiry-payouts'
 import { bitcoinApi, onchainApi, walletApi } from '../../src/lib/barkd-client'
 import { useWalletStore } from '../../src/stores/wallet'
-import { bitcoinKeys, walletKeys } from '../../src/lib/query-keys'
+import { bitcoinKeys, onchainKeys, walletKeys } from '../../src/lib/query-keys'
 import type { ExpiryPayout } from '@/types/domain/expiry-payout'
 import type { Vtxo } from '@/types/domain/vtxo'
 
@@ -27,7 +28,7 @@ const FRESH: Vtxo = {
 
 const PAYOUT: ExpiryPayout = {
   amountSats: 9500,
-  txid: 'payout-tx',
+  txid: 'ab'.repeat(32),
   vout: 0,
   vtxoId: 'old:0'
 }
@@ -49,6 +50,9 @@ describe(useExpiredVtxos, () => {
     })
     vi.spyOn(bitcoinApi, 'tip').mockResolvedValue(TIP)
     vi.spyOn(walletApi, 'vtxos').mockResolvedValue([EXPIRED, FRESH])
+    vi.spyOn(onchainApi, 'onchainBalance').mockResolvedValue({ confirmedSats: 0, totalSats: 0 })
+    vi.spyOn(onchainApi, 'onchainTransactions').mockResolvedValue([])
+    vi.spyOn(onchainApi, 'onchainUtxos').mockResolvedValue([])
     vi.spyOn(walletApi, 'balance').mockResolvedValue({
       claimableLightningReceiveSats: 0,
       pendingBoardSats: 0,
@@ -176,6 +180,37 @@ describe(useExpiredVtxos, () => {
       expect(result.current.payingOutSat).toBe(9500)
     }
   )
+
+  it('excludes an exact payout spent elsewhere while lookup is unavailable', async () => {
+    adoptSpy.mockResolvedValue([])
+    const sibling = { ...PAYOUT, amountSats: 3000, vout: 1, vtxoId: null }
+    findSpy.mockResolvedValue([PAYOUT, sibling])
+    const result = render()
+    await waitFor(() => {
+      expect(result.current.payingOutSat).toBe(12_500)
+    })
+
+    findSpy.mockRejectedValue(new Error('payout lookup temporarily unavailable'))
+    const sweep = new Transaction()
+    sweep.addInput(Uint8Array.from(Buffer.from(PAYOUT.txid, 'hex').toReversed()), PAYOUT.vout)
+    sweep.addOutput(new Uint8Array([0x6a]), 0n)
+    await act(async () => {
+      await queryClient.invalidateQueries({ queryKey: walletKeys.expiryPayouts() })
+      queryClient.setQueryData(onchainKeys.snapshot(), {
+        balance: { confirmedSats: 9300, totalSats: 9300 },
+        transactions: [
+          { balanceChangeSats: 9300, isCpfp: false, tx: sweep.toHex(), txid: sweep.getId() }
+        ],
+        utxos: []
+      })
+    })
+    await waitFor(() => {
+      expect(result.current.payingOutSat).toBe(3000)
+    })
+    expect(result.current.isPayoutError).toBeTruthy()
+    expect(result.current.payouts).toStrictEqual([sibling])
+    expect(queryClient.getQueryData(walletKeys.expiryPayouts())).toStrictEqual([PAYOUT, sibling])
+  })
 
   it('removes a successful sweep from the total even if the next lookup fails', async () => {
     adoptSpy.mockResolvedValue([])
