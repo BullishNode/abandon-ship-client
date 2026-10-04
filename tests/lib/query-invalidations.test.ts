@@ -16,26 +16,18 @@ import {
 import { exitKeys, onchainKeys, walletKeys } from '../../src/lib/query-keys'
 
 type InvalidateSpy = MockInstance<QueryClient['invalidateQueries']>
-type RemoveSpy = MockInstance<QueryClient['removeQueries']>
 
 describe('query invalidations', () => {
   let queryClient: QueryClient
   let invalidateSpy: InvalidateSpy
-  let removeSpy: RemoveSpy
 
   beforeEach(() => {
     queryClient = new QueryClientCtor()
     invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
-    removeSpy = vi.spyOn(queryClient, 'removeQueries')
   })
 
   function invalidatedKeys(): (QueryKey | undefined)[] {
     const { calls } = invalidateSpy.mock
-    return calls.map((call) => call[0]?.queryKey)
-  }
-
-  function removedKeys(): (QueryKey | undefined)[] {
-    const { calls } = removeSpy.mock
     return calls.map((call) => call[0]?.queryKey)
   }
 
@@ -102,12 +94,20 @@ describe('query invalidations', () => {
 
   describe(resetWalletQueriesAfterDelete, () => {
     it('removes wallet/exit caches and invalidates existence', async () => {
-      await resetWalletQueriesAfterDelete(queryClient)
-      expect(removedKeys()).toStrictEqual([
+      const keys = [
         walletKeys.balance(),
         walletKeys.transactions(),
+        walletKeys.expiryPayouts(),
+        walletKeys.expiredVtxos(100, ['old-wallet-coin']),
         exitKeys.all
-      ])
+      ]
+      for (const key of keys) {
+        queryClient.setQueryData(key, ['old wallet data'])
+      }
+      await resetWalletQueriesAfterDelete(queryClient)
+      for (const key of keys) {
+        expect(queryClient.getQueryData(key)).toBeUndefined()
+      }
       expect(invalidatedKeys()).toStrictEqual([walletKeys.exists()])
     })
   })
