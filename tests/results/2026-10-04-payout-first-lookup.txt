@@ -1,0 +1,20 @@
+First payout lookup failure — 2026-10-04
+Client base b3914e2; variant-b barkd 3ab429866.
+
+Before component regression: 3 PASS / 1 FAIL, exit 1.
+After affected component/hook suites: 16 PASS / 0 FAIL, exit 0.
+Touched-file lint/typecheck: PASS, zero warnings/errors.
+Production build: PASS (existing chunk/plugin warnings).
+
+Real Chromium, fresh browser context, mobile viewport, existing regtest wallet:
+Inject HTTP 503 only for the payout lookup before the first dashboard load.
+Before: FAIL; two real lookup attempts failed, no notice was shown.
+After: PASS; notice says payouts could not be checked and balance may be
+incomplete. Restore the actual endpoint, click Check again, notice disappears.
+Browser exceptions: 0. No synthetic balances or transaction activity.
+
+Cached positive amounts still use the existing last-checked notice. Neither
+error state offers the sweep button. The normal empty successful scan is hidden.
+Full client suite at the immediately preceding b3914e2: 1078 PASS / 0 FAIL;
+not repeated for this notice-only change.
+Local scripts/screenshots: session2-continuation/ux/first-lookup-*.

@@ -715,6 +715,8 @@
     }
   },
   "expiry_payout": {
+    "unavailable_title": "Could not check on-chain payouts",
+    "unavailable_description": "Your balance may be missing payouts from expired Ark funds. Try checking again.",
     "title": "{{amount}} paid out on-chain",
     "description": "Your expired Ark funds were paid on-chain. Move the payout into your on-chain balance to spend it from this app. A Bitcoin network fee is deducted from the payout.",
     "stale": "Could not update the payout status. This is the last checked amount.",
