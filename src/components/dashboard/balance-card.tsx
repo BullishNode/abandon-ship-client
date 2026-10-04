@@ -80,6 +80,11 @@ export function BalanceCard({
       label: t('dashboard.balance.pending_lightning_send')
     },
     {
+      amount: totals.claimableLightningReceiveSat,
+      key: 'claimable_lightning_receive',
+      label: t('dashboard.balance.claimable_lightning_receive')
+    },
+    {
       amount: totals.pendingArkoorSendSat,
       key: 'pending_arkoor_send',
       label: t('dashboard.balance.pending_arkoor_send')
@@ -107,6 +112,7 @@ export function BalanceCard({
     totals.pendingBoardSat === 0 &&
     totals.pendingInRoundSat === 0 &&
     totals.pendingLightningSendSat === 0 &&
+    totals.claimableLightningReceiveSat === 0 &&
     totals.pendingExitSat === 0
   const showBreakdown = !onlyOffchain && rows.length > 0
 

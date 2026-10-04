@@ -655,6 +655,7 @@
       "pending_board": "Pending board",
       "pending_in_round": "Pending in round",
       "pending_lightning_send": "Pending Lightning send",
+      "claimable_lightning_receive": "Incoming Lightning",
       "pending_arkoor_send": "Pending Ark send",
       "pending_offboard": "Pending offboard",
       "pending_exit": "Pending exit",
