@@ -23,18 +23,25 @@ export function ExpiryPayoutNote() {
       toast.success(t('expiry_payout.sweep.success', { amount: formatBitcoin(sweptSats) }))
     }
   })
-  if (payouts.length === 0) {
+  const hasPayout = payouts.length > 0
+  if (!hasPayout && !isPayoutError) {
     return null
   }
   return (
     <Alert className="mb-6" role="status">
       <CoinsIcon />
-      <AlertTitle>{t('expiry_payout.title', { amount: formatBitcoin(payingOutSat) })}</AlertTitle>
+      <AlertTitle>
+        {hasPayout
+          ? t('expiry_payout.title', { amount: formatBitcoin(payingOutSat) })
+          : t('expiry_payout.unavailable_title')}
+      </AlertTitle>
       <AlertDescription>
-        <p>{t('expiry_payout.description')}</p>
+        <p>
+          {t(hasPayout ? 'expiry_payout.description' : 'expiry_payout.unavailable_description')}
+        </p>
         {isPayoutError ? (
           <>
-            <p>{t('expiry_payout.stale')}</p>
+            {hasPayout ? <p>{t('expiry_payout.stale')}</p> : null}
             <Button onClick={refreshPayouts} size="sm" variant="outline">
               {t('expiry_payout.retry')}
             </Button>

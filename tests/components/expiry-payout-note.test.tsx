@@ -8,6 +8,7 @@ import { useSettingsStore } from '@/stores/settings'
 import type { ExpiryPayoutSweep } from '@/types/domain/expiry-payout'
 
 const state = vi.hoisted(() => ({
+  hasPayout: true,
   isPayoutError: false,
   refresh: vi.fn<() => void>()
 }))
@@ -17,9 +18,11 @@ vi.mock(import('@/hooks/barkd/use-expired-vtxos'), () => ({
     isChecked: true,
     isPayoutError: state.isPayoutError,
     payingOutIds: new Set<string>(),
-    payingOutSat: 9500,
+    payingOutSat: state.hasPayout ? 9500 : 0,
     payoutById: new Map(),
-    payouts: [{ amountSats: 9500, txid: 'payout', vout: 0, vtxoId: 'coin:0' }],
+    payouts: state.hasPayout
+      ? [{ amountSats: 9500, txid: 'payout', vout: 0, vtxoId: 'coin:0' }]
+      : [],
     refreshPayouts: state.refresh
   })
 }))
@@ -31,6 +34,7 @@ describe(ExpiryPayoutNote, () => {
   beforeEach(() => {
     queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
     state.isPayoutError = false
+    state.hasPayout = true
     state.refresh.mockReset()
     sweep.mockReset()
     useSettingsStore.setState({ bitcoinUnit: 'sats', discreetMode: false })
@@ -57,6 +61,19 @@ describe(ExpiryPayoutNote, () => {
     state.isPayoutError = true
     renderNote()
     expect(screen.getByText(/last checked amount/u)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Move to on-chain balance' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Check again' }))
+    expect(state.refresh).toHaveBeenCalledOnce()
+    expect(sweep).not.toHaveBeenCalled()
+  })
+
+  it('shows an incomplete-balance notice when the first payout scan fails', () => {
+    state.hasPayout = false
+    state.isPayoutError = true
+    renderNote()
+    expect(screen.getByText('Could not check on-chain payouts')).toBeInTheDocument()
+    expect(screen.getByText(/balance may be missing payouts/u)).toBeInTheDocument()
+    expect(screen.queryByText(/last checked amount/u)).toBeNull()
     expect(screen.queryByRole('button', { name: 'Move to on-chain balance' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Check again' }))
     expect(state.refresh).toHaveBeenCalledOnce()
