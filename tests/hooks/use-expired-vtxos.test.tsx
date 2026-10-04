@@ -3,8 +3,10 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useExpiredVtxos } from '../../src/hooks/barkd/use-expired-vtxos'
-import { bitcoinApi, walletApi } from '../../src/lib/barkd-client'
+import { useSweepExpiryPayouts } from '../../src/hooks/barkd/use-sweep-expiry-payouts'
+import { bitcoinApi, onchainApi, walletApi } from '../../src/lib/barkd-client'
 import { useWalletStore } from '../../src/stores/wallet'
+import { bitcoinKeys, walletKeys } from '../../src/lib/query-keys'
 import type { ExpiryPayout } from '@/types/domain/expiry-payout'
 import type { Vtxo } from '@/types/domain/vtxo'
 
@@ -149,6 +151,54 @@ describe(useExpiredVtxos, () => {
     })
     expect(result.current.payoutById.size).toBe(0)
     expect(result.current.payouts).toHaveLength(1)
+  })
+
+  it.each(['same height', 'new height'])(
+    'keeps the last known payout when a lookup fails at %s',
+    async (height) => {
+      adoptSpy.mockResolvedValue([])
+      findSpy.mockResolvedValue([PAYOUT])
+      const result = render()
+      await waitFor(() => {
+        expect(result.current.payingOutSat).toBe(9500)
+      })
+
+      findSpy.mockRejectedValue(new Error('bitcoind temporarily unavailable'))
+      await act(async () => {
+        if (height === 'new height') {
+          queryClient.setQueryData(bitcoinKeys.tip(), TIP + 1)
+        }
+        await queryClient.invalidateQueries({ queryKey: walletKeys.expiredVtxosAll() })
+      })
+      await waitFor(() => {
+        expect(findSpy).toHaveBeenCalledTimes(2)
+      })
+      expect(result.current.payingOutSat).toBe(9500)
+    }
+  )
+
+  it('removes a successful sweep from the total even if the next lookup fails', async () => {
+    adoptSpy.mockResolvedValue([])
+    findSpy.mockResolvedValue([PAYOUT])
+    vi.spyOn(onchainApi, 'sweepExpiryPayouts').mockResolvedValue({ sweptSats: 9300, txid: 'sweep' })
+    const { result } = renderHook(
+      () => ({ expiry: useExpiredVtxos(), sweep: useSweepExpiryPayouts() }),
+      {
+        wrapper: makeWrapper(queryClient)
+      }
+    )
+    await waitFor(() => {
+      expect(result.current.expiry.payingOutSat).toBe(9500)
+    })
+    findSpy.mockRejectedValue(new Error('bitcoind temporarily unavailable'))
+    await act(async () => {
+      await result.current.sweep.mutateAsync()
+    })
+    expect(queryClient.getQueryData(walletKeys.expiryPayouts())).toStrictEqual([])
+    await waitFor(() => {
+      expect(result.current.expiry.payingOutSat).toBe(0)
+    })
+    expect(result.current.expiry.payouts).toStrictEqual([])
   })
 
   it.each(['empty', 'failed'])(
