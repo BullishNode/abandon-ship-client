@@ -341,6 +341,7 @@
       "sent_to": "Sent to",
       "received_on": "Received to",
       "fee": "Fee",
+      "wallet_transfer_fee": "Wallet transfer fee",
       "fee_unavailable": "Not available",
       "date_created": "Created",
       "date_completed": "Completed",
@@ -718,7 +719,7 @@
     "unavailable_title": "Could not check on-chain payouts",
     "unavailable_description": "Your balance may be missing payouts from expired Ark funds. Try checking again.",
     "title": "{{amount}} paid out on-chain",
-    "description": "Your expired Ark funds were paid on-chain. Move the payout into your on-chain balance to spend it from this app. A Bitcoin network fee is deducted from the payout.",
+    "description": "Your expired Ark funds were paid on-chain after deducting the payout's network fee. Move them into your on-chain balance to spend them from this app. This move deducts a separate network fee.",
     "stale": "Could not update the payout status. This is the last checked amount.",
     "retry": "Check again",
     "sweep": {

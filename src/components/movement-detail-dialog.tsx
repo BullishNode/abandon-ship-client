@@ -131,7 +131,11 @@ function MovementDetailContent({
             <DetailRow label={counterpartyLabel} value={t('movements.detail.no_counterparty')} />
           )}
           <DetailRow
-            label={t('movements.detail.fee')}
+            label={t(
+              source === 'expiry_payout'
+                ? 'movements.detail.wallet_transfer_fee'
+                : 'movements.detail.fee'
+            )}
             value={
               fee === null
                 ? t('movements.detail.fee_unavailable')
