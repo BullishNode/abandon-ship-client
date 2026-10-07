@@ -334,7 +334,7 @@
       "exit": "On-chain: Exit",
       "exit_fee": "On-chain: Exit fee",
       "refresh": "Ark: Refresh",
-      "expiry_payout": "Payout transfer"
+      "expiry_payout": "Fallback exit"
     },
     "detail": {
       "title": "Transaction details",
