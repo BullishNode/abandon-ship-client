@@ -4,6 +4,7 @@ import {
   getMovementDirection,
   getMovementDisplayBalanceSats,
   getMovementFeeSat,
+  getMovementPayoutFeeSat,
   getMovementSource,
   isArkToOnchainTransfer,
   isFailedRoundMovement,
@@ -365,5 +366,20 @@ describe(getMovementDisplayBalanceSats, () => {
         })
       )
     ).toBe(-1500)
+  })
+})
+
+describe(getMovementPayoutFeeSat, () => {
+  it('keeps the original payout deduction separate from the later transfer fee', () => {
+    const movement = createMovement({
+      effectiveBalanceSats: -98_926,
+      metadata: { payout_fee_sat: 594, swept_sat: 98_500 },
+      offchainFeeSats: 0,
+      subsystem: { kind: 'expiry-payout', name: 'bark.expiry_payout' }
+    })
+    expect(getMovementPayoutFeeSat(movement)).toBe(594)
+    expect(getMovementFeeSat(movement)).toBe(426)
+    expect(getMovementPayoutFeeSat({ ...movement, metadata: { swept_sat: 98_500 } })).toBeNull()
+    expect(getMovementPayoutFeeSat({ ...movement, metadata: { payout_fee_sat: -1 } })).toBeNull()
   })
 })

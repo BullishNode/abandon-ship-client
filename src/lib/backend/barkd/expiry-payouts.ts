@@ -14,6 +14,7 @@ const serverVtxoStatusSchema = z.object({ state: z.string(), vtxo_id: z.string()
 
 const expiryPayoutSchema = z.object({
   amount_sat: z.number(),
+  fee_sat: z.number().int().nonnegative().nullish(),
   txid: z.string(),
   vout: z.number(),
   vtxo_id: z.string().nullable()
@@ -30,6 +31,7 @@ export function toExpiryPayout(json: unknown): ExpiryPayout {
   const dto = expiryPayoutSchema.parse(json)
   return {
     amountSats: dto.amount_sat,
+    feeSats: dto.fee_sat ?? null,
     txid: dto.txid,
     vout: dto.vout,
     vtxoId: dto.vtxo_id

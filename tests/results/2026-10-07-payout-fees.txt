@@ -1,0 +1,50 @@
+Expiry payout fee display, 2026-10-07
+
+Client base: 644fa3e. This commit adds optional exact recipient fee display.
+Backend: Bark receipt draft based on 3ab429866, host barkd SHA256
+572ed86ac172ce274bb211d5efbac01c90c364806b8ecd38ea418c0f84f12d21.
+The server exports public output-keyed receipts; no fee is inferred from
+unrelated historical VTXOs or from the whole batched transaction's fee.
+
+Before new unit regressions: 9 PASS / 3 FAIL.
+After affected tests: 58 PASS / 0 FAIL, 4 files.
+Full client: 1084 PASS / 0 FAIL, 112 files, exit 0, 161.63s.
+Touched-source lint/typecheck: PASS, 0 warnings/errors.
+Production build: PASS, 19.69s; existing plugin/chunk-size warnings.
+
+Actual mobile Chromium, 390x844, separate context; owner's tab unchanged:
+- Fresh seed restore through Bark discovered a real sidecar settlement.
+- Gross 29520 sat; received 28693 sat; original payout fee 827 sat.
+- Dashboard displayed received amount and 827-sat deduction.
+- Removing the static receipt caused HTTP404. Payout remained visible and
+  spendable; fee showed unavailable. Restoring the receipt restored 827 sat.
+- Privacy hid both payout amount and original fee.
+- Browser's Move to on-chain balance broadcast the exact payout input.
+- Original fee 827 sat and wallet-transfer fee 557 sat appeared separately
+  in movement details. Privacy hid both values there too.
+- After confirmation total was 49997981 sat, down from 49998538 by exactly
+  the 557-sat wallet-transfer fee. No second payout balance remained.
+- Browser exceptions: 0.
+
+Payout: 890ca9d164e607c3cc5b9b22fb0ecfd2719e7ff6554ce2c9bbb8c5fe694853be:0
+Wallet transfer: 6cd166fe99e5978e2d38c5e42f2369dc7e2d20202bcc5c7b9a5a4bdf42cf160e
+Proceeds: 28136 sat. Core independently verified the exact input and fees.
+
+Harness outcomes are separate from product assertions:
+- Initial preview failed because the test proxy's config used an unsupported
+  user/password JSON shape. Corrected to the existing cookie-file shape.
+- First journey exited 1 after successful broadcast: its Core CLI parser
+  attempted JSON.parse on empty gettxout output for the already-spent input.
+- Corrected parser; continuation exited 0, verified the same transaction,
+  confirmation, total, receipt and privacy. No second sweep was requested.
+This is a completed journey across those two runs, not a claimed clean
+single-run full-suite pass.
+
+Local raw evidence and scripts:
+~/bark-integration-2026-10-01/session2-continuation/2026-10-07/
+  client-payout-receipts-before.txt, client-payout-receipts-after.txt
+  client-receipts-lint.txt, client-receipts-full.txt
+  fee-receipts-live/browser-journey.log, browser-continue.log
+  fee-receipts-live/browser-continuation-result.json
+  fee-receipts-live/browser-*.png
+Private fixture seeds and wallet databases are not published.

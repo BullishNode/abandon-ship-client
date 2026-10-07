@@ -24,6 +24,7 @@ import {
   getMovementDirection,
   getMovementDisplayBalanceSats,
   getMovementFeeSat,
+  getMovementPayoutFeeSat,
   getMovementRawJson,
   getMovementSource
 } from '@/utils/movement'
@@ -97,6 +98,7 @@ function MovementDetailContent({
   const counterparty = getMovementCounterpartyDestination(movement)
   const source = getMovementSource(movement)
   const fee = getMovementFeeSat(movement, transactions)
+  const payoutFee = getMovementPayoutFeeSat(movement)
   const counterpartyLabel =
     direction === 'outgoing' ? t('movements.detail.sent_to') : t('movements.detail.received_on')
   const completedAt =
@@ -142,6 +144,16 @@ function MovementDetailContent({
                 : `${formatSats(fee)} · ${formatFiat(fee)}`
             }
           />
+          {source === 'expiry_payout' ? (
+            <DetailRow
+              label={t('movements.detail.payout_fee')}
+              value={
+                payoutFee === null
+                  ? t('movements.detail.fee_unavailable')
+                  : `${formatSats(payoutFee)} · ${formatFiat(payoutFee)}`
+              }
+            />
+          ) : null}
           <DetailRow
             label={t('movements.detail.date_created')}
             value={formatDateAbsolute(new Date(movement.createdAt))}
