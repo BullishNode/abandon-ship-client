@@ -7,6 +7,7 @@ import { loadEnv } from 'vite'
 import type { Plugin, ProxyOptions } from 'vite'
 import { defineConfig } from 'vitest/config'
 import { buildChainSource } from './api/src/chain-source.ts'
+import { BRANTA_ORIGIN } from './src/config/branta-server.ts'
 
 const DEFAULT_API_TARGET = 'http://localhost:4001'
 const DEFAULT_BARKD_TARGET = 'http://localhost:4000'
@@ -109,6 +110,10 @@ function wasmConfig(env: Env): string {
 // lightning-address sends hit arbitrary user-supplied domains and price quotes
 // hit third-party APIs — pinning it would break both without meaningfully
 // containing an XSS (which could exfiltrate over an allowed https origin anyway).
+// `img-src` admits Branta platform logos: the Branta origin comes from the SDK,
+// so it follows SDK upgrades, but logos redirect to Branta's S3 bucket and CSP
+// checks the redirect target too. If Branta moves storage, WASM just hides the
+// logo until this host is updated.
 const INLINE_SCRIPT_PATTERN = /<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/giu
 
 function inlineScriptHashes(html: string): string[] {
@@ -126,7 +131,7 @@ function buildWasmCsp(scriptHashes: string[]): string {
     "default-src 'self'",
     `script-src 'self' 'wasm-unsafe-eval' ${scriptHashes.join(' ')}`.trim(),
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data:",
+    `img-src 'self' data: ${BRANTA_ORIGIN} https://*.s3.amazonaws.com`,
     "font-src 'self' data:",
     "connect-src 'self' https: wss:",
     "worker-src 'self' blob:",
