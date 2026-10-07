@@ -200,3 +200,13 @@ export function getMovementFeeSat(
   }
   return null
 }
+
+export function getMovementPayoutFeeSat(movement: Movement): number | null {
+  const fee = movement.metadata?.payout_fee_sat
+  return movement.subsystem.kind === 'expiry-payout' &&
+    typeof fee === 'number' &&
+    Number.isSafeInteger(fee) &&
+    fee >= 0
+    ? fee
+    : null
+}

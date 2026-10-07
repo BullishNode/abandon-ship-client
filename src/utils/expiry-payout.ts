@@ -24,3 +24,16 @@ export function sumPayoutSats(payouts: ExpiryPayout[]): number {
   )
   return [...amountByOutpoint.values()].reduce((total, amount) => total + amount, 0)
 }
+
+// An incomplete receipt set cannot establish the total fee.
+export function sumPayoutFees(payouts: ExpiryPayout[]): number | null {
+  const fees = new Map(payouts.map((payout) => [`${payout.txid}:${payout.vout}`, payout.feeSats]))
+  let total = 0
+  for (const fee of fees.values()) {
+    if (fee === null || fee === undefined) {
+      return null
+    }
+    total += fee
+  }
+  return total
+}
