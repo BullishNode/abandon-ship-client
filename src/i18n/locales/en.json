@@ -334,7 +334,7 @@
       "exit": "On-chain: Exit",
       "exit_fee": "On-chain: Exit fee",
       "refresh": "Ark: Refresh",
-      "expiry_payout": "Fallback exit"
+      "expiry_payout": "Expiry payout"
     },
     "detail": {
       "title": "Transaction details",
@@ -647,7 +647,7 @@
       "offchain": "Off-chain",
       "renewing": "Renewing",
       "renewing_tooltip": "Expired coins need to renew before you can spend them in Ark. Your wallet tries automatically while online.",
-      "paying_out": "On-chain payout",
+      "paying_out": "Expiry payout",
       "paying_out_tooltip": "Payouts already included in your total. Move them to your on-chain balance to spend them from this app.",
       "onchain": "On-chain",
       "onchain_pending": "Pending on-chain",
