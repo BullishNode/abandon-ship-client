@@ -8,6 +8,7 @@ import { useSettingsStore } from '@/stores/settings'
 import type { ExpiryPayoutSweep } from '@/types/domain/expiry-payout'
 
 const state = vi.hoisted(() => ({
+  feeSats: null as number | null,
   hasPayout: true,
   isPayoutError: false,
   refresh: vi.fn<() => void>()
@@ -21,7 +22,7 @@ vi.mock(import('@/hooks/barkd/use-expired-vtxos'), () => ({
     payingOutSat: state.hasPayout ? 9500 : 0,
     payoutById: new Map(),
     payouts: state.hasPayout
-      ? [{ amountSats: 9500, txid: 'payout', vout: 0, vtxoId: 'coin:0' }]
+      ? [{ amountSats: 9500, feeSats: state.feeSats, txid: 'payout', vout: 0, vtxoId: 'coin:0' }]
       : [],
     refreshPayouts: state.refresh
   })
@@ -33,6 +34,7 @@ describe(ExpiryPayoutNote, () => {
   const sweep = vi.spyOn(onchainApi, 'sweepExpiryPayouts')
   beforeEach(() => {
     queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } })
+    state.feeSats = null
     state.isPayoutError = false
     state.hasPayout = true
     state.refresh.mockReset()
@@ -52,8 +54,23 @@ describe(ExpiryPayoutNote, () => {
 
   it('hides the payout amount with the wallet privacy setting', () => {
     useSettingsStore.setState({ discreetMode: true })
+    state.feeSats = 151
     renderNote()
     expect(screen.getByRole('status').textContent?.replaceAll(/\s/gu, '')).not.toContain('9500')
+    expect(screen.getByRole('status').textContent).not.toContain('151')
+    expect(screen.getByRole('button', { name: 'Move to on-chain balance' })).toBeEnabled()
+  })
+
+  it('shows the payout deduction separately from the upcoming wallet transfer', () => {
+    state.feeSats = 151
+    renderNote()
+    expect(screen.getByText(/Payout fee deducted:.*151/u)).toBeInTheDocument()
+    expect(screen.getByText(/separate network fee/u)).toBeInTheDocument()
+  })
+
+  it('does not invent a zero fee when the receipt is unavailable', () => {
+    renderNote()
+    expect(screen.getByText('Payout fee details are unavailable.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Move to on-chain balance' })).toBeEnabled()
   })
 

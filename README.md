@@ -108,7 +108,7 @@ npm run dev:wasm       # vite --mode wasm
 npm run build:wasm     # static site in dist/
 ```
 
-Expired-coin payouts (_Paying out_, _Paid out_, _Move to on-chain balance_) need barkd mode with a barkd that has the expiry-payout routes. The `@secondts/bark` 0.24.0 bindings lack those calls, so WASM mode skips the check and expired coins stay _Renewing_.
+Expiry payouts need barkd mode with the expiry-payout routes. The dashboard shows the amount received and the original payout fee when barkd supplies it; missing fees are shown as unavailable. Moving a payout into the on-chain wallet deducts a separate mining fee. The movement details show both fees. The `@secondts/bark` 0.24.0 bindings lack those calls, so WASM mode skips the check and expired coins stay _Renewing_.
 
 ### Bump bark versions
 

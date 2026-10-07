@@ -342,6 +342,7 @@
       "received_on": "Received to",
       "fee": "Fee",
       "wallet_transfer_fee": "Wallet transfer fee",
+      "payout_fee": "Expiry payout fee",
       "fee_unavailable": "Not available",
       "date_created": "Created",
       "date_completed": "Completed",
@@ -716,6 +717,8 @@
     }
   },
   "expiry_payout": {
+    "fee": "Payout fee deducted: {{amount}}",
+    "fee_unavailable": "Payout fee details are unavailable.",
     "unavailable_title": "Could not check on-chain payouts",
     "unavailable_description": "Your balance may be missing payouts from expired Ark funds. Try checking again.",
     "title": "{{amount}} paid out on-chain",

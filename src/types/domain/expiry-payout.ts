@@ -13,6 +13,8 @@ export interface ExpiryPayout {
   txid: string
   vout: number
   amountSats: number
+  // Exact deduction for this output; unknown for older or unavailable receipts.
+  feeSats?: number | null
 }
 
 export interface ExpiryPayoutSweep {
