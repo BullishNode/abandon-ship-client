@@ -1,0 +1,18 @@
+Client base: 36d1a07c3503690857fab499483f13432886ebc8
+Issue: New seed generated in the browser was treated as a restore by barkd;
+Bitcoin Core rejected create without birthday_height.
+
+Old barkd release-3a8f9694a: HTTP500 (missing birthday).
+Patched barkd debug and release image: HTTP200, usable on-chain address.
+Existing mnemonic without birthday and without fresh flag: still HTTP500.
+Final wire/create/restore focused tests: 21 PASS, 0 FAIL (5 files).
+Full suite: 1087 PASS, 0 FAIL (113 files), 109.33s.
+Typecheck: PASS. Targeted lint: PASS. Release image builds: PASS.
+Earlier focused: 13 PASS, 2 FAIL (stale expected create payload).
+Earlier full: 1086 PASS, 1 FAIL (same stale expectation); corrected and rerun.
+
+Actual signet browser: fresh qualification wallet created at /dashboard;
+25,000-sat deposit displayed. After render: zero page errors, zero failed
+requests. No owner-wallet funds touched. This does not certify a native payout.
+Backend requires fresh_mnemonic support. Only new-wallet creation sets it;
+restores preserve their requested birthday and unset/false legacy intent.

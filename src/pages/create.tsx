@@ -129,7 +129,7 @@ export default function CreateWalletPage() {
     }
 
     if ('arkServer' in values && 'network' in values) {
-      createWallet({ mnemonic, name, password })
+      createWallet({ mnemonic, name, password, restore: false })
     }
   }
 

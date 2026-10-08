@@ -104,7 +104,8 @@ describe('create wallet flow', () => {
     await waitFor(() =>
       expect(createWalletSpy).toHaveBeenCalledWith({
         birthdayHeight: undefined,
-        mnemonic: TEST_MNEMONIC
+        mnemonic: TEST_MNEMONIC,
+        restore: false
       })
     )
     await waitFor(() => expect(useWalletStore.getState().wallet?.name).toBe('my wallet'))

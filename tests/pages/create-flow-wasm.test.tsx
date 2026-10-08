@@ -90,7 +90,8 @@ describe('create wallet flow (WASM)', () => {
     await waitFor(() =>
       expect(createWalletSpy).toHaveBeenCalledWith({
         birthdayHeight: undefined,
-        mnemonic: TEST_MNEMONIC
+        mnemonic: TEST_MNEMONIC,
+        restore: false
       })
     )
     await waitFor(() => expect(persistOnboardingPassword).toHaveBeenCalledWith('correct horse'))
@@ -109,7 +110,8 @@ describe('create wallet flow (WASM)', () => {
     await waitFor(() =>
       expect(createWalletSpy).toHaveBeenCalledWith({
         birthdayHeight: undefined,
-        mnemonic: TEST_MNEMONIC
+        mnemonic: TEST_MNEMONIC,
+        restore: false
       })
     )
     expect(persistOnboardingPassword).not.toHaveBeenCalled()
