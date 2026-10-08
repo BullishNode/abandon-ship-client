@@ -99,8 +99,11 @@ function MovementDetailContent({
   const source = getMovementSource(movement)
   const fee = getMovementFeeSat(movement, transactions)
   const payoutFee = getMovementPayoutFeeSat(movement)
-  const counterpartyLabel =
+  let counterpartyLabel =
     direction === 'outgoing' ? t('movements.detail.sent_to') : t('movements.detail.received_on')
+  if (source === 'expiry_payout') {
+    counterpartyLabel = t('movements.detail.own_onchain_address')
+  }
   const completedAt =
     typeof movement.completedAt === 'string' &&
     new Date(movement.completedAt).getTime() !== new Date(movement.createdAt).getTime()
@@ -127,6 +130,11 @@ function MovementDetailContent({
               <MovementSourceBadge source={source} />
             </div>
           </div>
+          {source === 'expiry_payout' ? (
+            <p className="text-sm text-muted-foreground">
+              {t('movements.detail.expiry_transfer_description')}
+            </p>
+          ) : null}
           {counterparty ? (
             <CopyableValueRow label={counterpartyLabel} value={counterparty.value} />
           ) : (

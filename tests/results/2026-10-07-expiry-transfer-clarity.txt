@@ -1,0 +1,23 @@
+Expiry payout movement clarity — 2026-10-08 UTC
+
+The detail view identifies the destination as the user's own on-chain address.
+It explains that the wallet transfer mining fee applies to this move, while the
+original expiry payout fee was already deducted. Accounting and amount signs
+are unchanged.
+
+Typecheck: PASS.
+Targeted fee/history/amount/payout-note tests: 78 PASS, 0 FAIL (4 files).
+Targeted lint: initially FAIL on nested ternary; corrected, PASS, 0 warnings.
+Production frontend image build: PASS.
+Actual Chromium on the existing native regtest payout: PASS.
+  Original expiry fee 462 sat; subsequent wallet transfer fee 333 sat.
+  Own address and fee explanation visible; 1440px and 390px layouts checked.
+  No horizontal overflow; privacy hides both fees; 0 browser exceptions.
+  This check reads the prior real transaction; it does not claim another spend.
+
+Browser evidence: expiry-task-evidence/client/transfer-clarity-proof.json,
+transfer-clarity-desktop.png and transfer-clarity-mobile.png, beside the handoff.
+Image: abandon-ship/bark-web:qualification-transfer-clarity
+Digest: sha256:49e3f34c143eae140d77df4dc50d0b730204ac58abdf45ee59f29b871e4a063f
+The earlier full client suite at070dde8 passed1087/0. This text change ran the
+focused checks and real browser above; it does not claim a new full-suite run.

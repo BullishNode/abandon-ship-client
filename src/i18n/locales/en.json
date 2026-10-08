@@ -342,6 +342,8 @@
       "received_on": "Received to",
       "fee": "Fee",
       "wallet_transfer_fee": "Wallet transfer fee",
+      "own_onchain_address": "Your on-chain address",
+      "expiry_transfer_description": "Your expiry payout was moved to your on-chain wallet. The wallet transfer fee is charged here. The expiry payout fee was deducted earlier.",
       "payout_fee": "Expiry payout fee",
       "fee_unavailable": "Not available",
       "date_created": "Created",
