@@ -120,8 +120,7 @@ export const barkdBackend: Backend = {
     onchainUtxos: async () => {
       const utxos = await onchainApi.onchainUtxos()
       return utxos.map(toUtxo)
-    },
-    sweepExpiryPayouts: async () => await expiryPayoutsApi.sweepExpiryPayouts()
+    }
   },
   walletApi: {
     address: async () => {
@@ -145,7 +144,6 @@ export const barkdBackend: Backend = {
           network: config.network
         }
       }),
-    findExpiryPayouts: async () => await expiryPayoutsApi.findExpiryPayouts(),
     mnemonic: async () => await revealMnemonic(),
     nextRound: async () => toNextRoundStart(await walletApi.nextRound()),
     offboardVtxos: async ({ vtxos, address }) =>

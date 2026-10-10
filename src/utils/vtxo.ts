@@ -1,6 +1,5 @@
 import type { TFunction } from 'i18next'
 import type { ExitTransactionStatus } from '@/types/domain/exit'
-import type { ExpiryPayout } from '@/types/domain/expiry-payout'
 import type { Movement } from '@/types/domain/movement'
 import type { Vtxo } from '@/types/domain/vtxo'
 import { AVERAGE_BLOCK_INTERVAL_MS } from '@/constants/btc'
@@ -8,12 +7,7 @@ import type { ExitStateType } from '@/utils/exit-progress'
 import { formatRelativeTime } from '@/utils/relative-time'
 import { truncateMiddleChars } from '@/utils/truncate-middle'
 
-export type VtxoStatus = Vtxo['state']['type'] | 'renewing' | 'paying_out' | 'paid_out'
-
-export interface VtxoPayoutState {
-  payingOutIds: ReadonlySet<string>
-  payoutById: ReadonlyMap<string, ExpiryPayout>
-}
+export type VtxoStatus = Vtxo['state']['type'] | 'renewing'
 
 export type VtxoExitPhase = ExitStateType
 
@@ -118,19 +112,8 @@ export function getSpendableVtxos(vtxos: Vtxo[]): Vtxo[] {
 }
 
 // An expired coin stays `spendable` in bark, but it cannot be sent until it is
-// refreshed, so it is shown as renewing. One the server paid out instead is
-// paying out until its payout is seen on-chain, then paid out.
-export function getVtxoStatus(
-  vtxo: Vtxo,
-  tipHeight?: number,
-  payoutState?: VtxoPayoutState
-): VtxoStatus {
-  if (payoutState?.payoutById.has(vtxo.id) === true) {
-    return 'paid_out'
-  }
-  if (payoutState?.payingOutIds.has(vtxo.id) === true) {
-    return 'paying_out'
-  }
+// refreshed, so it is shown as renewing.
+export function getVtxoStatus(vtxo: Vtxo, tipHeight?: number): VtxoStatus {
   if (
     vtxo.state.type === 'spendable' &&
     tipHeight !== undefined &&

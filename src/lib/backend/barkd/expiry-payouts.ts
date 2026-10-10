@@ -1,46 +1,16 @@
 import { BaseAPI } from '@secondts/barkd'
 import { z } from 'zod'
-import type {
-  ExpiryPayout,
-  ExpiryPayoutSweep,
-  ServerVtxoStatus
-} from '@/types/domain/expiry-payout'
+import type { ServerVtxoStatus } from '@/types/domain/expiry-payout'
 
-// The expired-coin routes are not in any @secondts/barkd release, so they
-// are called through the generated client's base class: same base path, auth
+// The expired-coin route is not in any @secondts/barkd release, so it
+// is called through the generated client's base class: same base path, auth
 // middleware and ResponseError on a non-2xx status.
 
 const serverVtxoStatusSchema = z.object({ state: z.string(), vtxo_id: z.string() })
 
-const expiryPayoutSchema = z.object({
-  amount_sat: z.number(),
-  fee_sat: z.number().int().nonnegative().nullish(),
-  txid: z.string(),
-  vout: z.number(),
-  vtxo_id: z.string().nullable()
-})
-
-const expiryPayoutSweepSchema = z.object({ swept_sat: z.number(), txid: z.string() })
-
 export function toServerVtxoStatus(json: unknown): ServerVtxoStatus {
   const dto = serverVtxoStatusSchema.parse(json)
   return { state: dto.state, vtxoId: dto.vtxo_id }
-}
-
-export function toExpiryPayout(json: unknown): ExpiryPayout {
-  const dto = expiryPayoutSchema.parse(json)
-  return {
-    amountSats: dto.amount_sat,
-    feeSats: dto.fee_sat ?? null,
-    txid: dto.txid,
-    vout: dto.vout,
-    vtxoId: dto.vtxo_id
-  }
-}
-
-export function toExpiryPayoutSweep(json: unknown): ExpiryPayoutSweep {
-  const dto = expiryPayoutSweepSchema.parse(json)
-  return { sweptSats: dto.swept_sat, txid: dto.txid }
 }
 
 export class ExpiryPayoutsApi extends BaseAPI {
@@ -60,15 +30,5 @@ export class ExpiryPayoutsApi extends BaseAPI {
       vtxo_ids: vtxoIds
     })
     return z.array(z.unknown()).parse(json).map(toServerVtxoStatus)
-  }
-
-  async findExpiryPayouts(): Promise<ExpiryPayout[]> {
-    const json = await this.post('/api/v1/wallet/vtxos/expiry-payouts', {})
-    return z.array(z.unknown()).parse(json).map(toExpiryPayout)
-  }
-
-  async sweepExpiryPayouts(): Promise<ExpiryPayoutSweep> {
-    const json = await this.post('/api/v1/onchain/sweep-expiry-payouts', {})
-    return toExpiryPayoutSweep(json)
   }
 }

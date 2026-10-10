@@ -567,8 +567,7 @@ export const wasmBackend: Backend = {
     onchainUtxos: async () => {
       await ensureOpen()
       return toUtxos(await remote().onchainUtxos())
-    },
-    sweepExpiryPayouts: expiryPayoutsUnavailable
+    }
   },
   walletApi: {
     address: async () => {
@@ -613,7 +612,6 @@ export const wasmBackend: Backend = {
       void requestPersistentStorage()
       return { fingerprint, scanIncomplete }
     },
-    findExpiryPayouts: expiryPayoutsUnavailable,
     mnemonic: async () => {
       const seed = getSessionMnemonic() ?? (await remote().getMnemonic())
       if (seed === null) {
