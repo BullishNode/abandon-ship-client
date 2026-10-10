@@ -1,3 +1,4 @@
+import { ResponseError } from '@secondts/barkd'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
@@ -55,7 +56,7 @@ describe(useExpiredVtxos, () => {
     const result = render()
 
     await waitFor(() => {
-      expect(result.current.isChecked).toBeTruthy()
+      expect(result.current.status).toBe('checked')
     })
     expect(adoptSpy).toHaveBeenCalledWith({ vtxos: ['old:0'] })
   })
@@ -66,18 +67,49 @@ describe(useExpiredVtxos, () => {
     const result = render()
 
     await waitFor(() => {
-      expect(result.current.isChecked).toBeTruthy()
+      expect(result.current.status).toBe('checked')
     })
     expect(vtxosSpy).toHaveBeenCalledTimes(2)
     expect(adoptSpy).toHaveBeenCalledOnce()
   })
 
-  it('still finishes the check when the backend lacks the call', async () => {
-    adoptSpy.mockRejectedValue(new Error('not found'))
+  it('still finishes the check when the backend lacks the route', async () => {
+    adoptSpy.mockRejectedValue(new ResponseError(new Response(null, { status: 404 })))
     const result = render()
 
     await waitFor(() => {
-      expect(result.current.isChecked).toBeTruthy()
+      expect(result.current.status).toBe('checked')
     })
+  })
+
+  it('fails the check when the server errors', async () => {
+    adoptSpy.mockRejectedValue(new ResponseError(new Response(null, { status: 500 })))
+    const result = render()
+
+    await waitFor(() => {
+      expect(result.current.status).toBe('failed')
+    })
+  })
+
+  it('fails the check when the server is unreachable', async () => {
+    adoptSpy.mockRejectedValue(new TypeError('Failed to fetch'))
+    const result = render()
+
+    await waitFor(() => {
+      expect(result.current.status).toBe('failed')
+    })
+  })
+
+  it('fails the check when the coins do not reload after a spent result', async () => {
+    adoptSpy.mockResolvedValue([{ state: 'spent', vtxoId: 'old:0' }])
+    vtxosSpy
+      .mockResolvedValueOnce([EXPIRED, FRESH])
+      .mockRejectedValue(new TypeError('Failed to fetch'))
+    const result = render()
+
+    await waitFor(() => {
+      expect(result.current.status).toBe('failed')
+    })
+    expect(vtxosSpy).toHaveBeenCalledTimes(2)
   })
 })
