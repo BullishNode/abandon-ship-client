@@ -31,6 +31,15 @@ export async function barkdErrorMessage(error: unknown): Promise<string | undefi
   return undefined
 }
 
+// A barkd without a route answers 404, or 405 when the path exists for
+// another method.
+export function isRouteNotFoundError(error: unknown): boolean {
+  return (
+    error instanceof ResponseError &&
+    (error.response.status === 404 || error.response.status === 405)
+  )
+}
+
 export async function isWalletAlreadyExistsError(error: unknown): Promise<boolean> {
   if (!(error instanceof ResponseError)) {
     return false

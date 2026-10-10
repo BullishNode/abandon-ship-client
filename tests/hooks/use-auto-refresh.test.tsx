@@ -1,3 +1,4 @@
+import { ResponseError } from '@secondts/barkd'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
@@ -15,7 +16,12 @@ function expiring(id: string): Vtxo {
   return { amountSats: 1000, expiryHeight: TIP + 1, id, state: { type: 'spendable' } }
 }
 
-const EXPIRED: Vtxo = { amountSats: 1000, expiryHeight: TIP, id: 'old:0', state: { type: 'spendable' } }
+const EXPIRED: Vtxo = {
+  amountSats: 1000,
+  expiryHeight: TIP,
+  id: 'old:0',
+  state: { type: 'spendable' }
+}
 
 function makeWrapper(queryClient: QueryClient) {
   return ({ children }: { children: ReactNode }) => (
@@ -96,6 +102,41 @@ describe(useAutoRefresh, () => {
     })
     expect(refreshSpy).toHaveBeenCalledOnce()
   })
+
+  it('leaves out expired coins but refreshes the others when the check errors', async () => {
+    vtxosSpy.mockResolvedValue([expiring('good:0'), EXPIRED])
+    adoptSpy.mockRejectedValue(new ResponseError(new Response(null, { status: 500 })))
+    renderHook(() => useAutoRefresh(), { wrapper: makeWrapper(queryClient) })
+
+    await waitFor(() => {
+      expect(refreshSpy).toHaveBeenCalledWith({ vtxos: ['good:0'] })
+    })
+    expect(refreshSpy).toHaveBeenCalledOnce()
+  })
+
+  it('leaves out expired coins when the coins do not reload after a spent result', async () => {
+    vtxosSpy
+      .mockResolvedValueOnce([expiring('good:0'), EXPIRED])
+      .mockRejectedValue(new TypeError('Failed to fetch'))
+    adoptSpy.mockResolvedValue([{ state: 'spent', vtxoId: 'old:0' }])
+    renderHook(() => useAutoRefresh(), { wrapper: makeWrapper(queryClient) })
+
+    await waitFor(() => {
+      expect(refreshSpy).toHaveBeenCalledWith({ vtxos: ['good:0'] })
+    })
+    expect(refreshSpy).toHaveBeenCalledOnce()
+  })
+
+  it('refreshes expired coins when the backend lacks the route', async () => {
+    vtxosSpy.mockResolvedValue([expiring('good:0'), EXPIRED])
+    adoptSpy.mockRejectedValue(new ResponseError(new Response(null, { status: 404 })))
+    renderHook(() => useAutoRefresh(), { wrapper: makeWrapper(queryClient) })
+
+    await waitFor(() => {
+      expect(refreshSpy).toHaveBeenCalledWith({ vtxos: ['good:0', 'old:0'] })
+    })
+  })
+
   it('retries at a new height even when an old failed round is still returned', async () => {
     const failed = { id: 1, status: { error: 'unusable inputs: [bad:0]', type: 'failed' as const } }
     pendingRoundsSpy.mockResolvedValue([failed])
