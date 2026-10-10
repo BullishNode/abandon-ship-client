@@ -22,7 +22,6 @@ import { getVtxoColumns } from '@/components/vtxos/vtxos-columns'
 import { VTXOS_PAGE_SIZE } from '@/constants/vtxos'
 import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
 import { useExitStatus } from '@/hooks/barkd/use-exit-status'
-import { useExpiredVtxos } from '@/hooks/barkd/use-expired-vtxos'
 import { useRefreshingVtxos } from '@/hooks/barkd/use-refreshing-vtxos'
 import { useTrackedRefresh } from '@/hooks/barkd/use-tracked-refresh'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
@@ -50,7 +49,6 @@ export function VtxosTable() {
   const { data: movements = [] } = useWalletTransactions()
   const { data: tip } = useBitcoinTip()
   const { data: refreshingVtxos = [] } = useRefreshingVtxos()
-  const expiredVtxos = useExpiredVtxos()
   const { sats: formatSats, fiat: formatFiat } = usePrivateAmount()
   const showExitedVtxos = useSettingsStore((state) => state.showExitedVtxos)
   const setShowExitedVtxos = useSettingsStore((state) => state.setShowExitedVtxos)
@@ -74,7 +72,7 @@ export function VtxosTable() {
     if (exitState === 'exited') {
       return showExitedVtxos
     }
-    if (exitState === 'exiting' || expiredVtxos.excludedIds.has(vtxo.id)) {
+    if (exitState === 'exiting') {
       return true
     }
     if (vtxo.state.type === 'spent') {
@@ -90,8 +88,7 @@ export function VtxosTable() {
     return (
       isSpendable(vtxo) &&
       !exitStateById.has(vtxo.id) &&
-      !refreshPhaseById.has(vtxo.id) &&
-      !expiredVtxos.excludedIds.has(vtxo.id)
+      !refreshPhaseById.has(vtxo.id)
     )
   }
 
@@ -148,7 +145,6 @@ export function VtxosTable() {
     formatSats,
     locale,
     lockLabelById,
-    payoutState: expiredVtxos,
     refreshPhaseById,
     t,
     tipHeight: tip
@@ -241,7 +237,6 @@ export function VtxosTable() {
         formatSats={formatSats}
         lockLabel={detailVtxo ? lockLabelById.get(detailVtxo.id) : undefined}
         onOpenChange={handleDetailOpenChange}
-        payoutState={expiredVtxos}
         refreshPhase={detailVtxo ? refreshPhaseById.get(detailVtxo.id) : undefined}
         open={detailOpen}
         tipHeight={tip}

@@ -97,7 +97,6 @@ describe('query invalidations', () => {
       const keys = [
         walletKeys.balance(),
         walletKeys.transactions(),
-        walletKeys.expiryPayouts(),
         walletKeys.expiredVtxos(100, ['old-wallet-coin']),
         exitKeys.all
       ]

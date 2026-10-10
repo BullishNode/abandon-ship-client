@@ -108,7 +108,7 @@ npm run dev:wasm       # vite --mode wasm
 npm run build:wasm     # static site in dist/
 ```
 
-Expiry payouts need barkd mode with the expiry-payout routes. The dashboard shows the amount received and the original payout fee when barkd supplies it; missing fees are shown as unavailable. Moving a payout into the on-chain wallet deducts a separate mining fee. The movement details show both fees. The `@secondts/bark` 0.24.0 bindings lack those calls, so WASM mode skips the check and expired coins stay _Renewing_.
+Expired coins are checked against the server in barkd mode with the `adopt-server-status` route. A coin the server paid out on-chain is marked spent, and the payout arrives as an ordinary receive in the on-chain wallet. The `@secondts/bark` 0.24.0 bindings lack that call, so WASM mode skips the check and expired coins stay _Renewing_.
 
 Creating a wallet with Bitcoin Core also requires the fork's `fresh_mnemonic`
 request field. The create screen marks its newly generated seed so barkd starts

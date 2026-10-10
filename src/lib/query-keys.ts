@@ -8,7 +8,6 @@ export const walletKeys = {
   expiredVtxos: (tip: number | undefined, vtxoIds: string[]) =>
     [...walletKeys.expiredVtxosAll(), tip, vtxoIds] as const,
   expiredVtxosAll: () => [...walletKeys.all, 'expired-vtxos'] as const,
-  expiryPayouts: () => [...walletKeys.expiredVtxosAll(), 'payouts'] as const,
   mnemonic: () => [...walletKeys.all, 'mnemonic'] as const,
   nextRound: () => [...walletKeys.all, 'next-round'] as const,
   pendingRounds: () => [...walletKeys.all, 'pending-rounds'] as const,

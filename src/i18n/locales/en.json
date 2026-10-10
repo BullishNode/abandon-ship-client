@@ -396,9 +396,7 @@
         "queued": "Queued",
         "refreshing": "Refreshing"
       },
-      "renewing": "Renewing",
-      "paying_out": "Paying out",
-      "paid_out": "Paid out"
+      "renewing": "Renewing"
     },
     "expiry": {
       "expired": "Expired"
@@ -444,8 +442,7 @@
       "no_claim_address": "No address set",
       "copy_raw_json": "Copy raw JSON",
       "copy_raw_hex": "Copy raw hex",
-      "copied": "Copied",
-      "payout": "Payout"
+      "copied": "Copied"
     },
     "offboard": {
       "title_one": "Offboard VTXO",
@@ -651,8 +648,6 @@
       "offchain": "Off-chain",
       "renewing": "Renewing",
       "renewing_tooltip": "Expired coins need to renew before you can spend them in Ark. Your wallet tries automatically while online.",
-      "paying_out": "Expiry payout",
-      "paying_out_tooltip": "Payouts already included in your total. Move them to your on-chain balance to spend them from this app.",
       "onchain": "On-chain",
       "onchain_pending": "Pending on-chain",
       "onchain_pending_change": "Pending change",
@@ -716,22 +711,6 @@
       "format": "That does not look like a barkd auth token.",
       "invalid": "barkd rejected this token. Check for copy-paste mistakes, or print the current one with the command below.",
       "error": "Could not reach barkd. Check that it is running and try again."
-    }
-  },
-  "expiry_payout": {
-    "fee": "Payout fee deducted: {{amount}}",
-    "fee_unavailable": "Payout fee details are unavailable.",
-    "unavailable_title": "Could not check on-chain payouts",
-    "unavailable_description": "Your balance may be missing payouts from expired Ark funds. Try checking again.",
-    "title": "{{amount}} paid out on-chain",
-    "description": "Your expired Ark funds were paid on-chain after deducting the payout's network fee. Move them into your on-chain balance to spend them from this app. This move deducts a separate network fee.",
-    "stale": "Could not update the payout status. This is the last checked amount.",
-    "retry": "Check again",
-    "sweep": {
-      "button": "Move to on-chain balance",
-      "pending": "Moving payout…",
-      "success": "{{amount}} moved to your on-chain balance",
-      "error": "Could not move the payout"
     }
   }
 }
