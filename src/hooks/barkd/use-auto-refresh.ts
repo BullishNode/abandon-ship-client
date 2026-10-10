@@ -26,7 +26,7 @@ export function useAutoRefresh(): void {
   const { data: arkInfo } = useArkInfo()
   const { data: refreshingVtxos = [] } = useRefreshingVtxos()
   const { data: pendingRounds } = usePendingRounds()
-  const { isChecked: isExpiryChecked, excludedIds: paidOutIds } = useExpiredVtxos()
+  const { isChecked: isExpiryChecked } = useExpiredVtxos()
   const refusedAtHeight = useRefreshFailuresStore((state) => state.refusedAtHeight)
   const addRefusedVtxoIds = useRefreshFailuresStore((state) => state.addRefusedVtxoIds)
   const { mutate: refreshVtxos, isPending: isRefreshing } = useRefreshVtxos({
@@ -70,8 +70,7 @@ export function useAutoRefresh(): void {
     // would fail the whole batch, so it is skipped too.
     const excludedIds = new Set([
       ...mapRefreshPhases(refreshingVtxos).keys(),
-      ...getRefusedVtxoIds(useRefreshFailuresStore.getState().refusedAtHeight, tipHeight),
-      ...paidOutIds
+      ...getRefusedVtxoIds(useRefreshFailuresStore.getState().refusedAtHeight, tipHeight)
     ])
     const expiringIds = getExpiringVtxoIds(
       vtxos ?? [],
@@ -98,7 +97,6 @@ export function useAutoRefresh(): void {
     vtxoExpiryDelta,
     refreshingVtxos,
     refusedAtHeight,
-    paidOutIds,
     isExpiryChecked,
     isRefreshing,
     refreshVtxos

@@ -1,4 +1,4 @@
-import { ArrowsClockwiseIcon, HourglassIcon } from '@phosphor-icons/react'
+import { ArrowsClockwiseIcon } from '@phosphor-icons/react'
 import type { ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
 import { CircleCheckIcon } from '@/components/icons/circle-check'
@@ -13,8 +13,6 @@ const STATUS_CONFIG: Record<
 > = {
   exited: { icon: CircleCheckIcon, iconClass: 'text-muted-foreground' },
   locked: { icon: CircleLockIcon, iconClass: 'text-amber-500' },
-  paid_out: { icon: CircleCheckIcon, iconClass: 'text-blue-500' },
-  paying_out: { icon: HourglassIcon, iconClass: 'text-blue-500' },
   renewing: { icon: ArrowsClockwiseIcon, iconClass: 'text-amber-500' },
   spendable: { icon: CircleCheckIcon, iconClass: 'text-green-500' },
   spent: { icon: CircleMinusIcon, iconClass: 'text-muted-foreground' }

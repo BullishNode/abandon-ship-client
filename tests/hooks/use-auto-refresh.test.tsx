@@ -6,7 +6,6 @@ import { useAutoRefresh } from '../../src/hooks/barkd/use-auto-refresh'
 import { bitcoinApi, walletApi } from '../../src/lib/barkd-client'
 import { useRefreshFailuresStore } from '../../src/stores/refresh-failures'
 import { bitcoinKeys, walletKeys } from '../../src/lib/query-keys'
-import { useWalletStore } from '../../src/stores/wallet'
 import { ARK_INFO } from '../fixtures/ark-info'
 import type { Vtxo } from '@/types/domain/vtxo'
 
@@ -15,6 +14,8 @@ const TIP = 1000
 function expiring(id: string): Vtxo {
   return { amountSats: 1000, expiryHeight: TIP + 1, id, state: { type: 'spendable' } }
 }
+
+const EXPIRED: Vtxo = { amountSats: 1000, expiryHeight: TIP, id: 'old:0', state: { type: 'spendable' } }
 
 function makeWrapper(queryClient: QueryClient) {
   return ({ children }: { children: ReactNode }) => (
@@ -27,7 +28,7 @@ describe(useAutoRefresh, () => {
   const refreshSpy = vi.spyOn(walletApi, 'refreshVtxos')
   const pendingRoundsSpy = vi.spyOn(walletApi, 'pendingRounds')
   const adoptSpy = vi.spyOn(walletApi, 'adoptServerVtxoStatus')
-  const findSpy = vi.spyOn(walletApi, 'findExpiryPayouts')
+  const vtxosSpy = vi.spyOn(walletApi, 'vtxos')
 
   beforeEach(() => {
     queryClient = new QueryClient({
@@ -36,16 +37,14 @@ describe(useAutoRefresh, () => {
     vi.spyOn(bitcoinApi, 'tip').mockResolvedValue(TIP)
     vi.spyOn(walletApi, 'arkInfo').mockResolvedValue(ARK_INFO)
     vi.spyOn(walletApi, 'refreshingVtxos').mockResolvedValue([])
-    vi.spyOn(walletApi, 'vtxos').mockResolvedValue([expiring('good:0'), expiring('bad:0')])
+    vtxosSpy.mockReset()
+    vtxosSpy.mockResolvedValue([expiring('good:0'), expiring('bad:0')])
     pendingRoundsSpy.mockResolvedValue([])
     refreshSpy.mockReset()
     refreshSpy.mockResolvedValue(null)
     adoptSpy.mockReset()
     adoptSpy.mockResolvedValue([])
-    findSpy.mockReset()
-    findSpy.mockResolvedValue([])
     useRefreshFailuresStore.setState({ refusedAtHeight: {} })
-    useWalletStore.getState().clearWallet()
   })
 
   afterEach(() => {
@@ -74,18 +73,22 @@ describe(useAutoRefresh, () => {
   })
 
   it('waits for the expired-coin check before refreshing', async () => {
+    vtxosSpy.mockResolvedValue([expiring('good:0'), EXPIRED])
     // oxlint-disable-next-line promise/avoid-new
-    findSpy.mockReturnValue(new Promise(() => {}))
+    adoptSpy.mockReturnValue(new Promise(() => {}))
     renderHook(() => useAutoRefresh(), { wrapper: makeWrapper(queryClient) })
 
     await waitFor(() => {
-      expect(findSpy).toHaveBeenCalledWith()
+      expect(adoptSpy).toHaveBeenCalledWith({ vtxos: ['old:0'] })
     })
     expect(refreshSpy).not.toHaveBeenCalled()
   })
 
   it('leaves out a coin the server already paid out', async () => {
-    findSpy.mockResolvedValue([{ amountSats: 900, txid: 't', vout: 0, vtxoId: 'bad:0' }])
+    vtxosSpy
+      .mockResolvedValueOnce([expiring('good:0'), EXPIRED])
+      .mockResolvedValue([expiring('good:0'), { ...EXPIRED, state: { type: 'spent' } }])
+    adoptSpy.mockResolvedValue([{ state: 'spent', vtxoId: 'old:0' }])
     renderHook(() => useAutoRefresh(), { wrapper: makeWrapper(queryClient) })
 
     await waitFor(() => {

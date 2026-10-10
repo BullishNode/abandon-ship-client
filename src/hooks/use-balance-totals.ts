@@ -1,4 +1,3 @@
-import { useExpiredVtxos } from '@/hooks/barkd/use-expired-vtxos'
 import { useOnchainBalance } from '@/hooks/barkd/use-onchain-balance'
 import { useOnchainTransactions } from '@/hooks/barkd/use-onchain-transactions'
 import { useOnchainUtxos } from '@/hooks/barkd/use-onchain-utxos'
@@ -11,6 +10,5 @@ export function useBalanceTotals(): BalanceTotals {
   const { data: onchainBalance } = useOnchainBalance()
   const { data: onchainTransactions } = useOnchainTransactions()
   const { data: onchainUtxos } = useOnchainUtxos()
-  const { payingOutSat } = useExpiredVtxos()
-  return getBalanceTotals(balance, onchainBalance, onchainTransactions, onchainUtxos, payingOutSat)
+  return getBalanceTotals(balance, onchainBalance, onchainTransactions, onchainUtxos)
 }
