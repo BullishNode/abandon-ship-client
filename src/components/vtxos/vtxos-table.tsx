@@ -85,11 +85,7 @@ export function VtxosTable() {
   // A VTXO already committed to a round stays `spendable` in bark, so the
   // refresh phase is what keeps it out of a second refresh, offboard or exit.
   function isSelectable(vtxo: Vtxo): boolean {
-    return (
-      isSpendable(vtxo) &&
-      !exitStateById.has(vtxo.id) &&
-      !refreshPhaseById.has(vtxo.id)
-    )
+    return isSpendable(vtxo) && !exitStateById.has(vtxo.id) && !refreshPhaseById.has(vtxo.id)
   }
 
   const selectedVtxos = visibleVtxos.filter((vtxo) => rowSelection[vtxo.id] && isSelectable(vtxo))
