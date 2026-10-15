@@ -12,7 +12,7 @@ const destinationSchema = z.object({
 
 export class WalletFallbackApi extends BaseAPI {
   async destination(): Promise<z.infer<typeof destinationSchema>> {
-    const response = await this.request({ method: 'GET', path: '/api/v1/wallet/fallback-destination' })
+    const response = await this.request({ headers: {}, method: 'GET', path: '/api/v1/wallet/fallback-destination' })
     const value = destinationSchema.parse(await response.json())
     // Check address encoding for the configured network. Shared test-network
     // prefixes do not attest the server's chain identity.
@@ -22,8 +22,8 @@ export class WalletFallbackApi extends BaseAPI {
 
   async sync(): Promise<void> {
     // Both are real native routes. Wallet sync alone does not sync BDK.
-    await this.request({ method: 'POST', path: '/api/v1/onchain/sync' })
-    await this.request({ method: 'POST', path: '/api/v1/wallet/sync' })
+    await this.request({ headers: {}, method: 'POST', path: '/api/v1/onchain/sync' })
+    await this.request({ headers: {}, method: 'POST', path: '/api/v1/wallet/sync' })
   }
 }
 
