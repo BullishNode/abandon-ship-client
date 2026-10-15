@@ -108,7 +108,7 @@ npm run dev:wasm       # vite --mode wasm
 npm run build:wasm     # static site in dist/
 ```
 
-Expiry payouts need barkd mode with the expiry-payout routes. The dashboard shows the amount received and the original payout fee when barkd supplies it; missing fees are shown as unavailable. Moving a payout into the on-chain wallet deducts a separate mining fee. The movement details show both fees. The `@secondts/bark` 0.24.0 bindings lack those calls, so WASM mode skips the check and expired coins stay _Renewing_.
+This C client uses the native barkd backend for direct fallback settlement. Registered fallback payments appear in the owning wallet’s Bitcoin balance and transaction history; there is no separate payout sweep. Expired coins need an explicit spendable server status before renewal. An unavailable status keeps those coins out of renewal and shows a retry notice; a spent status alone does not prove a payout or its fees. The stock `@secondts/bark` 0.24.0 WASM package is not a qualified C financial client. Native C WASM compilation and a real browser journey require separate qualification.
 
 ### Bump bark versions
 
