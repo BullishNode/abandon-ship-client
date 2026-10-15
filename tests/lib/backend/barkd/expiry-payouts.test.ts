@@ -30,6 +30,12 @@ describe(ExpiryPayoutsApi, () => {
     ])
   })
 
+  it('offers status reconciliation without legacy payout lookup or a second sweep', () => {
+    const { api } = apiReturning(Response.json([]))
+    expect(api).not.toHaveProperty('findExpiryPayouts')
+    expect(api).not.toHaveProperty('sweepExpiryPayouts')
+  })
+
   it('throws a ResponseError when barkd lacks the route', async () => {
     const { api } = apiReturning(new Response('not found', { status: 404 }))
     await expect(api.adoptServerVtxoStatus([])).rejects.toBeInstanceOf(ResponseError)
