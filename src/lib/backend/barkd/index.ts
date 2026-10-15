@@ -1,5 +1,6 @@
 import {
   BalanceFromJSON,
+  CreateWalletRequestToJSON,
   BitcoinApi,
   BoardsApi,
   ExitsApi,
@@ -134,16 +135,32 @@ export const barkdBackend: Backend = {
       const json: unknown = await response.raw.json()
       return toBalance(BalanceFromJSON(json), json)
     },
-    createWallet: async ({ mnemonic, birthdayHeight }) =>
-      await walletApi.createWallet({
-        createWalletRequest: {
-          arkServer: config.arkServer,
-          birthdayHeight,
-          chainSource: config.chainSource,
-          mnemonic,
-          network: config.network
-        }
-      }),
+    createWallet: async ({ mnemonic, birthdayHeight, restore }) => {
+      const request = {
+        arkServer: config.arkServer,
+        birthdayHeight,
+        chainSource: config.chainSource,
+        mnemonic,
+        network: config.network
+      }
+      // This extension is not yet in the generated client. Restores retain
+      // their scan range; only the create screen marks a fresh seed.
+      return await walletApi
+        .withPreMiddleware(
+          // oxlint-disable-next-line require-await
+          async ({ url, init }) => ({
+            init: {
+              ...init,
+              body: JSON.stringify({
+                ...CreateWalletRequestToJSON(request),
+                fresh_mnemonic: restore === false
+              })
+            },
+            url
+          })
+        )
+        .createWallet({ createWalletRequest: request })
+    },
     mnemonic: async () => await revealMnemonic(),
     nextRound: async () => toNextRoundStart(await walletApi.nextRound()),
     offboardVtxos: async ({ vtxos, address }) =>
