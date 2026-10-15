@@ -40,7 +40,9 @@ describe(useAutoRefresh, () => {
     refreshSpy.mockReset()
     refreshSpy.mockResolvedValue(null)
     adoptSpy.mockReset()
-    adoptSpy.mockResolvedValue([])
+    adoptSpy.mockImplementation(async ({ vtxos }) =>
+      vtxos.map((vtxoId) => ({ state: 'spendable', vtxoId }))
+    )
     useRefreshFailuresStore.setState({ refusedAtHeight: {} })
     useWalletStore.getState().clearWallet()
   })
@@ -70,22 +72,27 @@ describe(useAutoRefresh, () => {
     })
   })
 
-  it('waits for the expired-coin check before refreshing', async () => {
-    // oxlint-disable-next-line promise/avoid-new
-    findSpy.mockReturnValue(new Promise(() => {}))
+  it('holds expired inputs while their status is pending and refreshes unrelated coins', async () => {
+    vi.spyOn(walletApi, 'vtxos').mockResolvedValue([
+      expiring('good:0'), { ...expiring('bad:0'), expiryHeight: TIP }
+    ])
+    adoptSpy.mockReturnValue(new Promise(() => {}))
     renderHook(() => useAutoRefresh(), { wrapper: makeWrapper(queryClient) })
-
     await waitFor(() => {
-      expect(findSpy).toHaveBeenCalledWith()
+      expect(adoptSpy).toHaveBeenCalledWith({ vtxos: ['bad:0'] })
+      expect(refreshSpy).toHaveBeenCalledWith({ vtxos: ['good:0'] })
     })
-    expect(refreshSpy).not.toHaveBeenCalled()
+    expect(refreshSpy).toHaveBeenCalledOnce()
   })
 
-  it('leaves out a coin the server already paid out', async () => {
-    findSpy.mockResolvedValue([{ amountSats: 900, txid: 't', vout: 0, vtxoId: 'bad:0' }])
+  it('keeps a generic server-spent input out without claiming a payout', async () => {
+    vi.spyOn(walletApi, 'vtxos').mockResolvedValue([
+      expiring('good:0'), { ...expiring('bad:0'), expiryHeight: TIP }
+    ])
+    adoptSpy.mockResolvedValue([{ state: 'spent', vtxoId: 'bad:0' }])
     renderHook(() => useAutoRefresh(), { wrapper: makeWrapper(queryClient) })
-
     await waitFor(() => {
+      expect(adoptSpy).toHaveBeenCalledWith({ vtxos: ['bad:0'] })
       expect(refreshSpy).toHaveBeenCalledWith({ vtxos: ['good:0'] })
     })
     expect(refreshSpy).toHaveBeenCalledOnce()
