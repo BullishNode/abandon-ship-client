@@ -30,6 +30,7 @@ import {
 } from '@/lib/backend/barkd/map'
 import { subscribeNotifications } from '@/lib/backend/barkd/notifications'
 import { revealMnemonic } from '@/lib/backend/barkd/reveal-mnemonic'
+import { StrictLnurlSendApi } from '@/lib/backend/barkd/strict-lnurl-send'
 import type { Backend } from '@/types/backend'
 import { refreshingVtxosFromRounds } from '@/utils/refresh'
 
@@ -42,6 +43,7 @@ const lightningApi = new LightningApi(clientConfig)
 const exitsApi = new ExitsApi(clientConfig)
 const bitcoinApi = new BitcoinApi(clientConfig)
 const expiryPayoutsApi = new ExpiryPayoutsApi(clientConfig)
+const strictLnurlSendApi = new StrictLnurlSendApi(clientConfig)
 
 export const barkdBackend: Backend = {
   bitcoinApi: {
@@ -162,7 +164,9 @@ export const barkdBackend: Backend = {
       return refreshingVtxosFromRounds(rounds.map(toPendingRound))
     },
     send: async ({ destination, amountSats, comment }) =>
-      await walletApi.send({ sendRequest: { amountSat: amountSats, comment, destination } }),
+      config.payoutRecoveryMode === 'wallet-fallback'
+        ? await strictLnurlSendApi.send({ destination, amountSats, comment })
+        : await walletApi.send({ sendRequest: { amountSat: amountSats, comment, destination } }),
     sendOnchain: async ({ destination, amountSats }) =>
       await walletApi.sendOnchain({
         sendOnchainRequest: { amountSat: amountSats, destination }
