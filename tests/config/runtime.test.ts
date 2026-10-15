@@ -95,6 +95,23 @@ describe(initConfig, () => {
     expect(config.chainSourceLabel).not.toContain(COOKIE_FILE)
   })
 
+  it('retains the existing recovery mode when none is declared', async () => {
+    mockConfigResponse({ ...baseResponse, chainSource: 'https://example.com' })
+    await initConfig()
+    expect(config.payoutRecoveryMode).toBe('key-sweep')
+  })
+
+  it('accepts an explicitly declared ordinary wallet fallback profile', async () => {
+    mockConfigResponse({ ...baseResponse, chainSource: 'https://example.com', payoutRecoveryMode: 'wallet-fallback' })
+    await initConfig()
+    expect(config.payoutRecoveryMode).toBe('wallet-fallback')
+  })
+
+  it('refuses an undeclared recovery mode', async () => {
+    mockConfigResponse({ ...baseResponse, chainSource: 'https://example.com', payoutRecoveryMode: 'guess' })
+    await expect(initConfig()).rejects.toThrow(ZodError)
+  })
+
   it('rejects a payload with no chain source', async () => {
     mockConfigResponse(baseResponse)
     await expect(initConfig()).rejects.toThrow(ZodError)

@@ -8,9 +8,10 @@ import type { ExitStateType } from '@/utils/exit-progress'
 import { formatRelativeTime } from '@/utils/relative-time'
 import { truncateMiddleChars } from '@/utils/truncate-middle'
 
-export type VtxoStatus = Vtxo['state']['type'] | 'renewing' | 'paying_out' | 'paid_out'
+export type VtxoStatus = Vtxo['state']['type'] | 'renewing' | 'paying_out' | 'paid_out' | 'recovery_unknown'
 
 export interface VtxoPayoutState {
+  recoveryUnknownIds?: ReadonlySet<string>
   payingOutIds: ReadonlySet<string>
   payoutById: ReadonlyMap<string, ExpiryPayout>
 }
@@ -125,6 +126,9 @@ export function getVtxoStatus(
   tipHeight?: number,
   payoutState?: VtxoPayoutState
 ): VtxoStatus {
+  if (payoutState?.recoveryUnknownIds?.has(vtxo.id) === true) {
+    return 'recovery_unknown'
+  }
   if (payoutState?.payoutById.has(vtxo.id) === true) {
     return 'paid_out'
   }

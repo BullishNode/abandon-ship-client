@@ -41,7 +41,8 @@ function byobConfigPlugin(env: Env): Plugin {
           JSON.stringify({
             arkServer: env.ARK_SERVER ?? '',
             ...(chainSource === undefined ? {} : { chainSource }),
-            network: env.BARK_NETWORK ?? 'signet'
+            network: env.BARK_NETWORK ?? 'signet',
+            payoutRecoveryMode: env.PAYOUT_RECOVERY_MODE ?? 'key-sweep'
           })
         )
       })

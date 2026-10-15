@@ -136,7 +136,8 @@ app.get('/api/config', (c) =>
     arkServer: ARK_SERVER,
     ...(CHAIN_SOURCE_CONFIG === undefined ? {} : { chainSource: CHAIN_SOURCE_CONFIG }),
     network: BARK_NETWORK,
-    walletDataPath: WALLET_DATA_PATH
+    walletDataPath: WALLET_DATA_PATH,
+    payoutRecoveryMode: process.env.PAYOUT_RECOVERY_MODE ?? 'key-sweep'
   })
 )
 

@@ -61,6 +61,7 @@ const ALLOWED_BARKD_ROUTES = [
   '/api/v1/wallet/addresses/next',
   '/api/v1/wallet/ark-info',
   '/api/v1/wallet/balance',
+  '/api/v1/wallet/fallback-destination',
   '/api/v1/wallet/bip321',
   '/api/v1/wallet/connected',
   '/api/v1/wallet/create',

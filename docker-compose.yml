@@ -38,6 +38,7 @@ services:
       - BITCOIND_RPC_URL=${BITCOIND_RPC_URL:-}
       - BITCOIND_RPC_COOKIE_FILE=${BITCOIND_RPC_COOKIE_FILE:-}
       - BARK_NETWORK=${BARK_NETWORK:-signet}
+      - PAYOUT_RECOVERY_MODE=${PAYOUT_RECOVERY_MODE:-key-sweep}
     healthcheck:
       test: ['CMD-SHELL', 'wget -q -O- http://127.0.0.1:4001/health >/dev/null 2>&1 || exit 1']
       interval: 2s

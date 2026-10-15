@@ -8,10 +8,18 @@ import { useSweepExpiryPayouts } from '@/hooks/barkd/use-sweep-expiry-payouts'
 import { usePrivateAmount } from '@/hooks/use-private-amount'
 import { backendErrorMessage } from '@/lib/error-message'
 import { sumPayoutFees } from '@/utils/expiry-payout'
+import { config } from '@/config/runtime'
+import { WalletFallbackRecoveryNote } from '@/components/wallet-fallback-recovery-note'
 
 // Expired coins the server paid out on-chain sit at their own keys, outside the
 // on-chain wallet, until they are swept into it.
 export function ExpiryPayoutNote() {
+  return config.payoutRecoveryMode === 'wallet-fallback'
+    ? <WalletFallbackRecoveryNote />
+    : <LegacyExpiryPayoutNote />
+}
+
+function LegacyExpiryPayoutNote() {
   const { t } = useTranslation()
   const { sats: formatBitcoin } = usePrivateAmount()
   const { payouts, payingOutSat, isPayoutError, refreshPayouts } = useExpiredVtxos()

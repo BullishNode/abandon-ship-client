@@ -11,6 +11,7 @@ export interface RuntimeConfig {
   chainSource: ChainSource
   network: Network
   walletDataPath: string
+  payoutRecoveryMode?: 'key-sweep' | 'wallet-fallback'
 }
 
 // Unknown shapes must fail here rather than be coerced: the generated
@@ -45,7 +46,8 @@ const configResponseSchema = z.object({
   arkServer: z.url(),
   chainSource: chainSourceSchema,
   network: z.enum(NETWORKS),
-  walletDataPath: z.string().default('/data/.bark/')
+  walletDataPath: z.string().default('/data/.bark/'),
+  payoutRecoveryMode: z.enum(['key-sweep', 'wallet-fallback']).default('key-sweep')
 })
 
 let runtime: RuntimeConfig | undefined
@@ -58,6 +60,9 @@ function requireConfig(): RuntimeConfig {
 }
 
 export const config = {
+  get payoutRecoveryMode(): 'key-sweep' | 'wallet-fallback' {
+    return requireConfig().payoutRecoveryMode ?? 'key-sweep'
+  },
   get arkServer(): string {
     return requireConfig().arkServer
   },

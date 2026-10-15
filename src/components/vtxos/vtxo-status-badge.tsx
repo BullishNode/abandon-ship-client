@@ -15,6 +15,7 @@ const STATUS_CONFIG: Record<
   locked: { icon: CircleLockIcon, iconClass: 'text-amber-500' },
   paid_out: { icon: CircleCheckIcon, iconClass: 'text-blue-500' },
   paying_out: { icon: HourglassIcon, iconClass: 'text-blue-500' },
+  recovery_unknown: { icon: HourglassIcon, iconClass: 'text-amber-500' },
   renewing: { icon: ArrowsClockwiseIcon, iconClass: 'text-amber-500' },
   spendable: { icon: CircleCheckIcon, iconClass: 'text-green-500' },
   spent: { icon: CircleMinusIcon, iconClass: 'text-muted-foreground' }

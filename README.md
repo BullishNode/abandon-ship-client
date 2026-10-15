@@ -80,6 +80,19 @@ cp .env.byob.example .env.byob
 npm run dev:byob
 ```
 
+### Recovery API compatibility
+
+For a barkd that sends automatic expiry payouts directly to its on-chain wallet,
+set `PAYOUT_RECOVERY_MODE=wallet-fallback` in the API process or BYOB environment.
+This uses the native fallback-destination, on-chain sync and wallet sync routes.
+Older clients retain `key-sweep` by default; use it only with a server that exposes
+the separate expiry-payout lookup and sweep routes.
+
+An expired coin reported spent is shown as **Recovery unverified**. A transaction
+at the current recovery address is a receipt, not proof of a particular server
+payout. Previous recovery addresses and unresolved coin records stay uncertain.
+Received funds are counted through the ordinary on-chain wallet balance once.
+
 ### Reset / start from scratch
 
 Each network uses its own docker volume (via `COMPOSE_PROJECT_NAME`), so wipe the one you used:

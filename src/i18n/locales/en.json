@@ -396,7 +396,8 @@
       },
       "renewing": "Renewing",
       "paying_out": "Paying out",
-      "paid_out": "Paid out"
+      "paid_out": "Paid out",
+      "recovery_unknown": "Recovery unverified"
     },
     "expiry": {
       "expired": "Expired"
@@ -731,5 +732,16 @@
       "success": "{{amount}} moved to your on-chain balance",
       "error": "Could not move the payout"
     }
+  },
+  "wallet_recovery": {
+    "title": "Recovery status",
+    "description": "Receipts at your recovery address belong to ordinary on-chain history. Your on-chain wallet balance already accounts for the outputs it still holds.",
+    "unknown_one": "The server marked {{count}} expired coin spent. Its recovery has not been independently attributed.",
+    "unknown_other": "The server marked {{count}} expired coins spent. Their recovery has not been independently attributed.",
+    "received": "Confirmed receipts at the current recovery address: {{amount}}. They may since have been spent. A receipt alone does not establish that the server paid an expired coin.",
+    "limits": "This view covers the current recovery address, not every address used previously. Coin recovery remains unverified until its payout is identified.",
+    "incomplete": "Some recovery details are unavailable. An unavailable record does not mean that funds are absent.",
+    "refresh": "Refresh wallet",
+    "refresh_failed": "Wallet refresh failed. Recovery remains unverified."
   }
 }
