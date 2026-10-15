@@ -12,11 +12,6 @@ interface WalletStore {
   wallet: WalletInfo | null
   exitClaimAddresses: Record<string, string>
   isEmergencyExitAllInProgress: boolean
-  // Expired coins the server reports spent, until their payout is found
-  // on-chain: shown as "Paying out" in this browser.
-  payingOutIds: string[]
-  addPayingOutIds: (vtxoIds: string[]) => void
-  removePayingOutIds: (vtxoIds: string[]) => void
   setWallet: (wallet: WalletInfo) => void
   updateWalletName: (name: string) => void
   setExitClaimAddresses: (vtxoIds: string[], address: string) => void
@@ -28,9 +23,6 @@ interface WalletStore {
 export const useWalletStore = create<WalletStore>()(
   persist(
     (set) => ({
-      addPayingOutIds: (vtxoIds) => {
-        set((state) => ({ payingOutIds: [...new Set([...state.payingOutIds, ...vtxoIds])] }))
-      },
       clearExitClaimAddresses: (vtxoIds) => {
         const removed = new Set(vtxoIds)
         set((state) => ({
@@ -43,16 +35,11 @@ export const useWalletStore = create<WalletStore>()(
         set({
           exitClaimAddresses: {},
           isEmergencyExitAllInProgress: false,
-          payingOutIds: [],
           wallet: null
         })
       },
       exitClaimAddresses: {},
       isEmergencyExitAllInProgress: false,
-      payingOutIds: [],
-      removePayingOutIds: (vtxoIds) => {
-        set((state) => ({ payingOutIds: state.payingOutIds.filter((id) => !vtxoIds.includes(id)) }))
-      },
       setExitClaimAddresses: (vtxoIds, address) => {
         const trimmed = address.trim()
         const target = new Set(vtxoIds)

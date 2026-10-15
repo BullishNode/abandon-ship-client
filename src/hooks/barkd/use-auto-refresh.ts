@@ -26,7 +26,7 @@ export function useAutoRefresh(): void {
   const { data: arkInfo } = useArkInfo()
   const { data: refreshingVtxos = [] } = useRefreshingVtxos()
   const { data: pendingRounds } = usePendingRounds()
-  const { isChecked: isExpiryChecked, excludedIds: paidOutIds } = useExpiredVtxos()
+  const { excludedIds: unavailableExpiredIds } = useExpiredVtxos()
   const refusedAtHeight = useRefreshFailuresStore((state) => state.refusedAtHeight)
   const addRefusedVtxoIds = useRefreshFailuresStore((state) => state.addRefusedVtxoIds)
   const { mutate: refreshVtxos, isPending: isRefreshing } = useRefreshVtxos({
@@ -60,9 +60,9 @@ export function useAutoRefresh(): void {
   }, [pendingRounds, tip, addRefusedVtxoIds])
 
   useEffect(() => {
-    // Expired coins are checked against the server first, so a coin it already
-    // paid out never lands in a batch (one would fail all the others).
-    if (isRefreshing || !isExpiryChecked) {
+    // Expired coins need a current, explicit spendable status. Unknown or
+    // in-flight expired inputs must not fail a batch of otherwise usable coins.
+    if (isRefreshing || tipHeight === undefined || vtxos === undefined) {
       return
     }
     // Skipped rather than blocking the whole wallet, so one VTXO sitting in a
@@ -71,7 +71,7 @@ export function useAutoRefresh(): void {
     const excludedIds = new Set([
       ...mapRefreshPhases(refreshingVtxos).keys(),
       ...getRefusedVtxoIds(useRefreshFailuresStore.getState().refusedAtHeight, tipHeight),
-      ...paidOutIds
+      ...unavailableExpiredIds
     ])
     const expiringIds = getExpiringVtxoIds(
       vtxos ?? [],
@@ -98,8 +98,7 @@ export function useAutoRefresh(): void {
     vtxoExpiryDelta,
     refreshingVtxos,
     refusedAtHeight,
-    paidOutIds,
-    isExpiryChecked,
+    unavailableExpiredIds,
     isRefreshing,
     refreshVtxos
   ])

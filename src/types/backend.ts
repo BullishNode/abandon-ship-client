@@ -2,11 +2,7 @@ import type { ArkInfo } from '@/types/domain/ark'
 import type { Balance, OnchainBalance } from '@/types/domain/balance'
 import type { PendingBoard } from '@/types/domain/board'
 import type { ExitClaimResult, ExitStartResult, ExitTransactionStatus } from '@/types/domain/exit'
-import type {
-  ExpiryPayout,
-  ExpiryPayoutSweep,
-  ServerVtxoStatus
-} from '@/types/domain/expiry-payout'
+import type { ServerVtxoStatus } from '@/types/domain/expiry-payout'
 import type { EmergencyExitFeeEstimate, FeeEstimate, OnchainFeeRates } from '@/types/domain/fees'
 import type { Movement } from '@/types/domain/movement'
 import type { WalletNotification } from '@/types/domain/notification'
@@ -55,8 +51,6 @@ export interface WalletApiBackend {
   walletDelete(params: DeleteWalletParams): Promise<DeleteWalletResult>
   // A coin the server reports spent is marked spent locally.
   adoptServerVtxoStatus(params: { vtxos: string[] }): Promise<ServerVtxoStatus[]>
-  // Unswept payouts of all the wallet's expired coins.
-  findExpiryPayouts(): Promise<ExpiryPayout[]>
 }
 
 export interface OnchainApiBackend {
@@ -65,8 +59,6 @@ export interface OnchainApiBackend {
   onchainSend(params: OnchainSendParams): Promise<OnchainSendResult>
   onchainTransactions(): Promise<WalletTx[]>
   onchainUtxos(): Promise<Utxo[]>
-  // Spends every expiry payout into the on-chain wallet.
-  sweepExpiryPayouts(): Promise<ExpiryPayoutSweep>
 }
 
 export interface HistoryApiBackend {

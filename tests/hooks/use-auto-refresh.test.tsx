@@ -27,7 +27,6 @@ describe(useAutoRefresh, () => {
   const refreshSpy = vi.spyOn(walletApi, 'refreshVtxos')
   const pendingRoundsSpy = vi.spyOn(walletApi, 'pendingRounds')
   const adoptSpy = vi.spyOn(walletApi, 'adoptServerVtxoStatus')
-  const findSpy = vi.spyOn(walletApi, 'findExpiryPayouts')
 
   beforeEach(() => {
     queryClient = new QueryClient({
@@ -42,8 +41,6 @@ describe(useAutoRefresh, () => {
     refreshSpy.mockResolvedValue(null)
     adoptSpy.mockReset()
     adoptSpy.mockResolvedValue([])
-    findSpy.mockReset()
-    findSpy.mockResolvedValue([])
     useRefreshFailuresStore.setState({ refusedAtHeight: {} })
     useWalletStore.getState().clearWallet()
   })

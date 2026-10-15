@@ -22,9 +22,9 @@ import { getVtxoColumns } from '@/components/vtxos/vtxos-columns'
 import { VTXOS_PAGE_SIZE } from '@/constants/vtxos'
 import { useBitcoinTip } from '@/hooks/barkd/use-bitcoin-tip'
 import { useExitStatus } from '@/hooks/barkd/use-exit-status'
-import { useExpiredVtxos } from '@/hooks/barkd/use-expired-vtxos'
 import { useRefreshingVtxos } from '@/hooks/barkd/use-refreshing-vtxos'
 import { useTrackedRefresh } from '@/hooks/barkd/use-tracked-refresh'
+import { useExpiredVtxos } from '@/hooks/barkd/use-expired-vtxos'
 import { useVtxos } from '@/hooks/barkd/use-vtxos'
 import { useWalletTransactions } from '@/hooks/barkd/use-wallet-transactions'
 import { useLocale } from '@/hooks/use-locale'
@@ -45,12 +45,12 @@ import {
 export function VtxosTable() {
   const { t } = useTranslation()
   const locale = useLocale()
+  const expiredVtxos = useExpiredVtxos()
   const { data: vtxos = [], isPending } = useVtxos({ all: true })
   const { data: exitStatuses = [] } = useExitStatus()
   const { data: movements = [] } = useWalletTransactions()
   const { data: tip } = useBitcoinTip()
   const { data: refreshingVtxos = [] } = useRefreshingVtxos()
-  const expiredVtxos = useExpiredVtxos()
   const { sats: formatSats, fiat: formatFiat } = usePrivateAmount()
   const showExitedVtxos = useSettingsStore((state) => state.showExitedVtxos)
   const setShowExitedVtxos = useSettingsStore((state) => state.setShowExitedVtxos)
@@ -148,7 +148,6 @@ export function VtxosTable() {
     formatSats,
     locale,
     lockLabelById,
-    payoutState: expiredVtxos,
     refreshPhaseById,
     t,
     tipHeight: tip
@@ -241,7 +240,6 @@ export function VtxosTable() {
         formatSats={formatSats}
         lockLabel={detailVtxo ? lockLabelById.get(detailVtxo.id) : undefined}
         onOpenChange={handleDetailOpenChange}
-        payoutState={expiredVtxos}
         refreshPhase={detailVtxo ? refreshPhaseById.get(detailVtxo.id) : undefined}
         open={detailOpen}
         tipHeight={tip}

@@ -58,8 +58,8 @@ describe('allowlist coverage vs @secondts/barkd', () => {
 
   it('allows the expired-coin routes the app calls outside the SDK', () => {
     expect(isAllowedBarkdPath('/api/v1/wallet/vtxos/adopt-server-status')).toBeTruthy()
-    expect(isAllowedBarkdPath('/api/v1/wallet/vtxos/expiry-payouts')).toBeTruthy()
-    expect(isAllowedBarkdPath('/api/v1/onchain/sweep-expiry-payouts')).toBeTruthy()
+    expect(isAllowedBarkdPath('/api/v1/wallet/vtxos/expiry-payouts')).toBeFalsy()
+    expect(isAllowedBarkdPath('/api/v1/onchain/sweep-expiry-payouts')).toBeFalsy()
   })
 
   it('rejects the mnemonic route', () => {

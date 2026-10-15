@@ -84,8 +84,6 @@ const ALLOWED_BARKD_ROUTES = [
   '/api/v1/wallet/vtxos/{param}/encoded',
   // Expired-coin routes, called outside the generated client.
   '/api/v1/wallet/vtxos/adopt-server-status',
-  '/api/v1/wallet/vtxos/expiry-payouts',
-  '/api/v1/onchain/sweep-expiry-payouts'
 ] as const
 
 const PARAM_PLACEHOLDER = '{param}'

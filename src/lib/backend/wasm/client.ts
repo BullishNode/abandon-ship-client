@@ -59,8 +59,8 @@ import type { WalletNotification } from '@/types/domain/notification'
 import type { CreateWalletResult, SendResult } from '@/types/domain/wallet'
 
 // oxlint-disable-next-line require-await
-async function expiryPayoutsUnavailable(): Promise<never> {
-  throw new Error('Expiry payouts require the barkd backend')
+async function serverStatusUnavailable(): Promise<never> {
+  throw new Error('Server status adoption requires the barkd backend')
 }
 
 // Thrown when a wallet exists in IndexedDB but the session seed is not in memory
@@ -568,14 +568,13 @@ export const wasmBackend: Backend = {
       await ensureOpen()
       return toUtxos(await remote().onchainUtxos())
     },
-    sweepExpiryPayouts: expiryPayoutsUnavailable
   },
   walletApi: {
     address: async () => {
       await ensureOpen()
       return await remote().getReceiveAddress()
     },
-    adoptServerVtxoStatus: expiryPayoutsUnavailable,
+    adoptServerVtxoStatus: serverStatusUnavailable,
     arkInfo: async () => {
       await ensureOpen()
       return toArkInfo(await remote().getArkInfo())
@@ -613,7 +612,6 @@ export const wasmBackend: Backend = {
       void requestPersistentStorage()
       return { fingerprint, scanIncomplete }
     },
-    findExpiryPayouts: expiryPayoutsUnavailable,
     mnemonic: async () => {
       const seed = getSessionMnemonic() ?? (await remote().getMnemonic())
       if (seed === null) {

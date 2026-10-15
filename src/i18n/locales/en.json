@@ -731,5 +731,10 @@
       "success": "{{amount}} moved to your on-chain balance",
       "error": "Could not move the payout"
     }
+  },
+  "expiry_status": {
+    "unavailable_title": "Expired coin status is unavailable",
+    "unavailable_description": "These expired coins will not be renewed until their status can be checked. A spent coin does not by itself confirm a Bitcoin payment. Check your Bitcoin balance and transaction history for funds received.",
+    "retry": "Check again"
   }
 }
