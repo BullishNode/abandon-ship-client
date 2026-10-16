@@ -10,7 +10,11 @@ const serverVtxoStatusSchema = z.object({ state: z.string(), vtxo_id: z.string()
 // identify a payout or prove that the registered destination has received it.
 export class ExpiryPayoutsApi extends BaseAPI {
   async fallbackDestination(network: Network): Promise<string> {
-    const response = await this.request({ method: 'GET', path: '/api/v1/wallet/fallback-destination' })
+    const response = await this.request({
+      headers: {},
+      method: 'GET',
+      path: '/api/v1/wallet/fallback-destination'
+    })
     const json: unknown = await response.json()
     const { address } = z.object({ address: z.string().min(1) }).strict().parse(json)
     if (address !== address.trim() || !isValidOnchainAddress(address, network)) {
