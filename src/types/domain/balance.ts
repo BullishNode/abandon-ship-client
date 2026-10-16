@@ -1,4 +1,6 @@
 export interface Balance {
+  // Owned but unavailable until native settlement status is authoritative.
+  awaitingSettlementSats?: number
   spendableSats: number
   pendingInRoundSats: number
   // Null/undefined only while the exit subsystem is momentarily unavailable, not

@@ -32,6 +32,11 @@ export function BalanceCard({
 
   const rows: BreakdownRow[] = [
     {
+      amount: totals.awaitingSettlementSat,
+      key: 'awaiting_settlement',
+      label: t('fallback.awaiting_settlement')
+    },
+    {
       amount: totals.offchainSat,
       key: 'offchain',
       label: t('dashboard.balance.offchain')
@@ -74,6 +79,7 @@ export function BalanceCard({
   ].filter((row) => row.amount > 0)
 
   const onlyOffchain =
+    totals.awaitingSettlementSat === 0 &&
     totals.onchainSat === 0 &&
     totals.onchainPendingSat === 0 &&
     totals.exitChangePendingSat === 0 &&

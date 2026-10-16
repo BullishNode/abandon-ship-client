@@ -34,3 +34,9 @@ The UI now reads native `abandon.fallback_payout` receipt metadata. It shows pre
 Coins carrying native `awaiting_settlement` are shown with that label and excluded from new UI selection. The upstream TypeScript SDK currently omits this additive field, so the adapter reads it from the same authenticated response; it performs no ownership or synchronization logic in JavaScript. Refusal explanations select stable native `code` values, not diagnostic message text.
 
 Validation for this milestone: all 1,038 existing and added web tests passed across 109 files, changed TypeScript files passed Ultracite, and the production build passed. An additional transaction-feed coverage test is recorded separately in the commit evidence. These are source and display tests. Actual native fallback receipt delivery, browser screenshots, and WC6 remain unrun until the new backend runtime and authenticated history RPC are integrated.
+
+## Awaiting-settlement balance
+
+Native `awaiting_settlement_sat` is read from the same authenticated balance response as the upstream fields. It remains in the owned total and appears under Awaiting settlement; it is excluded from available Ark value and refresh/fee selection. A permanent payout entitlement is represented by its receipt instead of returning as a second available Ark balance when Core is unreachable or its tip rolls back.
+
+The web build/typecheck and changed-file lint passed. The complete updated suite passed 1,042 tests in 109 files. Native cache/chain-outage regression and real browser acceptance remain pending in the paired backend/client gate; these web checks do not claim those outcomes.
