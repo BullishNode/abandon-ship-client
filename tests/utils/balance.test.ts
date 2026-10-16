@@ -53,8 +53,17 @@ function makeUtxo(overrides: Partial<Utxo> = {}): Utxo {
 }
 
 describe(getBalanceTotals, () => {
+  it('keeps awaiting settlement owned and separate from available Ark value', () => {
+    const balance = makeBalance({ awaitingSettlementSats: 5000, spendableSats: 2000 })
+    const result = getBalanceTotals(balance)
+    expect(result.awaitingSettlementSat).toBe(5000)
+    expect(result.offchainSat).toBe(2000)
+    expect(result.totalSat).toBe(7000)
+  })
+
   it('returns zeros when both balances are undefined', () => {
     expect(getBalanceTotals()).toStrictEqual({
+      awaitingSettlementSat: 0,
       claimableLightningReceiveSat: 0,
       exitChangePendingSat: 0,
       offchainSat: 0,
@@ -71,6 +80,7 @@ describe(getBalanceTotals, () => {
   it('returns onchain totals only when ark balance is undefined', () => {
     const onchain = makeOnchainBalance({ trustedSpendableSats: 1000, untrustedPendingSats: 200 })
     expect(getBalanceTotals(undefined, onchain)).toStrictEqual({
+      awaitingSettlementSat: 0,
       claimableLightningReceiveSat: 0,
       exitChangePendingSat: 0,
       offchainSat: 0,
@@ -95,6 +105,7 @@ describe(getBalanceTotals, () => {
     })
     const onchain = makeOnchainBalance({ trustedSpendableSats: 1000, untrustedPendingSats: 100 })
     expect(getBalanceTotals(balance, onchain)).toStrictEqual({
+      awaitingSettlementSat: 0,
       claimableLightningReceiveSat: 50,
       exitChangePendingSat: 0,
       offchainSat: 5000,

@@ -104,7 +104,7 @@ export function sortVtxosForDisplay(
 }
 
 export function isSpendable(vtxo: Vtxo): boolean {
-  return vtxo.state.type === 'spendable'
+  return vtxo.state.type === 'spendable' && vtxo.awaitingSettlement !== true
 }
 
 export function getSpendableVtxos(vtxos: Vtxo[]): Vtxo[] {

@@ -8,6 +8,7 @@ export interface Vtxo {
   id: string
   amountSats: number
   expiryHeight: number
+  awaitingSettlement?: boolean
   // Optional because the WASM backend's Vtxo surface does not expose these
   // fields; the barkd backend always supplies them.
   exitDelta?: number

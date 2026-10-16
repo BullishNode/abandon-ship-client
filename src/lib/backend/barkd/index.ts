@@ -8,6 +8,7 @@ import {
   OnchainApi,
   WalletApi
 } from '@secondts/barkd'
+import { z } from 'zod'
 import { config } from '@/config/runtime'
 import { clientConfig } from '@/lib/backend/barkd/client-config'
 import {
@@ -125,7 +126,17 @@ export const barkdBackend: Backend = {
       return response.address
     },
     arkInfo: async () => toArkInfo(await walletApi.arkInfo()),
-    balance: async () => toBalance(await walletApi.balance()),
+    balance: async () => {
+      // The published SDK drops this additive native pending category. Read
+      // the extension from the same authenticated balance response.
+      const response = await walletApi.balanceRaw()
+      const copy = response.raw.clone()
+      const balance = await response.value()
+      const extension = z
+        .object({ awaiting_settlement_sat: z.number().int().nonnegative().optional().default(0) })
+        .parse(await copy.json())
+      return toBalance(balance, extension.awaiting_settlement_sat)
+    },
     createWallet: async ({ mnemonic, birthdayHeight }) =>
       await walletApi.createWallet({
         createWalletRequest: {
@@ -162,8 +173,25 @@ export const barkdBackend: Backend = {
       return response.encoded
     },
     vtxos: async (params) => {
-      const vtxos = await walletApi.vtxos({ all: params?.all })
-      return vtxos.map(toVtxo)
+      // The published upstream TS SDK omits the fork's additive native field.
+      // Read it from the same authenticated response, without another request
+      // or a JavaScript reconciliation path.
+      const response = await walletApi.vtxosRaw({ all: params?.all })
+      const copy = response.raw.clone()
+      const vtxos = await response.value()
+      const extension = z
+        .array(
+          z.object({
+            awaiting_settlement: z.boolean().optional().default(false),
+            id: z.string()
+          })
+        )
+        .parse(await copy.json())
+      const awaiting = new Map(extension.map((vtxo) => [vtxo.id, vtxo.awaiting_settlement]))
+      return vtxos.map((vtxo) => ({
+        ...toVtxo(vtxo),
+        awaitingSettlement: awaiting.get(vtxo.id) ?? false
+      }))
     },
     walletDelete: async ({ fingerprint, dangerous }) =>
       await walletApi.walletDelete({ walletDeleteRequest: { dangerous, fingerprint } }),

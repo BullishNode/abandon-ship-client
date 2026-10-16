@@ -49,8 +49,9 @@ import type { Utxo, WalletTx } from '@/types/domain/onchain'
 import type { NextRoundStart, PendingRound, RoundStatus } from '@/types/domain/round'
 import type { Vtxo, VtxoState } from '@/types/domain/vtxo'
 
-export function toBalance(dto: BarkdBalance): Balance {
+export function toBalance(dto: BarkdBalance, awaitingSettlementSats = 0): Balance {
   return {
+    awaitingSettlementSats,
     claimableLightningReceiveSats: dto.claimableLightningReceiveSat,
     pendingBoardSats: dto.pendingBoardSat,
     pendingExitSats: dto.pendingExitSat,
