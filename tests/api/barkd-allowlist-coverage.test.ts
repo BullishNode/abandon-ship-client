@@ -58,6 +58,7 @@ describe('allowlist coverage vs @secondts/barkd', () => {
 
   it('allows C status adoption without the removed on-chain sweep route', () => {
     expect(isAllowedBarkdPath('/api/v1/wallet/vtxos/adopt-server-status')).toBeTruthy()
+    expect(isAllowedBarkdPath('/api/v1/wallet/fallback-destination')).toBeTruthy()
     expect(isAllowedBarkdPath('/api/v1/onchain/sweep-expiry-payouts')).toBeFalsy()
   })
 

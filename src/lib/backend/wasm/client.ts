@@ -575,6 +575,9 @@ export const wasmBackend: Backend = {
       return await remote().getReceiveAddress()
     },
     adoptServerVtxoStatus: serverStatusUnavailable,
+    fallbackDestination: async () => {
+      throw new Error('The browser wallet does not support this native payout address query')
+    },
     arkInfo: async () => {
       await ensureOpen()
       return toArkInfo(await remote().getArkInfo())

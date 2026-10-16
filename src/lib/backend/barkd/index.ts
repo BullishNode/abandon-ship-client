@@ -129,6 +129,7 @@ export const barkdBackend: Backend = {
       return response.address
     },
     adoptServerVtxoStatus: async ({ vtxos }) => await expiryPayoutsApi.adoptServerVtxoStatus(vtxos),
+    fallbackDestination: async () => await expiryPayoutsApi.fallbackDestination(config.network),
     arkInfo: async () => toArkInfo(await walletApi.arkInfo()),
     balance: async () => {
       const response = await walletApi.balanceRaw()

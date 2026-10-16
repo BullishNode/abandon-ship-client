@@ -476,6 +476,13 @@
     }
   },
   "settings": {
+    "fallback_destination": {
+      "label": "Automatic payout address",
+      "description": "Automatic expiry payouts use this address. It stays the same for this wallet.",
+      "loading": "Loading the stored payout address…",
+      "unavailable": "The stored payout address is unavailable.",
+      "retry": "Check again"
+    },
     "wallet_name": {
       "label": "Wallet name"
     },

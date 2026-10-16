@@ -51,6 +51,8 @@ const REJECTED_VARIANTS = [
   '/api/barkd/api/v1/wallet/mnemonic/',
   '/api/barkd/api/v1/wallet/mnemonic-backup',
   '/api/barkd/api/v1/wallet/does-not-exist',
+  '/api/barkd/api/v1/wallet/fallback-destination/change',
+  '/api/barkd/api/v1/wallet/fallback-destination-replace',
   '/api/barkd/api/v2/wallet/balance'
 ]
 
@@ -67,6 +69,7 @@ const CRLF_REJECTED_VARIANTS = [
 // should receive.
 const ALLOWED_VARIANTS: [string, string][] = [
   ['/api/barkd/api/v1/wallet/balance', '/api/v1/wallet/balance'],
+  ['/api/barkd/api/v1/wallet/fallback-destination', '/api/v1/wallet/fallback-destination'],
   ['/api/barkd/api/v1/wallet/send', '/api/v1/wallet/send'],
   ['/api/barkd/api/v1/wallet/vtxos/abc123', '/api/v1/wallet/vtxos/abc123'],
   ['/api/barkd/api/v1/wallet/vtxos/abc123/encoded', '/api/v1/wallet/vtxos/abc123/encoded'],

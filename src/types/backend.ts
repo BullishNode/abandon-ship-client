@@ -32,6 +32,7 @@ export interface WalletApiBackend {
   arkInfo(): Promise<ArkInfo>
   balance(): Promise<Balance>
   address(): Promise<string>
+  fallbackDestination(): Promise<string>
   mnemonic(): Promise<string>
   vtxos(params?: { all?: boolean }): Promise<Vtxo[]>
   vtxoEncoded(id: string): Promise<string>

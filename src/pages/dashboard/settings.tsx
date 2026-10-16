@@ -7,6 +7,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { ConfirmDialog } from '@/components/confirm-dialog'
 import { EmergencyExitStartDialog } from '@/components/emergency-exit-start-dialog'
 import { ExitProgressCard } from '@/components/exit-progress'
+import { FallbackDestinationSettings } from '@/components/fallback-destination-settings'
 import { SeedPhraseInput } from '@/components/seed-phrase-input'
 import { Button } from '@/components/ui/button'
 import { Field, FieldContent, FieldDescription, FieldLabel } from '@/components/ui/field'
@@ -330,6 +331,7 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto @container/field-group max-w-2xl space-y-8">
       <h1 className="font-bold text-2xl">Settings</h1>
+      {__BACKEND__ !== 'wasm' && <FallbackDestinationSettings />}
       <Field>
         <FieldLabel htmlFor="wallet-name">{t('settings.wallet_name.label')}</FieldLabel>
         <Input

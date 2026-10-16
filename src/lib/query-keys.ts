@@ -5,6 +5,7 @@ export const walletKeys = {
   arkInfo: () => [...walletKeys.all, 'ark-info'] as const,
   balance: () => [...walletKeys.all, 'balance'] as const,
   exists: () => [...walletKeys.all, 'exists'] as const,
+  fallbackDestination: () => [...walletKeys.all, 'fallback-destination'] as const,
   expiredVtxos: (tip: number | undefined, vtxoIds: string[]) =>
     [...walletKeys.expiredVtxosAll(), tip, vtxoIds] as const,
   expiredVtxosAll: () => [...walletKeys.all, 'expired-vtxos'] as const,
