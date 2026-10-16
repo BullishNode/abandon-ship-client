@@ -11,6 +11,7 @@ describe('fallback registration', () => {
       Response.json({ payout_address: 'tb1qapplicationaddress', registered: true })
     )
     await expect(fallbackRegistration()).resolves.toStrictEqual({
+      history_awaiting_sync: false,
       payout_address: 'tb1qapplicationaddress',
       registered: true
     })

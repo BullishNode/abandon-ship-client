@@ -22,6 +22,9 @@ export function FallbackSettings() {
       {data?.registered && !isError && (
         <code className="break-all select-all text-sm">{data.payout_address}</code>
       )}
+      {data?.history_awaiting_sync && (
+        <p className="text-muted-foreground text-sm">{t('fallback.awaiting_sync')}</p>
+      )}
       <FieldDescription>{t('fallback.description')}</FieldDescription>
     </Field>
   )

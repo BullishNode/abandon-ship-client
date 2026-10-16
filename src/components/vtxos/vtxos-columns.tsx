@@ -1,5 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import type { TFunction } from 'i18next'
+import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { VtxoExitBadge } from '@/components/vtxos/vtxo-exit-badge'
 import { VtxoRefreshBadge } from '@/components/vtxos/vtxo-refresh-badge'
@@ -90,6 +91,9 @@ export function getVtxoColumns({
         const exitState = exitStateById.get(row.original.id)
         if (exitState !== undefined) {
           return <VtxoExitBadge phase={exitPhaseById.get(row.original.id)} state={exitState} />
+        }
+        if (row.original.awaitingSettlement) {
+          return <Badge variant="outline">{t('fallback.awaiting_settlement')}</Badge>
         }
         const refreshPhase = refreshPhaseById.get(row.original.id)
         if (refreshPhase !== undefined) {

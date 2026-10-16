@@ -26,3 +26,11 @@ Run the WC6 scenarios from the client companion plan against an explicitly BIP84
 7. Restore from the original seeds; verify the same registration, history and onchain funds.
 
 These steps have not been run. A normal onchain deposit is not evidence of a fallback payout. Regrouping and reorg history must be reconciled by stable per-coin entitlements before payout history is enabled.
+
+## Source milestone: receipt display and typed refusals
+
+The UI now reads native `abandon.fallback_payout` receipt metadata. It shows prepared, broadcast, confirmed, conflicted, below-dust and awaiting-settlement states, with the actual payout transaction and amount when supplied by native code. It keeps the native Ark accounting delta separate from the displayed onchain payout amount. An incoming onchain transaction is collapsed in the feed only when its exact transaction ID and complete wallet value are covered by native receipts.
+
+Coins carrying native `awaiting_settlement` are shown with that label and excluded from new UI selection. The upstream TypeScript SDK currently omits this additive field, so the adapter reads it from the same authenticated response; it performs no ownership or synchronization logic in JavaScript. Refusal explanations select stable native `code` values, not diagnostic message text.
+
+Validation for this milestone: all 1,038 existing and added web tests passed across 109 files, changed TypeScript files passed Ultracite, and the production build passed. An additional transaction-feed coverage test is recorded separately in the commit evidence. These are source and display tests. Actual native fallback receipt delivery, browser screenshots, and WC6 remain unrun until the new backend runtime and authenticated history RPC are integrated.

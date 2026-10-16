@@ -1,5 +1,6 @@
 import type { Movement, MovementDestination } from '@/types/domain/movement'
 import type { WalletTx } from '@/types/domain/onchain'
+import { fallbackReceipt, isFallbackPayout } from '@/utils/fallback'
 import { formatAddress } from '@/utils/format'
 
 export type MovementSource =
@@ -10,9 +11,13 @@ export type MovementSource =
   | 'exit'
   | 'exit_fee'
   | 'refresh'
+  | 'fallback_payout'
   | 'unknown'
 
 export function getMovementDirection(movement: Movement): 'incoming' | 'outgoing' {
+  if (isFallbackPayout(movement)) {
+    return 'outgoing'
+  }
   return movement.effectiveBalanceSats >= 0 ? 'incoming' : 'outgoing'
 }
 
@@ -101,6 +106,12 @@ export function isFailedRoundMovement(movement: Movement): boolean {
 }
 
 export function getMovementDisplayBalanceSats(movement: Movement): number {
+  // This is a display amount, not another Ark balance movement. The actual
+  // balance/chart remains driven by the native effectiveBalanceSats.
+  const receipt = fallbackReceipt(movement)
+  if (receipt !== null) {
+    return receipt.payout_sat
+  }
   return isFailedRoundMovement(movement) ? 0 : movement.effectiveBalanceSats
 }
 
@@ -130,6 +141,9 @@ export function getBoardFundingTxids(movements: Movement[]): Set<string> {
 }
 
 export function getMovementSource(movement: Movement): MovementSource {
+  if (isFallbackPayout(movement)) {
+    return 'fallback_payout'
+  }
   if (isExitSubsystem(movement.subsystem.name)) {
     return 'exit'
   }

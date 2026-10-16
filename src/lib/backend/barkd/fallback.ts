@@ -3,6 +3,7 @@ import { authedFetch } from '@/lib/backend/barkd/authed-fetch'
 
 const registrationSchema = z
   .object({
+    history_awaiting_sync: z.boolean().optional().default(false),
     payout_address: z.string().min(1).nullable(),
     registered: z.boolean()
   })
