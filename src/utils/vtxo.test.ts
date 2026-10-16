@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Vtxo } from '@/types/domain/vtxo'
 import type { VtxoExitState } from './vtxo'
-import { sortVtxosForDisplay } from './vtxo'
+import { isSpendable, sortVtxosForDisplay } from './vtxo'
 
 function makeVtxo(id: string, expiryHeight: number, stateType: Vtxo['state']['type']): Vtxo {
   return {
@@ -50,5 +50,14 @@ describe(sortVtxosForDisplay, () => {
     const sorted = sortVtxosForDisplay(vtxos, exitStateById, new Map())
 
     expect(sorted.map((vtxo) => vtxo.id)).toStrictEqual(['exiting', 'spent'])
+  })
+})
+
+describe(isSpendable, () => {
+  it('excludes a native coin awaiting settlement without treating older responses as blocked', () => {
+    const coin = makeVtxo('expired', 100, 'spendable')
+    expect(isSpendable(coin)).toBeTruthy()
+    expect(isSpendable({ ...coin, awaitingSettlement: true })).toBeFalsy()
+    expect(isSpendable({ ...coin, awaitingSettlement: false })).toBeTruthy()
   })
 })

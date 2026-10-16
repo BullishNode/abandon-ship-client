@@ -1,3 +1,4 @@
+import { isSpendable } from '@/utils/vtxo'
 import { PPM_DENOMINATOR } from '@/constants/btc'
 import type { PpmExpiryFeeEntry, RefreshFees } from '@/types/domain/fees'
 import type { PendingRound, RefreshingVtxo, RefreshPhase } from '@/types/domain/round'
@@ -94,7 +95,7 @@ const NO_IDS: ReadonlySet<string> = new Set()
 // wasm backend leaves a delegated participation's inputs spendable until the
 // server issues the round, so those have to be excluded by id as well.
 export function isRefreshable(vtxo: Vtxo, inRoundIds: ReadonlySet<string>): boolean {
-  return vtxo.state.type === 'spendable' && !inRoundIds.has(vtxo.id)
+  return isSpendable(vtxo) && !inRoundIds.has(vtxo.id)
 }
 
 export function getRefreshableVtxos(vtxos: Vtxo[], inRoundIds: ReadonlySet<string>): Vtxo[] {
