@@ -693,5 +693,16 @@
       "invalid": "barkd rejected this token. Check for copy-paste mistakes, or print the current one with the command below.",
       "error": "Could not reach barkd. Check that it is running and try again."
     }
+  },
+  "fallback": {
+    "title": "Fallback payout",
+    "loading": "Checking registration…",
+    "unavailable": "Registration could not be checked. Try again when connected.",
+    "registered": "Registered — this payout address is permanent.",
+    "unregistered": "Not registered. Fallback payouts are not enabled for this wallet.",
+    "description": "If you leave Ark coins unrefreshed, the server pays eligible expired coins to this address. Each payout output costs 1,000 sats; a remainder below the address’s dust threshold goes to the operator. Miner fees are funded by the operator.",
+    "expiry_notice": "Refresh to keep using Ark. If you leave eligible coins unrefreshed, the server pays them to your fallback address after expiry. Coins awaiting settlement are not available to spend.",
+    "decided_for_fallback": "This coin expired and is being paid to your fallback address.",
+    "expired_new_lightning": "This coin expired. Refresh it first, then send."
   }
 }

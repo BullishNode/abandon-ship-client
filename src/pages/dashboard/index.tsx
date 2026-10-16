@@ -1,3 +1,4 @@
+import { FallbackExpiryNotice } from '@/components/fallback-expiry-notice'
 import { lazy, Suspense } from 'react'
 import { OverviewCards } from '@/components/dashboard/overview-cards'
 import { MovementsTable } from '@/components/movements-table'
@@ -12,6 +13,7 @@ export default function TransactionsPage() {
   return (
     <div className="flex flex-col gap-6">
       <OverviewCards />
+      <FallbackExpiryNotice />
       <MovementsTable />
       <Suspense fallback={<Skeleton className="h-80 w-full" />}>
         <BalanceChart />
