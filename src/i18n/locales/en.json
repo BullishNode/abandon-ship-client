@@ -709,7 +709,9 @@
     "awaiting_sync": "Payout history is awaiting sync. The last complete history is retained.",
     "payout_amount": "Fallback payout amount",
     "dust_amount": "Below-dust remainder sent to the operator",
-    "transaction": "Payout transaction",
+    "transaction": "Settlement transaction",
+    "claim_transaction": "Claim transaction",
+    "exit_pending": "This coin was reported as exited. Your wallet is still checking its onchain claim.",
     "miner_fee": "Miner fees are paid by the operator. The payout fee is shown separately.",
     "stage": {
       "committed": "Your coins are reserved for fallback payout. A payout has not been broadcast yet.",
@@ -717,6 +719,7 @@
       "confirmed": "The payout has confirmed.",
       "conflicted": "This attempt conflicted. The server is reconciling the remaining payout.",
       "below_dust": "After the payout fee, this amount was below the address’s dust threshold. It was not paid out.",
+      "exited": "Your coin was claimed on chain. No fallback payout was made.",
       "awaiting_settlement": "Chain state is being rebuilt. This receipt does not claim a confirmed payout."
     },
     "stage_label": {
@@ -725,6 +728,7 @@
       "confirmed": "Confirmed",
       "conflicted": "Conflicted",
       "below_dust": "Below dust",
+      "exited": "Exited",
       "awaiting_settlement": "Awaiting settlement"
     }
   }

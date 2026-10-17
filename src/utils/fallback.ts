@@ -3,6 +3,7 @@ import type { Movement } from '@/types/domain/movement'
 
 const receiptSchema = z.object({
   chain_view_valid: z.boolean(),
+  disposition: z.enum(['customer_payout', 'below_dust', 'operator', 'exited']).optional(),
   forfeited_sat: z.number().int().nonnegative().safe(),
   output_index: z.number().int().nonnegative().nullable(),
   payout_sat: z.number().int().nonnegative().safe(),
@@ -12,6 +13,7 @@ const receiptSchema = z.object({
     'confirmed',
     'conflicted',
     'below_dust',
+    'exited',
     'awaiting_settlement'
   ]),
   txid: z

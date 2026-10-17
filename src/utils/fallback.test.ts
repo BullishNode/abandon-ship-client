@@ -66,4 +66,44 @@ describe('native fallback payout display', () => {
     expect(buildMovementsFeed([movement], options)).toHaveLength(2)
     expect(movement.effectiveBalanceSats).toBe(0)
   })
+
+  it('shows another-device exit as one native debit and never as a payout amount', () => {
+    const movement = receipt('exited')
+    movement.subsystem.kind = 'exit'
+    movement.effectiveBalanceSats = -5000
+    movement.metadata = {
+      fallback: {
+        chain_view_valid: true,
+        disposition: 'exited',
+        forfeited_sat: 0,
+        output_index: null,
+        payout_sat: 0,
+        stage: 'exited',
+        txid: '11'.repeat(32)
+      }
+    }
+    expect(fallbackReceipt(movement)?.disposition).toBe('exited')
+    expect(getMovementSource(movement)).toBe('exit')
+    expect(getMovementDisplayBalanceSats(movement)).toBe(-5000)
+    expect(filterFeedByTab([{ kind: 'movement', movement }], 'onchain')).toHaveLength(1)
+  })
+
+  it('explains a dust forfeiture using its amount without adding an Ark debit', () => {
+    const movement = receipt('below_dust')
+    movement.metadata = {
+      fallback: {
+        chain_view_valid: true,
+        disposition: 'below_dust',
+        forfeited_sat: 1200,
+        output_index: null,
+        payout_sat: 0,
+        stage: 'below_dust',
+        txid: '22'.repeat(32)
+      }
+    }
+    expect(getMovementDisplayBalanceSats(movement)).toBe(-1200)
+    expect(movement.effectiveBalanceSats).toBe(0)
+    expect(fallbackReceipt(movement)?.stage).toBe('below_dust')
+  })
+
 })

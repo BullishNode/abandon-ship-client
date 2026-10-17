@@ -110,7 +110,10 @@ export function getMovementDisplayBalanceSats(movement: Movement): number {
   // balance/chart remains driven by the native effectiveBalanceSats.
   const receipt = fallbackReceipt(movement)
   if (receipt !== null) {
-    return receipt.payout_sat
+    if (receipt.disposition === 'exited') {
+      return movement.effectiveBalanceSats
+    }
+    return receipt.forfeited_sat > 0 ? -receipt.forfeited_sat : receipt.payout_sat
   }
   return isFailedRoundMovement(movement) ? 0 : movement.effectiveBalanceSats
 }
@@ -141,6 +144,9 @@ export function getBoardFundingTxids(movements: Movement[]): Set<string> {
 }
 
 export function getMovementSource(movement: Movement): MovementSource {
+  if (fallbackReceipt(movement)?.disposition === 'exited') {
+    return 'exit'
+  }
   if (isFallbackPayout(movement)) {
     return 'fallback_payout'
   }
