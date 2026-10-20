@@ -61,15 +61,40 @@ describe(getBalanceTotals, () => {
     expect(result.totalSat).toBe(7000)
   })
 
+  it('counts refresh and pending sends once without making them spendable', () => {
+    const balance = makeBalance({
+      awaitingSettlementSats: 2,
+      claimableLightningReceiveSats: 3,
+      needsRefreshSats: 5,
+      pendingArkoorSendSats: 7,
+      pendingBoardSats: 11,
+      pendingExitSats: 13,
+      pendingInRoundSats: 17,
+      pendingLightningSendSats: 19,
+      pendingOffboardSats: 23,
+      spendableSats: 29
+    })
+    const onchain = makeOnchainBalance({ trustedSpendableSats: 31, untrustedPendingSats: 37 })
+    const result = getBalanceTotals(balance, onchain)
+    expect(result.needsRefreshSat).toBe(5)
+    expect(result.pendingArkoorSendSat).toBe(7)
+    expect(result.pendingOffboardSat).toBe(23)
+    expect(result.offchainSat).toBe(29)
+    expect(result.totalSat).toBe(197)
+  })
+
   it('returns zeros when both balances are undefined', () => {
     expect(getBalanceTotals()).toStrictEqual({
       awaitingSettlementSat: 0,
       claimableLightningReceiveSat: 0,
       exitChangePendingSat: 0,
+      needsRefreshSat: 0,
       offchainSat: 0,
       onchainPendingSat: 0,
       onchainSat: 0,
       pendingBoardSat: 0,
+      pendingArkoorSendSat: 0,
+      pendingOffboardSat: 0,
       pendingExitSat: 0,
       pendingInRoundSat: 0,
       pendingLightningSendSat: 0,
@@ -83,10 +108,13 @@ describe(getBalanceTotals, () => {
       awaitingSettlementSat: 0,
       claimableLightningReceiveSat: 0,
       exitChangePendingSat: 0,
+      needsRefreshSat: 0,
       offchainSat: 0,
       onchainPendingSat: 200,
       onchainSat: 1000,
       pendingBoardSat: 0,
+      pendingArkoorSendSat: 0,
+      pendingOffboardSat: 0,
       pendingExitSat: 0,
       pendingInRoundSat: 0,
       pendingLightningSendSat: 0,
@@ -108,10 +136,13 @@ describe(getBalanceTotals, () => {
       awaitingSettlementSat: 0,
       claimableLightningReceiveSat: 50,
       exitChangePendingSat: 0,
+      needsRefreshSat: 0,
       offchainSat: 5000,
       onchainPendingSat: 100,
       onchainSat: 1000,
       pendingBoardSat: 10,
+      pendingArkoorSendSat: 0,
+      pendingOffboardSat: 0,
       pendingExitSat: 400,
       pendingInRoundSat: 20,
       pendingLightningSendSat: 30,

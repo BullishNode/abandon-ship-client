@@ -25,6 +25,7 @@ import type {
   WalletTxInfo,
   WalletVtxoInfo
 } from '@secondts/barkd'
+import { z } from 'zod'
 import type { ArkInfo } from '@/types/domain/ark'
 import type { Balance, OnchainBalance } from '@/types/domain/balance'
 import type { PendingBoard } from '@/types/domain/board'
@@ -49,14 +50,25 @@ import type { Utxo, WalletTx } from '@/types/domain/onchain'
 import type { NextRoundStart, PendingRound, RoundStatus } from '@/types/domain/round'
 import type { Vtxo, VtxoState } from '@/types/domain/vtxo'
 
-export function toBalance(dto: BarkdBalance, awaitingSettlementSats = 0): Balance {
+export function toBalance(dto: BarkdBalance, raw: unknown = {}): Balance {
+  const nativeBalance = z
+    .object({
+      awaiting_settlement_sat: z.number().int().nonnegative().optional().default(0),
+      needs_refresh_sat: z.number().int().nonnegative().optional().default(0),
+      pending_arkoor_send_sat: z.number().int().nonnegative().optional().default(0),
+      pending_offboard_sat: z.number().int().nonnegative().optional().default(0)
+    })
+    .parse(raw)
   return {
-    awaitingSettlementSats,
+    awaitingSettlementSats: nativeBalance.awaiting_settlement_sat,
     claimableLightningReceiveSats: dto.claimableLightningReceiveSat,
+    needsRefreshSats: nativeBalance.needs_refresh_sat,
+    pendingArkoorSendSats: nativeBalance.pending_arkoor_send_sat,
     pendingBoardSats: dto.pendingBoardSat,
     pendingExitSats: dto.pendingExitSat,
     pendingInRoundSats: dto.pendingInRoundSat,
     pendingLightningSendSats: dto.pendingLightningSendSat,
+    pendingOffboardSats: nativeBalance.pending_offboard_sat,
     spendableSats: dto.spendableSat
   }
 }

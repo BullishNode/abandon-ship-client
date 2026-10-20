@@ -127,15 +127,12 @@ export const barkdBackend: Backend = {
     },
     arkInfo: async () => toArkInfo(await walletApi.arkInfo()),
     balance: async () => {
-      // The published SDK drops this additive native pending category. Read
-      // the extension from the same authenticated balance response.
+      // The published SDK drops these additive native balance categories. Read
+      // the extensions from the same authenticated balance response.
       const response = await walletApi.balanceRaw()
       const copy = response.raw.clone()
       const balance = await response.value()
-      const extension = z
-        .object({ awaiting_settlement_sat: z.number().int().nonnegative().optional().default(0) })
-        .parse(await copy.json())
-      return toBalance(balance, extension.awaiting_settlement_sat)
+      return toBalance(balance, await copy.json())
     },
     createWallet: async ({ mnemonic, birthdayHeight }) =>
       await walletApi.createWallet({

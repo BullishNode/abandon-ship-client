@@ -25,11 +25,14 @@ export function carryForwardPendingExit(previous: unknown, next: unknown): unkno
 
 export interface BalanceTotals {
   awaitingSettlementSat: number
+  needsRefreshSat: number
   offchainSat: number
   onchainSat: number
   onchainPendingSat: number
   exitChangePendingSat: number
   pendingBoardSat: number
+  pendingArkoorSendSat: number
+  pendingOffboardSat: number
   pendingInRoundSat: number
   pendingLightningSendSat: number
   claimableLightningReceiveSat: number
@@ -62,19 +65,25 @@ export function getBalanceTotals(
   )
   const onchainPendingSat = untrustedPendingSat - exitChangePendingSat
   const awaitingSettlementSat = balance?.awaitingSettlementSats ?? 0
+  const needsRefreshSat = balance?.needsRefreshSats ?? 0
   const offchainSat = balance?.spendableSats ?? 0
   const pendingBoardSat = balance?.pendingBoardSats ?? 0
+  const pendingArkoorSendSat = balance?.pendingArkoorSendSats ?? 0
+  const pendingOffboardSat = balance?.pendingOffboardSats ?? 0
   const pendingInRoundSat = balance?.pendingInRoundSats ?? 0
   const pendingLightningSendSat = balance?.pendingLightningSendSats ?? 0
   const claimableLightningReceiveSat = balance?.claimableLightningReceiveSats ?? 0
   const pendingExitSat = balance?.pendingExitSats ?? 0
   const totalSat =
     awaitingSettlementSat +
+    needsRefreshSat +
     offchainSat +
     onchainSat +
     onchainPendingSat +
     exitChangePendingSat +
     pendingBoardSat +
+    pendingArkoorSendSat +
+    pendingOffboardSat +
     pendingInRoundSat +
     pendingLightningSendSat +
     claimableLightningReceiveSat +
@@ -83,10 +92,13 @@ export function getBalanceTotals(
     awaitingSettlementSat,
     claimableLightningReceiveSat,
     exitChangePendingSat,
+    needsRefreshSat,
     offchainSat,
     onchainPendingSat,
     onchainSat,
     pendingBoardSat,
+    pendingArkoorSendSat,
+    pendingOffboardSat,
     pendingExitSat,
     pendingInRoundSat,
     pendingLightningSendSat,

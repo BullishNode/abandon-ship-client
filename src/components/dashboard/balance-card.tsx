@@ -42,6 +42,11 @@ export function BalanceCard({
       label: t('dashboard.balance.offchain')
     },
     {
+      amount: totals.needsRefreshSat,
+      key: 'needs_refresh',
+      label: t('dashboard.balance.needs_refresh')
+    },
+    {
       amount: totals.onchainSat,
       key: 'onchain',
       label: t('dashboard.balance.onchain')
@@ -72,6 +77,16 @@ export function BalanceCard({
       label: t('dashboard.balance.pending_lightning_send')
     },
     {
+      amount: totals.pendingArkoorSendSat,
+      key: 'pending_arkoor_send',
+      label: t('dashboard.balance.pending_arkoor_send')
+    },
+    {
+      amount: totals.pendingOffboardSat,
+      key: 'pending_offboard',
+      label: t('dashboard.balance.pending_offboard')
+    },
+    {
       amount: totals.pendingExitSat,
       key: 'pending_exit',
       label: t('dashboard.balance.pending_exit')
@@ -80,12 +95,15 @@ export function BalanceCard({
 
   const onlyOffchain =
     totals.awaitingSettlementSat === 0 &&
+    totals.needsRefreshSat === 0 &&
     totals.onchainSat === 0 &&
     totals.onchainPendingSat === 0 &&
     totals.exitChangePendingSat === 0 &&
     totals.pendingBoardSat === 0 &&
     totals.pendingInRoundSat === 0 &&
     totals.pendingLightningSendSat === 0 &&
+    totals.pendingArkoorSendSat === 0 &&
+    totals.pendingOffboardSat === 0 &&
     totals.pendingExitSat === 0
   const showBreakdown = !onlyOffchain && rows.length > 0
 
