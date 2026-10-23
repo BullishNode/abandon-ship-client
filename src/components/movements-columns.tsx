@@ -1,3 +1,5 @@
+import { Badge } from '@/components/ui/badge'
+import { fallbackReceipt } from '@/utils/fallback'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { TFunction } from 'i18next'
 import { MovementAmountCell } from '@/components/movement-amount-cell'
@@ -50,6 +52,10 @@ export function getMovementColumns({
     {
       cell: ({ row }) => {
         const entry = row.original
+        const receipt = entry.kind === 'movement' ? fallbackReceipt(entry.movement) : null
+        if (receipt !== null) {
+          return <Badge variant="outline">{t(`fallback.stage_label.${receipt.stage}`)}</Badge>
+        }
         const status = entry.kind === 'movement' ? entry.movement.status : entry.status
         return <MovementStatusBadge status={status} />
       },

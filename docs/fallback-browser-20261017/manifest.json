@@ -1,0 +1,79 @@
+{
+  "scope": "Regtest real browser/native acceptance, not production qualification",
+  "nextest_run": "fe405d38-4905-49d2-8224-8fabc6f9424b",
+  "seconds": 46.016,
+  "browser": "Chromium151.0.7922.34",
+  "web_source": "10ecfb93d520c70bb55f2472c9c5d750a7a37941",
+  "web_dist_sha256": "76f5843236d0c5f279bd19019fa3067661313a830155076754f26bba12b38a27",
+  "client_build": {
+    "head": "bd92e45745f01f9cb5b73b6e90feeb5e075afe75",
+    "dirty_backend": true,
+    "features": "bark-cli/fallback-test-bip84,bark-cli/barkd-web-ui,ark-testing/fallback-test-bip84",
+    "web_dist": "10ecfb9",
+    "source_manifest_sha256": "923aa0fedaf5d7649ea6fa8001276cb5d74988d5f1aa47ecc1f00d0e7a36ab69",
+    "source_archive_sha256": "470821e24297a2313f7a9ea1b3a1d4f3af15309d0f2ea530d4b7b51673d94577",
+    "products": {
+      "bark": {
+        "host_path": "/home/francis/.cache/abandon-fresh/runtime-backend-terminal-first-20261017/bark",
+        "container_path": "/fresh-cache/runtime-backend-terminal-first-20261017/bark",
+        "sha256": "3e145d958eb4ddaa9c3650828537b233374d6a0086afe40a61ecaa8ffe1edd58",
+        "bytes": 66155456
+      },
+      "barkd": {
+        "host_path": "/home/francis/.cache/abandon-fresh/runtime-backend-terminal-first-20261017/barkd",
+        "container_path": "/fresh-cache/runtime-backend-terminal-first-20261017/barkd",
+        "sha256": "377a90a1170218f515205d7671213d87cb5049ce3921ffccc83550f1ba2a00a5",
+        "bytes": 76558784
+      },
+      "captaind": {
+        "host_path": "/home/francis/.cache/abandon-fresh/runtime-backend-terminal-first-20261017/captaind",
+        "container_path": "/fresh-cache/runtime-backend-terminal-first-20261017/captaind",
+        "sha256": "b889ddb7c1c9ba301cba63bb9ed12c52c8dab64766c38a823c409edccb1b8b14",
+        "bytes": 73915424
+      },
+      "watchmand": {
+        "host_path": "/home/francis/.cache/abandon-fresh/runtime-backend-terminal-first-20261017/watchmand",
+        "container_path": "/fresh-cache/runtime-backend-terminal-first-20261017/watchmand",
+        "sha256": "391188799e19874f779cfa8596243af6a7b05130a824c840ff31f6a49e68fb0a",
+        "bytes": 46798520
+      }
+    },
+    "native_test_binaries": {
+      "ark-testing::barkd": {
+        "host_path": "/home/francis/.cache/abandon-fresh/runtime-backend-terminal-first-20261017/barkd-51bfbf3edd2aaf6a",
+        "container_path": "/fresh-cache/runtime-backend-terminal-first-20261017/barkd-51bfbf3edd2aaf6a",
+        "sha256": "7161bfcee0e11ab502e45f0973c020bec88d819af515800f175efe88ed33ea93",
+        "bytes": 58028832
+      },
+      "ark-testing::server": {
+        "host_path": "/home/francis/.cache/abandon-fresh/runtime-backend-terminal-first-20261017/server-298b5788618ef8e0",
+        "container_path": "/fresh-cache/runtime-backend-terminal-first-20261017/server-298b5788618ef8e0",
+        "sha256": "4fbad280980efa2268f2ba466b6cb0499123102e4f28796b755045ede323d1c2",
+        "bytes": 160862696
+      }
+    },
+    "nextest_binaries_original_sha256": "711078722554f26bee5f75f6b55f2188865ac11ed2826f1e412d97aecaf338b5",
+    "nextest_binaries_immutable_sha256": "88291410b576327ccda72313647fdb0e1c5ce6f2519ccb1e5defa885399a9d2f",
+    "client_metadata_sha256": "b9e60d38fe81b1b2db6855ed84c9d190c46cd3d28d95bb3d69287647a3ed8b05",
+    "runtime_harness_only_after_build": {
+      "file": "justfile",
+      "current_sha256": "8bcf85e341c95b28ed28c3d74d735effe082d282a97bbf3f7d7dc45c2dbbc3f6",
+      "patch_sha256": "9cc62c26a15299c20a5531c72ad02df12146022291a9d0f3a86c77c7be9c6875",
+      "reason": "nextest --binaries-metadata cannot combine with --package from existing just int; add explicit int-binaries recipe without rebuilding archived products",
+      "existing_archive_recipes_preserved": true
+    }
+  },
+  "server_source": "7055d1fce858f3112aff671d0b2a8a454d6a2214",
+  "server_hashes": {
+    "captaind": "6c223d603724ca8755dbd7c8594ceed9807ce390dad2b373b536da6f081a6b4f",
+    "watchmand": "5084cb4dddc04e243c6d7f5e11b5090b16f2862fb4842104113cbf3a4d457fea"
+  },
+  "files": {
+    "payout-settings.png": "2ec0aff29bec5ea7d528d3750d76213f8d09b2ffbdc4404cd58c7f3d9cc79687",
+    "browser-evidence.json": "53dc4ed015c6f2da786ce89d68fad7d866afb21d704b067fbade2a49c32890c9",
+    "registered-coins.png": "a5353d2adf10083e4ac7e1abb5a18bb4184e0ad17dd32f61abf4e921d2fd61af",
+    "restored-payout-detail.png": "9a47bfd6988198be64fb018bc133a9c9064c8d8b939739384bd74c3c020110a2",
+    "restored-history.png": "64964469bc2ef983be759862ea70deef12ff1a992431b586c39283187af5f033",
+    "payout-payout-detail.png": "e4f4021b18e8e808b25850debcd440265516dfa18f35823c620461346aa239ee"
+  }
+}

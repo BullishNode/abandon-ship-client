@@ -143,11 +143,6 @@ export function SendModal({ open, onOpenChange, initialStep = 'scan' }: SendModa
                     />
                   )}
                   <BrantaVerificationStatus
-                    key={
-                      flow.brantaPayment?.platformLogoLightUrl ??
-                      flow.brantaPayment?.platformLogoUrl ??
-                      'pending'
-                    }
                     payment={flow.brantaPayment}
                     verifyUrl={flow.brantaVerifyUrl}
                   />

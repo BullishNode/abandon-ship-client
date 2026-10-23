@@ -31,6 +31,11 @@ function makeVtxo(
 }
 
 describe(estimateRefreshAllFeeSat, () => {
+  it('does not quote a refresh fee for inputs the native wallet is still settling', () => {
+    const coin = { ...makeVtxo(5000, 120), awaitingSettlement: true }
+    expect(estimateRefreshAllFeeSat([coin], 100, refreshFees)).toBeUndefined()
+  })
+
   it('returns undefined when inputs are missing', () => {
     expect(estimateRefreshAllFeeSat(undefined, 100, refreshFees)).toBeUndefined()
     expect(estimateRefreshAllFeeSat([makeVtxo(1000, 200)], undefined, refreshFees)).toBeUndefined()

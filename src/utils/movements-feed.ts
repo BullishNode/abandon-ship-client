@@ -1,3 +1,4 @@
+import { fallbackReceipt } from '@/utils/fallback'
 import { AVERAGE_BLOCK_INTERVAL_MS } from '@/constants/btc'
 import type { Movement, MovementStatus } from '@/types/domain/movement'
 import type { Network } from '@/types/domain/network'
@@ -223,7 +224,11 @@ export function filterFeedByTab(feed: MovementsFeedRow[], tab: MovementsTab): Mo
     const source = getFeedRowSource(row)
     if (tab === 'onchain') {
       return (
-        source === 'onchain' || source === 'board' || source === 'exit' || source === 'exit_fee'
+        source === 'onchain' ||
+        source === 'board' ||
+        source === 'exit' ||
+        source === 'exit_fee' ||
+        source === 'fallback_payout'
       )
     }
     if (tab === 'ark') {
@@ -254,8 +259,26 @@ export function buildMovementsFeed(
       tipHeight: options.tipHeight
     })
   }
-  const visibleOnchainEntries =
-    options.hideExitFee === true ? onchainEntries.filter((entry) => !entry.isCpfp) : onchainEntries
+  const payoutByTxid = new Map<string, number>()
+  for (const movement of visibleMovements) {
+    const receipt = fallbackReceipt(movement)
+    if (
+      receipt?.txid !== null &&
+      receipt?.txid !== undefined &&
+      receipt.chain_view_valid &&
+      (receipt.stage === 'broadcast' || receipt.stage === 'confirmed')
+    ) {
+      payoutByTxid.set(receipt.txid, (payoutByTxid.get(receipt.txid) ?? 0) + receipt.payout_sat)
+    }
+  }
+  const visibleOnchainEntries = onchainEntries.filter((entry) => {
+    if (options.hideExitFee === true && entry.isCpfp) {
+      return false
+    }
+    // Collapse only a fully covered actual incoming transaction. Other
+    // incoming amounts in the same transaction must remain visible.
+    return entry.direction !== 'incoming' || payoutByTxid.get(entry.txid) !== entry.amountSat
+  })
   const knownTxids = new Set((options.transactions ?? []).map((tx) => tx.txid))
   const optimisticEntries = buildOptimisticOffboardEntries(
     options.pendingOffboards ?? [],

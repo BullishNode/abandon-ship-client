@@ -1,4 +1,5 @@
 import { ResponseError } from '@secondts/barkd'
+import i18n from '@/i18n'
 
 // barkd has no stable status code for these cases, so we match its error
 // messages until one exists. "Datadir has unexpected contents" comes from
@@ -17,6 +18,19 @@ async function readJsonBody(response: Response): Promise<unknown> {
 export async function barkdErrorMessage(error: unknown): Promise<string | undefined> {
   if (error instanceof ResponseError) {
     const body = await readJsonBody(error.response)
+    if (
+      error.response.status === 409 &&
+      typeof body === 'object' &&
+      body !== null &&
+      'code' in body
+    ) {
+      if (body.code === 'decided_for_fallback') {
+        return i18n.t('fallback.decided_for_fallback')
+      }
+      if (body.code === 'expired_new_lightning') {
+        return i18n.t('fallback.expired_new_lightning')
+      }
+    }
     if (typeof body === 'object' && body !== null && 'message' in body) {
       const { message } = body
       if (typeof message === 'string' && message.length > 0) {

@@ -1,3 +1,4 @@
+import { FallbackPayoutDetail } from '@/components/fallback-payout-detail'
 import { CheckIcon, CopyIcon } from '@phosphor-icons/react'
 import { useTranslation } from 'react-i18next'
 import { MovementAmountCell } from '@/components/movement-amount-cell'
@@ -149,6 +150,7 @@ function MovementDetailContent({
             />
           )}
         </div>
+        <FallbackPayoutDetail movement={movement} formatSats={formatSats} />
         <LabelEditor
           inputId="movement-label"
           label={metadata?.label ?? ''}

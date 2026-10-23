@@ -1,0 +1,240 @@
+{
+  "browser": "151.0.7922.34",
+  "results": [
+    {
+      "phase": "registered",
+      "status": "PASS",
+      "base_url": "http://127.0.0.1:24730",
+      "evidence": {
+        "expiry_height": 129,
+        "payout_address": "bcrt1qe6xvy6ua2qqeag0myxxwxwqs8pfen3ckqr53qt",
+        "payout_sat": 99000,
+        "vtxo_id": "135ea34947f5bdddb83a63a856300de2e9da4e1f9e4ee7aa286b21e2fcf8b228:0"
+      }
+    },
+    {
+      "phase": "payout",
+      "status": "PASS",
+      "base_url": "http://127.0.0.1:21104",
+      "evidence": {
+        "movement": {
+          "effective_balance_sat": -100000,
+          "exited_vtxos": [],
+          "id": 2,
+          "input_vtxos": [
+            "135ea34947f5bdddb83a63a856300de2e9da4e1f9e4ee7aa286b21e2fcf8b228:0"
+          ],
+          "intended_balance_sat": -100000,
+          "metadata": {
+            "fallback": {
+              "allocation_id": 1,
+              "chain_view_valid": true,
+              "entitlements": [
+                {
+                  "attempts": [
+                    {
+                      "active": true,
+                      "allocation_id": 1,
+                      "confirmation": {
+                        "hash": "57f3550b5e94f19403812e9728556e921b6435ca9d2989b61bf0c9a8a9630a3b",
+                        "height": 131
+                      },
+                      "disposition": "customer_payout",
+                      "fee": 1000,
+                      "forfeited": 0,
+                      "gross": 100000,
+                      "output_amount": 99000,
+                      "output_index": 0,
+                      "parent": {
+                        "input": [
+                          {
+                            "previous_output": "032d15a9bf489db56cd343670658f05dd86ad432d0a91e73898a57d6f212b478:0",
+                            "script_sig": "",
+                            "sequence": 0,
+                            "witness": [
+                              "48a7566f34fbcb6da853cfb66f0787db161c5f99596460231ae1293fb54bad4ac92f2bc0311ba99af87836d9f6915c304a732a0c447b6f7130d97a71ba78037d",
+                              "028100b17520ad3c1db751bf8fbea3f4f232fa6ad0a9010468d830a6287924c68b83617a221cac",
+                              "c039f89df14bc9b40736354bc79ec9f23eb2e0e7a763b09503d9401ef9b3f53353"
+                            ]
+                          }
+                        ],
+                        "lock_time": 130,
+                        "output": [
+                          {
+                            "script_pubkey": "0014ce8cc26b9d50019ea1fb218ce33810385399c716",
+                            "value": 99000
+                          },
+                          {
+                            "script_pubkey": "5120b92944b1e3189b8d3bc2867c7f51b2f3389bc8d940cd7b4a8da381c267fb8362",
+                            "value": 1000
+                          },
+                          {
+                            "script_pubkey": "51024e73",
+                            "value": 0
+                          }
+                        ],
+                        "version": 3
+                      },
+                      "payout": 99000,
+                      "script": "0014ce8cc26b9d50019ea1fb218ce33810385399c716",
+                      "stage": "confirmed"
+                    }
+                  ],
+                  "chain_view_valid": true,
+                  "entitlement_id": 1,
+                  "first_seen": "2026-10-17T00:52:28.334819794Z",
+                  "gross": 100000,
+                  "last_updated": "2026-10-17T00:52:28.850609470Z",
+                  "terminal_claim": null,
+                  "vtxo_id": "135ea34947f5bdddb83a63a856300de2e9da4e1f9e4ee7aa286b21e2fcf8b228:0"
+                }
+              ],
+              "forfeited_sat": 0,
+              "output_index": 0,
+              "payout_sat": 99000,
+              "stage": "confirmed",
+              "txid": "1ac4a84b3829e6929ceab6517914af7b7ec0a21df32f261fde4f6aea5041d5fe"
+            }
+          },
+          "offchain_fee_sat": 1000,
+          "output_vtxos": [],
+          "received_on": [],
+          "sent_to": [
+            {
+              "amount_sat": 99000,
+              "destination": {
+                "type": "bitcoin",
+                "value": "bcrt1qe6xvy6ua2qqeag0myxxwxwqs8pfen3ckqr53qt"
+              }
+            }
+          ],
+          "status": "successful",
+          "subsystem": {
+            "kind": "payout",
+            "name": "abandon.fallback_payout"
+          },
+          "time": {
+            "completed_at": "2026-10-17T00:52:28.850609470Z",
+            "created_at": "2026-10-17T00:52:28.334819794Z",
+            "updated_at": "2026-10-17T00:52:28.850609470Z"
+          }
+        },
+        "payout_address": "bcrt1qe6xvy6ua2qqeag0myxxwxwqs8pfen3ckqr53qt",
+        "payout_outpoint": "1ac4a84b3829e6929ceab6517914af7b7ec0a21df32f261fde4f6aea5041d5fe:0",
+        "payout_sat": 99000
+      }
+    },
+    {
+      "phase": "restored",
+      "status": "PASS",
+      "base_url": "http://127.0.0.1:20882",
+      "evidence": {
+        "movement": {
+          "effective_balance_sat": -100000,
+          "exited_vtxos": [],
+          "id": 2,
+          "input_vtxos": [
+            "135ea34947f5bdddb83a63a856300de2e9da4e1f9e4ee7aa286b21e2fcf8b228:0"
+          ],
+          "intended_balance_sat": -100000,
+          "metadata": {
+            "fallback": {
+              "allocation_id": 1,
+              "chain_view_valid": true,
+              "entitlements": [
+                {
+                  "attempts": [
+                    {
+                      "active": true,
+                      "allocation_id": 1,
+                      "confirmation": {
+                        "hash": "57f3550b5e94f19403812e9728556e921b6435ca9d2989b61bf0c9a8a9630a3b",
+                        "height": 131
+                      },
+                      "disposition": "customer_payout",
+                      "fee": 1000,
+                      "forfeited": 0,
+                      "gross": 100000,
+                      "output_amount": 99000,
+                      "output_index": 0,
+                      "parent": {
+                        "input": [
+                          {
+                            "previous_output": "032d15a9bf489db56cd343670658f05dd86ad432d0a91e73898a57d6f212b478:0",
+                            "script_sig": "",
+                            "sequence": 0,
+                            "witness": [
+                              "48a7566f34fbcb6da853cfb66f0787db161c5f99596460231ae1293fb54bad4ac92f2bc0311ba99af87836d9f6915c304a732a0c447b6f7130d97a71ba78037d",
+                              "028100b17520ad3c1db751bf8fbea3f4f232fa6ad0a9010468d830a6287924c68b83617a221cac",
+                              "c039f89df14bc9b40736354bc79ec9f23eb2e0e7a763b09503d9401ef9b3f53353"
+                            ]
+                          }
+                        ],
+                        "lock_time": 130,
+                        "output": [
+                          {
+                            "script_pubkey": "0014ce8cc26b9d50019ea1fb218ce33810385399c716",
+                            "value": 99000
+                          },
+                          {
+                            "script_pubkey": "5120b92944b1e3189b8d3bc2867c7f51b2f3389bc8d940cd7b4a8da381c267fb8362",
+                            "value": 1000
+                          },
+                          {
+                            "script_pubkey": "51024e73",
+                            "value": 0
+                          }
+                        ],
+                        "version": 3
+                      },
+                      "payout": 99000,
+                      "script": "0014ce8cc26b9d50019ea1fb218ce33810385399c716",
+                      "stage": "confirmed"
+                    }
+                  ],
+                  "chain_view_valid": true,
+                  "entitlement_id": 1,
+                  "first_seen": "2026-10-17T00:52:28.334819794Z",
+                  "gross": 100000,
+                  "last_updated": "2026-10-17T00:52:28.850609470Z",
+                  "terminal_claim": null,
+                  "vtxo_id": "135ea34947f5bdddb83a63a856300de2e9da4e1f9e4ee7aa286b21e2fcf8b228:0"
+                }
+              ],
+              "forfeited_sat": 0,
+              "output_index": 0,
+              "payout_sat": 99000,
+              "stage": "confirmed",
+              "txid": "1ac4a84b3829e6929ceab6517914af7b7ec0a21df32f261fde4f6aea5041d5fe"
+            }
+          },
+          "offchain_fee_sat": 1000,
+          "output_vtxos": [],
+          "received_on": [],
+          "sent_to": [
+            {
+              "amount_sat": 99000,
+              "destination": {
+                "type": "bitcoin",
+                "value": "bcrt1qe6xvy6ua2qqeag0myxxwxwqs8pfen3ckqr53qt"
+              }
+            }
+          ],
+          "status": "successful",
+          "subsystem": {
+            "kind": "payout",
+            "name": "abandon.fallback_payout"
+          },
+          "time": {
+            "completed_at": "2026-10-17T00:52:28.850609470Z",
+            "created_at": "2026-10-17T00:52:28.334819794Z",
+            "updated_at": "2026-10-17T00:52:28.850609470Z"
+          }
+        },
+        "payout_address": "bcrt1qe6xvy6ua2qqeag0myxxwxwqs8pfen3ckqr53qt",
+        "payout_outpoint": "1ac4a84b3829e6929ceab6517914af7b7ec0a21df32f261fde4f6aea5041d5fe:0",
+        "payout_sat": 99000
+      }
+    }
+  ]
+}

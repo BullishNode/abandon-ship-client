@@ -1,0 +1,69 @@
+{
+  "scope": "Web companion for client non-payout receipts; not embedded or deployed yet.",
+  "base": "e1a498be563d0c1121fba3b1f0e08700855c7758",
+  "patch_sha256": "0466d74e75392d053cf5886c9bc155bff1ecf3d3a190491f94873b5ba4512e72",
+  "files": {
+    "src/utils/fallback.ts": "d8db31d58579441615f163e306981af9c01c079500f14ec5970aa20c816ea4c0",
+    "src/utils/movement.ts": "2e77d0722b1eee4dc25ef6f9782f560206f09b4f230c3b89ce19a7cf4707bbc3",
+    "src/components/fallback-payout-detail.tsx": "9b1d08cba08d4f4bca2a7f245dd699df5524bed82395e769e4e4a0cd00f8c5a0",
+    "src/i18n/locales/en.json": "12a85661142e75a2d4bcb4cf138a1f3bc88979d0bd830f705c26d82440831f9f",
+    "src/utils/fallback.test.ts": "ae653a514624c6d619bdb9fe7bd549ca78c3051fc671fc5033ce5ba931037ad2"
+  },
+  "validation": {
+    "node": "v22.23.2",
+    "targeted_tests": {
+      "command": "npm test -- src/utils/fallback.test.ts src/lib/backend/barkd/fallback.test.ts",
+      "state": "PASS",
+      "files": 2,
+      "tests": 7,
+      "seconds": 2.96
+    },
+    "typecheck": {
+      "command": "npm run typecheck",
+      "state": "PASS"
+    },
+    "build": {
+      "command": "npm run build",
+      "state": "PASS",
+      "vite_seconds": 13.33,
+      "warning": "Existing large output chunk warning; build succeeded."
+    }
+  },
+  "dist": {
+    "assets/App-DyvzKxZ4.js": "d0b3d0de5fea0a34e21dbdc40ad1b4e3ca3e20b33bc744afd9786f34ea3ab875",
+    "assets/balance-chart-gamtiH8a.js": "b3b3228e21195342c1dd37883ccfb82d265f103b1a8f72f1aaa56dffb9292709",
+    "assets/barkd-CIQk4u3_.js": "989ebb6abe22f45a61d81587ba3645995e5762bac626528def8f7de5acfeec70",
+    "assets/btc-ShIH-9jT.js": "ec20395f36b3ae501ab0319ac798e9b06d1ed23debd10c1b16414c2f8a7e62f9",
+    "assets/dm-sans-latin-ext-wght-normal-BOFOeGcA.woff2": "a5d38fe99f930275684999b462c7123faa063d9e44e73b4b241723d884aa0f49",
+    "assets/dm-sans-latin-wght-normal-Xz1IZZA0.woff2": "9fea608a947e67020c33cad9a6fe3d60c54119dfb8cff87768a8117a15ed7543",
+    "assets/errors-Bfb42NAB.js": "ded3c84e6f20973e8c5c3cfe543c18f11f4ffecafeab0f0acdd4372a46df6fbd",
+    "assets/i18n-CAJJr8gs.js": "724e9fbb6725d54fb7f984d185aa6110365207d480eda6d17eb014be32bac6dd",
+    "assets/index-CKz0761D.js": "8154118c389ce9b5c596cf9efada2f858ad761d3cdfd8c40cef4d24fd4c7c5c7",
+    "assets/index-D-5vaJSe.css": "49e04a9bb05edde8c2f039e22a40e25aab5ccbd1d1e36d11144a52905f8877ea",
+    "assets/initReactI18next-CPDwVD1J.js": "470da6e32d251303e7851c26bbe4bc7a2c4ed0ea9c530281966903ea747a5b74",
+    "assets/new-password-fields-n8Er2t6D.js": "f0a25fab870d2a0236cca80f74b83182cae1b7d5ceb1709d803161de5a5e2d37",
+    "assets/preload-helper-C1qKPofu.js": "37dc63cfd53b6af8cda7ad6bff8dac7c5b6fe77ff83c30b8abe0c4bf57ca96f0",
+    "assets/refresh-DoMnxdoM.js": "cc2a3c9bdf0364d684197f5613cc484c10e9a8deaf0fc6653fe10ab13b2b2cc6",
+    "assets/runtime-BYcFc2pg.js": "de57b1ca43b6c8f6220f36d10662bb78b377d7294feaf300addc9b6b585391c9",
+    "assets/runtime-C_HEEntI.js": "ccd1241ea45f2cbe0f25f4e296fda9ff6096e76121b98e7e979ffb84cfb16f53",
+    "assets/second_logo-QmKNMYY7.svg": "2d4a6adcafc51a06435e45aaa8ef543bc95edea53233f089f153fea463932c22",
+    "assets/second_logo_white-BIfqSdON.svg": "2abb5c4a025cfd065d56a1ffeb81ae59bcfdf53527a7e20fde9d62b51eb96081",
+    "assets/source-code-pro-cyrillic-ext-wght-normal-BODHZjil.woff2": "dd503d60c322511f5618af7d1dc4f2d7002a58f665b515c7d62ea6f5535ac669",
+    "assets/source-code-pro-cyrillic-wght-normal-aqTvhEeI.woff2": "fd7699ecbd3ce9ae5db900abc491150d176e8b1530aee9a9268cb3023658a5b3",
+    "assets/source-code-pro-greek-wght-normal-BvT6WsG1.woff2": "34dfcd3f61fc26a6ba2a7ee30eab6bc4bdc5d4872a8b49a90a17f1bf9e70553b",
+    "assets/source-code-pro-latin-ext-wght-normal-0UZNSh4u.woff2": "ab316ee7e4a28a149fe9f74a3e9173c3d14a11bb7d4df898dd2fe10da7b7fe24",
+    "assets/source-code-pro-latin-wght-normal-BP8Zz55n.woff2": "8b774aaa5137a38ef40f4ac9d36db9a5eee152b2f66589dfdc82ff007fc87135",
+    "assets/source-code-pro-vietnamese-wght-normal-B6x53GZG.woff2": "d8a28d78c1c6de660e1be91fdadc9b01268415407922ed3cf64909a0b02a6356",
+    "assets/use-wallet-transactions-DHh7l8hL.js": "5ad35d3146c91cd0964c8c9667a87bee97818ec76112e8cc1b6aee8bf4cfcba5",
+    "favicon-180.png": "a834e7d4b6255d0517eda9c057a759f43a62b8252b8d56aa64d6b2588ab4ad7e",
+    "favicon.png": "31d038f4a69e82010c417db9051e7562f4fcead79465d4b3e586960fe6a1b30a",
+    "favicon.svg": "c29222184cb2b7d9101947e2916bf0d637c592a85ab7d33abc0afb376a1af91d",
+    "fonts/dm-sans.ttf": "dd1563c3bb43e0a5163db0d0dfe3ef4b9cd698ed4166d23ba3031e6eff00e9f5",
+    "index.html": "0084bde7d7beccfa8a680c4c21f7769fa7f67f648d2b284399ff4fea96a257f4"
+  },
+  "limits": [
+    "Current v6 Rust products still embed 10ecfb9 web bundle.",
+    "No new actual browser/runtime pairing test executed for this companion yet."
+  ],
+  "recorded_at": "2026-10-17T19:18:51.680098+00:00"
+}
